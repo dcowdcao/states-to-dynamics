@@ -1,0 +1,9 @@
+"""Per-token L2 norm vs move position (raw + standardized).
+
+Shows the token-0 norm spike (~300 vs ~22 median) that makes squared-distance scoring
+assign prototypes by magnitude. Entrypoint: `python -m spade.diagnostics.norm_vs_move`
+"""
+
+# def stream_activations(...): ...
+# def calibrate_standardization(...): ...
+# def main(): ...

@@ -1,0 +1,13 @@
+"""Hand-built board unit tests for the legality taxonomy.
+
+Co-located with illegal_taxonomy.py because they're tightly coupled. Pipeline-level self-
+tests live in spade.validation.final_validation.
+
+Entrypoint: `python -m spade.legality.test_illegal_taxonomy`
+"""
+
+# def board_from(spec): ...    # build a board from a compact string
+# def test_occupied_is_illegal(): ...
+# def test_no_flip_is_illegal(): ...
+# def test_legal_move_classifies_legal(): ...
+# ...

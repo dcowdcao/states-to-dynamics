@@ -1,0 +1,19 @@
+# Installable package `spade` — replaces the original repo's sys.path injection.
+# `pip install -e .` puts src/spade on the path so `import spade.*` resolves everywhere.
+# Pins mirror requirements.txt; keep the two in sync (or make requirements.txt the source
+# of truth and read it here) when porting.
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spade"
+version = "0.1.0"
+description = "Sparsemax-Distance SAEs on OthelloGPT (Karvonen board-game protocol)"
+requires-python = ">=3.10"
+# dependencies = [...]  # port from requirements.txt
+
+[tool.setuptools.packages.find]
+where = ["src"]
+# finds the `spade` package and subpackages under src/
