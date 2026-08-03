@@ -54,9 +54,17 @@ def load_space(name: str, entry, device: str):
 
 
 def representative_spaces() -> list[tuple]:
-    """(space_name, entry_or_None): baselines + one checkpoint per SAE config."""
+    """(space_name, entry_or_None): baselines + one checkpoint per SAE config.
+
+    EXCLUDED_SAE configs are dropped here, which is what makes the exclusion global —
+    every study reaches its space list through this function. The source repo filtered
+    inside two study modules instead, so three other studies and the viewer kept reading
+    the degenerate checkpoint.
+    """
     by_config = {}
     for e in entries():
+        if e.config in EXCLUDED_SAE:
+            continue
         best = by_config.get(e.config)
         if best is None or e.seed == 42 or (best.seed != 42 and e.seed < best.seed):
             by_config[e.config] = e
