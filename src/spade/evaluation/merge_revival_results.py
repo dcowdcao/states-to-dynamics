@@ -1,13 +1,30 @@
-"""Merge the baseline, sweep and revived-config result CSVs into one table.
+"""Combine baseline + old-sweep + revived lam1e-03-gam1e-04 Karvonen results
+into one CSV for the comparison figure.
 
-Joins on wandb_name. Exists because the chosen-best SpaDE configuration was retrained
-after its original checkpoint was lost, and its row has to sit alongside the older rows in
-the combined figure.
-
-The retrained model is NOT metric-identical to the lost original — same config, same seed,
-different numbers, because the trainer moved underneath it. Label that row as the config
-under the current trainer, never as a reproduction.
+Usage: python -m spade.evaluation.merge_revival_results
 """
 
-# SOURCES = [...]   # results/<experiment>/all_results.csv, resolved via paths.results_dir
-# def main(): ...
+import sys
+
+import pandas as pd
+
+from spade.common.paths import results_dir
+
+SOURCES = [
+    results_dir("main") / "all_results.csv",
+    results_dir("spade_sweep") / "all_results.csv",
+    results_dir("spade_revival") / "all_results.csv",
+]
+
+
+def main():
+    frames = [pd.read_csv(p) for p in SOURCES]
+    out = results_dir("spade_revival") / "combined_results.csv"
+    combined = pd.concat(frames, ignore_index=True).drop_duplicates(
+        subset="wandb_name", keep="last")
+    combined.to_csv(out, index=False)
+    print(f"wrote {out} ({len(combined)} rows from {len(SOURCES)} sources)")
+
+
+if __name__ == "__main__":
+    sys.exit(main())
