@@ -16,10 +16,13 @@ porting. It cannot be done as specified. The tier is ~92 GB
 Copying within netscratch is not a backup — the same 90-day retention applies, which is
 what the existing 129 MB `spade_checkpoint_backup` there already runs into.
 
-**Done instead, tonight:** a full file manifest of every `spade_*` dir — path, size, mtime
-— committed under `manifests/netscratch/`. If the tier expires we will at least know
-exactly what was lost, and the small derived artifacts can be pulled into the repo, since
-they are what the figures actually read.
+**Done instead, tonight.** Two things. A full file manifest of every `spade_*` dir — path,
+size, mtime — committed under `manifests/netscratch/`, so if the tier expires we know
+exactly what was lost. And the part that does fit: everything except the `.pt` checkpoints
+is only 738 MB across 1306 files, and is now copied to
+`/n/home10/dcao/spade_netscratch_backup/` (outside the repo, mirroring the netscratch
+layout). That covers the per-seed CSVs and derived tensors the aggregation and figures
+actually read. What remains exposed is ~91 GB of `ae.pt` weights.
 
 **The question for David:** where does 92 GB go — lab storage, tape, cold storage — and is
 it all of it, or only the parts that cannot be regenerated? The distinction that matters:
