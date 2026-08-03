@@ -1,16 +1,69 @@
-"""7-category move-legality taxonomy, matched to the Othello engine's get_valid_moves().
+"""Move-legality taxonomy for the OthelloGPT rules study (constraint rules R1-R3).
 
-Classifies an illegal candidate move into a category (occupied, no-flip, off-board, ...),
-ordered by the board computation depth the category requires. The categories map onto the
-formal rules in docs/othello_rules.md: R1 placement, R2 bracketing, R3 turn order. Forfeit
-positions are excluded by an explicit contract, not by accident.
-
-Shared by the rules, straightness and violation-divergence pipelines and by their figure
-scripts. Uses circuits.othello_engine_utils.
+Classifies each candidate square, given a board and the player to move, into
+one of 7 categories ordered by how much board computation is needed to detect
+the violation. `classify() == LEGAL` matches the engine's `get_valid_moves()`
+exactly on non-forfeit positions (mover has at least one regular legal move);
+callers must skip forfeit positions, where the engine falls back to letting
+opponent-flipping squares be played.
 """
 
-# CATEGORIES = [...]   # ordered by required board-computation depth
-# LEGAL = ...
-# def flips(board, move): ...
-# def classify(board, move) -> str: ...
-# def classify_all(board) -> dict: ...
+import numpy as np
+
+from spade.common.paths import add_karvonen_to_path
+
+add_karvonen_to_path()
+
+from circuits.othello_engine_utils import OthelloBoardState, eights, stoi_indices
+
+CATEGORIES = [
+    "legal",             # 0: flips at least one line for the mover
+    "occupied_own",      # 1: square already holds the mover's disc
+    "occupied_opp",      # 2: square already holds the opponent's disc
+    "empty_detached",    # 3: empty, touches no discs at all
+    "empty_own_only",    # 4: empty, touches only the mover's discs
+    "empty_no_bracket",  # 5: empty, touches opponent discs, no line closes
+    "opponent_only",     # 6: flips only for the opponent (turn confusion)
+]
+LEGAL = 0
+
+
+def flips(state: np.ndarray, square: int, color: int) -> bool:
+    """Would placing `color` on `square` flip at least one opponent disc?"""
+    r, c = square // 8, square % 8
+    for dr, dc in eights:
+        cr, cc = r + dr, c + dc
+        seen_opp = False
+        while 0 <= cr <= 7 and 0 <= cc <= 7 and state[cr, cc] != 0:
+            if state[cr, cc] == color:
+                if seen_opp:
+                    return True
+                break
+            seen_opp = True
+            cr, cc = cr + dr, cc + dc
+    return False
+
+
+def classify(board: OthelloBoardState, square: int) -> int:
+    state, me = board.state, board.next_hand_color
+    r, c = square // 8, square % 8
+    if state[r, c] == me:
+        return 1
+    if state[r, c] == -me:
+        return 2
+    if flips(state, square, me):
+        return LEGAL
+    if flips(state, square, -me):
+        return 6
+    neighbors = [state[r + dr, c + dc] for dr, dc in eights
+        if 0 <= r + dr <= 7 and 0 <= c + dc <= 7]
+    if all(v == 0 for v in neighbors):
+        return 3
+    if any(v == -me for v in neighbors):
+        return 5
+    return 4
+
+
+def classify_all(board: OthelloBoardState) -> list[int]:
+    """Category of every vocab square, in token order (index i = token i+1)."""
+    return [classify(board, sq) for sq in stoi_indices]
