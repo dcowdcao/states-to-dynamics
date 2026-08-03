@@ -1,0 +1,25 @@
+{
+  "model": "Baidicoot/Othello-GPT-Transformer-Lens",
+  "hook": "blocks.5.hook_resid_post",
+  "layer": 5,
+  "n_events": 2000,
+  "n_rows": 3673,
+  "rows_per_population": {
+    "flipped": 1370,
+    "random": 1370,
+    "settled": 933
+  },
+  "skips": {
+    "no_diagnostic_square_settled": 656,
+    "no_diagnostic_square_flipped": 630,
+    "no_diagnostic_square_random": 630,
+    "no_settled_square": 411
+  },
+  "scales": "1,2,3,4,6,8,12,16",
+  "betas": "1,2",
+  "settled_min_age": 10,
+  "n_bootstrap": 1000,
+  "seed": 7,
+  "linear_probe_dir": "/n/home10/dcao/Spade_Research_David_Sumedh_Ba/analysis/linear_probe/activations",
+  "tpr_probe": "/n/netscratch/ba_lab/Lab/dcao/spade_bracket/tpr_probes/tpr_r52_f2_layer5.pt"
+}

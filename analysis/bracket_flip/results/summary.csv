@@ -1,0 +1,44 @@
+key,contrast,direction_source,value,n,definition
+n_events,,,2000.0,2000,"headline single-flip events, layer 5"
+n_events_strict,,,1596.0,2000,events whose control avoids all eight of s's rays
+var_isotropic_chance,,,0.0019569471624266144,2000,share a random direction takes once the swap axis is removed
+cos_tpr_vs_linear_direction,,,0.8219921450902581,64,median over squares of cos between the two probes' retain directions
+direction_overlap_median,,,0.04933371929297827,4032,"off-diagonal |cos| between retain directions of different squares, TPR; this is the floor the empirical null carries"
+direction_overlap_max,,,0.3415422905566416,4032,worst-case of the same
+cos_turn_axis_vs_delta_pc1,,,0.9950625053071058,2000,the leading direction of the after-before ensemble against the to-move axis
+cos_swap_across_events_median,,,0.00024403902191521155,3998000,cos between the matched-control displacements of two different events
+rank_matching_control_swap,,,73.0,2000,rank of the shared subspace needed to reach what one per-event control direction reaches
+norm_mean_delta,,,1.2694240565283637,2000,length of the mean after-before displacement (activation units)
+rms_norm_delta,,,29.447775981442945,2000,root-mean-square length of the same displacements
+cos_flip_median,after-before,tpr,-0.01999054299319264,2000,median cos of the displacement with the retain direction at s
+cos_null_median,after-before,tpr,-0.09452685163936245,58434,"the same at unflipped discs, pooled (empirical null)"
+p_flip_positive,after-before,tpr,0.288,2000,events whose cos at s is positive
+cos_flip_median,after-before,linear,-0.005197767273655948,2000,median cos of the displacement with the retain direction at s
+cos_null_median,after-before,linear,-0.08399640469867559,58434,"the same at unflipped discs, pooled (empirical null)"
+p_flip_positive,after-before,linear,0.4225,2000,events whose cos at s is positive
+cos_flip_median,after-control,tpr,0.17476462820901406,1596,median cos of the displacement with the retain direction at s
+cos_null_median,after-control,tpr,-0.001919366840889617,46930,"the same at unflipped discs, pooled (empirical null)"
+p_flip_positive,after-control,tpr,1.0,1596,events whose cos at s is positive
+cos_flip_median,after-control,linear,0.16279882843743038,1596,median cos of the displacement with the retain direction at s
+cos_null_median,after-control,linear,-0.0017211507902939373,46930,"the same at unflipped discs, pooled (empirical null)"
+p_flip_positive,after-control,linear,1.0,1596,events whose cos at s is positive
+var_swap,after-before,tpr,0.689425649462419,2000,energy share along the matched control's displacement
+var_flip,after-before,tpr,0.006688092545561932,2000,"energy share along the retain direction at s, swap removed"
+var_resid,after-before,tpr,0.3038862579920189,2000,energy left over: 1 - var_swap - var_flip
+var_flip_null,after-before,tpr,0.0015183470605863462,2000,var_flip taken at one unflipped disc per event (empirical null)
+var_turn,after-before,tpr,0.054865619866875666,2000,energy share along the single to-move axis the whole event set shares
+var_swap,after-before,linear,0.689425649462419,2000,energy share along the matched control's displacement
+var_flip,after-before,linear,0.006205026361393403,2000,"energy share along the retain direction at s, swap removed"
+var_resid,after-before,linear,0.3043693241761874,2000,energy left over: 1 - var_swap - var_flip
+var_flip_null,after-before,linear,0.001114201932649418,2000,var_flip taken at one unflipped disc per event (empirical null)
+var_turn,after-before,linear,0.054865619866875666,2000,energy share along the single to-move axis the whole event set shares
+var_swap,after-control,tpr,0.08465000126975672,1596,energy share along the matched control's displacement
+var_flip,after-control,tpr,0.020544019461902152,1596,"energy share along the retain direction at s, swap removed"
+var_resid,after-control,tpr,0.894805979268341,1596,energy left over: 1 - var_swap - var_flip
+var_flip_null,after-control,tpr,0.00422320465727835,1596,var_flip taken at one unflipped disc per event (empirical null)
+var_turn,after-control,tpr,0.0002628948799027669,1596,energy share along the single to-move axis the whole event set shares
+var_swap,after-control,linear,0.08465000126975672,1596,energy share along the matched control's displacement
+var_flip,after-control,linear,0.019131311842527983,1596,"energy share along the retain direction at s, swap removed"
+var_resid,after-control,linear,0.8962186868877153,1596,energy left over: 1 - var_swap - var_flip
+var_flip_null,after-control,linear,0.0031745934902969,1596,var_flip taken at one unflipped disc per event (empirical null)
+var_turn,after-control,linear,0.0002628948799027669,1596,energy share along the single to-move axis the whole event set shares
