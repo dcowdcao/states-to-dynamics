@@ -6,6 +6,33 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Wave 0 is blocked: there is nowhere to put the netscratch backup (2026-08-03)
+
+**Needs a decision.** The agreed first step was to back up the netscratch tier before
+porting. It cannot be done as specified. The tier is ~92 GB
+(`spade_multiseed` 68 G, `spade_divergence` 9.3 G, `spade_divergence_v1_onecontrol` 8.4 G,
+`spade_straightness` 5.3 G, `spade_bracket` 658 M, `spade_manifold` 471 M, `spade_rules`
+69 M) and `/n/home10` has **22 GB free** against a 95 GB filesystem already 77% full.
+Copying within netscratch is not a backup — the same 90-day retention applies, which is
+what the existing 129 MB `spade_checkpoint_backup` there already runs into.
+
+**Done instead, tonight:** a full file manifest of every `spade_*` dir — path, size, mtime
+— committed under `manifests/netscratch/`. If the tier expires we will at least know
+exactly what was lost, and the small derived artifacts can be pulled into the repo, since
+they are what the figures actually read.
+
+**The question for David:** where does 92 GB go — lab storage, tape, cold storage — and is
+it all of it, or only the parts that cannot be regenerated? The distinction that matters:
+the per-seed CSVs are small and irreplaceable in practice; the checkpoints are large and
+*technically* regenerable by re-running training, which is 2-day GPU jobs across 5 seeds
+and 14 configurations. Also worth deciding whether `spade_divergence_v1_onecontrol` (8.4 G)
+is kept at all — it is the superseded one-control branch set, but three shipped
+sub-studies were computed on it and never re-derived.
+
+**Deadline:** retention started 2026-07-22, so ~2026-10-20.
+
+---
+
 ## The plan, re-derived against the live repo (2026-08-03)
 
 **Goal:** the 2026-07-22 skeleton was written against the source repo as it stood that
