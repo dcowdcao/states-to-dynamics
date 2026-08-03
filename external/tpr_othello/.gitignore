@@ -1,0 +1,7 @@
+*.swp
+*/*.swp
+*.DS_Store
+*/*.DS_Store
+*.codex
+*/__pycache__/
+*/*/__pycache__/
