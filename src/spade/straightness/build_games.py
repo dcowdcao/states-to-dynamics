@@ -29,7 +29,7 @@ import torch
 from spade.common.config import CTX_LEN, MODEL_NAME
 from spade.common.device import select_device
 from spade.common.study import study_dir
-from spade.othello.games import stream_games
+from spade.othello.games import collect_legal, first_illegal_pos, stream_games
 from spade.othello.taxonomy import classify_all
 
 from circuits.othello_engine_utils import OthelloBoardState, stoi, to_string
@@ -40,42 +40,6 @@ T0_MIN, T0_MAX = 10, 40
 ROLLOUT_BATCH = 250
 WTHOR_YEARS = range(2014, 2024)
 WTHOR_URL = "https://www.ffothello.org/wthor/base_zip/WTH_{year}.ZIP"
-
-
-def collect_legal(games, n: int, skips: Counter) -> list[list[int]]:
-    out = []
-    while len(out) < n:
-        seq = next(games)["tokens"][:CTX_LEN]
-        if len(seq) < CTX_LEN:
-            skips["short_game"] += 1
-        elif 0 in seq:
-            skips["pass_token"] += 1
-        else:
-            out.append(seq)
-    return out
-
-
-def engine_legal(board: OthelloBoardState, square: int) -> bool:
-    r, c = square // 8, square % 8
-    if board.state[r, c] != 0:
-        return False
-    kind = board.tentative_move(square)
-    if kind == 1:
-        return True
-    if kind == 0:
-        return False
-    # flips only for the opponent: engine-legal iff the mover must forfeit
-    return all(board.tentative_move(m) != 1 for m in range(64))
-
-
-def first_illegal_pos(seq: list[int]) -> int:
-    board = OthelloBoardState()
-    for pos, tok in enumerate(seq):
-        sq = to_string(tok)
-        if not engine_legal(board, sq):
-            return pos
-        board.umpire(sq)
-    return -1
 
 
 def sample_rollouts(model, device: str, n: int, seed: int) -> tuple[list[list[int]], list[int]]:
