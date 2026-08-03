@@ -36,12 +36,13 @@ stage_train() {
     echo "=== Stage: Train 8 SAEs (Karvonen-matched) ==="
     mkdir -p logs/training "${SAVE_DIR}"
 
-    for sae_type in "${SAE_TYPES[@]}"; do
-        python -m "spade.training.train_${sae_type}" \
-            --save_dir "${SAVE_DIR}" \
-            --device cuda:0 \
-            2>&1 | tee "logs/training/train_${sae_type}.log"
-    done
+    # One call over the eight configs: trainer_N is assigned by position within a run, and
+    # the registry and every eval CSV depend on trainer_3 being TopK. Looping the per-type
+    # entrypoints into one --save_dir writes trainer_0 eight times.
+    python -m spade.training.sweep \
+        --save_dir "${SAVE_DIR}" \
+        --device cuda:0 \
+        2>&1 | tee "logs/training/train.log"
 
     echo "  Training complete. SAEs saved to: ${SAVE_DIR}"
 }

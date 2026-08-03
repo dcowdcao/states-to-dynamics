@@ -43,11 +43,14 @@ echo "=== Training 8 SAEs on $(hostname) ==="
 echo "GPU: $(nvidia-smi --query-gpu=name --format=csv,noheader)"
 echo "CUDA: $(python -c 'import torch; print(torch.version.cuda)')"
 
-for SAE_TYPE in standard panneal gated gated_anneal topk batch_topk spade cosine_spade; do
-    echo "--- ${SAE_TYPE} ---"
-    python -m "spade.training.train_${SAE_TYPE}" \
-        --save_dir checkpoints/main \
-        --device cuda:0
-done
+# One call over the eight configs, not a loop over the eight entrypoints. trainer_N is
+# assigned by position within a single run, and checkpoints/main/trainer_3 being TopK is a
+# fact the registry, the eval CSVs and every figure depend on; eight separate calls would
+# each start at trainer_0 in their own directory. The per-type entrypoints are for training
+# one type on its own. This also matches the source, which made a single trainSAE() call
+# over a shared activation stream rather than re-streaming eight times.
+python -m spade.training.sweep \
+    --save_dir checkpoints/main \
+    --device cuda:0
 
 echo "=== Training complete ==="

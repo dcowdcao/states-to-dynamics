@@ -67,15 +67,14 @@ log "=========================================="
 log "Stage 1/4: Training 8 SAEs (100 steps)"
 log "=========================================="
 
-for SAE_TYPE in "${SAE_TYPES[@]}"; do
-    log "  Training: ${SAE_TYPE}"
-    python -m "spade.training.train_${SAE_TYPE}" \
-        --save_dir "${SAVE_DIR}" \
-        --device "$DEVICE" \
-        --smoke_test \
-        --no_wandb \
-        2>&1 | tee "${LOGS_DIR}/training/smoke_train_${SAE_TYPE}.log"
-done
+# One call over the eight configs, so trainer_0..7 land in one directory in the order the
+# registry expects. The per-type entrypoints each start at trainer_0 in their own dir.
+python -m spade.training.sweep \
+    --save_dir "${SAVE_DIR}" \
+    --device "$DEVICE" \
+    --smoke_test \
+    --no_wandb \
+    2>&1 | tee "${LOGS_DIR}/training/smoke_train.log"
 
 # Verify: 8 checkpoints + standardization params
 N_CKPT=$(find "${SAVE_DIR}" -name 'ae.pt' 2>/dev/null | wc -l | tr -d ' ')
