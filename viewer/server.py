@@ -32,7 +32,7 @@ from circuits.othello_engine_utils import OthelloBoardState, stoi
 DEFAULT_TOP_K = 20
 
 # The same pinned roster the browser build ships — see spade.export.viewer_weights.ROSTER.
-ENTRIES = {e.config.replace("Trainer-othello", ""): e.checkpoint_dir for e in roster()}
+ENTRIES = {e.config.replace("Trainer-othello", ""): e.ckpt_dir for e in roster()}
 DEVICE = select_device()
 
 _model = None

@@ -109,9 +109,9 @@ def export_model(model) -> dict:
 
 
 def export_sae(entry) -> dict:
-    ae, _ = load_karvonen_sae(str(entry.checkpoint_dir), device="cpu")
+    ae, _ = load_karvonen_sae(str(entry.ckpt_dir), device="cpu")
     kind = KIND_BY_CLASS[type(ae).__name__]
-    std = load_standardization_params(str(entry.checkpoint_dir), device="cpu")
+    std = load_standardization_params(str(entry.ckpt_dir), device="cpu")
     display = entry.config.replace("Trainer-othello", "")
 
     sd = ae.state_dict()
@@ -149,8 +149,8 @@ def export_reference(model, sae_manifests) -> dict:
     saes = {}
     for m in sae_manifests:
         entry = next(e for e in roster() if e.config == m["id"])
-        ae, _ = load_karvonen_sae(str(entry.checkpoint_dir), device="cpu")
-        std = load_standardization_params(str(entry.checkpoint_dir), device="cpu")
+        ae, _ = load_karvonen_sae(str(entry.ckpt_dir), device="cpu")
+        std = load_standardization_params(str(entry.ckpt_dir), device="cpu")
         wrapped = StandardizedDictionary(ae, torch.tensor(std["mean"]), std["scale"])
         feats = wrapped.encode(resid[None]).squeeze(0)
         top = torch.topk(feats, REF_TOP_K)
