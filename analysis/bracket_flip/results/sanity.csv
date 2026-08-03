@@ -1,0 +1,5 @@
+check,n,value,threshold,pass
+before identical across events sharing a prefix,4,0.0,max abs diff over all 8 layers < 1e-4,True
+strict-control contrast shorter than the raw before/after difference,1596,1.0,fraction of events == 1.0,True
+median ||after - before|| (layer 5),1596,30.151730607703016,,True
+"median ||after - control|| (layer 5, strict)",1596,16.87101782279758,,True

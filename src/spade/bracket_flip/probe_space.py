@@ -1,0 +1,459 @@
+"""M1, M2 and M5 of the bracket-flip study: what the TPR reads off the flanked square.
+
+Writes CSVs to analysis/bracket_flip/results/; make_figures.py draws them and
+never recomputes anything.
+
+Three conventions meet here and all three are load-bearing.
+
+1. The probe's classes are mover-relative {empty, theirs, mine} with "mine" the
+   player to move next. Playing m flips that perspective, so `before` is read
+   from the mover's side and `after` and `control` from the opponent's. ORIENT
+   carries that single fact into both the absolute relabeling and the panel
+   coordinates.
+2. Panel coordinates are gauge-invariant logit differences, never filler
+   coordinates: the bilinear form is invariant under f -> Af, B -> BA^-1, and
+   analysis/bracket_flip/reports/PROBE_REPORT.md measures the filler angle moving
+   131.3 -> 104.5 degrees across seeds at constant accuracy.
+3. Events are the independent unit (one per game), squares within an event are
+   not, so every interval here is a cluster bootstrap over events.
+
+Usage: python -m spade.bracket_flip.probe_space
+"""
+
+import argparse
+from dataclasses import dataclass
+from functools import lru_cache
+
+import numpy as np
+import pandas as pd
+import torch
+import torch.nn.functional as F
+from torch import Tensor
+
+from spade.bracket_flip.tpr_probe import (
+    CLASSES,
+    N_TRAIN,
+    SEED,
+    TensorProductBoardProbe,
+    TPRProbe,
+    _fit,
+)
+from spade.common.config import MODEL_NAME
+from spade.common.paths import repo_root
+from spade.common.study import study_dir
+
+EMPTY, THEIRS, MINE = 0, 1, 2  # index into tpr_probe.CLASSES
+CONDITIONS = ("before", "after", "control")
+
+# +1 where "mine" is the mover, -1 where the move has handed the turn over.
+# events.py drops forfeits at t and t+1, so `after` and `control` share the sign.
+ORIENT = {"before": 1, "after": -1, "control": -1}
+
+# events.csv `control_squares` codes, read on the board before m.
+ROLE_CODE = {"empty": 0, "placed": 1, "flipped": 2, "unflipped_own": 3, "unflipped_opp": 4}
+INPUT_LAYER = -1  # W_E[token] + W_pos[pos]: the input-space anchor of FIGURE_GUIDELINES 4.1
+BLOCKS = tuple(range(8))
+LAYERS = (INPUT_LAYER, *BLOCKS)
+BASES = ("relative", "absolute")
+MAIN_LAYER = 5
+N_BOOT = 2000
+LINEAR_EPOCHS, LINEAR_LR = 200, 1e-2  # the layer sweep of analysis/linear_probe/train_linear_probe.py
+
+CACHE = study_dir("bracket") / "probe_space"
+RESULTS = repo_root() / "analysis" / "bracket_flip" / "results"
+
+
+# ---------------------------------------------------------------- data
+
+def events() -> pd.DataFrame:
+    return pd.read_csv(study_dir("bracket") / "events" / "events.csv")
+
+
+def role_codes(ev: pd.DataFrame) -> np.ndarray:
+    """[n, 64] over ROLE_CODE, engine-square order (square = 8 * row + col)."""
+    return np.array([[int(c) for c in s] for s in ev.control_squares])
+
+
+def event_acts() -> dict[str, Tensor]:
+    return {c: torch.load(study_dir("bracket") / "events" / f"{c}.pt", weights_only=True)
+            for c in CONDITIONS}
+
+
+@lru_cache(maxsize=1)
+def embed_weights() -> tuple[Tensor, Tensor]:
+    """(W_E, W_pos), cached so repeat runs touch neither the network nor the model."""
+    path = CACHE / "embed_weights.pt"
+    if path.exists():
+        w = torch.load(path, weights_only=True)
+        return w["W_E"], w["W_pos"]
+
+    # The only two tensors this study needs from the model itself, fetched once.
+    from spade.common.net import force_ipv4
+    force_ipv4()
+    from transformer_lens import HookedTransformer
+
+    model = HookedTransformer.from_pretrained(MODEL_NAME, device="cpu")
+    w = {"W_E": model.W_E.clone(), "W_pos": model.W_pos.clone()}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(w, path)
+    return w["W_E"], w["W_pos"]
+
+
+def input_event_acts(ev: pd.DataFrame) -> dict[str, Tensor]:
+    """Residual stream before block 0, per condition. Exact, and needs no forward pass.
+
+    `before` sits at position t-1 of run(P + m) and reads token P[t-1]; `after`
+    and `control` sit at position t and read m and m'.
+    """
+    w_e, w_pos = embed_weights()
+    t = torch.tensor(ev.t.to_numpy())
+    token = {"before": torch.tensor([int(p.split()[-1]) for p in ev.prefix]),
+             "after": torch.tensor(ev.move.to_numpy()),
+             "control": torch.tensor(ev.control_move.to_numpy())}
+    pos = {"before": t - 1, "after": t, "control": t}
+    return {c: w_e[token[c]] + w_pos[pos[c]] for c in CONDITIONS}
+
+
+@lru_cache(maxsize=1)
+def _block_acts() -> Tensor:
+    return torch.load(study_dir("bracket") / "probe" / "all_layer_activations.pt",
+                      weights_only=True)
+
+
+@lru_cache(maxsize=None)
+def probe_acts(layer: int) -> Tensor:
+    """[20000, 512] probe-set activations at `layer`, or in the input space."""
+    if layer != INPUT_LAYER:
+        return _block_acts()[layer]
+    w_e, w_pos = embed_weights()
+    tokens = torch.load(study_dir("bracket") / "probe" / "tokens.pt", weights_only=True).long()
+    idx = torch.load(study_dir("bracket") / "probe" / "move_indices.pt",
+                     weights_only=True).reshape(tokens.shape[0], -1)
+    return (w_e[torch.gather(tokens, 1, idx)] + w_pos[idx]).reshape(-1, w_e.shape[1])
+
+
+@lru_cache(maxsize=None)
+def probe_labels(basis: str) -> Tensor:
+    return torch.load(study_dir("bracket") / "probe" / f"board_states_{basis}.pt",
+                      weights_only=True)
+
+
+# ---------------------------------------------------------------- probes
+
+def tpr(layer: int, basis: str) -> TPRProbe:
+    """TPR fit on this study's probe set.
+
+    Cached apart from tpr_probe.train()'s path, which holds A1's committed-set
+    fits that the other wave-2 agents load.
+    """
+    path = CACHE / f"tpr_{basis}_layer{layer}.pt"
+    if path.exists():
+        artifact = torch.load(path, weights_only=True)
+        module = TensorProductBoardProbe(**artifact["shape"])
+        module.load_state_dict(artifact["probe_state_dict"])
+        return TPRProbe(module.requires_grad_(False), layer)
+
+    acts = probe_acts(layer)[:N_TRAIN]
+    with torch.enable_grad():
+        module = _fit(acts, probe_labels(basis)[:N_TRAIN], SEED)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    torch.save({"probe_state_dict": module.state_dict(),
+                "shape": {"d_model": acts.shape[-1],
+                          "role_dim": module.role_embeddings.shape[-1],
+                          "filler_dim": module.filler_embeddings.shape[-1]}}, path)
+    return TPRProbe(module.requires_grad_(False), layer)
+
+
+def linear(layer: int, basis: str) -> Tensor:
+    """[512, 8, 8, 3] probe: the capacity reference for the TPR, same split and recipe
+    as the layer sweep in analysis/linear_probe/train_linear_probe.py."""
+    path = CACHE / f"linear_{basis}_layer{layer}.pt"
+    if path.exists():
+        return torch.load(path, weights_only=True)
+
+    acts, labels = probe_acts(layer)[:N_TRAIN], probe_labels(basis)[:N_TRAIN]
+    torch.manual_seed(SEED)
+    probe = (torch.randn(acts.shape[-1], 8, 8, 3) * 0.01).requires_grad_(True)
+    optimizer = torch.optim.Adam([probe], lr=LINEAR_LR)
+    with torch.enable_grad():
+        for _epoch in range(LINEAR_EPOCHS):
+            F.cross_entropy(torch.einsum("nd,drcl->nrcl", acts, probe).reshape(-1, 3),
+                            labels.reshape(-1)).backward()
+            optimizer.step()
+            optimizer.zero_grad()
+    probe = probe.detach()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(probe, path)
+    return probe
+
+
+def accuracies(layer: int) -> dict:
+    """Held-out board-state accuracy over rows N_TRAIN: (games 160-399), all 64 squares."""
+    acts = probe_acts(layer)[N_TRAIN:]
+    out = {"layer": layer, "n_train": N_TRAIN, "n_eval": acts.shape[0]}
+    for basis in BASES:
+        labels = probe_labels(basis)[N_TRAIN:].reshape(-1, 64)
+        out[f"acc_tpr_{basis}"] = round(
+            (tpr(layer, basis).decode(acts).argmax(-1) == labels).float().mean().item(), 4)
+        out[f"acc_linear_{basis}"] = round(
+            (torch.einsum("nd,drcl->nrcl", acts, linear(layer, basis)).reshape(-1, 64, 3)
+             .argmax(-1) == labels).float().mean().item(), 4)
+    return out
+
+
+# ---------------------------------------------------------------- read-out
+
+@dataclass(frozen=True)
+class Decode:
+    """One layer's read-out of every event, in the probe's native basis."""
+    layer: int
+    logits: dict[str, np.ndarray]  # condition -> [n_events, 64, 3]
+    codes: np.ndarray  # [n_events, 64] over ROLE_CODE
+    square_s: np.ndarray  # [n_events]
+
+    @property
+    def pred(self) -> dict[str, np.ndarray]:
+        return {c: l.argmax(-1) for c, l in self.logits.items()}
+
+    def at_s(self, per_square: np.ndarray) -> np.ndarray:
+        return per_square[np.arange(len(self.square_s)), self.square_s]
+
+
+def decode(layer: int, ev: pd.DataFrame, acts: dict[str, Tensor],
+           input_acts: dict[str, Tensor]) -> Decode:
+    probe = tpr(layer, "relative")
+    source = input_acts if layer == INPUT_LAYER else {c: a[:, layer] for c, a in acts.items()}
+    return Decode(layer, {c: probe.decode(h).numpy() for c, h in source.items()},
+                  role_codes(ev), ev.square_s.to_numpy())
+
+
+def owner(pred: np.ndarray, condition: str) -> np.ndarray:
+    """Decoded absolute owner: +1 the mover's colour, -1 the opponent's, 0 empty.
+
+    This is the design's "compose the relative label with whose turn it is", and
+    it is exact rather than fitted, so absolute correctness at s reduces to
+    reading `theirs` at both ends.
+    """
+    sign = ORIENT[condition]
+    return np.where(pred == EMPTY, 0, np.where(pred == MINE, sign, -sign))
+
+
+def coords(logits: np.ndarray, condition: str, absolute: bool) -> np.ndarray:
+    """[..., 2] gauge-invariant panel coordinates.
+
+    x = l_mine - l_theirs is who owns the square, y = mean(l_mine, l_theirs) -
+    l_empty is whether it is occupied at all. `absolute` re-signs x by whose turn
+    it is, giving l_mover's-colour - l_opponent's-colour: an exact relabel of the
+    same logits, not a second measurement.
+    """
+    x = logits[..., MINE] - logits[..., THEIRS]
+    y = (logits[..., MINE] + logits[..., THEIRS]) / 2 - logits[..., EMPTY]
+    return np.stack([x * (ORIENT[condition] if absolute else 1), y], -1)
+
+
+# ---------------------------------------------------------------- statistics
+
+def boot_ci(numer: np.ndarray, denom: np.ndarray,
+            rng: np.random.Generator) -> tuple[float, float]:
+    """95% percentile CI for numer.sum()/denom.sum(), resampling events with replacement."""
+    idx = rng.integers(0, len(numer), size=(N_BOOT, len(numer)))
+    lo, hi = np.percentile(numer[idx].sum(1) / denom[idx].sum(1), [2.5, 97.5])
+    return float(lo), float(hi)
+
+
+def ratio_row(name: str, layer: int, numer: np.ndarray, denom: np.ndarray,
+              rng: np.random.Generator) -> dict:
+    lo, hi = boot_ci(numer, denom, rng)
+    return {"layer": layer, "metric": name, "estimate": numer.sum() / denom.sum(),
+            "ci_lo": lo, "ci_hi": hi, "n_events": int((denom > 0).sum()),
+            "n_units": int(denom.sum())}
+
+
+def swapped(pred_a: np.ndarray, pred_b: np.ndarray) -> np.ndarray:
+    """theirs -> mine or mine -> theirs; strictly stronger than "the class changed"."""
+    return (((pred_a == THEIRS) & (pred_b == MINE))
+            | ((pred_a == MINE) & (pred_b == THEIRS)))
+
+
+def readout(d: Decode, rng: np.random.Generator) -> list[dict]:
+    """The M1 proportions at one layer, each with a cluster-bootstrap interval."""
+    pred = d.pred
+    s = {c: d.at_s(p) for c, p in pred.items()}
+    ones = np.ones(len(d.square_s))
+    per_event_flags = {
+        "p_s_unchanged_rel": s["before"] == s["after"],
+        "p_s_theirs_both": (s["before"] == THEIRS) & (s["after"] == THEIRS),
+        "p_s_unchanged_ctrl": s["before"] == s["control"],
+        "p_s_absolute_correct": (owner(s["before"], "before") == -1)
+                                & (owner(s["after"], "after") == 1),
+        "p_s_absolute_correct_before": owner(s["before"], "before") == -1,
+        "p_s_absolute_correct_after": owner(s["after"], "after") == 1,
+    }
+    rows = [ratio_row(name, d.layer, flag.astype(float), ones, rng)
+            for name, flag in per_event_flags.items()]
+
+    swaps = swapped(pred["before"], pred["after"])
+    for name, roles in [("p_unflipped_swap_rel", ("unflipped_own", "unflipped_opp")),
+                        ("p_unflipped_swap_own", ("unflipped_own",)),
+                        ("p_unflipped_swap_opp", ("unflipped_opp",))]:
+        mask = np.isin(d.codes, [ROLE_CODE[r] for r in roles])
+        rows.append(ratio_row(name, d.layer, (swaps & mask).sum(1).astype(float),
+                              mask.sum(1).astype(float), rng))
+    return rows
+
+
+def per_event(d: Decode, ev: pd.DataFrame) -> pd.DataFrame:
+    """One row per event at the main layer, so A5 can re-derive every proportion."""
+    pred = d.pred
+    s = {c: d.at_s(p) for c, p in pred.items()}
+    unflipped = np.isin(d.codes, [ROLE_CODE["unflipped_own"], ROLE_CODE["unflipped_opp"]])
+    swaps = swapped(pred["before"], pred["after"])
+    return pd.DataFrame({
+        "game_id": ev.game_id, "t": ev.t, "mover": ev.mover, "square_s": ev.square_s,
+        "control_kind": ev.control_kind,
+        **{f"s_{c}": [CLASSES[k] for k in s[c]] for c in CONDITIONS},
+        "s_unchanged": s["before"] == s["after"],
+        "s_unchanged_ctrl": s["before"] == s["control"],
+        "s_absolute_correct": (owner(s["before"], "before") == -1)
+                              & (owner(s["after"], "after") == 1),
+        "n_unflipped": unflipped.sum(1),
+        "n_unflipped_swapped": (swaps & unflipped).sum(1),
+    })
+
+
+# ---------------------------------------------------------------- M2 field
+
+def field(d: Decode, rng: np.random.Generator) -> pd.DataFrame:
+    """Mean position per square role and condition, with dispersion and CIs.
+
+    128,000 arrows would be a smear, so the panel gets five aggregated ones
+    (FIGURE_GUIDELINES 4.7). `c{xx,xy,yy}` is the point cloud's covariance, which
+    the figure draws as a 50% dispersion ellipse; the interval is on the mean and
+    clusters on events.
+    """
+    rows = []
+    for absolute in (False, True):
+        xy = {c: coords(l, c, absolute) for c, l in d.logits.items()}
+        for role, code in ROLE_CODE.items():
+            mask = d.codes == code
+            row = {"basis": BASES[absolute], "role": role,
+                   "n_events": int((mask.sum(1) > 0).sum()), "n_squares": int(mask.sum())}
+            for c in CONDITIONS:
+                cov = np.cov(xy[c][mask].T)
+                row |= {f"{c}_cxx": cov[0, 0], f"{c}_cxy": cov[0, 1], f"{c}_cyy": cov[1, 1]}
+                for axis, name in ((0, "x"), (1, "y")):
+                    per_event_sum = (xy[c][..., axis] * mask).sum(1)
+                    lo, hi = boot_ci(per_event_sum, mask.sum(1).astype(float), rng)
+                    row |= {f"{c}_{name}": per_event_sum.sum() / mask.sum(),
+                            f"{c}_{name}_lo": lo, f"{c}_{name}_hi": hi}
+            rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def displacements(d: Decode) -> pd.DataFrame:
+    """Per event, the median before->after displacement length of each role's squares.
+
+    Taking the median over squares first keeps the event as the unit of analysis,
+    so the marginal and its bootstrap band share one n. Roles holding a single
+    square (flipped, placed) are that square's value.
+    """
+    out = {}
+    for absolute in (False, True):
+        step = np.linalg.norm(coords(d.logits["after"], "after", absolute)
+                              - coords(d.logits["before"], "before", absolute), axis=-1)
+        for role, code in ROLE_CODE.items():
+            masked = np.where(d.codes == code, step, np.nan)
+            out[f"{BASES[absolute]}_{role}"] = np.nanmedian(masked, axis=1)
+    return pd.DataFrame(out)
+
+
+# ---------------------------------------------------------------- F2 worked example
+
+def canonical(ev: pd.DataFrame, lengths: pd.DataFrame) -> tuple[int, dict]:
+    """A typical event, picked mechanically: among events at the median t holding a
+    strict control, the one whose flipped-square displacement is closest to the
+    median over all events. Typical in the measurement, not in the picture."""
+    target = lengths["relative_flipped"].median()
+    pool = ev.index[(ev.t == int(ev.t.median())) & (ev.control_kind == "strict")]
+    i = int(pool[np.argmin(np.abs(lengths.loc[pool, "relative_flipped"] - target).to_numpy())])
+    return i, {"n_pool": len(pool), "t": int(ev.t[i]), "median_t": int(ev.t.median()),
+               "median_displacement": round(float(target), 4),
+               "event_displacement": round(float(lengths.loc[i, "relative_flipped"]), 4)}
+
+
+def worked_example(d: Decode, ev: pd.DataFrame, i: int) -> pd.DataFrame:
+    """The 64 squares of one event: true discs, decoded class, panel coordinates.
+
+    Only m and s change between the two boards, so the role code and the mover
+    determine both boards outright and no replay is needed.
+    """
+    mover = int(ev.mover[i])
+    disc = {"before": {"empty": 0, "placed": 0, "flipped": -mover,
+                       "unflipped_own": mover, "unflipped_opp": -mover},
+            "after": {"empty": 0, "placed": mover, "flipped": mover,
+                      "unflipped_own": mover, "unflipped_opp": -mover}}
+    role = np.array(list(ROLE_CODE))[np.argmax(
+        d.codes[i][:, None] == np.array(list(ROLE_CODE.values()))[None, :], axis=1)]
+    row = {"square": np.arange(64), "role": role,
+           **{f"disc_{c}": [disc[c][r] for r in role] for c in ("before", "after")}}
+    for c in CONDITIONS:
+        row[f"pred_{c}"] = [CLASSES[k] for k in d.pred[c][i]]
+        for absolute in (False, True):
+            xy = coords(d.logits[c][i], c, absolute)
+            row |= {f"{BASES[absolute]}_{c}_x": xy[:, 0], f"{BASES[absolute]}_{c}_y": xy[:, 1]}
+    return pd.DataFrame(row)
+
+
+# ---------------------------------------------------------------- driver
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--threads", type=int, default=8)
+    args = parser.parse_args()
+    torch.set_num_threads(args.threads)
+    torch.set_grad_enabled(False)
+
+    RESULTS.mkdir(parents=True, exist_ok=True)
+    rng = np.random.default_rng(SEED)
+    ev, acts = events(), event_acts()
+    input_acts = input_event_acts(ev)
+
+    basis = pd.DataFrame([accuracies(layer) for layer in LAYERS])
+    basis.to_csv(RESULTS / "m1_basis.csv", index=False)
+    print(basis.to_string(index=False), flush=True)
+
+    rows, main_decode = [], None
+    for layer in LAYERS:
+        d = decode(layer, ev, acts, input_acts)
+        rows += readout(d, rng)
+        if layer == MAIN_LAYER:
+            main_decode = d
+        print(f"layer {layer} read out", flush=True)
+    depth = pd.DataFrame(rows)
+    depth.to_csv(RESULTS / "m1_decode.csv", index=False)
+
+    per_event(main_decode, ev).to_csv(RESULTS / "m1_per_event.csv", index=False)
+    field(main_decode, rng).to_csv(RESULTS / "m2_field.csv", index=False)
+    lengths = displacements(main_decode)
+    i, rule = canonical(ev, lengths)
+    worked_example(main_decode, ev, i).to_csv(RESULTS / "f2_event.csv", index=False)
+    lengths.insert(0, "game_id", ev.game_id)
+    lengths.to_csv(RESULTS / "m2_displacements.csv", index=False)
+
+    blocks = depth[depth.layer >= 0]
+    peak = blocks.loc[blocks[blocks.metric == "p_s_absolute_correct"].estimate.idxmax(), "layer"]
+    headline = depth[depth.layer == MAIN_LAYER].set_index("metric").estimate
+    accs = basis.set_index("layer")
+    contract = {"n_events": len(ev), "peak_layer": int(peak), "main_layer": MAIN_LAYER,
+                "p_s_unchanged_rel": headline["p_s_unchanged_rel"],
+                "p_unflipped_swap_rel": headline["p_unflipped_swap_rel"],
+                "p_s_absolute_correct": headline["p_s_absolute_correct"],
+                "acc_rel_L5": accs.acc_tpr_relative[MAIN_LAYER],
+                "acc_abs_L5": accs.acc_tpr_absolute[MAIN_LAYER],
+                "canonical_event_row": i, **{f"canonical_{k}": v for k, v in rule.items()}}
+    pd.Series(contract).rename("value").rename_axis("key").to_csv(RESULTS / "contract_a3.csv")
+    print(pd.Series(contract).to_string(), flush=True)
+
+
+if __name__ == "__main__":
+    main()
