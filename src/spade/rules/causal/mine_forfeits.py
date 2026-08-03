@@ -24,6 +24,7 @@ from random import Random
 
 import torch
 
+from spade.common.config import CTX_LEN
 from spade.common.net import force_ipv4
 from spade.common.paths import add_karvonen_to_path
 from spade.common.study import study_dir
@@ -36,7 +37,6 @@ from circuits.othello_engine_utils import OthelloBoardState, stoi, to_string
 from spade.othello.taxonomy import flips
 
 J_MIN = 5
-CTX_LEN = 59
 
 
 def event_from(game: list[int], j: int, board_before_a: OthelloBoardState,

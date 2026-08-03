@@ -24,7 +24,7 @@ import torch.nn as nn
 PKG_DIR = Path(__file__).resolve().parents[1]        # src/spade
 SRC_DIR = PKG_DIR.parent                             # src
 
-D_MODEL = 512
+EXPECTED_D_MODEL = 512
 WIDTH = 64
 
 # The eight trainer types the whole pipeline is defined over, and the substring each
@@ -200,12 +200,12 @@ def test_standardization_parent_fallback():
         save_dir = Path(tmp) / "checkpoints" / "main"
         trainer_dir = save_dir / "trainer_0"
         trainer_dir.mkdir(parents=True)
-        params = {"mean": [0.0] * D_MODEL, "scale": 2.0, "d_model": D_MODEL}
+        params = {"mean": [0.0] * EXPECTED_D_MODEL, "scale": 2.0, "d_model": EXPECTED_D_MODEL}
         (save_dir / "standardization_params.json").write_text(json.dumps(params))
 
         loaded = load_standardization_params(str(trainer_dir))
         assert loaded["scale"] == 2.0, "parent-dir standardization_params.json not found"
-        assert loaded["d_model"] == D_MODEL
+        assert loaded["d_model"] == EXPECTED_D_MODEL
 
 
 @test("checkpoint dispatch round-trip on real weights")
@@ -228,9 +228,9 @@ def test_checkpoint_roundtrip():
 def test_standardization_math():
     from spade.evaluation.karvonen_adapter import StandardizedDictionary
 
-    wrapped = StandardizedDictionary(_IdentityDictionary(D_MODEL, WIDTH),
-                                     torch.randn(D_MODEL), 0.5)
-    x = torch.randn(8, D_MODEL)
+    wrapped = StandardizedDictionary(_IdentityDictionary(EXPECTED_D_MODEL, WIDTH),
+                                     torch.randn(EXPECTED_D_MODEL), 0.5)
+    x = torch.randn(8, EXPECTED_D_MODEL)
     x_std = wrapped._standardize(x)
     assert torch.allclose(x_std, 0.5 * (x - wrapped.mean), atol=1e-5), \
         "standardization is scale * (x - mean)"
@@ -242,16 +242,16 @@ def test_standardization_math():
 def test_standardized_dictionary_shapes():
     from spade.evaluation.karvonen_adapter import StandardizedDictionary
 
-    wrapped = StandardizedDictionary(_IdentityDictionary(D_MODEL, WIDTH),
-                                     torch.zeros(D_MODEL), 1.0)
-    x = torch.randn(16, D_MODEL)
+    wrapped = StandardizedDictionary(_IdentityDictionary(EXPECTED_D_MODEL, WIDTH),
+                                     torch.zeros(EXPECTED_D_MODEL), 1.0)
+    x = torch.randn(16, EXPECTED_D_MODEL)
     f = wrapped.encode(x)
     assert f.shape == (16, WIDTH)
-    assert wrapped.decode(f).shape == (16, D_MODEL)
+    assert wrapped.decode(f).shape == (16, EXPECTED_D_MODEL)
     x_hat, f2 = wrapped(x, output_features=True)
     assert f2.shape == f.shape
     # 3D input is the loss_recovered path
-    assert wrapped(torch.randn(4, 8, D_MODEL)).shape == (4, 8, D_MODEL)
+    assert wrapped(torch.randn(4, 8, EXPECTED_D_MODEL)).shape == (4, 8, EXPECTED_D_MODEL)
 
 
 # ── The SpaDE family ────────────────────────────────────────────────────────
@@ -260,11 +260,11 @@ def test_standardized_dictionary_shapes():
 def test_spade_roundtrip():
     from spade.saes.spade import SpaDEAutoEncoder
 
-    ae = SpaDEAutoEncoder(activation_dim=D_MODEL, dict_size=WIDTH, lambda_init=9.77e-4)
-    x = torch.randn(16, D_MODEL)
+    ae = SpaDEAutoEncoder(activation_dim=EXPECTED_D_MODEL, dict_size=WIDTH, lambda_init=9.77e-4)
+    x = torch.randn(16, EXPECTED_D_MODEL)
     f = ae.encode(x)
     assert f.shape == (16, WIDTH)
-    assert ae.decode(f).shape == (16, D_MODEL)
+    assert ae.decode(f).shape == (16, EXPECTED_D_MODEL)
     _, f2 = ae(x, output_features=True)
     assert f2.shape == f.shape
 
@@ -273,7 +273,7 @@ def test_spade_roundtrip():
 def test_spade_lambda():
     from spade.saes.spade import SpaDEAutoEncoder
 
-    ae = SpaDEAutoEncoder(activation_dim=D_MODEL, dict_size=WIDTH, lambda_init=9.77e-4)
+    ae = SpaDEAutoEncoder(activation_dim=EXPECTED_D_MODEL, dict_size=WIDTH, lambda_init=9.77e-4)
     assert hasattr(ae, "lambda_pre"), "lambda_pre is a state_dict key loaders depend on"
     assert ae.lambda_val.requires_grad, "SpaDE lambda must be trainable"
     assert abs(ae.lambda_val.item() - 9.77e-4) < 1e-5
@@ -283,11 +283,11 @@ def test_spade_lambda():
 def test_cosine_spade_roundtrip():
     from spade.saes.spade_cosine import CosineSpaDEAutoEncoder
 
-    ae = CosineSpaDEAutoEncoder(activation_dim=D_MODEL, dict_size=WIDTH)
-    x = torch.randn(16, D_MODEL)
+    ae = CosineSpaDEAutoEncoder(activation_dim=EXPECTED_D_MODEL, dict_size=WIDTH)
+    x = torch.randn(16, EXPECTED_D_MODEL)
     f = ae.encode(x)
     assert f.shape == (16, WIDTH)
-    assert ae.decode(f).shape == (16, D_MODEL)
+    assert ae.decode(f).shape == (16, EXPECTED_D_MODEL)
 
 
 @test("class names SpaDEAutoEncoder / CosineSpaDEAutoEncoder are unchanged")
@@ -378,14 +378,14 @@ def test_figure_type_map():
 
 @test("LR warmup is monotonically increasing")
 def test_lr_warmup_monotonic():
-    model = nn.Linear(D_MODEL, WIDTH)
+    model = nn.Linear(EXPECTED_D_MODEL, WIDTH)
     opt = torch.optim.Adam(model.parameters(), lr=3e-4)
     warmup_steps = 100
     sched = torch.optim.lr_scheduler.LambdaLR(
         opt, lr_lambda=lambda step: min(step / max(warmup_steps, 1), 1.0))
 
     lrs = []
-    x = torch.randn(4, D_MODEL)
+    x = torch.randn(4, EXPECTED_D_MODEL)
     for _ in range(warmup_steps):
         opt.zero_grad()
         model(x).sum().backward()
@@ -401,12 +401,12 @@ def test_lr_warmup_monotonic():
 def test_production_scheduler():
     lr = 3e-4
     warmup_steps = 100
-    model = nn.Linear(D_MODEL, WIDTH)
+    model = nn.Linear(EXPECTED_D_MODEL, WIDTH)
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     sched = torch.optim.lr_scheduler.LambdaLR(
         opt, lr_lambda=lambda step: min(step / max(warmup_steps, 1), 1.0))
 
-    x = torch.randn(4, D_MODEL)
+    x = torch.randn(4, EXPECTED_D_MODEL)
     for _ in range(warmup_steps + 50):
         opt.zero_grad()
         model(x).sum().backward()

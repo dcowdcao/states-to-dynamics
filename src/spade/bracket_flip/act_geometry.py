@@ -20,11 +20,10 @@ import pandas as pd
 import torch
 from scipy.signal import fftconvolve
 
+from spade.common.config import D_MODEL, LAYER
 from spade.common.paths import repo_root
 from spade.common.study import study_dir
 
-LAYER = 5
-D_MODEL = 512
 CLASSES = ("empty", "theirs", "mine")
 # `control_squares` codes, read on the board before m
 # (analysis/bracket_flip/reports/DATA_REPORT.md).

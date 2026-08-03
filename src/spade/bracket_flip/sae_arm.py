@@ -35,12 +35,12 @@ from torch.nn.functional import one_hot
 from spade.bracket_flip import act_geometry as ag
 from spade.bracket_flip import tpr_probe
 from spade.common.device import select_device
+from spade.common.config import LAYER
 from spade.common.paths import repo_root
 from spade.common.study import study_dir
 from spade.multiseed.aggregate_seeds import BASELINE_CONFIGS
 from spade.spaces import batched_apply, load_space, representative_spaces
 
-LAYER = 5
 THEIRS, MINE = tpr_probe.CLASSES.index("theirs"), tpr_probe.CLASSES.index("mine")
 KEEP = {"raw", *BASELINE_CONFIGS}  # raw + the 8 *Trainer-othello baselines; skip the controls and the SpaDE-lam sweep
 
