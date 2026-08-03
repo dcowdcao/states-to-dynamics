@@ -15,7 +15,7 @@ import torch
 
 from spade.common.paths import repo_root
 from spade.evaluation.karvonen_adapter import load_karvonen_sae
-from spade.spaces import batched_apply, load_space
+from spade.spaces import EXCLUDED_SAE, batched_apply, load_space
 # private registry internals: seed42_entries() verifies every config at once and
 # crashes on any in-flight (registered, not yet trained) checkpoint; this study
 # builds and verifies its entries per config instead.
@@ -23,8 +23,14 @@ from spade.saes.registry import _SEED42_DIRS, _verify, SAEEntry
 
 POINT_BASED = {cfg for cfg in _SEED42_DIRS if "SpaDE" in cfg}
 # paper drops VE<0.85; only the baseline distance-SpaDE (VE~0.43) trips that —
-# CosineSpaDE VE~0.98, revived SpaDE-lam1e-03-gam1e-04 VE~0.995 (L0~1808)
-LOW_VE = {"SpaDETrainer-othello"}
+# CosineSpaDE VE~0.98, revived SpaDE-lam1e-03-gam1e-04 VE~0.995 (L0~1808).
+#
+# This is the same checkpoint as spade.spaces.EXCLUDED_SAE, named from the other side:
+# every other study drops it as degenerate, while this one deliberately keeps and marks
+# it, because the shattering result is a claim *about* it. Aliased rather than restated
+# so the two cannot drift, and so the divergence is visible rather than accidental.
+# Whether that result survives the exclusion is an open question in PROCESS.md.
+LOW_VE = EXCLUDED_SAE
 
 
 def spaces() -> list[tuple[str, SAEEntry | None]]:

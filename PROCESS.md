@@ -6,6 +6,64 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The port is done: 15 parallel agents, one branch each (2026-08-03)
+
+Every zone ported from the frozen source repo — `common`, `othello`, `saes`, `spaces` +
+`rules`, `rules/causal`, `training`, the pipeline, `figures`, the four studies, `scripts`,
+`docs`, and the viewer. Each agent worked in its own worktree on its own `port/*` branch;
+all fifteen are merged. Per-agent records are in `docs/port_notes/`.
+
+**Where it stands:** 101 modules import cleanly, 28 analysis scripts compile, all 38 shell
+scripts parse, `final_validation` is 23/24 with the one skip being the checkpoint
+round-trip (weights are gitignored). Unit tests pass: 7 taxonomy, 11 divergence kernels,
+plus the manifold-capture selftests reproducing the source numbers. What is *not* verified
+is any real number — no eval has been run, because neither the checkpoints nor the
+activations have been copied in. The wave-3 acceptance check (TopK on
+`checkpoints/main/trainer_3` → L0 80.00, VE 0.943, coverage 0.722) is still outstanding and
+is the first thing to do with a GPU.
+
+**Seams the agents could not see from inside their own worktrees, fixed on merge:**
+- *Three scripts would have destroyed the checkpoint layout.* They looped the eight
+  per-type training entrypoints into one `--save_dir`, which writes `trainer_0` eight times.
+  `trainer_N` is assigned by position within a single run, and `checkpoints/main/trainer_3`
+  being TopK is a fact the registry, every eval CSV and every figure depend on. Now one
+  `spade.training.sweep` call, which is also what the source did.
+- *The SAE exclusion filtered nothing.* `EXCLUDED_SAE` was ported but never applied;
+  `representative_spaces()` now drops it, which is what makes "excluded everywhere" true.
+- *Two agents both ported `collect_legal` and `first_illegal_pos`* — byte-identical, since
+  one took them from the other. Deduplicated.
+- Four figure scripts called `results_dir()` with the old no-arg signature (`TypeError`);
+  the viewer exporter used a registry field name that does not exist (`AttributeError`);
+  three modules re-declared `LAYER`/`D_MODEL`/`CTX_LEN` locally, which is the drift that put
+  nine copies of the dictionary size in the source repo.
+
+**Needs David — the two that affect published claims:**
+
+1. *The manifold-capture headline rests on the checkpoint we just excluded everywhere.*
+   "Distance-SpaDE is the purest tiler, support size 0, shattering on 7/8 concepts" is a
+   claim **about** the degenerate γ=1e-2 seed-42 checkpoint, and `docs/claims_status.md`
+   lists it under "Holds" while retiring the geometry family's conclusion for resting on
+   that same checkpoint. The study knows: it carries its own `LOW_VE` marker naming it.
+   I aliased `LOW_VE` to `EXCLUDED_SAE` so there is one definition, and changed no
+   behaviour. Either the shattering result is re-derived on a healthy SpaDE, or it needs
+   stating as a property of a degenerate run, or the exclusion carves out an exception.
+
+2. *A configuration in three documents never ran.* `checkpoints/main/trainer_5/config.json`
+   records λ=9.77e-5, γ=0.2, steps 400, device mps. Three source docs report "SpaDE
+   initial, λ=9.77e-5, γ=0.2" as a distinct over-regularized run. It is not a run at all —
+   it is the γ=1e-2 production run wearing a Mac smoke config with pre-canonicalization
+   defaults. That also explains the L0 15.4 / VE 0.352 attribution. The ported docs say so;
+   the numbers in any older writeup do not.
+
+Smaller items, each in the relevant `docs/port_notes/` file: BatchTopK *has* been evaluated
+since 2026-07-14 (three source docs say it never was — real numbers now in the tables); four
+bracket-flip CSVs have no producer in the tree because the A4 driver was never committed
+upstream, so those figures redraw but cannot be re-derived; the extracted baseline-merge
+helper filters `sae_type` on the substring "SpaDE", which also matches CosineSpaDE; and
+`autoencoders_spade_v2` has no row in the artifact table and was mapped by the general rule.
+
+---
+
 ## Wave 0 is blocked: there is nowhere to put the netscratch backup (2026-08-03)
 
 **Needs a decision.** The agreed first step was to back up the netscratch tier before
