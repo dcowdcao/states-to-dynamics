@@ -3,10 +3,11 @@
 
 .PHONY: setup run test clean
 
-setup:              ## create venv, install package, vendor Karvonen_Research
+setup:              ## create env, install package editable, vendor the external forks
 	# python -m venv .venv && . .venv/bin/activate
-	# pip install -e .
-	# ensure external/Karvonen_Research is present (git submodule / rsync)
+	# pip install -e .            # editable: paths anchor on the repo root marker
+	# ensure external/{Karvonen_Research,tpr_othello} are present, pinned, and complete
+	#   (their own .gitignore hides files circuits needs at runtime — see external/README.md)
 
 run:                ## full local pipeline: extract -> train -> eval -> figures
 	bash scripts/run_pipeline.sh all

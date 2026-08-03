@@ -1,6 +1,16 @@
 # figures/
 
-Canonical figures only (the original had 3 overlapping `Figure_4_karvonen_extension*`
-variants — keep one). Includes the combined Figure 4 (all configs + error bars) and the
-SpaDE diagnostic figures. Geometry-study PNGs live with their studies under
-`analysis/geometry/`, not here.
+Cross-study and headline figures only. Per-study outputs live with their study under
+`analysis/<study>/figures/`.
+
+Subdirectories are by experiment (`cosine_spade_sweep/`, `spade_revival/`), not a flat
+namespace: the source repo has eight distinct files named `Figure_4_karvonen_extension*.png`
+in six directories, all different. Flattening loses five of them.
+
+How a figure gets made is not a per-script choice. [FIGURE_GUIDELINES.md](../FIGURE_GUIDELINES.md)
+is normative and plotting code cites it by section; `spade.figures.paper_style` is the only
+module where a color literal may appear, and shared panel renderers live beside it. The
+short version: encode by color *and* shape so it survives grayscale, put uncertainty on
+every claim-supporting curve and state its semantics and n, style the reference class as a
+reference and nulls as gray/dashed/last, and draw at final printed width rather than
+rescaling in LaTeX.

@@ -1,7 +1,8 @@
-# Installable package `spade` — replaces the original repo's sys.path injection.
+# Installable package `spade` — replaces the source repo's sys.path injection.
 # `pip install -e .` puts src/spade on the path so `import spade.*` resolves everywhere.
-# Pins mirror requirements.txt; keep the two in sync (or make requirements.txt the source
-# of truth and read it here) when porting.
+#
+# Editable only. spade.common.paths anchors on a repo-root marker, so a non-editable
+# install resolves into site-packages and fails at the first external-fork lookup.
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -11,9 +12,12 @@ build-backend = "setuptools.build_meta"
 name = "spade"
 version = "0.1.0"
 description = "Sparsemax-Distance SAEs on OthelloGPT (Karvonen board-game protocol)"
-requires-python = ">=3.10"
-# dependencies = [...]  # port from requirements.txt
+requires-python = ">=3.11,<3.12"
+# dependencies = [...]  # regenerate from the working env; see requirements.txt
 
 [tool.setuptools.packages.find]
 where = ["src"]
-# finds the `spade` package and subpackages under src/
+# find_namespace, not find: seven subpackages in the source repo have no __init__.py and
+# only import because src/ is on sys.path. Plain `find` drops them silently — the package
+# installs, imports, and is missing half the studies.
+namespaces = true

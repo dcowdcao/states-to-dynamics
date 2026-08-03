@@ -1,11 +1,18 @@
 # Geometry studies — index
 
-14 self-contained studies of SAE feature geometry on OthelloGPT. Each folder holds its
+13 self-contained studies of SAE feature geometry on OthelloGPT. Each folder holds its
 `make_<study>.py` + a `README.md` + `summary.json` + its PNGs. Cross-cutting takeaways to
 carry over: "best SAE" is metric-dependent (TopK owns the single sharpest feature; PAnneal
-wins MSE + board reconstruction; SpaDE-1e-4 wins per-square avg coverage); SpaDE γ=1e-2 is
-broken for cell-state mapping; the linear probe (~0.97) is the gold standard; move 0 is
-uniformly hard.
+wins MSE + board reconstruction; SpaDE-1e-4 wins per-square avg coverage); the linear probe
+(~0.99) is the gold standard, so the bottleneck is SAE design rather than layer-5
+information; move 0 is uniformly hard.
+
+Two caveats before quoting any of this. The `legal_vs_illegal/` study was deleted and
+became `analysis/rules_manifolds/`. And this family is the last one still built on the
+7-SAE set, including the SpaDE γ=1e-2 checkpoint that was later excluded elsewhere for
+degenerate provenance — its "SpaDE γ=1e-2 is broken for cell-state mapping" conclusion is
+plausibly an artifact of that checkpoint rather than of the architecture. See
+`docs/claims_status.md`.
 
 | Study | What it shows |
 |---|---|

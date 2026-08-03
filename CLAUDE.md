@@ -4,6 +4,8 @@
 
 - Read PROCESS.md before starting work: it holds a running log of what's in flight and the non-obvious decisions behind it. After doing something noteworthy (a new experiment, a critical decision, a gotcha worth remembering), add a concise entry to PROCESS.md so the next human or agent has context the code alone doesn't show.
 
+- Read FIGURE_GUIDELINES.md before writing ANY plotting code or fixing ANY figure, and follow it. It encodes NeurIPS/ICLR/ICML requirements and the conventions of the mech-interp and representation-geometry literature: colors and markers come from `src/figures/paper_style.py` (never literals in a plotting script), every claim-supporting curve carries uncertainty with its semantics and n stated, the reference class is styled as a reference and nulls are gray/dashed/last, and figures are legible in grayscale at final printed size. When you add a figure type the document doesn't cover, add the rule to it.
+
 - If you are ever uncertain about something or need clarification, or if you want to change some core logic, you MUST ask me for permission first. This holds even in auto mode.
 
 - After implementing, you MUST clean up any files you no longer need, i.e. files that are now stale. Again, if you are on the fence about a particular file or group of files, you MUST ask me for permission first.
