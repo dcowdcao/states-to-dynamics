@@ -356,7 +356,7 @@ def main():
     args = ap.parse_args()
     apply_style(camera_ready=args.camera_ready)
 
-    out = results_dir() / "violation_divergence"
+    out = results_dir("violation_divergence")
     out.mkdir(parents=True, exist_ok=True)
     depth = depth_table()
     depth.to_csv(out / "depth_sweep.csv", index=False, float_format="%.6g")

@@ -42,7 +42,7 @@ from spade.othello.taxonomy import CATEGORIES
 apply_style()
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
-CSV_DIR = results_dir() / "violation_divergence"
+CSV_DIR = results_dir("violation_divergence")
 DIV = study_dir("divergence") / "divergence"
 
 RAW = "resid_post_5"                 # the dense space the dictionaries encode

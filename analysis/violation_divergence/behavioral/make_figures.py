@@ -50,7 +50,7 @@ from circuits.othello_engine_utils import OthelloBoardState, to_string
 
 HERE = Path(__file__).resolve().parent
 FIGURES = HERE / "figures"
-RESULTS = results_dir() / "violation_divergence"
+RESULTS = results_dir("violation_divergence")
 
 VOCAB = 61          # 60 board squares, plus the pass token at index 0
 SQUARES = 60        # the chance model: uniform over the tokens that name a square

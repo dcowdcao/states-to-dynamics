@@ -25,7 +25,7 @@ from spade.figures.paper_style import (
     CATEGORY_STYLE, GRID, INK, MUTED, NULL, REFERENCE, apply_style, rule_key, save_figure)
 from spade.violation_divergence.divergence import WINDOW
 
-RESULTS = results_dir() / "violation_divergence"
+RESULTS = results_dir("violation_divergence")
 FIGURES = Path(__file__).resolve().parent / "figures"
 
 EMPTY_SQUARE_CATEGORIES = ["empty_detached", "empty_own_only", "empty_no_bracket", "opponent_only"]
