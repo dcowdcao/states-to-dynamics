@@ -13,12 +13,63 @@ fallback; $SPADE_REPO is already the convention in the cluster job scripts.
 Study working dirs are NOT here — they live outside the repo, see spade.common.study.
 """
 
-# def repo_root() -> Path:              # walk up to CLAUDE.md / .git marker
-# def karvonen_root() -> Path:          # repo_root() / "external" / "Karvonen_Research"
-# def add_karvonen_to_path() -> None:   # sys.path.insert Karvonen root; raise if missing
-# def tpr_root() -> Path:               # repo_root() / "external" / "tpr_othello"
-# def add_tpr_to_path() -> None:        # tpr_root()/src AND tpr_root()/src/hook_utils, both as roots
-# def data_dir() -> Path:               # repo_root() / "data" / "activations"
-# def results_dir(experiment: str) -> Path:      # results/<experiment>/
-# def checkpoints_dir(experiment: str) -> Path:  # checkpoints/<experiment>/
-# def figures_dir() -> Path:            # repo_root() / "figures"
+import sys
+from pathlib import Path
+
+_MARKERS = ("CLAUDE.md", ".git")
+
+
+def repo_root() -> Path:
+    for d in Path(__file__).resolve().parents:
+        if any((d / m).exists() for m in _MARKERS):
+            return d
+    raise FileNotFoundError(f"no repo-root marker {_MARKERS} above {__file__}")
+
+
+def karvonen_root() -> Path:
+    p = repo_root() / "external" / "Karvonen_Research"
+    if not p.is_dir():
+        raise FileNotFoundError(f"Karvonen_Research (circuits dependency) not found at {p}")
+    return p
+
+
+def add_karvonen_to_path() -> None:
+    """Put Karvonen_Research on sys.path so `import circuits...` resolves."""
+    k = str(karvonen_root())
+    if k not in sys.path:
+        sys.path.insert(0, k)
+
+
+def tpr_root() -> Path:
+    p = repo_root() / "external" / "tpr_othello"
+    if not p.is_dir():
+        raise FileNotFoundError(f"tpr_othello (TPR probe dependency) not found at {p}")
+    return p
+
+
+def add_tpr_to_path() -> None:
+    """Put tpr_othello's src/ and src/hook_utils/ on sys.path, both as roots.
+
+    Exactly the two entries upstream's own entrypoints insert; importing their modules
+    without both diverges from the path they were written against.
+    """
+    src = tpr_root() / "src"
+    for p in (str(src), str(src / "hook_utils")):
+        if p not in sys.path:
+            sys.path.insert(0, p)
+
+
+def data_dir() -> Path:
+    return repo_root() / "data"
+
+
+def results_dir(experiment: str) -> Path:
+    return repo_root() / "results" / experiment
+
+
+def checkpoints_dir(experiment: str) -> Path:
+    return repo_root() / "checkpoints" / experiment
+
+
+def figures_dir() -> Path:
+    return repo_root() / "figures"
