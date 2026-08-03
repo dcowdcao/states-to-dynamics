@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OthelloGPT SAE feature viewer</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --ink: #ffffff;
+    --ink-2: #c3c2b7;
+    --ink-3: #898781;
+    --hairline: #2c2c2a;
+    --border: rgba(255,255,255,0.10);
+    --accent: #3987e5;
+    --board: #2a6b4a;
+    --board-hover: #33805a;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--page); color: var(--ink);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+    min-height: 100vh; padding: 20px;
+  }
+  header { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+  header h1 { font-size: 17px; font-weight: 600; }
+  header .sub { color: var(--ink-3); font-size: 12.5px; }
+  select {
+    background: var(--surface); color: var(--ink); border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 8px; font: inherit; margin-left: auto;
+  }
+  .layout { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px;
+  }
+  .card h2 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .card .sub { color: var(--ink-3); font-size: 12px; margin-bottom: 12px; }
+
+  /* board */
+  #board-card { flex: 0 0 auto; }
+  .board-wrap { display: grid; grid-template-columns: 18px auto; grid-template-rows: 18px auto; }
+  .col-labels { grid-column: 2; display: grid; grid-template-columns: repeat(8, 52px); }
+  .row-labels { grid-row: 2; display: grid; grid-template-rows: repeat(8, 52px); }
+  .col-labels div, .row-labels div {
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-3); font-size: 11px;
+  }
+  #board {
+    grid-column: 2; grid-row: 2;
+    display: grid; grid-template-columns: repeat(8, 52px); grid-template-rows: repeat(8, 52px);
+    gap: 2px; background: var(--surface);
+  }
+  .sq {
+    background: var(--board); border-radius: 2px; position: relative;
+    display: flex; align-items: center; justify-content: center; cursor: default;
+  }
+  .sq.legal { cursor: pointer; }
+  .sq.legal:hover { background: var(--board-hover); }
+  .disc { width: 76%; height: 76%; border-radius: 50%; }
+  .disc.black { background: #111; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18); }
+  .disc.white { background: #f2f1ea; }
+  .disc.last { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .hint { width: 22%; height: 22%; border-radius: 50%; opacity: 0.55; }
+  .hint.black { background: #111; } .hint.white { background: #f2f1ea; }
+  .sq.legal:hover .hint { width: 76%; height: 76%; opacity: 0.4; }
+
+  .board-foot { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 12.5px; color: var(--ink-2); }
+  .board-foot button {
+    background: none; color: var(--ink-2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 10px; font: inherit; cursor: pointer;
+  }
+  .board-foot button:hover { color: var(--ink); border-color: var(--ink-3); }
+  #movelist { margin-top: 10px; max-width: 434px; color: var(--ink-3); font-size: 12px;
+              font-variant-numeric: tabular-nums; line-height: 1.7; }
+
+  /* feature bars */
+  #features-card { flex: 1 1 420px; min-width: 380px; }
+  #stats { display: flex; gap: 18px; margin-bottom: 10px; font-size: 12.5px; color: var(--ink-2);
+           font-variant-numeric: tabular-nums; }
+  #busy { color: var(--ink-3); font-size: 12px; visibility: hidden; }
+  .frow { display: grid; grid-template-columns: 58px 1fr 62px; align-items: center;
+          gap: 10px; height: 24px; }
+  .frow .fid { color: var(--ink-2); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .frow .track { position: relative; height: 16px; }
+  .frow .fill {
+    position: absolute; left: 0; top: 0; height: 100%;
+    background: var(--accent); border-radius: 0 4px 4px 0;
+    transition: width 0.25s ease; min-width: 2px;
+  }
+  .frow .val { color: var(--ink-2); font-size: 12px; text-align: right;
+               font-variant-numeric: tabular-nums; }
+  #empty { color: var(--ink-3); font-size: 13px; padding: 24px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>OthelloGPT · SAE feature viewer</h1>
+  <span class="sub">blocks.5.hook_resid_post · d=512 → 8192 features · seed 42</span>
+  <select id="sae-select" title="SAE checkpoint"></select>
+</header>
+
+<div class="layout">
+  <div class="card" id="board-card">
+    <h2>Board</h2>
+    <div class="sub">click a highlighted square to move</div>
+    <div class="board-wrap">
+      <div class="col-labels" id="col-labels"></div>
+      <div class="row-labels" id="row-labels"></div>
+      <div id="board"></div>
+    </div>
+    <div class="board-foot">
+      <button id="undo">Undo</button>
+      <button id="reset">Reset</button>
+      <span id="turn"></span>
+      <span id="counts"></span>
+    </div>
+    <div id="movelist"></div>
+  </div>
+
+  <div class="card" id="features-card">
+    <h2>Top feature activations</h2>
+    <div class="sub" id="feat-sub">at the latest move</div>
+    <div id="stats"><span id="l0"></span><span id="busy">running model…</span></div>
+    <div id="bars"></div>
+    <div id="empty">Place a piece to see feature activations.</div>
+  </div>
+</div>
+
+<script>
+const ALPHA = "ABCDEFGH";
+const label = m => ALPHA[m % 8] + Math.floor(m / 8);   // matches circuits.to_board_label
+const $ = id => document.getElementById(id);
+
+let moves = [], seq = 0, lastResp = null;
+
+for (let c = 0; c < 8; c++) $("col-labels").insertAdjacentHTML("beforeend", `<div>${ALPHA[c]}</div>`);
+for (let r = 0; r < 8; r++) $("row-labels").insertAdjacentHTML("beforeend", `<div>${r}</div>`);
+for (let m = 0; m < 64; m++) {
+  const sq = document.createElement("div");
+  sq.className = "sq"; sq.dataset.m = m;
+  sq.addEventListener("click", () => {
+    if (sq.classList.contains("legal")) { moves.push(m); refresh(); }
+  });
+  $("board").appendChild(sq);
+}
+$("undo").onclick = () => { if (moves.length) { moves.pop(); refresh(); } };
+$("reset").onclick = () => { moves = []; refresh(); };
+$("sae-select").onchange = refresh;
+
+const fmt = v => v >= 100 ? v.toFixed(1) : v >= 1 ? v.toFixed(2) : v.toFixed(4);
+
+function renderBoard(r) {
+  const last = moves.length ? moves[moves.length - 1] : -1;
+  const legal = new Set(r.legal_moves);
+  document.querySelectorAll(".sq").forEach(sq => {
+    const m = +sq.dataset.m, v = r.board[m];
+    sq.classList.toggle("legal", legal.has(m));
+    sq.innerHTML = v !== 0
+      ? `<div class="disc ${v === 1 ? "black" : "white"}${m === last ? " last" : ""}"></div>`
+      : (legal.has(m) ? `<div class="hint ${r.next_player}"></div>` : "");
+  });
+  const nb = r.board.filter(v => v === 1).length, nw = r.board.filter(v => v === -1).length;
+  $("turn").textContent = legal.size ? `${r.next_player} to move` : "game over";
+  $("counts").textContent = `● ${nb}  ○ ${nw}`;
+  $("movelist").textContent = moves.map((m, i) => `${i + 1}.${label(m)}`).join("  ");
+}
+
+function renderFeatures(r) {
+  $("empty").style.display = r.features.length ? "none" : "block";
+  $("l0").textContent = r.l0 === null ? "" : `L0 = ${r.l0} / ${r.dict_size}`;
+  const max = r.features.length ? r.features[0].activation : 1;
+  $("bars").innerHTML = r.features.map(f => `
+    <div class="frow" title="feature ${f.index} — activation ${f.activation}">
+      <span class="fid">F${f.index}</span>
+      <div class="track"><div class="fill" style="width:${100 * f.activation / max}%"></div></div>
+      <span class="val">${fmt(f.activation)}</span>
+    </div>`).join("");
+}
+
+async function refresh() {
+  const s = ++seq;
+  $("busy").style.visibility = "visible";
+  const resp = await fetch("/api/state", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ moves, sae: $("sae-select").value }),
+  });
+  if (s !== seq) return;
+  $("busy").style.visibility = "hidden";
+  if (!resp.ok) { alert((await resp.json()).detail); moves.pop(); return refresh(); }
+  lastResp = await resp.json();
+  renderBoard(lastResp);
+  renderFeatures(lastResp);
+  $("feat-sub").textContent = moves.length
+    ? `${$("sae-select").selectedOptions[0].text} · after ${moves.length}. ${label(moves[moves.length - 1])}`
+    : "at the latest move";
+}
+
+(async () => {
+  const saes = await (await fetch("/api/saes")).json();
+  $("sae-select").innerHTML = saes.map(s => `<option value="${s.id}">${s.display}</option>`).join("");
+  refresh();
+})();
+</script>
+</body>
+</html>
