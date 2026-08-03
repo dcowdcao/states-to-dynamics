@@ -67,6 +67,13 @@ tier that six studies depend on.
   stays at eight. Noted for the record: this pair was given as "γ=1e-3, λ=1e-4"; it is
   assigned here the way the existing named checkpoint assigns it, and is a one-line flip if
   the literal reading was intended.
+- *CosineSpaDE's default stays γ=1.0*, against the γ-sweep's own recommendation of γ=20.
+  The sweep selected 20 on reconstruction F₁, the one metric with an interior maximum
+  (0.547 vs 0.530). Coverage runs the other way and is the deciding metric here: 0.537 at
+  γ=1.0 against 0.474 at γ=20. The rest of the trade is L0 173 → 98 and loss recovered
+  0.991 → 0.984. Worth knowing that the F₁ peak is thin — 0.011 over γ=10, with seed
+  dispersion reported for L0 only (n=5) — so the metric that picked 20 is also the one
+  whose margin is unquantified.
 - *Put a freeze notice in the source repo* so a session that starts there is redirected.
 
 **Open:** thirteen questions remain in MIGRATION.md — the report-file locations, several

@@ -271,8 +271,9 @@ that repo's `PROCESS.md` unless noted.
   geometry family's "SpaDE is broken for cell-state mapping" conclusion rests on it and
   must be re-run or retired, and the viewer roster keeps eight entries with the λ=1e-3/γ=1e-4
   checkpoint taking its slot.
-- CosineSpaDE's operating point is **γ=20**, not the `DEFAULT_COSINE_GAMMA=1.0` default;
-  the γ-sweep across 5.3 decades selects it (L0 98, recon-F₁ 0.547).
+- CosineSpaDE's default is **γ=1.0**, kept deliberately over the γ-sweep's recommended
+  γ=20. The sweep selected on reconstruction F₁ (0.547 vs 0.530); coverage runs the other
+  way (0.537 vs 0.474) and decides it. Do not "fix" this back to 20 from the sweep README.
 - **All six** `autoencoders/trainer_*/config.json` are a Mac smoke-test config
   (`device: mps`, `steps: 400`) written over real GPU weights — not just `trainer_5` as the
   old plan said. Do not trust them to label the checkpoints.
