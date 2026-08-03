@@ -52,7 +52,16 @@ late-layer-specific effect.
 
 **CosineSpaDE γ sweep: "γ is not a sparsity lever, the sweep is flat."** Retracted — the
 original grid sat entirely in the flat left tail of a sigmoid. Across γ ∈ [0.05, 1e4], L0
-runs 179 → 20.5. The operating point is **γ = 20**, not the γ = 1.0 default.
+runs 179 → 20.5, so γ moves the model a great deal.
+
+What the sweep *recommends* is a separate question from what the default *is*. The sweep
+selected γ = 20 on reconstruction F₁ (0.547 against the γ=1.0 default's 0.530) — the one
+metric in the sweep with an interior maximum. Coverage runs the other way (0.537 against
+0.474), and the default was deliberately kept at **γ = 1.0** on that basis. Do not "correct"
+the default to 20 from the sweep README; the decision is recorded in PROCESS.md and
+ARCHITECTURE.md § Invariants. Worth knowing that the F₁ peak is thin — 0.011 over γ=10,
+with seed dispersion reported for L0 only — so the metric that picked 20 is also the one
+whose margin is unquantified.
 
 **Geometry: "SpaDE γ=1e-2 is broken."** Re-attributed, not confirmed. That seed-42
 checkpoint has a degenerate evaluation (L0 15.4, VE 0.352) where seeds 43–46 of the same
