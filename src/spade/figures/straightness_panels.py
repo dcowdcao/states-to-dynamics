@@ -1,12 +1,175 @@
-"""Shared trajectory panels: depth profiles, event-locked curves, KDE densities.
+"""Trajectory panels for the straightness study, shared by the raw-space and
+per-SAE figures: profiles over the game, event-locked responses, and per-class
+distributions of the whole-game statistic.
 
-Event-locked panels put a thin dashed rule at the event position behind the data, shade
-and name the baseline window numerically, and shade any region that is zero by
-construction rather than leaving a reader to infer it. Distributions over three or more
-classes are KDE curves, not step histograms, with bootstrap bands computed at a fixed
-full-sample bandwidth.
+Two panels make up a curvature_vs_t figure: the per-class profile over the game,
+and the violation-locked response (Δ turning angle against each violation game's
+matched source legal game, aligned at the injected move t0). density_panel is
+the whole-game view the AUROCs summarize. Angles are scale-free, so all three
+are comparable across representation spaces even when step lengths are not. See
+FIGURE_GUIDELINES.md §4.2 and §4.4 for the conventions these encode.
 """
 
-# def profile_panel(ax, depth, curves, ci): ...
-# def event_locked_panel(ax, offsets, curves, baseline_window): ...
-# def kde_panel(ax, samples_by_class, bandwidth): ...
+import numpy as np
+
+from spade.figures.paper_style import CLASS_STYLE, GRID, INK, MUTED
+
+REL_WINDOW = (-8, 12)  # positions relative to the injected move
+KDE_GRID, KDE_BOOT, KDE_SEED = 512, 1000, 0
+
+
+def mean_sem(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    n = (~np.isnan(x)).sum(0)
+    return np.nanmean(x, 0), np.nanstd(x, 0) / np.sqrt(np.maximum(n, 1))
+
+
+def kde_ci(vals: np.ndarray, grid: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Gaussian KDE (Scott's rule) with a percentile bootstrap band over games.
+
+    Resamples reweight one fixed kernel matrix, so the bandwidth stays the
+    full-sample one instead of shifting with each resample's spread.
+    """
+    n = len(vals)
+    h = vals.std(ddof=1) * n ** -0.2
+    kernel = np.exp(-0.5 * ((grid[:, None] - vals) / h) ** 2) / (h * np.sqrt(2 * np.pi))
+    w = np.random.default_rng(KDE_SEED).multinomial(n, np.full(n, 1 / n), KDE_BOOT)
+    lo, hi = np.percentile(kernel @ w.T / n, [2.5, 97.5], axis=1)
+    return kernel.mean(1), lo, hi
+
+
+def density_panel(ax, per_game: np.ndarray, blocks: dict, classes: list[str]) -> None:
+    """Per-game mean turning angle, one KDE curve per class with a bootstrap band.
+
+    Medians are marked on the baseline: the gap between two triangles is the
+    class separation the AUROC figures score. Set the y-floor once after every
+    panel is drawn — set_ylim freezes autoscale, which on shared axes would clip
+    whichever panel peaks highest.
+    """
+    pad = 0.03 * np.ptp(per_game)
+    grid = np.linspace(per_game.min() - pad, per_game.max() + pad, KDE_GRID)
+    for i, c in enumerate(classes):
+        style, is_ref = CLASS_STYLE[c], c == "legal"
+        vals = per_game[blocks[c]]
+        dens, lo, hi = kde_ci(vals, grid)
+        ax.fill_between(grid, lo, hi, color=style["color"], alpha=0.25, lw=0,
+                        zorder=4 if is_ref else 2)
+        body = np.flatnonzero(dens > 0.02 * dens.max())  # no markers on flat tails
+        ax.plot(grid, dens, lw=2.4 if is_ref else 1.6, color=style["color"],
+                marker=style["marker"], ms=4, markevery=body[12 * i::72].tolist(),
+                markeredgecolor="white", markeredgewidth=0.5,
+                label=style["label"], zorder=5 if is_ref else 3)
+        ax.plot(np.median(vals), 0, marker="v", ms=5, color=style["color"],
+                markeredgecolor="white", markeredgewidth=0.5, clip_on=False,
+                zorder=6)
+    ax.set_xlabel("per-game mean turning angle (deg)")
+    ax.set_ylabel("density")
+
+
+def violation_delta(theta: np.ndarray, t0: np.ndarray, src: np.ndarray,
+                    viol: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """(rels, mean, sem) of Δ turning angle vs. the matched source game.
+
+    theta index k is the turn at position k+2, so the turn at t0+r is k=t0+r-2.
+    Δ is identically zero for r <= -2: the games share every activation before
+    t0, and the turn at t0-2 is the last one whose window excludes t0.
+    """
+    delta = theta[viol] - theta[src]
+    rels = np.arange(REL_WINDOW[0], REL_WINDOW[1] + 1)
+    aligned = np.full((len(delta), len(rels)), np.nan)
+    for i, r in enumerate(rels):
+        k = t0 + r - 2
+        ok = (k >= 0) & (k < theta.shape[1])
+        aligned[ok, i] = delta[np.arange(len(delta))[ok], k[ok]]
+    mu, sem = mean_sem(aligned)
+    return rels, mu, sem
+
+
+def value_delta(values: np.ndarray, t0: np.ndarray, src: np.ndarray,
+                viol: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Event-locked Δ for a per-position quantity indexed by position directly
+    (norm, L0), rather than by turn like theta. Δ ≡ 0 for r <= -1 here: the
+    activation at t0-1 already excludes the injected token."""
+    delta = values[viol] - values[src]
+    rels = np.arange(REL_WINDOW[0], REL_WINDOW[1] + 1)
+    aligned = np.full((len(delta), len(rels)), np.nan)
+    for i, r in enumerate(rels):
+        k = t0 + r - 1  # values index j is position j+1 (position 0 dropped)
+        ok = (k >= 0) & (k < values.shape[1])
+        aligned[ok, i] = delta[np.arange(len(delta))[ok], k[ok]]
+    mu, sem = mean_sem(aligned)
+    return rels, mu, sem
+
+
+def value_profile_panel(ax, values: np.ndarray, blocks: dict, classes: list[str],
+                        ylabel: str, offset: int = 1) -> None:
+    """A per-position quantity vs. board position, one line per class.
+
+    `offset` maps array index to board position: 1 for values attached to a
+    position (norm, L0), 2 for step lengths, whose index k spans positions
+    k+1 -> k+2 and is plotted at the position the step ends on.
+    """
+    positions = np.arange(values.shape[1]) + offset
+    for i, c in enumerate(classes):
+        style, is_ref = CLASS_STYLE[c], c == "legal"
+        mu, sem = mean_sem(values[blocks[c]])
+        ax.fill_between(positions, mu - 1.96 * sem, mu + 1.96 * sem,
+                        color=style["color"], alpha=0.25, lw=0)
+        ax.plot(positions, mu, lw=2.4 if is_ref else 1.6, color=style["color"],
+                marker=style["marker"], ms=4, markevery=(2 * i, 9),
+                markeredgecolor="white", markeredgewidth=0.5,
+                zorder=5 if is_ref else 3, label=style["label"])
+    ax.set_xlabel("board position t")
+    ax.set_ylabel(ylabel)
+
+
+def profile_panel(ax, theta: np.ndarray, blocks: dict, classes: list[str]) -> None:
+    """Mean turning angle vs. board position, one line per class."""
+    positions = np.arange(theta.shape[1]) + 2
+    for i, c in enumerate(classes):
+        style, is_ref = CLASS_STYLE[c], c == "legal"
+        mu, sem = mean_sem(theta[blocks[c]])
+        ax.fill_between(positions, mu - 1.96 * sem, mu + 1.96 * sem,
+                        color=style["color"], alpha=0.25, lw=0)
+        ax.plot(positions, mu, lw=2.4 if is_ref else 1.6, color=style["color"],
+                marker=style["marker"], ms=4, markevery=(2 * i, 9),
+                markeredgecolor="white", markeredgewidth=0.5,
+                zorder=5 if is_ref else 3, label=style["label"])
+    ax.set_xlabel("board position t")
+    ax.set_ylabel("mean turning angle (deg)")
+
+
+def event_axes(ax, prefix_end: float = -1.5) -> None:
+    """Event-locked furniture: shaded Δ ≡ 0 prefix, zero line, t0 line, x axis.
+
+    `prefix_end` bounds the shaded region: -1.5 for turning angles (the turn at
+    t0-1 already sees t0), -0.5 for step lengths and per-position values like
+    norm and L0, which stay zero one position longer.
+    """
+    ax.axvspan(REL_WINDOW[0] - 0.5, prefix_end, color=GRID, alpha=0.7, lw=0, zorder=0)
+    ax.axhline(0, color=MUTED, lw=0.9, ls=(0, (4, 3)), zorder=1)
+    ax.axvline(0, color=MUTED, lw=1.2, ls=(0, (4, 3)), zorder=1)
+    ax.set_xlabel("position relative to injected move ($t - t_0$)")
+    ax.set_xticks(range(REL_WINDOW[0], REL_WINDOW[1] + 1, 4))
+
+
+def violation_panel(ax, rels: np.ndarray, mu: np.ndarray, sem: np.ndarray,
+                    ghost: np.ndarray | None = None, annotate: bool = True,
+                    prefix_end: float = -1.5, fmt: str = "{:.1f}°") -> None:
+    """Event-locked Δ for one quantity. `ghost` overlays a reference space in gray."""
+    color = CLASS_STYLE["violation"]["color"]
+    event_axes(ax, prefix_end)
+    if ghost is not None:
+        ax.plot(rels, ghost, "-", lw=1.4, color="#b0b0b0", zorder=2,
+                label="raw L5 (reference)")
+    ax.fill_between(rels, mu - 1.96 * sem, mu + 1.96 * sem, color=color,
+                    alpha=0.3, lw=0, zorder=3)
+    ax.plot(rels, mu, "-", marker=CLASS_STYLE["violation"]["marker"], lw=2.0, ms=5,
+            color=color, markeredgecolor="white", markeredgewidth=0.6, zorder=4)
+    if annotate:
+        peak = int(np.abs(mu).argmax())  # largest excursion, either sign
+        dy = 0.12 * (mu.max() - mu.min() or 1.0)  # scale-relative: norms are ~1e-3
+        ax.annotate(f"{fmt.format(mu[peak])} at $t_0${rels[peak]:+d}",
+                    xy=(rels[peak], mu[peak]),
+                    xytext=(rels[peak] + 2.2, mu[peak] - np.sign(mu[peak] or 1) * dy),
+                    fontsize=8, color=INK, ha="left", va="center",
+                    arrowprops=dict(arrowstyle="->", color=MUTED, lw=0.9))
