@@ -30,6 +30,14 @@ Driven by the import graph, not by tidiness. `common` → `othello` + `saes` →
 `spaces` + `rules` → the four downstream studies. Getting this backwards means porting a
 study before the API it imports exists.
 
+**Wave 0 — back up netscratch.** Independent of the port and ahead of it: copy the
+irreplaceable intermediates off the 90-day tier — seeds 43–46 above all, then the branch,
+event and trajectory sets. They are the error bars on every published figure and cannot be
+re-derived without re-running the jobs. A `spade_checkpoint_backup` dir already exists,
+which suggests this was started once and not finished.
+*Verify:* a checksum listing of what was copied, committed to the repo, so a later session
+can tell what survived.
+
 **Wave 1 — packaging and foundations.** `pyproject.toml` (editable install, `>=3.11,<3.12`,
 namespace-safe package discovery), `requirements.txt` regenerated from the working
 `spade_env` rather than copied, `spade/common/{config,paths,device,net,study}.py`,
@@ -89,7 +97,7 @@ hand, per wave, as the code that needs them lands:
   dependency of `rules/causal/unflip_edit.py` and three `bracket_flip` modules.
 - **The netscratch tier**, ~92 GB under `/n/netscratch/ba_lab/Lab/$USER/spade_*`, on 90-day
   retention from 2026-07-22. It holds seeds 43–46 — the error bars on every published
-  figure. Decide before ~2026-10-20 whether it is backed up, promoted, or allowed to expire.
+  figure. Backed up in wave 0, ahead of everything else; the deadline is ~2026-10-20.
 - **Three files inside `external/Karvonen_Research`** that git cannot see, two of them hidden
   by the *vendored* `.gitignore` that git still honours: `linear_probes/*.pth`,
   `circuits/resources/meta.pkl`, `circuits/dictionary_learning/pretrained_dictionary_downloader.sh`.
@@ -98,47 +106,56 @@ The `.gitignore` must also carry forward every rule that keeps ~1.2 GB out of th
 `wandb/`, `viewer/web/weights/`, `analysis/linear_probe/activations/`, `results/*/f1_TFRRC*.pt`
 — and the `*.html` negations, whose absence has already silently dropped a tracked file once.
 
+## Decided
+
+- **The shared layer is lifted out of `rules/`** into `spade/othello/` (games, boards,
+  taxonomy), `spade/saes/registry.py` and `spade/spaces.py`. No study imports from a
+  sibling study.
+- **Netscratch is backed up before the port** — wave 0 above.
+- **The SpaDE γ=1e-2 seed-42 checkpoint is excluded everywhere**, decided once in
+  `spade.spaces`, and the default SpaDE configuration becomes **λ=1e-3, γ=1e-4**
+  (`checkpoints/spade_revival/`). Two follow-ons: the geometry family's "SpaDE is broken"
+  conclusion rests on the excluded checkpoint and must be re-run or retired before it is
+  quoted again, and the viewer roster stays at eight with the new default taking the old
+  slot.
+- **The source repo carries a freeze notice** pointing here, so a session that starts there
+  is told where the work moved.
+
 ## Open questions
 
 Needing David's call. Nothing below is resolved silently.
 
 **Structure**
-1. Does the shared layer split land as proposed — `othello/` (games, boards, taxonomy),
-   `saes/registry.py`, and a top-level `spaces.py` lifted out of `rules/` — or does `rules/`
-   stay one package that four other studies import from?
-2. Do the eight `bracket_flip` and two `violation_divergence` report `.md` files move to
+1. Do the eight `bracket_flip` and two `violation_divergence` report `.md` files move to
    `analysis/<study>/reports/`, or stay beside the code that produced them?
 
 **Data**
-3. `autoencoders_spade_sweep/trainer_0–3` (λ=1e-8/1e-7, config-only, fully collapsed):
+2. `autoencoders_spade_sweep/trainer_0–3` (λ=1e-8/1e-7, config-only, fully collapsed):
    archive as a negative result, or delete?
-4. All six `autoencoders/trainer_*/config.json` are a Mac smoke config over real GPU
+3. All six `autoencoders/trainer_*/config.json` are a Mac smoke config over real GPU
    weights. Regenerate them from the true run parameters during the port, or migrate as-is
    with a marker?
-5. Intermediate `trainer_*/checkpoints/ae_{9155,18310,27465}.pt` — roughly 3× the final
+4. Intermediate `trainer_*/checkpoints/ae_{9155,18310,27465}.pt` — roughly 3× the final
    weight volume, no readers. Drop before migrating?
-6. `archive/` (127 MB, 93 MB already in history): carry into the new repo and pay the
+5. `archive/` (127 MB, 93 MB already in history): carry into the new repo and pay the
    history cost twice, or leave it on the old branch?
-7. `wandb/` (579 MB) — delete outright?
-8. Netscratch: promote, back up, or let expire? And do the `spade_*` dirs keep their names?
+6. `wandb/` (579 MB) — delete outright?
+7. Do the netscratch `spade_*` dirs keep their names after the repo is renamed?
 
 **Science**
-9. The SpaDE γ=1e-2 checkpoint is excluded by the straightness study as degenerate but is
-   still read by the rules, manifold-capture and geometry studies, and is still on the live
-   public viewer. Exclude it everywhere, or keep the split?
-10. `analysis/geometry/` is the only study family still built on the 7-SAE set, and its
-    "SpaDE is broken" conclusion may be an artifact of that same checkpoint. Is geometry
-    current, or does it get re-run before being ported as a result?
-11. Three violation-divergence sub-studies were computed on the superseded one-control
-    branch set and never re-derived on two controls. Re-derive, or port with the caveat?
-12. Tracked-figure policy: ~300 MB of committed PNGs, including 190 near-duplicate view-grid
-    panels. Keep all in the new history, or track only canonical figures and regenerate the
-    rest?
+8. `analysis/geometry/` is the only family still built on the 7-SAE set including the now-
+   excluded checkpoint. Re-run it on the current set, or retire it as a result and keep it
+   as history?
+9. Three violation-divergence sub-studies were computed on the superseded one-control
+   branch set and never re-derived on two controls. Re-derive, or port with the caveat?
+10. Tracked-figure policy: ~300 MB of committed PNGs, including 190 near-duplicate
+    view-grid panels. Keep all in the new history, or track only canonical figures and
+    regenerate the rest?
 
 **Deployment**
-13. Confirm the dead Docker path (`build_space.py`, `space_src/`, `hf_space/`) is deleted
+11. Confirm the dead Docker path (`build_space.py`, `space_src/`, `hf_space/`) is deleted
     rather than ported, after its exact CPU pins are rescued into docs.
-14. Keep `server.py` + `static/index.html` at all? They are the only consumers of
+12. Keep `server.py` + `static/index.html` at all? They are the only consumers of
     fastapi/uvicorn and a second, divergent copy of the viewer UI.
-15. The viewer roster drifted to 9 SAEs after an 8-SAE deploy. Pin the exporter to the
-    recorded 8, or accept 9 and update the Space card?
+13. The viewer needs a re-export and re-verification after the checkpoint consolidation and
+    the roster change. Redeploy the Space then, or leave it frozen on the current build?

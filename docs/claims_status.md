@@ -57,7 +57,9 @@ runs 179 → 20.5. The operating point is **γ = 20**, not the γ = 1.0 default.
 **Geometry: "SpaDE γ=1e-2 is broken."** Re-attributed, not confirmed. That seed-42
 checkpoint has a degenerate evaluation (L0 15.4, VE 0.352) where seeds 43–46 of the same
 config give 128 and 0.973, and its `config.json` is a Mac smoke config over real GPU
-weights. Do not carry it as an architectural claim about SpaDE.
+weights. It is now excluded from every study and from the viewer, so this conclusion has to
+be re-run on the current set or retired — it cannot be quoted as it stands. The default
+SpaDE configuration is λ=1e-3, γ=1e-4.
 
 **SpaDE vs baselines: "the simplex ceiling is a fundamental limitation."** Overturned
 inside its own document. CosineSpaDE keeps the identical sparsemax simplex and no-bias

@@ -54,9 +54,24 @@ tier that six studies depend on.
   working environment: four pins are wrong, `transformer_lens>=2.0` is incompatible with
   the vendored `circuits`, four hard deps are undeclared, and two pins have no importer.
 
-**Open:** fifteen questions in MIGRATION.md need David's call — the shared-layer split, the
-SpaDE γ=1e-2 checkpoint's status across studies, whether `analysis/geometry/` is still
-current, netscratch retention, and the tracked-figure policy.
+**Decided with David (2026-08-03):**
+- *Lift the shared layer out of `rules/`* — confirmed.
+- *Back up netscratch before porting anything else*, as wave 0. ~92 GB on a 90-day clock
+  that expires around 2026-10-20, holding the seeds behind every error bar.
+- *Exclude the SpaDE γ=1e-2 seed-42 checkpoint everywhere*, from one place, rather than
+  keeping the source repo's split where one study excluded it and three others plus the
+  public viewer kept reading it. Its "SpaDE is broken for cell-state mapping" conclusion in
+  the geometry family therefore has to be re-run or retired before it is quoted again.
+- *The default SpaDE configuration is λ=1e-3, γ=1e-4* (`checkpoints/spade_revival/`),
+  replacing γ=1e-2. It takes the excluded checkpoint's slot in the viewer roster, which
+  stays at eight. Noted for the record: this pair was given as "γ=1e-3, λ=1e-4"; it is
+  assigned here the way the existing named checkpoint assigns it, and is a one-line flip if
+  the literal reading was intended.
+- *Put a freeze notice in the source repo* so a session that starts there is redirected.
+
+**Open:** thirteen questions remain in MIGRATION.md — the report-file locations, several
+data-retention calls, whether the geometry family gets re-run, the one-control divergence
+sub-studies, the tracked-figure policy, and the viewer's deployment.
 
 **Status:** plan updated and pushed. No code ported yet.
 

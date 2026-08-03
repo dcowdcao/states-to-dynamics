@@ -15,8 +15,9 @@ so an unstandardized encode is silently wrong, not merely inaccurate.
 # def batched_apply(fn, x, batch): ...      # memory-bounded encode over a big tensor
 # def center_by_t(x, t): ...                # remove the per-position mean (the t confound)
 
-# One provenance decision, currently duplicated in two study modules as
-# EXCLUDED_SAE = {"SpaDETrainer-othello"}: the distance-SpaDE gamma=1e-2 checkpoint is
-# degenerate (L0 15.4, VE 0.352) and its config.json is a Mac smoke config over real GPU
-# weights. Whether it is excluded everywhere or only in some studies is an open question
-# in MIGRATION.md; whatever is decided, it is decided here, once.
+# EXCLUDED_SAE = {"SpaDETrainer-othello"} — the distance-SpaDE gamma=1e-2 seed-42
+# checkpoint. Degenerate (L0 15.4, VE 0.352, where seeds 43-46 of the same config give 128
+# and 0.973) with a Mac smoke config written over its real GPU weights. The source repo
+# excluded it in the straightness study only, while three other studies and the public
+# viewer kept reading it; it is now excluded everywhere, from here, once. The default SpaDE
+# is gamma=1e-4 (checkpoints/spade_revival/), which takes its place in the roster.

@@ -171,7 +171,7 @@ self-contained older generation rather than being the organizing unit.
 | `autoencoders_cosine_spade/` | `checkpoints/cosine_spade/` | |
 | `autoencoders_spade_sweep/` (trainer_4, 6 — the two with weights) | `checkpoints/spade_sweep/` | |
 | `autoencoders_spade_sweep/` (trainer_0–3 — λ=1e-8/1e-7, config-only, collapsed) | `archive/spade_sweep_collapsed/` | VE ≈ −3e-05, L0 = 8192 |
-| `autoencoders_spade_lam1e-03_gam1e-04/` | `checkpoints/spade_revival/` | **was missing from the plan**; required by the registry |
+| `autoencoders_spade_lam1e-03_gam1e-04/` | `checkpoints/spade_revival/` | **was missing from the plan**; the default SpaDE config, required by the registry |
 | `results/karvonen/` | `results/main/` | |
 | `results/karvonen_{batch_topk,cosine_spade,spade_sweep}/` | `results/{batch_topk,cosine_spade,spade_sweep}/` | |
 | `results/karvonen_spade_lam1e-03_gam1e-04/` | `results/spade_revival/` | was missing |
@@ -260,8 +260,17 @@ that repo's `PROCESS.md` unless noted.
   trainer. Any `checkpoints/` reshuffle must move it with its trainers.
 
 **Hyperparameters and provenance**
-- Canonical `DEFAULT_LAMBDA_INIT=1e-3`, `DEFAULT_SPADE_GAMMA=1e-2`. λ ≤ 1e-7 collapses —
-  below fp32 sparsemax resolution those runs train bitwise-identically.
+- The default SpaDE configuration is **λ=1e-3, γ=1e-4** — the chosen-best point, with
+  checkpoints under `checkpoints/spade_revival/`. It replaces the source repo's
+  `DEFAULT_SPADE_GAMMA=1e-2`, whose seed-42 checkpoint is degenerate and is now excluded
+  everywhere (below). λ ≤ 1e-7 collapses — below fp32 sparsemax resolution those runs train
+  bitwise-identically, so there is no point sweeping there.
+- The **γ=1e-2 seed-42 checkpoint is excluded from every study and from the viewer**, in
+  one place (`spade.spaces`). The source repo excluded it in the straightness study only
+  while three other studies and the public Space kept reading it. Two consequences: the
+  geometry family's "SpaDE is broken for cell-state mapping" conclusion rests on it and
+  must be re-run or retired, and the viewer roster keeps eight entries with the λ=1e-3/γ=1e-4
+  checkpoint taking its slot.
 - CosineSpaDE's operating point is **γ=20**, not the `DEFAULT_COSINE_GAMMA=1.0` default;
   the γ-sweep across 5.3 decades selects it (L0 98, recon-F₁ 0.547).
 - **All six** `autoencoders/trainer_*/config.json` are a Mac smoke-test config

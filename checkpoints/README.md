@@ -7,7 +7,8 @@ Trained SAE weights, one subtree per experiment. Weight files (`ae.pt`) are giti
 - `batch_topk/`    — BatchTopK add-on                            (was `autoencoders_batch_topk/`)
 - `cosine_spade/`  — CosineSpaDE add-on                          (was `autoencoders_cosine_spade/`)
 - `spade_sweep/`   — SpaDE λ/γ sweep checkpoints                 (was `autoencoders_spade_sweep/`)
-- `spade_revival/` — the retrained chosen-best config   (was `autoencoders_spade_lam1e-03_gam1e-04/`)
+- `spade_revival/` — **the default SpaDE config**, λ=1e-3 γ=1e-4
+                                        (was `autoencoders_spade_lam1e-03_gam1e-04/`)
 
 Each holds `trainer_<i>/` subfolders, with `standardization_params.json` at *this* level,
 not inside them — the loader searches a checkpoint dir and its parent, and the file lives
