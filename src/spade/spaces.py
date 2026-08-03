@@ -10,14 +10,73 @@ wrapping it in StandardizedDictionary — SAEs were trained on scale*(x-mean) ac
 so an unstandardized encode is silently wrong, not merely inaccurate.
 """
 
-# def load_space(name): ...                 # -> encoder callable + metadata
-# def representative_spaces(): ...          # the canonical space list used across studies
-# def batched_apply(fn, x, batch): ...      # memory-bounded encode over a big tensor
-# def center_by_t(x, t): ...                # remove the per-position mean (the t confound)
+import torch
 
-# EXCLUDED_SAE = {"SpaDETrainer-othello"} — the distance-SpaDE gamma=1e-2 seed-42
-# checkpoint. Degenerate (L0 15.4, VE 0.352, where seeds 43-46 of the same config give 128
-# and 0.973) with a Mac smoke config written over its real GPU weights. The source repo
-# excluded it in the straightness study only, while three other studies and the public
-# viewer kept reading it; it is now excluded everywhere, from here, once. The default SpaDE
-# is gamma=1e-4 (checkpoints/spade_revival/), which takes its place in the roster.
+from spade.common.config import D_MODEL, DICT_SIZE
+from spade.common.paths import repo_root
+from spade.evaluation.karvonen_adapter import (
+    StandardizedDictionary,
+    load_karvonen_sae,
+    load_standardization_params,
+)
+from spade.saes.registry import entries
+
+MIN_T_BIN = 5
+ENCODE_BATCH = 8192
+
+# The distance-SpaDE gamma=1e-2 seed-42 checkpoint. Degenerate (L0 15.4, VE 0.352, where
+# seeds 43-46 of the same config give 128 and 0.973) with a Mac smoke config written over
+# its real GPU weights. Excluded from every study and from the viewer, decided here once;
+# the default SpaDE is gamma=1e-4 (checkpoints/spade_revival/), which takes its slot.
+EXCLUDED_SAE = {"SpaDETrainer-othello"}
+
+
+def load_space(name: str, entry, device: str):
+    """encode_fn mapping a raw-activation batch on `device` to features."""
+    params = load_standardization_params(
+        str(repo_root() / "checkpoints" / "main" / "trainer_0"))
+    mean, scale = torch.tensor(params["mean"], device=device), params["scale"]
+    if name == "raw":
+        return lambda x: scale * (x - mean)
+    if name == "random_proj":
+        g = torch.Generator().manual_seed(0)
+        w = (torch.randn(D_MODEL, DICT_SIZE, generator=g) / D_MODEL ** 0.5).to(device)
+        return lambda x: torch.relu((scale * (x - mean)) @ w)
+    if name == "random_topk":
+        from circuits.dictionary_learning.trainers.top_k import AutoEncoderTopK
+        torch.manual_seed(0)
+        ae = AutoEncoderTopK(D_MODEL, DICT_SIZE, 80).to(device).eval()
+        return StandardizedDictionary(ae, mean, scale).to(device).encode
+    ae, _ = load_karvonen_sae(str(entry.ckpt_dir), device=device)
+    params = load_standardization_params(str(entry.ckpt_dir), device=device)
+    return StandardizedDictionary(
+        ae, torch.tensor(params["mean"], device=device), params["scale"]).to(device).encode
+
+
+def representative_spaces() -> list[tuple]:
+    """(space_name, entry_or_None): baselines + one checkpoint per SAE config."""
+    by_config = {}
+    for e in entries():
+        best = by_config.get(e.config)
+        if best is None or e.seed == 42 or (best.seed != 42 and e.seed < best.seed):
+            by_config[e.config] = e
+    return [(n, None) for n in ["raw", "random_proj", "random_topk"]] + \
+        [(cfg, e) for cfg, e in sorted(by_config.items())]
+
+
+def batched_apply(fn, acts: torch.Tensor, device: str) -> torch.Tensor:
+    with torch.no_grad():
+        return torch.cat([fn(acts[i:i + ENCODE_BATCH].to(device)).cpu()
+            for i in range(0, len(acts), ENCODE_BATCH)])
+
+
+def center_by_t(feats: torch.Tensor, t: torch.Tensor, legal: torch.Tensor) -> torch.Tensor:
+    """Subtract each t bin's legal centroid (visualization-grade: no
+    leave-own-prefix-out — fine for embeddings, not for distance metrics)."""
+    centered = feats - feats[legal].mean(0)
+    for tv in t.unique().tolist():
+        bin_legal = legal & (t == tv)
+        if int(bin_legal.sum()) >= MIN_T_BIN:
+            bin_mask = t == tv
+            centered[bin_mask] = feats[bin_mask] - feats[bin_legal].mean(0)
+    return centered
