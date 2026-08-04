@@ -82,7 +82,7 @@ spade_sae/
 ├── data/activations/          extracted .pt + metadata.json
 ├── results/<experiment>/      eval CSVs/tensors
 ├── figures/                   canonical cross-study figures only
-└── archive/                   superseded snapshots + old runs
+└── archive/                   superseded configs, run records and docs — provenance only
 ```
 
 **Outside the repo, and load-bearing.** Six studies keep their heavy artifacts on netscratch
@@ -179,11 +179,13 @@ self-contained older generation rather than being the organizing unit.
 | `8_spade_configs_updated/karvonen_spade_sweep/` | `results/spade_sweep_8config/` | **live input**, see below |
 | `lambda_sweep_results/karvonen_spade_sweep/` | `results/lambda_sweep/` | **live input** |
 | `gamma_sweep_results/karvonen_spade_sweep/` | `results/gamma_sweep_lam1e-07/` | **live input**; name disambiguates it from the CosineSpaDE γ-sweep |
-| the rest of those three dirs (configs, stray figures, stray SLURM logs) | `archive/<name>/` | |
-| `best_spade_lam1e-07_gam5e-03/` | `archive/` | zero readers; the point is already covered via the γ-sweep CSV |
+| the training configs of those three dirs | `archive/{spade_sweep_8config,lambda_sweep}/` | `gamma_sweep_results/` kept none; its six stray Mac smoke logs → `archive/main_mac_smoke_eval/` |
+| their stray figures, and `best_spade_lam1e-07_gam5e-03/` | not migrated | zero readers; waits on question 10, the tracked-figure policy |
+| their SLURM stdout/stderr | not migrated | 1.2 MB of progress-bar spam over numbers the eval CSVs carry |
 | `results/legality/` | — | never existed; row dropped |
 | `figures/` | `figures/`, keeping the `cosine_spade_sweep/` and `spade_revival/` subdirs | there are 8 distinct `Figure_4_*.png`, no true duplicates — flattening destroys 5 |
-| `W&B Results/`, `results/Wandb_Export.csv` | `archive/wandb_charts/` | 2026-03-29 exports, no readers |
+| `results/Wandb_Export.csv` | `archive/Wandb_Export.csv` | 2026-03-29 export, no reader in `src/`; the wandb record open question 15 cites |
+| `W&B Results/` (6 chart PNGs) | not migrated | same export as images; waits on question 10 |
 | `wandb/` (579 MB), `logs/` | not migrated | transient, gitignored |
 | `archive/runs/Run_{2,3}_Results/` | see MIGRATION.md open question | 127 MB, 93 MB already in history |
 
@@ -239,7 +241,7 @@ success. Do not copy that line forward.
 | `docs/fasrc_run_commands.md` | `docs/fasrc_commands.md` (rewritten as a runbook) + `docs/session_logs/` (the historical half) |
 | `docs/othello_rules.md` | unchanged — the R1–R8 spec three studies cite |
 | `docs/{bracket_flip_design,violation_divergence_design,ReStraV_Summary,activation_cache_plan,othello_experiment}.md` | unchanged |
-| `docs/Refactor_Cleanup_Progress.md` | `archive/old_md/` — the 2026-07 refactor is finished history |
+| `docs/Refactor_Cleanup_Progress.md` | `archive/docs/` — the 2026-07 refactor is finished history |
 
 ## Invariants a port must not break
 

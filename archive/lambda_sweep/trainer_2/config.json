@@ -1,0 +1,31 @@
+{
+    "trainer": {
+        "trainer_class": "SpaDETrainer",
+        "dict_class": "SpaDEAutoEncoder",
+        "activation_dim": 512,
+        "dict_size": 8192,
+        "lambda_init": 9e-08,
+        "gamma_reg": 0.001,
+        "lr": 0.0003,
+        "warmup_steps": 1000,
+        "decay_start": null,
+        "steps": 36621,
+        "seed": 42,
+        "device": "cuda:0",
+        "layer": 5,
+        "lm_name": "Baidicoot/Othello-GPT-Transformer-Lens",
+        "wandb_name": "SpaDE-lam9e-08-gam1e-03_trainer_2",
+        "submodule_name": null
+    },
+    "buffer": {
+        "d_submodule": 512,
+        "io": "out",
+        "n_ctxs": 1000.0,
+        "ctx_len": 59,
+        "refresh_batch_size": 64,
+        "out_batch_size": 8192,
+        "device": "cuda:0",
+        "standardization_mean_norm": 8.142680168151855,
+        "standardization_scale": 0.5055211273334282
+    }
+}
