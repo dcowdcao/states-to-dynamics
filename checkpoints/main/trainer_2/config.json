@@ -1,0 +1,30 @@
+{
+    "trainer": {
+        "dict_class": "GatedAutoEncoder",
+        "trainer_class": "GatedSAETrainer",
+        "activation_dim": 512,
+        "dict_size": 8192,
+        "lr": 0.0003,
+        "l1_penalty": 1.368421,
+        "warmup_steps": 10,
+        "sparsity_warmup_steps": 200,
+        "decay_start": null,
+        "seed": 42,
+        "device": "mps",
+        "layer": 5,
+        "lm_name": "Baidicoot/Othello-GPT-Transformer-Lens",
+        "wandb_name": "GatedSAETrainer-othello_trainer_2",
+        "submodule_name": null
+    },
+    "buffer": {
+        "d_submodule": 512,
+        "io": "out",
+        "n_ctxs": 128,
+        "ctx_len": 59,
+        "refresh_batch_size": 16,
+        "out_batch_size": 2048,
+        "device": "mps",
+        "standardization_mean_norm": 8.150009155273438,
+        "standardization_scale": 0.5063744012842061
+    }
+}

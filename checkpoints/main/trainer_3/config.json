@@ -1,0 +1,33 @@
+{
+    "trainer": {
+        "trainer_class": "TopKTrainer",
+        "dict_class": "AutoEncoderTopK",
+        "lr": 0.000282842712474619,
+        "steps": 400,
+        "auxk_alpha": 0.03125,
+        "warmup_steps": 10,
+        "decay_start": null,
+        "threshold_beta": 0.999,
+        "threshold_start_step": 1000,
+        "seed": 42,
+        "activation_dim": 512,
+        "dict_size": 8192,
+        "k": 80,
+        "device": "mps",
+        "layer": 5,
+        "lm_name": "Baidicoot/Othello-GPT-Transformer-Lens",
+        "wandb_name": "TopKTrainer-othello_trainer_3",
+        "submodule_name": null
+    },
+    "buffer": {
+        "d_submodule": 512,
+        "io": "out",
+        "n_ctxs": 128,
+        "ctx_len": 59,
+        "refresh_batch_size": 16,
+        "out_batch_size": 2048,
+        "device": "mps",
+        "standardization_mean_norm": 8.150009155273438,
+        "standardization_scale": 0.5063744012842061
+    }
+}

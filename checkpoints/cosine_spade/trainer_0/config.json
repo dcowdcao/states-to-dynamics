@@ -1,0 +1,31 @@
+{
+    "trainer": {
+        "trainer_class": "CosineSpaDETrainer",
+        "dict_class": "CosineSpaDEAutoEncoder",
+        "activation_dim": 512,
+        "dict_size": 8192,
+        "gamma_reg": 1.0,
+        "lr": 0.0003,
+        "warmup_steps": 1000,
+        "decay_start": null,
+        "steps": 36621,
+        "seed": 42,
+        "device": "cuda:0",
+        "layer": 5,
+        "lm_name": "Baidicoot/Othello-GPT-Transformer-Lens",
+        "wandb_name": "CosineSpaDETrainer-othello_trainer_0",
+        "submodule_name": null,
+        "init_from_data": true
+    },
+    "buffer": {
+        "d_submodule": 512,
+        "io": "out",
+        "n_ctxs": 1000.0,
+        "ctx_len": 59,
+        "refresh_batch_size": 64,
+        "out_batch_size": 8192,
+        "device": "cuda:0",
+        "standardization_mean_norm": 8.134363174438477,
+        "standardization_scale": 0.5060430511011577
+    }
+}
