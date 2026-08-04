@@ -13,11 +13,13 @@ name = "spade"
 version = "0.1.0"
 description = "Sparsemax-Distance SAEs on OthelloGPT (Karvonen board-game protocol)"
 requires-python = ">=3.11,<3.12"
-# dependencies = [...]  # regenerate from the working env; see requirements.txt
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+# One dependency list, in requirements.txt, where each pin sits next to its reason.
+dependencies = { file = ["requirements.txt"] }
 
 [tool.setuptools.packages.find]
 where = ["src"]
-# find_namespace, not find: seven subpackages in the source repo have no __init__.py and
-# only import because src/ is on sys.path. Plain `find` drops them silently — the package
-# installs, imports, and is missing half the studies.
-namespaces = true
+# Every package dir carries an __init__.py; final_validation fails the build if one doesn't.
+namespaces = false
