@@ -1,4 +1,4 @@
-"""Step 1 of the straightness study: build the four game classes.
+"""Step 1 of the straightness study: build the five game classes.
 
 Every game is a fixed CTX_LEN(=59)-token sequence, no pass tokens:
 - legal: first 59 moves of streamed synthetic games (the model's training
