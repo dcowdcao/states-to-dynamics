@@ -6,6 +6,39 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The fork grid can share one basis, if it goes through R^21 (2026-08-04)
+
+`analysis/r21_shared_basis/`, branch `curvproj/r21-shared-basis`. The nine-space fork grid
+in `violation_divergence/game_trajectory` refits its plane per space and has to disclaim
+that cells are not comparable, because R^512 and R^8192 share no coordinates. Projecting
+the displacement through the 21-D ReStraV descriptor first gives every space the same named
+coordinates, and then one plane does work for all nine cells.
+
+**A shared plane costs nothing; not fitting at all costs less.** Illegal-vs-control centroid
+gap, in pooled within-group SDs on game 0: per-space refit 0.70–1.80, one shared fitted
+plane 0.70–1.64 (better in 6 of 9 spaces), fixed axes (Δ mean *d*, Δ mean θ) 1.32–2.00 —
+best in every space, on 0.11–0.20 of the variance the fitted planes maximise. The status-quo
+activation plane is 0.13–0.39 on the same points. Verdict and full tables in `REPORT.md`.
+
+**The comparability claim is half, not whole.** Z-scoring is mandatory in R^21 (the
+components mix degrees with activation-scale lengths, ~450x SD spread across dictionaries)
+and it is per space, so a shared basis makes arrangement and direction comparable cell to
+cell but never absolute magnitude. The grids say exactly that; the refit grid keeps the old
+disclaimer.
+
+**Every number is scored against an exact permutation null** — all 28 ways of relabelling
+the 8 non-reference branches 6/2 — because n=1 game and 10 overlapping windows per branch
+make a raw effect size meaningless. R^21 roughly doubles the null as well as raising the
+gap; after dividing it out the status quo sits at 0.45–1.05x chance and the named plane at
+2.32–3.10x.
+
+**Gotcha for anyone reusing this.** A full 21-D descriptor needs 8 sampled positions = 15
+plies, so on game 0 (t0=10, window clipped at the board start) every plotted window straddles
+t0 and the figure loses its zero-by-construction prefix segment. Also: `restrav_features`
+silently returns a *shorter* vector for a short window instead of raising — assert width 21.
+
+---
+
 ## Wave 8: the docs catch up, and q15 narrows to one hypothesis (2026-08-04)
 
 Three agents on `wave8/*` — the claims ledger, the archive zone, the docs sweep. Per-agent
