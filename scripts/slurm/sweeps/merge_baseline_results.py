@@ -1,13 +1,9 @@
-"""Combine a sweep's eval CSV with the non-SpaDE rows of the baseline run.
+"""Combine a sweep's eval CSV with the baseline rows the sweep does not replace.
 
-Extracted verbatim from the `python -c` heredocs that submit_spade_only_eval.sh
-and submit_spade_sweep_eval.sh used to carry inline. Belongs beside
+Extracted from the `python -c` heredocs that submit_spade_only_eval.sh and
+submit_spade_sweep_eval.sh used to carry inline. Belongs beside
 spade.evaluation.merge_revival_results once wave 3 lands; it lives here for now
 because the port of scripts/ runs ahead of the port of src/.
-
-The baseline filter drops any row whose sae_type contains "SpaDE"
-case-insensitively, which also drops CosineSpaDE. That is the original
-behaviour and it is preserved deliberately.
 """
 
 import argparse
@@ -16,6 +12,9 @@ import os
 import pandas as pd
 
 BASELINE_CSV = "results/main/all_results.csv"
+# Both callers sweep distance-SpaDE, so its baseline row is the one the sweep
+# supersedes. CosineSpaDE is a separate family and stays a baseline.
+SWEPT_SAE_TYPE = "SpaDETrainer"
 
 
 def main() -> None:
@@ -29,7 +28,7 @@ def main() -> None:
 
     if os.path.exists(args.baseline_csv):
         baseline = pd.read_csv(args.baseline_csv)
-        baseline = baseline[~baseline["sae_type"].str.contains("SpaDE", case=False, na=False)]
+        baseline = baseline[baseline["sae_type"] != SWEPT_SAE_TYPE]
         dfs.append(baseline)
         print(f"  Loaded {len(baseline)} baseline SAE results")
 
