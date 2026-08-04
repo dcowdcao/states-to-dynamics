@@ -197,7 +197,7 @@ def main():
           f"max={h_std.norm(dim=-1).max().item():.4f}")
 
     if args.save_counts:
-        out_path = repo_root / args.save_counts if not os.path.isabs(args.save_counts) else Path(args.save_counts)
+        out_path = root / args.save_counts if not os.path.isabs(args.save_counts) else Path(args.save_counts)
         t.save(
             {
                 "fire_counts": fire_counts,
