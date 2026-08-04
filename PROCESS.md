@@ -79,6 +79,42 @@ in its category's colour and line style, with the marker in the square's **corne
 nine branches. Uniform grammar, no disc obscured. Only the reference's flips get rings
 (dashed, outside the disc so they read over black and white); drawing all three legal
 branches' flip sets is a knot with no question behind it.
+---
+
+## The fork figure's game is now chosen, and the criteria disagree (2026-08-04)
+
+`game_trajectory/` drew `complete[0]` — game 0, *t0*=10, the minimum *t0* over the
+1550 branch-complete games. List order, not a criterion.
+`analysis/violation_divergence/game_selection/` sweeps all 1550. Its pure argmax is
+**game 662, *t0*=22**; the figures draw **game 1235, *t0*=20** — see the last paragraph.
+
+Two constraints made the sweep worth trusting, and both were committed before it ran
+(`score_games.py` docstring): score in **raw layer 5 only** — an SAE in the selection
+loop would tilt the nine-space grid toward whichever dictionary drove the choice — and
+score in **full R^512**, since a top-2 PCA criterion selects the game that flatters one
+plane and the plane is being redesigned.
+
+**The four candidate criteria have disjoint top-10s.** ρ(*S3*, *S4*) = −0.442: the games
+whose branches diverge furthest are the games whose illegal categories are *least*
+differentiated, because large δ̂ means everything moving along one shared direction. So
+"pick the biggest divergence" is the worst rule for a category-colored figure.
+
+**Why not *S1*, the illegal-vs-control separation.** It is the study's own scientific
+contrast, and the aggregate says illegal displaces *less* than a legal control (0.978).
+Its argmax is therefore the single game that most contradicts the paper, dressed as an
+illustration. The pick is argmax *S3* instead — scale-free, and no claim rests on it.
+Cost, stated in the sub-study README: game 662 is at the 5.8th percentile of *S1*
+(conservative direction, but not representative of that contrast).
+
+Transfer check: game 662 is rank 1/302 in Standard, TopK and SpaDE latent spaces too,
+ρ = 0.935–0.990 against raw L5. The choice is branch geometry, not the selecting space.
+
+**Why the figures draw 1235, not 662.** Argmax *S3* alone lands on a game at the 5.8th
+percentile of *S1*, so the panel would understate the very contrast the study is about. The
+rule was restated as *argmax S3 among games at or above the median S1* — 1235 is *S3* rank
+3/1550 (1.042 vs the 1.080 max) and above median on *S1* and *S2*, with *t0*=20 against a
+population median of 21. Chosen after seeing the results, which is why the rule is written
+down here and the disclosure is on the figure; `branches.FIGURE_GAME` holds the constant.
 
 ---
 

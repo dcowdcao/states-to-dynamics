@@ -1,0 +1,81 @@
+n = 1550 complete games (all nine branch types), scored in raw layer 5, full R^512.
+recommendation criterion: s3_category_differentiation (argmax).
+
+SELECTED game 662, t0=22  S3=1.0802  S1=0.8037 (rank 1460/1550)  S2=0.4756 (rank 586/1550)  S4=0.2785 (rank 1473/1550)
+INCUMBENT game 0, t0=10  S1=0.9380 (rank 1079/1550)  S2=0.5515 (rank 31/1550)  S3=0.7030 (rank 787/1550)  S4=0.5159 (rank 439/1550)
+
+t0 of complete games: min 10, median 21, max 34; selected t0=22 is at percentile 56.8.
+
+criterion distribution over all complete games:
+  s1_illegal_vs_control        min 0.6345  q25 0.9177  median 1.0133  q75 1.1143  max 2.0195
+  s2_branch_distinctness       min 0.3149  q25 0.4312  median 0.4612  q75 0.4914  max 0.6048
+  s3_category_differentiation  min 0.3240  q25 0.6251  median 0.7045  q75 0.7844  max 1.0802
+  s4_delta_hat_end             min 0.1659  q25 0.3721  median 0.4454  q75 0.5301  max 1.0346
+
+Spearman rank correlation between criteria (n = 1550 games):
+                                      S1        S2        S3        S4
+  s1_illegal_vs_control            1.000    -0.025    -0.317    -0.054
+  s2_branch_distinctness          -0.025     1.000     0.025     0.328
+  s3_category_differentiation     -0.317     0.025     1.000    -0.442
+  s4_delta_hat_end                -0.054     0.328    -0.442     1.000
+
+top 10 by s1_illegal_vs_control:
+  game |     t0 |      s1_illegal_vs_control |     s2_branch_distinctness | s3_category_differentiation |           s4_delta_hat_end
+------------------------------------------------------------------------------------------------------------------------------------
+  1487 |     22 |                     2.0195 |                     0.4716 |                     0.6970 |                     0.3606
+   101 |     11 |                     1.8009 |                     0.5089 |                     0.4791 |                     0.4378
+  1094 |     29 |                     1.7573 |                     0.4576 |                     0.7157 |                     0.3468
+   456 |     16 |                     1.7193 |                     0.4271 |                     0.3766 |                     0.6856
+  1378 |     13 |                     1.6966 |                     0.4651 |                     0.6367 |                     0.4824
+   182 |     17 |                     1.6956 |                     0.5267 |                     0.7515 |                     0.3351
+   278 |     13 |                     1.6882 |                     0.5140 |                     0.5071 |                     0.4673
+  1978 |     13 |                     1.6402 |                     0.5561 |                     0.5008 |                     0.7623
+   735 |     20 |                     1.6177 |                     0.4964 |                     0.7351 |                     0.3474
+   667 |     27 |                     1.6095 |                     0.4515 |                     0.7363 |                     0.3308
+
+top 10 by s2_branch_distinctness:
+  game |     t0 |      s1_illegal_vs_control |     s2_branch_distinctness | s3_category_differentiation |           s4_delta_hat_end
+------------------------------------------------------------------------------------------------------------------------------------
+  1377 |     12 |                     0.8187 |                     0.6048 |                     0.7606 |                     0.6815
+   365 |     25 |                     1.0005 |                     0.5785 |                     0.7782 |                     0.4072
+   154 |     14 |                     1.0370 |                     0.5782 |                     0.7082 |                     0.5134
+  1525 |     10 |                     1.1214 |                     0.5780 |                     0.5988 |                     0.5469
+  1259 |     19 |                     0.8700 |                     0.5771 |                     0.7148 |                     0.4870
+   681 |     16 |                     1.3463 |                     0.5763 |                     0.6256 |                     0.5948
+  1231 |     16 |                     1.0602 |                     0.5741 |                     0.8859 |                     0.5692
+    65 |     25 |                     1.1590 |                     0.5728 |                     0.6193 |                     0.4439
+   862 |     22 |                     1.0720 |                     0.5724 |                     0.7943 |                     0.4331
+   443 |     28 |                     1.0485 |                     0.5721 |                     0.7081 |                     0.5413
+
+top 10 by s3_category_differentiation:
+  game |     t0 |      s1_illegal_vs_control |     s2_branch_distinctness | s3_category_differentiation |           s4_delta_hat_end
+------------------------------------------------------------------------------------------------------------------------------------
+   662 |     22 |                     0.8037 |                     0.4756 |                     1.0802 |                     0.2785
+   755 |     15 |                     0.9124 |                     0.4766 |                     1.0472 |                     0.3833
+  1235 |     20 |                     1.1325 |                     0.5259 |                     1.0416 |                     0.3364
+  1532 |     17 |                     0.7565 |                     0.4405 |                     1.0330 |                     0.2753
+  1175 |     10 |                     1.0484 |                     0.4637 |                     1.0218 |                     0.2585
+  1033 |     18 |                     0.7946 |                     0.4521 |                     1.0162 |                     0.4099
+  1294 |     29 |                     0.9627 |                     0.4273 |                     1.0104 |                     0.2394
+  1499 |     34 |                     0.9204 |                     0.4716 |                     1.0090 |                     0.2554
+  1629 |     14 |                     0.9441 |                     0.4781 |                     1.0040 |                     0.3441
+  1269 |     29 |                     0.8829 |                     0.4511 |                     1.0000 |                     0.3241
+
+top 10 by s4_delta_hat_end:
+  game |     t0 |      s1_illegal_vs_control |     s2_branch_distinctness | s3_category_differentiation |           s4_delta_hat_end
+------------------------------------------------------------------------------------------------------------------------------------
+  1842 |     27 |                     0.9148 |                     0.4566 |                     0.5852 |                     1.0346
+   702 |     12 |                     0.8827 |                     0.5688 |                     0.5383 |                     0.9040
+  1250 |     10 |                     1.2649 |                     0.4869 |                     0.4853 |                     0.8811
+   982 |     17 |                     1.1368 |                     0.5101 |                     0.7493 |                     0.8761
+   204 |     14 |                     1.1570 |                     0.4822 |                     0.6453 |                     0.8742
+   554 |     14 |                     0.8028 |                     0.4838 |                     0.7114 |                     0.8602
+   843 |     28 |                     1.0455 |                     0.4439 |                     0.5306 |                     0.8573
+  1196 |     31 |                     0.8710 |                     0.4896 |                     0.7320 |                     0.8567
+  1208 |     18 |                     0.7759 |                     0.5316 |                     0.6829 |                     0.8534
+   955 |     15 |                     0.9005 |                     0.5090 |                     0.5708 |                     0.8518
+
+transfer check: S3 of the selected game re-scored in SAE spaces, within a random sample of 302 games (seed 0, selected game and incumbent forced in).
+  StandardTrainer-othello      selected game rank 1/302 (S3=1.1098); incumbent rank 174/302; Spearman vs raw L5 rho=0.966
+  TopKTrainer-othello          selected game rank 1/302 (S3=1.1068); incumbent rank 147/302; Spearman vs raw L5 rho=0.935
+  SpaDE-lam1e-03-gam1e-04      selected game rank 1/302 (S3=1.0859); incumbent rank 168/302; Spearman vs raw L5 rho=0.990
