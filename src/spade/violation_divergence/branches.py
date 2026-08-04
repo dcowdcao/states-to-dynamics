@@ -31,9 +31,8 @@ from spade.common.config import CTX_LEN
 from spade.common.study import study_dir
 from spade.othello.boards import replay
 from spade.othello.games import (  # imports force_ipv4() + karvonen path
-    collect_legal, first_illegal_pos, stream_games)
+    classify_prefix, collect_legal, first_illegal_pos, stream_games)
 from spade.othello.taxonomy import CATEGORIES, LEGAL, classify
-from spade.rules.build_pairs import classify_prefix
 from spade.rules.flip_labels import flip_stats
 
 from circuits.othello_engine_utils import to_string
