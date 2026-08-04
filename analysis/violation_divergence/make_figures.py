@@ -8,7 +8,7 @@ number here is a groupby-mean over the same nine arrays that the figures draw.
     results/violation_divergence/divergence_curves.csv   role x r, layer 5 + W_E
     results/violation_divergence/contract_keys.csv       the cross-validation keys
 
-    figures/divergence_layer5.{png,pdf}   F1  event-locked delta-hat and M2's cosines
+    figures/divergence_layer5.{png,pdf}   F1  event-locked delta-hat, raw and vs control
     figures/depth_sweep.{png,pdf}         F3  peak/plateau/offset/censoring vs depth
 
 Two peak conventions are reported side by side and must not be confused. The

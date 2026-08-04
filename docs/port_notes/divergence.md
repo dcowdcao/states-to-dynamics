@@ -51,7 +51,8 @@ dependencies land, which is expected at this point in the port.
 - `spade.rules.build_pairs.classify_prefix` — a sibling-study import. The skeleton
   lists `classify_prefix` under `rules/build_pairs.py` and not under `othello/games.py`,
   so that is where it is imported from. If it moves to `othello/games.py`, this is a
-  one-line change.
+  one-line change. *It moved; the import follows it — see
+  `docs/finish_notes/flagged-defects.md`.*
 - `spade.rules.flip_labels.flip_stats`, `spade.straightness.extract_traj.check_sink` —
   two more sibling-study imports, both carried over as-is on instruction.
   `spade/straightness/extract_traj.py` does not exist yet, so `extract_acts.py` is the
@@ -102,12 +103,14 @@ now.
   "event-locked delta-hat and M2's cosines". The two cosine panels were deleted; the
   code comment inside `f1_divergence_layer5` says so and the docstring was never
   updated. Left alone — it is a source-repo defect, not a port artifact.
+  *Fixed since — see `docs/finish_notes/flagged-defects.md`.*
 - `game_trajectory/make_figures.py` re-imports torch inside `space_features` as
   `import torch as _t` while the module already imports torch at the top. Pointless,
   and it violates the house rule on function-level imports. Left as-is.
 - `game_trajectory/README.md` documents flags `--n_grid` and `--embedding both` that
   the script's argparse does not accept (`--embedding` takes `pca|isomap`). Stale in
   the source; not repaired.
+  *Fixed since — see `docs/finish_notes/flagged-defects.md`.*
 - The behavioural figure's suptitle, "An illegal move changes what OthelloGPT predicts,
   immediately and for the rest of the game", is about the branch-vs-reference KL and is
   not one of the retired claims — but the legal control has the *highest* KL of all, and

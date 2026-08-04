@@ -13,6 +13,7 @@ import importlib
 import json
 import py_compile
 import re
+import subprocess
 import sys
 import tempfile
 import traceback
@@ -362,6 +363,26 @@ def test_seed42_csv_paths():
         assert rel.startswith("results/"), f"{rel} is not under results/"
         assert "karvonen" not in rel, f"{rel} still uses the old results/karvonen* name"
         assert not rel.startswith(("lambda_sweep_results", "gamma_sweep_results"))
+
+
+@test("the sweep merge keeps CosineSpaDE as a baseline")
+def test_sweep_merge_family_filter():
+    merge = SRC_DIR.parent / "scripts/slurm/sweeps/merge_baseline_results.py"
+    with tempfile.TemporaryDirectory() as tmp:
+        sweep = Path(tmp) / "sweep"
+        sweep.mkdir()
+        baseline = Path(tmp) / "all_results.csv"
+        baseline.write_text("sae_name,sae_type\n"
+                            + "".join(f"x,{c}\n" for c in EXPECTED_DISPATCH))
+        (sweep / "all_results.csv").write_text("sae_name,sae_type\ns,SpaDETrainer\n")
+        subprocess.run([sys.executable, str(merge), "--results_dir", str(sweep),
+                        "--baseline_csv", str(baseline)], check=True, capture_output=True)
+        combined = (sweep / "combined_results.csv").read_text()
+
+    assert "CosineSpaDETrainer" in combined, \
+        "the baseline filter matched CosineSpaDE on the SpaDE substring"
+    assert combined.count(",SpaDETrainer\n") == 1, \
+        "the baseline SpaDE row is superseded by the sweep's own and must be dropped"
 
 
 @test("the figure type map covers all 8 trainer classes")
