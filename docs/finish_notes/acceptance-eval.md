@@ -55,26 +55,41 @@ VE is an aggregate over millions of rows and is stable under resampling; coverag
 feature-label assignments learned by argmax over thresholds, which flip under small input
 changes. The pattern of deltas matches that and nothing else.
 
-## `checkpoints/main/trainer_5` — the reference row does not describe the weights
+## `checkpoints/main/trainer_5` — the weights are not the run
 
-| metric | reference | rerun |
+The `ae.pt` in this directory does not correspond to its own config, its wandb run, or its
+committed eval row. Everything except the weights agrees:
+
+| source | L0 | variance explained |
 |---|---|---|
-| L0 | 15.43 | 127.76 |
-| variance explained | 0.352 | 0.973 |
-| coverage | 0.0614 | 0.209 |
-| reconstruction F1 | 0.256 | 0.470 |
+| wandb training record | 15.43 | 0.3667 |
+| committed eval row | 15.43 | 0.352 |
+| **rerun of the ae.pt on disk** | **127.76** | **0.973** |
 
-This is not a resampling effect. It confirms, with numbers, the finding recorded in
-PROCESS.md on 2026-08-03: `trainer_5/config.json` records λ=9.77e-5, γ=0.2, 400 steps,
-device mps — a Mac smoke config that was never the run that produced these weights, and
-which "also explains the L0 15.4 / VE 0.352 attribution".
+Checked against the wandb export for all six `main/` trainers, comparing each run's
+training-time `l0` / `frac_variance_explained` against the rerun of the weights in that
+directory. **trainer_0 through trainer_4 match. trainer_5 alone does not.**
 
-**The consequence is not yet drawn, and is the owner's call.** The exclusion of this
-checkpoint, and the geometry family's retired "SpaDE is broken for cell-state mapping"
-conclusion, both rest on it being degenerate. On its actual weights it reconstructs at
-VE 0.973, which is not degenerate. Its coverage of 0.209 *is* the worst of the eight by a
-wide margin (the others run 0.51–0.74), so "poor at board-state coverage" survives; "broken
-reconstruction, VE 0.352" does not.
+This corrects the finding recorded in PROCESS.md on 2026-08-03, which read the same
+discrepancy as "a configuration in three documents never ran". It did run:
+`SpaDETrainer-othello_trainer_5`, λ=9.77e-5, γ=0.2, 36621 steps, cuda:0, finished,
+2026-03-26. The docs reporting "SpaDE initial, λ=9.77e-5, γ=0.2" as a distinct
+over-regularized run are correct, and its degeneracy is real.
 
-Note also that nothing in the tree pins which run these weights came from: the config.json
-that would say is the known-wrong smoke config.
+What is actually stale in `config.json` is `steps=400` and `device=mps`, and those are stale
+in **all six** configs, not just this one — a general artifact of the Mac smoke config, and
+exactly what MIGRATION.md open question 3 is about. λ and γ are correct.
+
+**So the exclusion decision's justification stands**, and is if anything firmer: both
+recorded SpaDE baseline runs are degenerate (γ=0.2 → VE 0.367, γ=0.1 → VE 0.399). The
+anomaly is that the file on disk is neither of them.
+
+Provenance of those weights is not recoverable from what is in the tree. No run in
+`results/Wandb_Export.csv` reports L0 ≈ 128 / VE ≈ 0.97. All six `ae.pt` share one mtime
+(2026-04-09 05:52), so trainer_5 was not overwritten later than its siblings; the local
+`wandb/` runs that do report L0 ≈ 128 are from July and postdate the file.
+
+**Owner's call.** Anything that loaded `main/trainer_5/ae.pt` was analysing a model other
+than the one its config and metrics describe — that includes the viewer roster, the geometry
+family, and `manifold_capture`'s `LOW_VE` marker, which names this checkpoint as low-VE
+while the file itself reconstructs at 0.973.
