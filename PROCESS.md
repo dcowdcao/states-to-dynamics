@@ -193,6 +193,13 @@ make a raw effect size meaningless. R^21 roughly doubles the null as well as rai
 gap; after dividing it out the status quo sits at 0.45–1.05x chance and the named plane at
 2.32–3.10x.
 
+**Do not quote that 2.32–3.10x.** It is a one-game number and it does not replicate. Both
+`fork_curvature_space/` (40 games) and `curvature_discriminant/` re-measured the same named
+pair: 1.27x over 40 games, and 0.24–1.10x on game 1235 specifically. Nothing was wrong with
+the computation — the n=1 statistic is simply unstable, which is what 8 effective branches
+in 21 dimensions predicts. The defensible figure for R^21 over the incumbent plane is the
+40-game paired gap, **+0.08 [+0.01, +0.15]**.
+
 **Gotcha for anyone reusing this.** A full 21-D descriptor needs 8 sampled positions = 15
 plies, so on game 0 (t0=10, window clipped at the board start) every plotted window straddles
 t0 and the figure loses its zero-by-construction prefix segment. Also: `restrav_features`
