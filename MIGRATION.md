@@ -165,6 +165,19 @@ Needing David's call. Nothing below is resolved silently.
     L0 ≈ 128 / VE ≈ 0.97. What are these weights, and what did the studies that loaded them
     actually measure? See [docs/finish_notes/acceptance-eval.md](docs/finish_notes/acceptance-eval.md).
 
+    A byte-exact hash sweep over netscratch, the frozen repo and the local backup finds
+    **exactly two copies**: `autoencoders/trainer_5/ae.pt` and
+    `feature_viewer/hf_space/checkpoints/SpaDE/ae.pt` — the checkpoint **deployed to the
+    public Space**, carrying the same λ=9.77e-5 / γ=0.2 / `SpaDETrainer-othello_trainer_5`
+    config. Nothing in netscratch matches, so these are not a sibling seed of the multiseed
+    set. Two consequences: the public viewer is serving the checkpoint whose identity is in
+    question, and **question 11 must not delete `hf_space/` until this is settled** — that
+    directory holds the only redundant copy.
+
+    The file now has three recorded L0 values under different protocols: 15.43 (wandb and the
+    committed eval, N=59000), 127.76 (the 2026-08-04 rerun, N=59000), and 776.65
+    (`archive/main_mac_smoke_eval/`, N=520 on mps).
+
 **Science**
 8. `analysis/geometry/` is the only family still built on the 7-SAE set including the now-
    excluded checkpoint. Re-run it on the current set, or retire it as a result and keep it
