@@ -452,8 +452,8 @@ def test_p_anneal_state():
 
 
 NOT_CHECKED = """
-  - no eval reproduces a known number (TopK on checkpoints/main/trainer_3:
-    L0 80.00, variance explained 0.943, coverage 0.722) — that needs weights + activations
+  - no eval is run here. The acceptance eval is in docs/finish_notes/acceptance-eval.md,
+    with its rows in results/acceptance/ (three checkpoints reproduce their reference exactly)
   - no GPU kernel, no nnsight trace, no loss_recovered path is exercised
   - the F1 / coverage / board-reconstruction math is not checked numerically
   - training loops are not run; only the LR schedule shape is checked

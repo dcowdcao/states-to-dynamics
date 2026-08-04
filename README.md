@@ -16,11 +16,14 @@ representations encode the rules of Othello, what happens to a square when it is
 how an illegal move propagates, whether trajectories straighten with depth, and whether
 SAE features capture concept manifolds or shatter them.
 
-> **Status: skeleton.** This tree is an architecture scaffold — files hold pseudocode, not
-> working code. Logic is being ported from `../Spade_Research_David_Sumedh_Ba`, which is
-> frozen and read-only. All new work happens here. See [ARCHITECTURE.md](ARCHITECTURE.md)
-> for the layout and the old→new map, [MIGRATION.md](MIGRATION.md) for the port order and
-> the open questions, and [PROCESS.md](PROCESS.md) for decisions.
+> **Status: ported and running.** All fifteen zones are ported from
+> `../Spade_Research_David_Sumedh_Ba`, which stays frozen and read-only; all new work happens
+> here. The package installs, `final_validation` is 25/25, and three checkpoints reproduce
+> their published evaluation exactly. Two data-provenance questions are open and affect
+> published numbers — MIGRATION.md questions 14 and 15. See
+> [ARCHITECTURE.md](ARCHITECTURE.md) for the layout and the old→new map,
+> [MIGRATION.md](MIGRATION.md) for what is left and the open questions, and
+> [PROCESS.md](PROCESS.md) for decisions.
 
 ## Run it
 

@@ -6,6 +6,44 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The port runs, and two of its reference numbers do not survive contact (2026-08-04)
+
+Three agents on `finish/*` branches — packaging, the checkpoint copy, the flagged defects —
+merged here. The tree went from "code moved, nothing verified" to installable, loaded with
+its seed-42 weights, and 25/25 on `final_validation` with no skips. Per-agent records in
+`docs/finish_notes/`.
+
+**The port is faithful, and the proof is exact.** `checkpoints/{batch_topk,cosine_spade,
+spade_revival}/trainer_0` reproduce their committed reference rows to 0.000000 on L0,
+variance explained, coverage and reconstruction F1. Identical inputs, identical outputs. That
+exercises SAE loading, standardization, the Karvonen adapter and the F1/coverage math end to
+end, so nothing below is a port defect.
+
+**Wave 3's stated acceptance number is wrong.** It gave VE = 0.943 for TopK on
+`main/trainer_3`; the committed reference is 0.9867 and the rerun gives 0.98688. 0.943
+appears nowhere in the tree. That wrong number has been the gate on the whole port, and
+anyone checking against it would have concluded the port was broken. Corrected in
+MIGRATION.md and in `final_validation`'s caveat text.
+
+**Two provenance findings, now MIGRATION.md questions 14 and 15.** The activations behind the
+five `results/karvonen/` reference rows no longer exist — those rows were committed 50
+minutes before the only surviving extraction was written — so they reproduce only to ±0.014
+on the assignment-protocol metrics. And `main/trainer_5/ae.pt` is not the run its config
+names: it reruns at VE 0.973 where its wandb record and eval row both say ≈0.36, while
+trainer_0–4 all match theirs.
+
+That second one **retracts** the 2026-08-03 entry's reading that the λ=9.77e-5, γ=0.2
+configuration never ran. It ran, 36621 steps on cuda:0, and finished degenerate, which is
+what the docs reporting it say. `steps=400` and `device=mps` are stale in all six configs,
+not just that one. The exclusion decision's justification is unaffected; what is in doubt is
+which model the studies that loaded those weights were measuring.
+
+Worth repeating for the next session: gitignored data must be copied into the real tree, not
+into an agent worktree, or it evaporates with the worktree. And two agents prepending to
+PROCESS.md conflict every time — one merge write-up, per-agent notes elsewhere.
+
+---
+
 ## `spade` is installable now; the "101 modules import" claim never went through an install (2026-08-04)
 
 Wave 1's stated verification — `pip install -e .` in a clean env, `import spade`,

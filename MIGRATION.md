@@ -57,8 +57,17 @@ the `checkpoints/` copy below must be done first.
 **Wave 3 — the pipeline.** `extraction`, `training/{core,sweep}` + eight entrypoints,
 `evaluation`, `multiseed`, `diagnostics`, the Karvonen figure entrypoints, `validation`.
 *Verify:* `python -m spade.validation.final_validation`, plus one real eval reproducing a
-known number — TopK on `checkpoints/main/trainer_3` gives L0 = 80.00, variance explained
-= 0.943, coverage = 0.722.
+known number. **Done, 2026-08-04** — see
+[docs/finish_notes/acceptance-eval.md](docs/finish_notes/acceptance-eval.md). Use the
+committed reference rows, not the numbers this line used to carry: it said variance
+explained = 0.943, which appears nowhere in the tree. `results/karvonen/all_results.csv`
+gives TopK on `checkpoints/main/trainer_3` as L0 79.93, VE **0.9867**, coverage 0.7265.
+
+The strongest form of this check is not TopK. `checkpoints/{batch_topk,cosine_spade,
+spade_revival}/trainer_0` reproduce their references *exactly* — 0.000000 on L0, VE,
+coverage and reconstruction F1 — because their reference evals used the activation set that
+still exists. The five `results/karvonen/` checkpoints cannot be reproduced exactly at all;
+their activations are gone (open question 14).
 
 **Wave 4 — spaces and the rules program.** `spade/spaces.py`, `spade/rules/*`,
 `spade/rules/causal/*`. This is the layer four other studies import; nothing downstream
@@ -141,6 +150,20 @@ Needing David's call. Nothing below is resolved silently.
    history cost twice, or leave it on the old branch?
 6. `wandb/` (579 MB) — delete outright?
 7. Do the netscratch `spade_*` dirs keep their names after the repo is renamed?
+14. **The activations behind `results/karvonen/` no longer exist.** Those five reference rows
+    were committed 2026-07-13 22:02 -0700; the only surviving activation set was written
+    2026-07-14 01:52–01:55 and is a later extraction, so they reproduce only to ±0.014 on
+    coverage and reconstruction F1 (VE and L0 are stable). Re-baseline the reference on the
+    surviving set, or reconstruct the original extraction? Reconstruction needs parameters
+    nothing records — `data/activations/metadata.json` describes a 100-game smoke run
+    (`activation_shape [4680, 512]`) beside 12 GB tensors holding 5,900,000 rows, which is
+    question 3's problem in the activations rather than the checkpoints.
+15. **`checkpoints/main/trainer_5/ae.pt` is not the run its config names.** It reruns at
+    L0 127.76 / VE 0.973; its wandb record and committed eval row both say L0 15.43 /
+    VE ≈ 0.36. trainer_0–4 all match their records. It is not the other recorded SpaDE
+    baseline either (γ=0.1, VE 0.399), and no run in `results/Wandb_Export.csv` reports
+    L0 ≈ 128 / VE ≈ 0.97. What are these weights, and what did the studies that loaded them
+    actually measure? See [docs/finish_notes/acceptance-eval.md](docs/finish_notes/acceptance-eval.md).
 
 **Science**
 8. `analysis/geometry/` is the only family still built on the 7-SAE set including the now-
