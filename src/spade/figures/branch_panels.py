@@ -37,12 +37,12 @@ def fork_panel(ax, coords: np.ndarray, rows: list[dict], pos: np.ndarray, t0: in
         st = branch_style(r["category"], r["is_control"])
         seg, z = coords[i, k:], pos[k:]
         ax.plot(seg[:, 0], seg[:, 1], z, ls=st["ls"], color=st["color"], lw=st["lw"],
-                marker=st["marker"], ms=3.0, markevery=3, markeredgecolor="white",
-                markeredgewidth=0.3, zorder=st["zorder"],
+                marker=st["marker"], ms=3.5, markevery=3, markerfacecolor=st["mfc"],
+                markeredgecolor=st["mec"], markeredgewidth=0.5, zorder=st["zorder"],
                 label=st["label"] if legend else None)
         ax.plot([seg[-1, 0]], [seg[-1, 1]], [z[-1]], marker=st["marker"], ms=6,
-                color=st["color"], markeredgecolor="white", markeredgewidth=0.7,
-                zorder=st["zorder"] + 1)
+                color=st["color"], markerfacecolor=st["mfc"], markeredgecolor=st["mec"],
+                markeredgewidth=0.7, zorder=st["zorder"] + 1)
     ax.plot([0], [0], [t0], marker="*", ms=15, color=INK, markeredgecolor="white",
             markeredgewidth=0.8, zorder=9,
             label="branch point $t_0$" if legend else None)
@@ -73,8 +73,8 @@ def board_panel(ax, board, rows: list[dict], flipped: list[int]) -> None:
         ax.add_patch(plt.Rectangle((x - 0.5, y - 0.5), 1, 1, fill=False, zorder=4,
                                    lw=st["lw"], ls=st["ls"], edgecolor=st["color"]))
         ax.plot(x - CORNER, y - CORNER, marker=st["marker"], ms=8, lw=0,
-                color=st["color"], markeredgecolor="white", markeredgewidth=0.8,
-                zorder=6, label=st["label"])
+                color=st["color"], markerfacecolor=st["mfc"], markeredgecolor=st["mec"],
+                markeredgewidth=1.0, zorder=6, label=st["label"])
 
 
 def board_note(board) -> str:

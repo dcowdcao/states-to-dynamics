@@ -13,9 +13,24 @@ python analysis/violation_divergence/fork_and_board/make_figures.py \
 ```
 
 Both panels draw the same game, which is what makes the pairing mean anything.
-The default is **game 1235** (*t0* = 20), picked by a sweep over the 1550
-branch-complete games (`../game_selection`); `--game` asserts the game it is
-given carries all nine branch types rather than silently drawing eight.
+The default is **game 1235** (*t0* = 20); `--game` asserts the game it is given
+carries all nine branch types rather than silently drawing eight.
+
+## Game 1235 is selected, and the figure says so
+
+Game 1235 is the **argmax**, over all 1550 branch-complete games, of the mutual
+separation of its six illegal displacement trajectories — scored in raw layer 5
+in the full 512-dimensional space, never in an SAE space or a 2-D projection
+(`../game_selection`). Population median 0.705; this game 1.080.
+
+That is load-bearing, not boilerplate. On this game the reference and both
+controls separate from all six illegal branches **in all nine spaces**, which
+looks like a result. Over 40 games that ordering holds in only 0.07–0.17 of
+them, against a 0.036 chance floor. The selected game displays structure that
+does not generalise, so the disclosure rides in the legend-title block on the
+figure itself (`branches.selection_note`) and not only here: a reader who does
+not know the game was chosen will over-read the panels. A different `--game`
+swaps the note for one saying that game was passed explicitly.
 
 ## Layout
 
@@ -47,6 +62,12 @@ square that already holds a disc, and covering that disc would destroy the
 evidence for the category. The outlined cell, in the branch's own colour and
 line style, is what identifies the square.
 
+The **two legal controls share the null styling** — grey, dashed, last in the
+legend — and on this board they land on adjacent squares (h3, h4), where two
+identical grey marks cannot be told apart. Control 2, the null *for* control 1,
+therefore takes an open marker. Same colour, same shape, different fill, so the
+pair separates without reading legend text and survives grayscale.
+
 ## Axes
 
 - Each fork cell: `PC1 (x% var)` / `PC2 (y% var)` per §4.6 — **per component,
@@ -61,9 +82,10 @@ line style, is what identifies the square.
 - **Planes are refit per space.** Cells are comparable in the *shape* of the
   fork and never in position or magnitude; SAE latent spaces live on different
   scales. The legend title says so on the figure itself.
-- **One game is n = 1.** This is an illustration of the design, not a
-  claim-supporting figure. Every number — the 0.978 ratio, the 0.4985
-  legal-vs-legal null, the plateau — belongs to `../README.md`, where it carries
-  its CI over 13,531 branches.
+- **One game is n = 1, and a selected one.** See the section above: the panels
+  look cleaner than a typical fork does, by construction. This is an
+  illustration of the design, not a claim-supporting figure. Every number — the
+  0.978 ratio, the 0.4985 legal-vs-legal null, the plateau — belongs to
+  `../README.md`, where it carries its CI over 13,531 branches.
 - The view angle is fixed at `elev=18, azim=−58` and stated on the figure, so a
   favourable camera cannot pass as a result.

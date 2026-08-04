@@ -15,16 +15,26 @@ CONTROL_LABEL = {1: "control: another legal move (null)",
 
 
 def branch_style(category: int, is_control: int) -> dict:
+    """Colour, marker and label for one branch. `mfc`/`mec` are the marker's
+    face and edge: filled with a white halo, except control 2, which is open."""
     if is_control:
+        # The two controls share the null styling and often land on adjacent
+        # squares, where identical grey marks cannot be told apart without
+        # reading the legend. Control 2 -- the null for control 1 -- opens up.
+        opened = is_control == 2
         return {"color": NULL["color"], "marker": NULL["marker"], "ls": NULL["ls"],
-                "lw": NULL["lw"], "zorder": NULL["zorder"], "label": CONTROL_LABEL[is_control]}
+                "lw": NULL["lw"], "zorder": NULL["zorder"],
+                "label": CONTROL_LABEL[is_control],
+                "mfc": "white" if opened else NULL["color"],
+                "mec": NULL["color"] if opened else "white"}
     if category == 0:
         return {"color": REFERENCE["color"], "marker": REFERENCE["marker"], "ls": "-",
                 "lw": REFERENCE["lw"], "zorder": REFERENCE["zorder"],
-                "label": "reference (the game as played)"}
+                "label": "reference (the game as played)",
+                "mfc": REFERENCE["color"], "mec": "white"}
     s = CATEGORY_STYLE[CATEGORIES[category]]
     return {"color": s["color"], "marker": s["marker"], "ls": "-", "lw": 1.5,
-            "zorder": 3, "label": s["label"]}
+            "zorder": 3, "label": s["label"], "mfc": s["color"], "mec": "white"}
 
 
 def legend_order(labels: list[str]) -> list[int]:

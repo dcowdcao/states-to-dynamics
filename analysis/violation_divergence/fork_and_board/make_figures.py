@@ -34,12 +34,11 @@ from spade.othello.boards import flip_set, replay
 from spade.saes.registry import seed42_entries
 from spade.spaces import EXCLUDED_SAE
 from spade.violation_divergence.branches import (
-    Game, complete_games, load_game, reference_row)
+    FIGURE_GAME, Game, complete_games, load_game, reference_row, selection_note)
 from spade.violation_divergence.fork_plane import (
     EMBEDDINGS, STRIDE, positions, space_features)
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
-DEFAULT_GAME = 1235      # as in ../game_trajectory; both panels draw one game
 NCOL = 3
 CELL_W, CELL_H = 3.7, 3.5  # one fork cell, as in ../game_trajectory's grid
 BOARD_H = 5.4              # the board row, tall enough for a square board
@@ -61,7 +60,8 @@ def legend_title(g: Game, method: str) -> str:
             f"(b) {n_legal} moves are legal at $t_0$; the played move and two of the "
             f"other {n_legal - 1} are branched\n"
             f"one game (n=1): an illustration of the design, not a claim — the study's\n"
-            f"numbers, with their CIs over 13,531 branches, are in the parent README")
+            f"numbers, with their CIs over 13,531 branches, are in the parent README\n"
+            f"{selection_note(g.game)}")
 
 
 def figure(g: Game, Z: np.ndarray, pos: np.ndarray, method: str, device: str,
@@ -120,7 +120,7 @@ def figure(g: Game, Z: np.ndarray, pos: np.ndarray, method: str, device: str,
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--game", type=int, default=DEFAULT_GAME)
+    parser.add_argument("--game", type=int, default=FIGURE_GAME)
     parser.add_argument("--embedding", default="pca", choices=["pca", "isomap"])
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()

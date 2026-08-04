@@ -30,14 +30,11 @@ from spade.figures.paper_style import (
 from spade.saes.registry import seed42_entries
 from spade.spaces import EXCLUDED_SAE
 from spade.violation_divergence.branches import (
-    Game, complete_games, load_game, reference_row)
+    FIGURE_GAME, Game, complete_games, load_game, reference_row, selection_note)
 from spade.violation_divergence.fork_plane import (
     EMBEDDINGS, STRIDE, positions, space_features)
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
-# Most mutually separated illegal categories among games at or above the median
-# illegal-vs-control gap; picked by analysis/violation_divergence/game_selection.
-DEFAULT_GAME = 1235
 
 
 def delta_hat(Z: np.ndarray, ref: int) -> np.ndarray:
@@ -55,8 +52,8 @@ def marginal_panel(ax, Z: np.ndarray, rows: list[dict], pos: np.ndarray,
     for i, row in enumerate(rows):
         st = branch_style(row["category"], row["is_control"])
         ax.plot(r, dh[i], ls=st["ls"], color=st["color"], lw=st["lw"],
-                marker=st["marker"], ms=3.5, markevery=3, markeredgecolor="white",
-                markeredgewidth=0.3, zorder=st["zorder"])
+                marker=st["marker"], ms=3.5, markevery=3, markerfacecolor=st["mfc"],
+                markeredgecolor=st["mec"], markeredgewidth=0.5, zorder=st["zorder"])
     ax.text(r[0] + 0.4, ax.get_ylim()[1] * 0.93, "0 by construction\n(shared prefix)",
             fontsize=7, color=MUTED, va="top")
     ax.set_xlabel("position relative to the branch, $t-t_0$")
@@ -87,13 +84,14 @@ def fork_figure(g: Game, Z: np.ndarray, pos: np.ndarray, method: str,
                    f"{method.upper()} plane, a learned basis refit for this game; view "
                    f"elev={ELEV}, azim={AZIM}; every {STRIDE}nd ply. One game (n=1): an "
                    f"illustration of the design, not a claim — the study's numbers, with "
-                   f"their CIs over 13,531 branches, are in the parent README.",
-                   loc="lower center", bbox_to_anchor=(0.5, -0.19))
+                   f"their CIs over 13,531 branches, are in the parent README.\n"
+                   f"{selection_note(g.game)}",
+                   loc="lower center", bbox_to_anchor=(0.5, -0.28))
     if not camera_ready:
         fig.suptitle(f"Game {g.game}: one prefix, {n} futures, forking at $t_0$={g.t0} "
                      f"(layer 5, positions {pos[0]}–{pos[-1]})", fontsize=11)
     fig.tight_layout()
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.235)
+    rule_key(fig, ["R1", "R2", "R3"], y=-0.325)
     return save_figure(fig, FIG_DIR / f"game_{g.game}_fork_{method}", camera_ready)
 
 
@@ -122,19 +120,20 @@ def space_grid(g: Game, Z: np.ndarray, pos: np.ndarray, method: str, device: str
     ordered_legend(fig, fig.axes[0], 4,
                    f"game {g.game}, $t_0$={g.t0}; {method.upper()} plane refit per space "
                    f"(arb. units, not comparable across cells); view elev={ELEV}, azim={AZIM}. "
-                   f"One game (n=1): shape only — the parent README carries the numbers.",
-                   loc="lower center", bbox_to_anchor=(0.5, -0.06))
+                   f"One game (n=1): shape only — the parent README carries the numbers.\n"
+                   f"{selection_note(g.game)}",
+                   loc="lower center", bbox_to_anchor=(0.5, -0.135))
     if not camera_ready:
         fig.suptitle(f"The fork in every representation space, game {g.game} "
                      f"({method.upper()})", fontsize=11)
     fig.subplots_adjust(left=0.02, right=0.97, top=0.92, bottom=0.06, wspace=0.06, hspace=0.16)
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.085)
+    rule_key(fig, ["R1", "R2", "R3"], y=-0.16)
     return save_figure(fig, FIG_DIR / f"space_fork_grid_{method}", camera_ready)
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--game", type=int, default=DEFAULT_GAME)
+    parser.add_argument("--game", type=int, default=FIGURE_GAME)
     parser.add_argument("--n_games", type=int, default=1)
     parser.add_argument("--embedding", default="pca", choices=["pca", "isomap"])
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")

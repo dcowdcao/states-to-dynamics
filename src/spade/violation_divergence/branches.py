@@ -62,6 +62,28 @@ def role(category: int, is_control: int) -> str:
     return "reference" if category == LEGAL else CATEGORIES[category]
 
 
+# The game every single-game figure draws. It is an argmax over the
+# branch-complete games, not a draw from them, so a figure showing it owes the
+# reader selection_note(). Picked by analysis/violation_divergence/game_selection.
+FIGURE_GAME = 1235
+
+
+def selection_note(game: int) -> str:
+    """Why the figure is drawing this game, for the figure itself and not only a
+    README: the selected game shows structure that does not survive resampling --
+    its reference/control-vs-illegal ordering holds in 0.07-0.17 of games, against
+    a 0.036 chance floor -- so a reader who does not know it was selected
+    over-reads the panels."""
+    if game != FIGURE_GAME:
+        return f"game {game}, passed explicitly; the figures' default is {FIGURE_GAME}"
+    return (f"game {FIGURE_GAME} is SELECTED, not a typical draw: it is the argmax, over "
+            f"all 1550\nbranch-complete games, of the mutual separation of its six illegal "
+            f"displacement\ntrajectories, scored in raw layer 5 in the full 512-dimensional "
+            f"space and never in\nan SAE space or a 2-D projection. It is the clearest "
+            f"available illustration of the\nconstruction, not a typical one (population "
+            f"median 0.705, this game 1.080).")
+
+
 @dataclass(frozen=True)
 class Game:
     """One source game's branch rows, read back out of branches.pt."""

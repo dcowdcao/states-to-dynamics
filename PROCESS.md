@@ -34,6 +34,22 @@ per §4.6, per panel because the plane is refit per space. `draw_board` labels `
 `rank (1 at the top)` alongside the ticks it already owned, so the board's reading note
 moved off the xlabel to wherever the caller has room for it.
 
+**Game 1235 is selected, and that is now on the figure.** It is the argmax over the 1550
+branch-complete games of the mutual separation of its six illegal trajectories (raw layer
+5, full 512-d, never an SAE space or a projection; population median 0.705, this game
+1.080). It matters: on 1235 the reference and both controls separate from all six illegal
+branches in all nine spaces, but over 40 games that ordering holds in 0.07–0.17 of them
+against a 0.036 chance floor — selected structure that does not generalise, and a reader
+who does not know it was chosen over-reads the panels. `branches.FIGURE_GAME` and
+`branches.selection_note()` keep the constant and its disclosure together, so every figure
+drawing the default game prints it; a non-default `--game` prints that instead.
+
+**The two nulls were indistinguishable.** `branch_style` returned byte-identical dicts for
+`is_control` 1 and 2, and on this board they land on adjacent squares (h3, h4). Control 2 —
+the null *for* control 1 — now takes an open marker (`mfc`/`mec` in the style dict, which
+also pulled the hardcoded `"white"` marker edges out of the three panel bodies). Same
+colour, same shape, different fill: separable without reading legend text, and in grayscale.
+
 **Status:** rendered on game 1235 with all nine spaces, working PNG and camera-ready PDF.
 The standalone `branch_board/make_figures.py` and `game_trajectory`'s `space_grid` are now
 subsets of it — recommended for deletion, pending confirmation; the `game_0_*` figures in

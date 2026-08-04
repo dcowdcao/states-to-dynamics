@@ -27,10 +27,10 @@ from spade.figures.branch_style import ordered_legend
 from spade.figures.paper_style import MUTED, apply_style, rule_key, save_figure
 from spade.othello.boards import flip_set, replay
 from spade.othello.taxonomy import CATEGORIES
-from spade.violation_divergence.branches import Game, load_game, reference_row
+from spade.violation_divergence.branches import (
+    FIGURE_GAME, Game, load_game, reference_row, selection_note)
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
-DEFAULT_GAME = 1235  # the game the fork figure draws by default
 
 
 def figure(g: Game, camera_ready: bool) -> Path:
@@ -50,15 +50,16 @@ def figure(g: Game, camera_ready: bool) -> Path:
                    f"one move per branch, styled as in the fork figure.\n"
                    f"{n_legal} moves are legal at $t_0$; the played move and two of the "
                    f"other {n_legal - 1} are branched.\nOne game (n=1): an illustration "
-                   f"of the design, not a claim.",
-                   loc="lower center", bbox_to_anchor=(0.5, -0.40))
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.43)
+                   f"of the design, not a claim.\n"
+                   f"{selection_note(g.game)}",
+                   loc="lower center", bbox_to_anchor=(0.5, -0.52))
+    rule_key(fig, ["R1", "R2", "R3"], y=-0.55)
     return save_figure(fig, FIG_DIR / f"game_{g.game}_branch_board", camera_ready)
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--game", type=int, default=DEFAULT_GAME)
+    parser.add_argument("--game", type=int, default=FIGURE_GAME)
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()
 
