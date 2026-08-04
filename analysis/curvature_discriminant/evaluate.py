@@ -168,11 +168,6 @@ def one_game_plane(coords: np.ndarray, m: dict, game: int):
     return coords[idx][branch][:, keep], m["category"][idx][branch] != 0
 
 
-def centroid_gap(coords: np.ndarray, m: dict, game: int) -> float:
-    sub, illegal = one_game_plane(coords, m, game)
-    return _gap(sub, illegal)
-
-
 def permutation_null(coords: np.ndarray, m: dict, game: int) -> dict:
     """The separation, divided by its own exact label-permutation null.
 
