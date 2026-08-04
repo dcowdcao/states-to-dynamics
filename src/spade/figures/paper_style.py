@@ -75,14 +75,16 @@ RULE_TEXT = {
 }
 
 
-def rule_key(fig, rules: list[str], y: float = -0.005) -> None:
+def rule_key(owner, rules: list[str], y: float = -0.005, x: float = 0.005) -> None:
     """Print the rule definitions under the panels, left-aligned.
 
-    Placed in figure coordinates below the axes; savefig's tight bbox grows to
-    include it, so it never collides with the bottom row.
+    `owner` is the figure, or an axes when the key belongs beside a panel rather
+    than under the whole figure; coordinates are that owner's. Under a figure,
+    savefig's tight bbox grows to include the text, so it never collides with
+    the bottom row.
     """
-    fig.text(0.005, y, "\n".join(RULE_TEXT[r] for r in rules), ha="left",
-             va="top", fontsize=7.5, color=MUTED, linespacing=1.5)
+    owner.text(x, y, "\n".join(RULE_TEXT[r] for r in rules), ha="left",
+               va="top", fontsize=7.5, color=MUTED, linespacing=1.5)
 
 
 # Un-flip edit populations. `random` is the direction-matched null, so it takes

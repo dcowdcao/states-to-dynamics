@@ -30,6 +30,8 @@ def draw_board(ax, discs: np.ndarray, disc_size: float = DISC_SIZE) -> None:
                 markeredgewidth=1.0)
     ax.set_xticks(range(8), list("abcdefgh"))
     ax.set_yticks(range(8), range(1, 9))
+    ax.set_xlabel("file")
+    ax.set_ylabel("rank (1 at the top)")
     ax.set_xlim(-0.5, 7.5)
     ax.set_ylim(7.5, -0.5)
     ax.set_aspect("equal")

@@ -8,8 +8,12 @@ numbers live in the parent `README.md`.
 
 ```
 python analysis/violation_divergence/game_trajectory/make_figures.py \
-    [--n_games 1] [--embedding pca|isomap] [--camera-ready]
+    [--game 1235] [--n_games 1] [--embedding pca|isomap] [--camera-ready]
 ```
+
+The default is **game 1235** (*t0* = 20), picked by a sweep over the 1550
+branch-complete games (`../game_selection`); the script asserts the requested
+game carries all nine branch types rather than silently drawing eight.
 
 ## What is plotted
 
@@ -47,7 +51,7 @@ The window is the study's own, r ∈ [−8, 24]. View angle is fixed at
 | file | what |
 |---|---|
 | `game_<id>_fork_pca` | one game: the 3-D fork, beside δ̂ vs r — the magnitude a projection cannot show |
-| `space_fork_grid_pca` | one game across **all nine representation spaces** — raw layer 5 and the eight seed-42 dictionaries. Planes are refit per space, so only the *shape* of the fork is comparable across cells, never position |
+| `space_fork_grid_pca` | one game across **all nine representation spaces** — raw layer 5 and the eight seed-42 dictionaries. Planes are refit per space, so only the *shape* of the fork is comparable across cells, never position. **Superseded by `../fork_and_board`**, which draws this grid as panel (a) over the board the branches play on |
 
 ## Reading them honestly
 

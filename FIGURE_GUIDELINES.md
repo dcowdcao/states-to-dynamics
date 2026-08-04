@@ -289,6 +289,12 @@ conditions:
   figure that can only be read next to the doc it abbreviates gets read wrong
   in a talk, on a poster, and in the README. Keep it to one line each, muted,
   and drive it from the same constant the labels come from.
+- **Panels that share a styling table share one legend.** When two panels of
+  different kinds (a projection and a board, a curve and a matrix) draw the same
+  classes from the same style dict, a second legend only repeats itself. Place
+  it once, and place it where the layout already wastes room: a square panel
+  beside a wide one leaves a band, and the shared legend plus the in-figure key
+  are what belong there. An empty band is a layout bug, not neutral whitespace.
 - Cross-reference between figures so points can be aligned across panels.
 - Working figures may carry an in-figure title; **camera-ready must not** (ICML:
   "omit titles from inside the graphic file itself") — the title becomes the

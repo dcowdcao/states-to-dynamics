@@ -23,6 +23,7 @@ Usage: python -m spade.violation_divergence.branches [--n_prefixes 2000] [--smok
 import argparse
 import json
 from collections import Counter
+from dataclasses import dataclass
 from random import Random
 
 import torch
@@ -59,6 +60,39 @@ def role(category: int, is_control: int) -> str:
     if is_control:
         return CONTROL_NAMES[is_control - 1]
     return "reference" if category == LEGAL else CATEGORIES[category]
+
+
+@dataclass(frozen=True)
+class Game:
+    """One source game's branch rows, read back out of branches.pt."""
+    game: int
+    t0: int
+    idx: torch.Tensor          # row indices into branches.pt, for the act tensors
+    rows: list[dict]
+    tokens: list[int]
+
+
+def load_game(meta: dict, game: int) -> Game:
+    idx = (meta["game_id"] == game).nonzero().flatten()
+    assert len(idx), f"game {game} has no branches"
+    rows = [{"category": int(meta["category"][i]),
+             "is_control": int(meta["is_control"][i]),
+             "square": to_string(int(meta["branch_token"][i])),
+             "n_legal": int(meta["n_legal"][i])} for i in idx]
+    return Game(game, int(meta["t0"][idx[0]]), idx, rows,
+                meta["tokens"][idx[0]].long().tolist())
+
+
+def reference_row(rows: list[dict]) -> int:
+    return next(i for i, r in enumerate(rows)
+                if r["category"] == LEGAL and not r["is_control"])
+
+
+def complete_games(meta: dict) -> list[int]:
+    """Games carrying every branch type: the reference, both controls, all six."""
+    n_types = len(CATEGORIES) + N_CONTROLS
+    return [g for g in meta["game_id"].unique().tolist()
+        if int((meta["game_id"] == g).sum()) == n_types]
 
 
 def pick_branches(reference: int, cats: list[int], rng: Random) -> list[tuple[int, int, int]] | None:

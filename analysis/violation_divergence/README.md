@@ -17,6 +17,7 @@ python analysis/violation_divergence/make_figures.py                # F1, F3
 python analysis/violation_divergence/behavioral/make_figures.py     # F6
 python analysis/violation_divergence/probe_readout/make_figures.py  # F7
 python analysis/violation_divergence/sae_spaces/make_figures.py     # F2, F4, F5
+python analysis/violation_divergence/fork_and_board/make_figures.py # the design, n=1
 ```
 
 `$DIR` = `$SPADE_DIVERGENCE_DIR` (default `/n/netscratch/ba_lab/Lab/$USER/spade_divergence`).
@@ -188,10 +189,11 @@ without importing `src/spade/violation_divergence/divergence.py`:
 `probe_readout/figures/f7_probe_readout` (F7) ·
 `sae_spaces/figures/sae_feature_recurrence`.
 
-**The design itself**, in `game_trajectory/` (see its README): one game drawn as a
-path, shared to *t0*, then one path per branch, with move index as a third axis and
-the plane a PCA of the displacement. `space_fork_grid_pca` shows
-that fork across all nine representation spaces at once. These are n=1
+**The design itself**, in `fork_and_board/` (see its README):
+`game_1235_fork_and_board_pca` puts the fork in all nine representation spaces
+over the board the game forks on, so a coloured trajectory can be traced back to
+the move that produced it. `game_trajectory/game_1235_fork_pca` adds the
+magnitude a projection cannot show, δ̂ against offset. These are n=1
 illustrations of the construction, not claim-supporting curves — every number above
 comes from the aggregates.
 

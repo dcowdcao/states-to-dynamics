@@ -6,6 +6,41 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## One figure: the fork over the board it forks on (2026-08-04)
+
+`analysis/violation_divergence/fork_and_board/` merges the nine-space fork grid and the
+branch board into a single figure — (a) the 3×3 grid of representation spaces, (b) the
+board at *t0* — because the two only mean something together: (b) says what the nine
+branches are, (a) says where they go. Both draw the same game, **1235** (*t0*=20), and the
+entry points now assert the requested game is branch-complete instead of taking
+`complete[0]`.
+
+The board is square and the grid is three wide, so the band beside the board carries the
+figure's apparatus: **one legend for both panels** (the payoff of `branch_style` — both
+halves already draw identically, so a second legend would repeat itself), the board's
+reading key, and the R1/R2/R3 gloss.
+
+Three extractions, each because the combined figure would otherwise have copied code:
+`src/spade/figures/branch_panels.py` owns `fork_panel` / `board_panel` / `axis_labels`
+(were private to the two scripts), `src/spade/violation_divergence/fork_plane.py` owns the
+sampled positions and the displacement embedding, and `branches.py` — which defines what a
+row of `branches.pt` means — grew the reader for it (`load_game`, `complete_games`,
+`reference_row`). `ordered_legend` and `rule_key` now take the figure *or* an axes as
+their owner, which is what lets both live inside the band rather than under the figure.
+
+**Axis labels.** `space_grid` never labelled x/y, so nine panels carried their variance
+ratios buried in the titles; they now read `PC1 (27% var)` / `PC2 (10% var)` on the axes
+per §4.6, per panel because the plane is refit per space. `draw_board` labels `file` /
+`rank (1 at the top)` alongside the ticks it already owned, so the board's reading note
+moved off the xlabel to wherever the caller has room for it.
+
+**Status:** rendered on game 1235 with all nine spaces, working PNG and camera-ready PDF.
+The standalone `branch_board/make_figures.py` and `game_trajectory`'s `space_grid` are now
+subsets of it — recommended for deletion, pending confirmation; the `game_0_*` figures in
+both folders are stale against the new default game.
+
+---
+
 ## The branch board, and one board-drawing rule for two studies (2026-08-04)
 
 `analysis/violation_divergence/branch_board/` draws the position the game forks on, with

@@ -5,8 +5,11 @@ space. It never says what the nine branches *are*. This one does: the Othello
 position at the end of the shared prefix, with every branch move drawn on the
 square it plays.
 
+**Superseded by `../fork_and_board`**, which draws this board as panel (b) under
+the same nine branches in every representation space, with one legend for both.
+
 ```
-python analysis/violation_divergence/branch_board/make_figures.py [--game 0] [--camera-ready]
+python analysis/violation_divergence/branch_board/make_figures.py [--game 1235] [--camera-ready]
 ```
 
 `--game` indexes `branches.pt`'s `game_id`; the default is the game the fork

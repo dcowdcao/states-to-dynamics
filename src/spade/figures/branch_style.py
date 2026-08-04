@@ -45,9 +45,11 @@ def legend_order(labels: list[str]) -> list[int]:
     return sorted(range(len(labels)), key=lambda i: rank[i])
 
 
-def ordered_legend(fig, ax, ncol: int, y: float, title: str):
+def ordered_legend(owner, ax, ncol: int, title: str, **placement):
+    """One legend for a whole figure. `owner` is the figure, or the blank axes
+    the legend is parked in; `placement` is that owner's loc/bbox_to_anchor."""
     handles, labels = ax.get_legend_handles_labels()
     order = legend_order(labels)
-    return fig.legend([handles[i] for i in order], [labels[i] for i in order],
-                      loc="lower center", ncol=ncol, fontsize=8, frameon=False,
-                      bbox_to_anchor=(0.5, y), title=title, title_fontsize=7.5)
+    return owner.legend([handles[i] for i in order], [labels[i] for i in order],
+                        ncol=ncol, fontsize=8, frameon=False, title=title,
+                        title_fontsize=7.5, **placement)
