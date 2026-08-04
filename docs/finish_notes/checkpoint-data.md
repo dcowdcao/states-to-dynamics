@@ -36,6 +36,9 @@ Both load-bearing layout rules hold:
 
 `checkpoints/main/trainer_5` is the degenerate γ=1e-2 seed-42 checkpoint. It is copied and
 the registry lists it; the exclusion is a downstream decision made once in `spade.spaces`.
+*The copy is faithful — the digests match the source — but the file is not that
+checkpoint's evaluation: it reruns at L0 127.76 / VE 0.973 against a recorded L0 15.43 /
+VE ≈ 0.36. MIGRATION.md open question 15, `docs/finish_notes/acceptance-eval.md`.*
 
 ## Verification
 

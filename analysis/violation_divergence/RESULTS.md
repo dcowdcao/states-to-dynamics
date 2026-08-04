@@ -1,3 +1,15 @@
+> **Correction, read first.** A3's wave-2 record, not the study's current position
+> (`README.md`, `RED_TEAM.md`, `docs/claims_status.md`). Three things below were
+> retired afterwards. `delta_peak_L5`, `delta_peak_r_L5` and the Headline's "peak
+> offset migrates 0.00 → 5.68" are max-of-noise — a within-row permutation null
+> reproduces the peak to 0.4% at every layer and 79–83% of the depth drift, and
+> those panels were deleted as a correctness fix. `peak_layer` = 7 is vacuous as
+> defined: the metric normalizes within each space, so an excess over the input
+> floor has no cross-space meaning. And "`occupied_opp` behaves as a no-op" was
+> answered the other way by the probe read-out — the square decodes the mover's
+> colour in 78.6% of events, a recolor (`probe_readout/RESULTS.md`, `RED_TEAM.md`).
+> The plateau, the ratio and the never-halves fraction are means and stand.
+
 # A3 raw activation space: M1, M2, M3 across `token_embed` and `resid_post_0..7`
 
 Everything below is read from `$SPADE_DIVERGENCE_DIR/divergence/*.npz` (2000

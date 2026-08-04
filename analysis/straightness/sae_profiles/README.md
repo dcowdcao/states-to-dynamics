@@ -13,8 +13,9 @@ Family labels carry the sparsity setting (`src/spade/figures/paper_style.sae_lab
 frac_recovered 0.597, VE 0.352 — where seeds 43–46 of the same config give
 L0 128, frac_recovered 0.996, VE 0.973, and that bad row is what gives the
 published SpaDE aggregate its VE 0.849 ± 0.278. The checkpoint's provenance is
-independently suspect (PROCESS.md flags its `config.json` as a Mac smoke config
-written over real GPU weights), so it is excluded rather than carrying a result.
+independently suspect — the `ae.pt` in `checkpoints/main/trainer_5` does not
+reproduce that degenerate row at all, rerunning at L0 127.76 / VE 0.973
+(MIGRATION.md open question 15) — so it is excluded rather than carrying a result.
 This study made the call first and enforced it locally; the exclusion is now a
 global decision, held in one place as `spade.spaces.EXCLUDED_SAE` and read from
 there by every study and by the viewer. Registry membership is untouched. SpaDE

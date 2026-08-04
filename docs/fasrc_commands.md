@@ -25,9 +25,6 @@ mamba create -n spade_env python=3.11 -y
 source activate spade_env
 
 pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cu124
-pip install sparsemax transformer-lens==1.17.0 nnsight==0.3.7 \
-  wandb datasets tqdm scipy matplotlib pandas scikit-learn einops numpy \
-  jaxtyping pydantic transformers python-chess
 pip install -e "$SPADE_REPO"
 ```
 
@@ -36,13 +33,14 @@ pip install -e "$SPADE_REPO"
 walks up for a `CLAUDE.md` / `.git` marker, and a non-editable install resolves
 into site-packages and then fails late, at the first `karvonen_root()` call.
 
-Do not install from `requirements.txt` yet. It cannot build a working
-environment as it stands — four pins are wrong, four hard deps are undeclared,
-and two pins have no importer. It gets regenerated from this env, not the other
-way round.
+The dependencies come from `requirements.txt`, which `pyproject.toml` reads as the
+package's requirement list. It was regenerated off the working `spade_env` and
+verified (`docs/finish_notes/env-install.md`); the source repo's version, which
+could not build a working environment, is not what ships here. Do not hand-install
+a package list beside it.
 
-`plotly` and `umap-learn` are needed only by the older `analysis/geometry/`
-scripts.
+`plotly` and `umap-learn` are deliberately not in it — only the older
+`analysis/geometry/` scripts import them.
 
 ### W&B
 

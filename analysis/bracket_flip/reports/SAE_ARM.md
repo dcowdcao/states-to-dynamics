@@ -42,14 +42,17 @@ both.
 
 ## The SpaDE-vs-Cosine question
 
-The straightness study found SpaDE destroys the trajectory signal while
-CosineSpaDE keeps it. **That split does not reproduce here.** Both SpaDE variants
-fail together — same board-decode collapse (0.76 / 0.73), same low cos_flip
-(0.060 / 0.060). CosineSpaDE does not rescue the flip representation the way it
-rescued trajectory straightness. So "CosineSpaDE preserves what SpaDE discards"
-is signal-specific, not a general property: it holds for trajectory geometry and
-fails for board-state read-out. Worth stating because it is the opposite of what
-the earlier result would predict.
+**Both SpaDE variants fail together here** — same board-decode collapse
+(0.76 / 0.73), same low cos_flip (0.060 / 0.060). CosineSpaDE does not rescue the
+flip representation.
+
+This section was written against the straightness claim that SpaDE destroys the
+trajectory signal while CosineSpaDE keeps it. **That claim is retired** — every
+family preserves the separation, 0.01–0.21 (`docs/claims_status.md`) — so there is
+no split to fail to reproduce, and the "CosineSpaDE preserves what SpaDE discards"
+contrast has no live counterpart to be signal-specific against. What stands is the
+measurement: neither prototype variant decodes the board well enough here to carry
+the flip.
 
 ## Caveats
 

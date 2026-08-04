@@ -274,17 +274,22 @@ own recommendation of γ=20: the sweep selected on reconstruction F₁ (0.547 vs
 0.530), but coverage runs the other way (0.537 vs 0.474) and is the deciding
 metric here. Do not change it back from the sweep write-up.
 
-Two provenance traps around these numbers:
+Three provenance traps around these numbers:
 
-- **Checkpoint `config.json` files are not trustworthy labels.** All six
-  `checkpoints/main/trainer_*/config.json` are a Mac smoke-test config
-  (`device: mps`, `steps: 400`) written over real GPU weights. The SpaDE one
-  additionally records `lambda_init 9.77e-05, gamma_reg 0.2` — the *stale
-  pre-canonicalization* class defaults, replaced on 2026-07-12 when λ and γ were
-  canonicalized to named constants. The "SpaDE initial, λ=9.77e-5, γ=0.2" label
-  that appears in older write-ups is read off that stale file; the weights are the
-  production run. `docs/claims_status.md` attributes the same evaluation
+- **Checkpoint `config.json` files record the wrong run length and device.** All six
+  `checkpoints/main/trainer_*/config.json` carry `steps: 400` and `device: mps` from
+  a Mac smoke config; the runs are 36,621 steps on `cuda:0`. **λ and γ in those
+  files are correct.** In particular the SpaDE one's `lambda_init 9.77e-05,
+  gamma_reg 0.2` is a real configuration that really ran —
+  `SpaDETrainer-othello_trainer_5`, finished 2026-03-26, degenerate — not a label
+  read off a stale file. `docs/claims_status.md` attributes the same evaluation
   (L0 15.4, VE 0.352) to the γ=1e-2 checkpoint, and it wins.
+- **`checkpoints/main/trainer_5/ae.pt` is not the run its config, its wandb record
+  and its eval row describe.** Those three agree on L0 15.43 / VE ≈ 0.36; the file
+  on disk reruns at L0 127.76 / VE 0.973. trainer_0–4 all match their records.
+  What the weights are is MIGRATION.md open question 15
+  ([acceptance-eval.md](finish_notes/acceptance-eval.md)), so any result that
+  loaded them measured an unidentified model.
 - **The revived `lam1e-03 gam1e-04` checkpoint is not a reproduction** of the lost
   original at the same config and seed: VE 0.995 vs 0.434, L0 1808 vs 961. The
   trainer moved underneath it. Label it as that config *under the current
@@ -300,7 +305,7 @@ dict_size 8192, lr 3e-4, 36,621 steps, seed 42. This exploration produced the
 
 | # | λ_init | γ | L0 | Status |
 |---|---|---|---|---|
-| 1 | 9.77e-5 | 0.2 | 15.4 | finished — heavily over-regularized (but see the config-label trap above) |
+| 1 | 9.77e-5 | 0.2 | 15.4 | finished — heavily over-regularized; the weights now in `checkpoints/main/trainer_5` are not this run (§5) |
 | 2 | 5e-6 | 0.1 | 31.5 | finished — never Karvonen-evaluated |
 
 **Phase 2 — λ sweep at fixed γ=0.001**
@@ -464,12 +469,21 @@ The SpaDE row is the current default configuration
 (`checkpoints/spade_revival/`, `results/spade_revival/`). Its L0 of 1808 is denser
 than Standard ReLU, so it is a reconstruction-quality point, not a sparsity result.
 
+**Coverage and reconstruction F1 in the five `results/main/` rows** — p-Anneal,
+Standard ReLU, Gated, TopK, Gated+p-Anneal — reproduce only to ±0.014, because the
+activation set they were evaluated on no longer exists (MIGRATION.md open question
+14). L0 and variance explained are stable across the two sets. The BatchTopK,
+CosineSpaDE and SpaDE rows come from evals whose activations survive and reproduce
+to 0.000000 ([acceptance-eval.md](finish_notes/acceptance-eval.md)).
+
 The main run's original SpaDE entry (L0 15.4, loss recovered 0.597, coverage
-0.061, VE 0.352) is **excluded everywhere**: that seed-42 checkpoint evaluates
-degenerately where seeds 43–46 of the same config give L0 128 and VE 0.973, and
-its `config.json` is a Mac smoke config over real GPU weights. Any conclusion that
+0.061, VE 0.352) is **excluded everywhere**: that seed-42 evaluation is degenerate
+where seeds 43–46 of the same config give L0 128 and VE 0.973. Any conclusion that
 rested on it — in particular the geometry family's "SpaDE is broken for cell-state
 mapping" — has to be re-run on the current set or retired before it is quoted.
+Note what the exclusion does *not* settle: the `ae.pt` now in
+`checkpoints/main/trainer_5` does not reproduce that degenerate row (§5, open
+question 15).
 
 ### 7b. Distance-SpaDE at its best swept point (λ=1e-7, γ=0.005)
 

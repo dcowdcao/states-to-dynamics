@@ -121,6 +121,12 @@ explained (R²).
 CosineSpaDE also reports reconstruction precision 0.489 / recall 0.727; the SpaDE
 default reports 0.366 / 0.956; BatchTopK 0.656 / 0.666.
 
+Coverage and recon_F1 for the five `results/main/` baselines (PAnneal, Standard,
+Gated, TopK, GatedAnneal) reproduce only to ±0.014: the activations behind those
+rows no longer exist (MIGRATION.md open question 14). L0 and var_explained are
+stable, and the BatchTopK, CosineSpaDE and SpaDE-default rows reproduce exactly
+(`docs/finish_notes/acceptance-eval.md`).
+
 ### Reading the results
 
 - **CosineSpaDE** reaches near-baseline fidelity (frac 0.992, var 0.979) at
@@ -145,7 +151,10 @@ default reports 0.366 / 0.956; BatchTopK 0.656 / 0.666.
 The main run's original SpaDE entry (L0 15.4, var 0.352) does not appear above: it
 is the γ=1e-2 seed-42 checkpoint, whose evaluation is degenerate where seeds 43–46
 of the same config give L0 128 and var 0.973, and it is excluded from every study
-and from the viewer. See `docs/claims_status.md`.
+and from the viewer. See `docs/claims_status.md`. Re-running that row from
+`checkpoints/main/trainer_5` will not return it — the `ae.pt` there gives L0 127.76
+/ var 0.973 and is not the run its config and metrics describe (MIGRATION.md open
+question 15).
 
 ### CosineSpaDE γ sweep (19 γ from 0.05 to 1e4, × 5 seeds, mean ± std)
 

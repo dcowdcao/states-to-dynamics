@@ -77,6 +77,8 @@ Not fixable here, and not faked:
   the three `bracket_flip` modules that read `linear_probe.pt` cannot run.
 - The wave-3 acceptance number (TopK on `checkpoints/main/trainer_3` → L0 80.00, VE 0.943,
   coverage 0.722) still cannot be checked. Import-clean is not run-clean.
+  *Run since, and the number quoted here was wrong: the committed reference is L0 79.93,
+  VE 0.9867, coverage 0.7265 — see `docs/finish_notes/acceptance-eval.md`.*
 
 ## For David
 
