@@ -6,6 +6,39 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Wave 8: the docs catch up, and q15 narrows to one hypothesis (2026-08-04)
+
+Three agents on `wave8/*` — the claims ledger, the archive zone, the docs sweep. Per-agent
+records in `docs/finish_notes/`. Wave 8's third part, deleting the source repo's residue,
+stays gated: questions 14 and 15 are open and wave 0 is blocked.
+
+**The retraction had not propagated.** Three non-historical docs still stated that λ=9.77e-5
+/ γ=0.2 were "stale defaults read off a Mac smoke config" — `pipeline.md` §5 and §7a,
+`spade_vs_baselines.md` Appendix A, `straightness/sae_profiles/README.md`. Fixed. Port notes
+keep the old numbers on purpose; they record what an agent believed at the time.
+
+**q14's ±0.014 band now appears where numbers are compared.** It changes a reading:
+`spade_vs_baselines.md`'s Pareto listing separates Gated (0.5673) from Standard (0.5679) on
+reconstruction F1, which is well inside the band.
+
+**q15, narrowed.** A byte-exact sweep over netscratch, the frozen repo and the backup finds
+exactly two copies of `main/trainer_5/ae.pt`: itself and
+`feature_viewer/hf_space/checkpoints/SpaDE/ae.pt`, the checkpoint deployed to the public
+Space. Nothing in the multiseed tier matches, so it is not a stored sibling seed. But it
+reruns at L0 127.76 / VE 0.973, which is what `spaces.py:28` already records for seeds 43–46
+of the same config. Leading hypothesis, untested: seed 42 was re-run post-canonicalization
+and overwrote the degenerate checkpoint in place, without ever landing on netscratch. Testable
+by retraining that config at seed 42 and comparing. **This pins q11** — `hf_space/` holds the
+only redundant copy and cannot be deleted first.
+
+**One label is wrong in eight places.** The excluded checkpoint is called "the γ=1e-2
+checkpoint" in prose; its config and its wandb record both say **γ=0.2**. `EXCLUDED_SAE` is
+the config name `"SpaDETrainer-othello"`, so no code identifier is affected — but the
+exclusion decision was taken under the wrong label, so the owner should confirm the rename
+rather than have an agent do it silently.
+
+---
+
 ## The port runs, and two of its reference numbers do not survive contact (2026-08-04)
 
 Three agents on `finish/*` branches — packaging, the checkpoint copy, the flagged defects —

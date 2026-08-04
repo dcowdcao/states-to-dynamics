@@ -6,6 +6,8 @@
 
 - Read FIGURE_GUIDELINES.md before writing ANY plotting code or fixing ANY figure, and follow it. It encodes NeurIPS/ICLR/ICML requirements and the conventions of the mech-interp and representation-geometry literature: colors and markers come from `src/figures/paper_style.py` (never literals in a plotting script), every claim-supporting curve carries uncertainty with its semantics and n stated, the reference class is styled as a reference and nulls are gray/dashed/last, and figures are legible in grayscale at final printed size. When you add a figure type the document doesn't cover, add the rule to it.
 
+- Spin up as many parallel agents as the task can absorb, each in its own git worktree, rather than working through it serially yourself. Split the prompt into the largest set of independent pieces you can defend — competing designs to prototype, separate files to edit, separate questions to answer — and give each piece its own agent. Worktrees live in `../spade_sae_worktrees/<purpose>` on a branch named for that purpose, so no two agents contend for one working tree; merge what won and delete the rest. Read-only exploration does not need a worktree.
+
 - If you are ever uncertain about something or need clarification, or if you want to change some core logic, you MUST ask me for permission first. This holds even in auto mode.
 
 - After implementing, you MUST clean up any files you no longer need, i.e. files that are now stale. Again, if you are on the fence about a particular file or group of files, you MUST ask me for permission first.
