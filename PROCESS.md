@@ -6,6 +6,46 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## R^21 cannot carry the fork figure's move-index curve (2026-08-04)
+
+Feasibility check on projecting `space_fork_grid_pca` through the ReStraV descriptor
+instead of the raw activation displacement. New study in
+`analysis/violation_divergence/fork_expanding_curvature/`; tables in its README.
+
+**The blocker is dimensional, not statistical.** `restrav_features` needs 8 sampled
+positions (14 plies at STRIDE=2) to fill d1..d7 and θ1..θ6. The fork window has 4 sampled
+positions before *t0* (8 plies). A sliding window at W=8 therefore has zero curve points
+free of the branch, so the shared prefix at the origin and the spray at *t0* — the figure's
+entire content — are outside the descriptor's domain. W ≤ 4 keeps a prefix but returns
+R^13 at most. No W does both.
+
+**Gotcha worth remembering: `restrav_features` truncates silently.** `d[:, :7]` and
+`theta[:, :6]` on a short window return 11/13/15/17/19 columns with no error (and an
+obscure `IndexError` from `moment4` at W=2), and the column *meanings* shift — at W=5,
+column 4 is θ1, not d5. Anything slicing it from a variable window must assert the width.
+
+**The expanding window anchored at *t0* was prototyped and rendered.** It is causal and
+event-locked, but it starts 14 plies after the branch and 13 of its 21 coordinates are then
+frozen exactly (measured 0.000e+00) — the first steps since the branch never change again,
+so only the 8 cumulative moments move, and their travel is only 1.2–2.1× a null with the
+temporal order shuffled away.
+
+**A large effect size here is the denominator, not the descriptor.** Illegal-vs-control
+separation goes 0.09–0.45 (the current per-position plane) → 1.2–1.6 (R^21), but the *same
+raw displacement* averaged to one point per branch gives 0.89–1.87, i.e. larger, in every
+space. Collapsing the position axis removes the within-group spread that dominates the
+denominator. A label-permutation null over all 28 relabellings of the 8 branches clears
+nothing (best p=0.18 against a 0.036 floor). Also noted: an unscaled PCA of R^21 is a plane
+of turning angles (PC1 puts 1% of its energy on the step-length block, since d is in
+activation-norm units and θ in degrees), so the planes are fit after a diagonal unit-RMS
+rescale that keeps zero displacement at the origin.
+
+**Recommendation:** keep the raw-displacement plane for the fork; if R^21 belongs in the
+study it belongs as one point per branch over the whole post-*t0* stretch, as a §4.6
+embedding scatter over the full 13,531-branch population, not at n=1.
+
+---
+
 ## The port runs, and two of its reference numbers do not survive contact (2026-08-04)
 
 Three agents on `finish/*` branches — packaging, the checkpoint copy, the flagged defects —
