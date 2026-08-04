@@ -1,0 +1,33 @@
+{
+  "sae_name": "trainer_3_TopKTrainer_d8192",
+  "sae_type": "TopKTrainer",
+  "wandb_name": "TopKTrainer-othello_trainer_3",
+  "activation_dim": 512,
+  "dict_size": 8192,
+  "n_samples": 59000,
+  "frac_recovered": null,
+  "coverage": 0.7404574155807495,
+  "reconstruction_f1": 0.6981154680252075,
+  "reconstruction_precision": 0.7290261387825012,
+  "reconstruction_recall": 0.7139997482299805,
+  "l0": 79.94065856933594,
+  "variance_explained": 0.9868764271829651,
+  "thresholds": [
+    0.0,
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    1.0
+  ],
+  "coverage_blank_mask": 0.46442505717277527,
+  "reconstruction_f1_blank_mask": 0.49968940019607544,
+  "lr": 0.000282842712474619,
+  "k": 80,
+  "seed": 42
+}

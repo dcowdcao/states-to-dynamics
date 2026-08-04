@@ -1,0 +1,33 @@
+{
+  "sae_name": "trainer_0_CosineSpaDETrainer_d8192",
+  "sae_type": "CosineSpaDETrainer",
+  "wandb_name": "CosineSpaDETrainer-othello_trainer_0",
+  "activation_dim": 512,
+  "dict_size": 8192,
+  "n_samples": 59000,
+  "frac_recovered": null,
+  "coverage": 0.5346006751060486,
+  "reconstruction_f1": 0.5298826694488525,
+  "reconstruction_precision": 0.48928651213645935,
+  "reconstruction_recall": 0.7271351218223572,
+  "l0": 173.55953979492188,
+  "variance_explained": 0.9789499248255263,
+  "thresholds": [
+    0.0,
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    1.0
+  ],
+  "coverage_blank_mask": 0.3584724962711334,
+  "reconstruction_f1_blank_mask": 0.38619232177734375,
+  "gamma_reg": 1.0,
+  "lr": 0.0003,
+  "seed": 42
+}
