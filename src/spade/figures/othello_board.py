@@ -3,7 +3,7 @@
 Discs are absolute colour and the axes are algebraic (a-h left to right, 1-8 top
 to bottom), so the same square lands in the same place in every board figure.
 Each caller owns its own overlay: bracket_flip shades squares by role,
-branch_board outlines the branch squares by violation category.
+fork_and_board outlines the branch squares by violation category.
 """
 
 import numpy as np

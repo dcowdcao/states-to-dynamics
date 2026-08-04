@@ -51,17 +51,18 @@ also pulled the hardcoded `"white"` marker edges out of the three panel bodies).
 colour, same shape, different fill: separable without reading legend text, and in grayscale.
 
 **Status:** rendered on game 1235 with all nine spaces, working PNG and camera-ready PDF.
-The standalone `branch_board/make_figures.py` and `game_trajectory`'s `space_grid` are now
-subsets of it — recommended for deletion, pending confirmation; the `game_0_*` figures in
-both folders are stale against the new default game.
+`branch_board/` and `game_trajectory`'s `space_grid` were subsets of it and are deleted; the
+board drawing survives in `spade.figures.othello_board`. `fork_figure` stays in
+`game_trajectory` — it carries the δ̂ marginal panel, the quantitative half §4.8 requires and
+which this figure does not have.
 
 ---
 
 ## The branch board, and one board-drawing rule for two studies (2026-08-04)
 
-`analysis/violation_divergence/branch_board/` draws the position the game forks on, with
-all nine branch moves on their squares — the companion the fork figure needed, since a
-projected trajectory never says what a branch *is*.
+The board the game forks on, with all nine branch moves on their squares — the companion the
+fork figure needed, since a projected trajectory never says what a branch *is*. It began as
+`analysis/violation_divergence/branch_board/` and is now panel (b) of `fork_and_board/`.
 
 Two extractions, both because the same rule was about to be written twice.
 `src/spade/figures/othello_board.py` owns "draw an 8×8 board with these discs" (was

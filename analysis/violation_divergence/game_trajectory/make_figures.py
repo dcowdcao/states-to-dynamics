@@ -21,18 +21,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from spade.common.device import select_device
 from spade.common.study import study_dir
 from spade.figures.branch_panels import AZIM, ELEV, axis_labels, fork_panel
 from spade.figures.branch_style import branch_style, ordered_legend
 from spade.figures.paper_style import (
-    GRID, MUTED, apply_style, rule_key, sae_label, save_figure)
-from spade.saes.registry import seed42_entries
-from spade.spaces import EXCLUDED_SAE
+    GRID, MUTED, apply_style, rule_key, save_figure)
 from spade.violation_divergence.branches import (
     FIGURE_GAME, Game, complete_games, load_game, reference_row, selection_note)
-from spade.violation_divergence.fork_plane import (
-    EMBEDDINGS, STRIDE, positions, space_features)
+from spade.violation_divergence.fork_plane import EMBEDDINGS, STRIDE, positions
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 
@@ -95,42 +91,6 @@ def fork_figure(g: Game, Z: np.ndarray, pos: np.ndarray, method: str,
     return save_figure(fig, FIG_DIR / f"game_{g.game}_fork_{method}", camera_ready)
 
 
-def space_grid(g: Game, Z: np.ndarray, pos: np.ndarray, method: str, device: str,
-               camera_ready: bool) -> Path:
-    """One cell per representation space, one game. Planes are refit per space,
-    so positions are not comparable across cells -- only the shape of the fork is."""
-    spaces = [("raw layer 5 (reference space)", None)] + \
-        [(sae_label(e.config.replace("Trainer-othello", "")), e)
-        for e in seed42_entries() if e.config not in EXCLUDED_SAE]
-    ref = reference_row(g.rows)
-    ncol = 3
-    nrow = int(np.ceil(len(spaces) / ncol))
-    fig = plt.figure(figsize=(3.7 * ncol, 3.5 * nrow))
-    for j, (name, entry) in enumerate(spaces):
-        F = space_features(Z, entry, device)
-        n, T, D = F.shape
-        coords, var, _ = EMBEDDINGS[method]((F - F[ref]).reshape(-1, D))
-        ax = fig.add_subplot(nrow, ncol, j + 1, projection="3d")
-        fork_panel(ax, coords.reshape(n, T, 2), g.rows, pos, g.t0,
-                   legend=(j == 0), zlabel=(j % ncol == 0))
-        xlab, ylab = axis_labels(method, var)
-        ax.set_xlabel(xlab, labelpad=-8, fontsize=8)
-        ax.set_ylabel(ylab, labelpad=-8, fontsize=8)
-        ax.set_title(name, loc="left", fontsize=8.5)
-    ordered_legend(fig, fig.axes[0], 4,
-                   f"game {g.game}, $t_0$={g.t0}; {method.upper()} plane refit per space "
-                   f"(arb. units, not comparable across cells); view elev={ELEV}, azim={AZIM}. "
-                   f"One game (n=1): shape only — the parent README carries the numbers.\n"
-                   f"{selection_note(g.game)}",
-                   loc="lower center", bbox_to_anchor=(0.5, -0.135))
-    if not camera_ready:
-        fig.suptitle(f"The fork in every representation space, game {g.game} "
-                     f"({method.upper()})", fontsize=11)
-    fig.subplots_adjust(left=0.02, right=0.97, top=0.92, bottom=0.06, wspace=0.06, hspace=0.16)
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.16)
-    return save_figure(fig, FIG_DIR / f"space_fork_grid_{method}", camera_ready)
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--game", type=int, default=FIGURE_GAME)
@@ -140,7 +100,6 @@ def main():
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    device = select_device()
     base = study_dir("divergence")
     meta = torch.load(base / "branches" / "branches.pt", weights_only=True)
     acts = torch.load(base / "acts" / "resid_post_5.pt", weights_only=True)
@@ -148,14 +107,11 @@ def main():
     complete = complete_games(meta)
     assert args.game in complete, f"game {args.game} does not carry every branch type"
 
-    for i, game in enumerate([args.game]
-                             + [g for g in complete if g != args.game][:args.n_games - 1]):
+    for game in [args.game] + [g for g in complete if g != args.game][:args.n_games - 1]:
         g = load_game(meta, game)
         pos = positions(g.t0)
         Z = acts[g.idx][:, pos, :].float().numpy()
         print(f"wrote {fork_figure(g, Z, pos, args.embedding, args.camera_ready)}")
-        if i == 0:
-            print(f"wrote {space_grid(g, Z, pos, args.embedding, device, args.camera_ready)}")
 
 
 if __name__ == "__main__":
