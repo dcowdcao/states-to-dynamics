@@ -1,4 +1,9 @@
-"""The plane a fork figure is drawn in, and the space it is drawn from.
+"""The displacement plane a fork figure is drawn in, and the spaces and
+positions every fork figure is drawn from.
+
+`positions` and `spaces` are the study's sampling rule and its nine-cell grid,
+shared with the R^21 plane of curvature_plane.py; the embeddings below are the
+displacement plane specifically.
 
 Move index is the third axis of every fork panel, so the plane must NOT be a
 PCA of raw activations -- move index dominates activation geometry in every
@@ -17,18 +22,33 @@ the representation's frame, not of the trajectory's shape.
 import numpy as np
 import torch
 
+from spade.figures.paper_style import sae_label
+from spade.saes.registry import seed42_entries
+from spade.spaces import EXCLUDED_SAE
 from spade.violation_divergence.compute_divergence import sae_encoder
 
 ISOMAP_NEIGHBORS, ISOMAP_PRE_DIMS = 12, 50  # spade/rules/embed.py uses 15 on ~4k points
 STRIDE = 2               # one mover per curve; see the module docstring
 WINDOW = (-8, 24)        # the study's analysis window, r = t - t0
 FIRST_POS, LAST_POS = 1, 58  # position 0 is the attention sink
+RAW_SPACE = "raw layer 5 (reference space)"
 
 
-def positions(t0: int) -> np.ndarray:
-    """The study's window, at t0's parity, clipped to the usable board."""
-    p = np.arange(max(FIRST_POS, t0 + WINDOW[0]), min(LAST_POS, t0 + WINDOW[1]) + 1)
+def positions(t0: int, back: int = 0) -> np.ndarray:
+    """The study's window at t0's parity, clipped to the usable board and extended
+    `back` sampled positions earlier -- a trailing descriptor window needs context
+    the study window does not, and a short game simply yields fewer."""
+    lo = max(FIRST_POS, t0 + WINDOW[0] - STRIDE * back)
+    p = np.arange(lo, min(LAST_POS, t0 + WINDOW[1]) + 1)
     return p[(p - t0) % STRIDE == 0]
+
+
+def spaces() -> list[tuple[str, object]]:
+    """(label, SAE entry or None) per grid cell -- raw layer 5 leads, then one
+    seed-42 SAE family each (FIGURE_GUIDELINES 4.6)."""
+    return [(RAW_SPACE, None)] + [
+        (sae_label(e.config.replace("Trainer-othello", "")), e)
+        for e in seed42_entries() if e.config not in EXCLUDED_SAE]
 
 
 def pca2(X: np.ndarray, basis: np.ndarray | None = None):

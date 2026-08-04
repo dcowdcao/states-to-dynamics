@@ -6,6 +6,55 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The R^21 plane moves into the library, and fork_and_board can draw it (2026-08-04)
+
+Branch `r21/plane-and-combined`. `fork_curvature_space/descriptor.py` was analysis-level,
+so `fork_and_board` could only have reached it by importing one analysis dir from another.
+It is now `src/spade/violation_divergence/curvature_plane.py`, beside `fork_plane.py`.
+
+**What the move deduplicated, and what it did not.** The sampling window
+(`STRIDE`/`WINDOW`/`FIRST_POS`/`LAST_POS`) and the nine-cell space list are one rule, so
+they live once in `fork_plane.py`; `positions(t0, back=0)` grew the `back` parameter the
+R^21 window needs, and `back=0` is the displacement plane's old body exactly. The
+duplicated figure-game constant is gone — `branches.FIGURE_GAME` was always the one that
+mattered. The two planes' *fitting* is genuinely different (uncentred PCA of D vs
+column-scaled PCA of Δφ, which has to survive NaNs) and stays separate. Verified by
+re-rendering all four `fork_curvature_space` figures before and after the move:
+byte-identical PNGs. Four other analysis dirs still each carry their own copy of the
+nine-space list; they were out of scope here.
+
+**fork_and_board grew `--plane {displacement,r21}`**, default `displacement`. Two figures,
+`game_1235_fork_and_board_displacement_pca` and `..._r21_pca` (the old
+`game_1235_fork_and_board_pca` is the former, renamed).
+
+**The trap, which would have been silent.** φ — step lengths, turning angles, moments — is
+nonlinear, so `mean over members of φ(z_b) ≠ φ(mean over members of z_b)`. A figure drawing
+one mean per rule must apply φ per member and average afterwards; averaging the trajectories
+first measures the curvature of a path no branch takes, and the result looks perfectly
+plausible. The plane projection is linear, so mean-then-project is safe and the figure
+keeps taking its mean in the plane, as the displacement version does.
+`test_curvature_plane.py` pins both halves: φ does not commute with the mean, the
+projection does.
+
+**The R^21 grouping is no better: within/between rule spread = 0.902 in R^21 against 0.885
+on displacements** (game 1235, raw layer 5, column-scaled Δφ over t ≥ t0). Slightly worse,
+in fact. There is no population number in R^21 — the 0.945 median is a displacement figure
+— so each legend names which of the two it is quoting rather than letting one stand for
+the other.
+
+**The window still costs two offsets and the prefix still collapses.** At t0=20, 15 of the
+study window's 17 offsets carry a descriptor and 2 of those are branch-free, unchanged by
+dropping control 2 and by the rule grouping. `project()` asserts `max|Δφ| = 0` on the
+branch-free offsets in all nine spaces on every render, so the legend's "the prefix still
+IS the origin" is checked rather than asserted.
+
+**Layout gotcha.** The R^21 legend title is five lines longer than the displacement one, so
+the board note and the rule key, which used to sit at a fixed y, landed on top of it. They
+now hang off the legend's measured bottom edge (one `fig.canvas.draw()`), which is why the
+two figures' canvases differ slightly in height.
+
+---
+
 ## fork_and_board: rules instead of categories, one control, ticks on (2026-08-04)
 
 Three requested changes to the shipped figure. The first one produced a number worth

@@ -190,9 +190,12 @@ without importing `src/spade/violation_divergence/divergence.py`:
 `sae_spaces/figures/sae_feature_recurrence`.
 
 **The design itself**, in `fork_and_board/` (see its README):
-`game_1235_fork_and_board_pca` puts the fork in all nine representation spaces
-over the board the game forks on, so a coloured trajectory can be traced back to
-the move that produced it. `game_trajectory/game_1235_fork_pca` adds the
+`game_1235_fork_and_board_displacement_pca` puts the fork in all nine
+representation spaces over the board the game forks on, so a coloured trajectory
+can be traced back to the move that produced it, and
+`game_1235_fork_and_board_r21_pca` is the same figure with the plane taken inside
+the 21-D ReStraV curvature descriptor instead.
+`game_trajectory/game_1235_fork_pca` adds the
 magnitude a projection cannot show, δ̂ against offset. These are n=1
 illustrations of the construction, not claim-supporting curves — every number above
 comes from the aggregates.

@@ -12,6 +12,11 @@ python analysis/violation_divergence/fork_curvature_space/make_figures.py [--gam
 python analysis/violation_divergence/fork_curvature_space/measure.py [--n_games 40] [--w 8] [--game 1235]
 ```
 
+The plane itself lives in `src/spade/violation_divergence/curvature_plane.py`,
+beside `fork_plane.py`, which owns the displacement plane and the sampling window
+both of them share. It started here as `descriptor.py` and moved down when
+`../fork_and_board` needed the same plane: two surfaces, one rule.
+
 **Verdict: the projection works and barely outperforms the plane it replaces.**
 The fork is drawable in R^21 at full width with every invariant preserved
 exactly, but on illegal-vs-legal-control separation it scores 1.26–1.27x its own

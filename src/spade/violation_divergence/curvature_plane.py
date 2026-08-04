@@ -1,9 +1,14 @@
-"""The ReStraV curvature descriptor as the plane the branch fork is drawn in.
+"""The R^21 curvature plane a fork figure can be drawn in, beside fork_plane.py.
 
-The incumbent fork figure (../game_trajectory) projects the displacement
-D(t) = z_b(t) - z_ref(t) onto a PCA of D. Here the plane is built inside the
-space the straightness study works in instead: step lengths d and turning angles
-theta, summarised by src/spade/straightness/geometry.py.
+fork_plane projects the displacement D(t) = z_b(t) - z_ref(t) onto a PCA of D.
+Here the plane is built inside the space the straightness study works in instead:
+step lengths d and turning angles theta, summarised by
+src/spade/straightness/geometry.py into ReStraV's 21 components.
+
+phi is NONLINEAR, so a caller drawing a mean over several branches must apply
+`windowed` to each branch separately and average afterwards. The plane projection
+is linear, so mean-then-project and project-then-mean agree; mean-then-phi does
+not, and measures the curvature of a fictitious averaged path.
 
 R^21 is the destination. The descriptor is defined for a whole trajectory while
 the fork needs a curve over move index, and the two ways out are the two
@@ -18,23 +23,23 @@ variants:
 
 Dimensional accounting, which is what constrains the windowed variant. A window
 of w sampled positions gives w-1 step lengths and w-2 angles, so ReStraV's 7 raw
-d and 6 raw theta need w >= 8, i.e. 14 plies of span at STRIDE 2. The figure's
-analysis window only reaches r=-8, four sampled positions before the branch, so
-inside it no full-width window is also branch-free. Reading context back to the
-START OF THE GAME dissolves that: at t0=20 the pre-branch positions are
-2,4,..,20, and a window ending at r=-2 spans positions 4..18, entirely prefix.
-The cost is the first two plotted offsets, whose windows run off the board and
-stay undefined. The descriptor at offset r still covers r-14..r, so the branch
-enters 1 of the window's 7 steps at r=0 and does not fill it until r=12; that
-smear is the price of R^21 and measure.py reports it.
+d and 6 raw theta need w >= 8, i.e. 14 plies of span at STRIDE 2. The study
+window only reaches r=-8, four sampled positions before the branch, so inside it
+no full-width window is also branch-free. Reading context back to the START OF
+THE GAME dissolves that: at t0=20 the pre-branch positions are 2,4,..,20, and a
+window ending at r=-2 spans positions 4..18, entirely prefix. The cost is the
+first two plotted offsets, whose windows run off the board and stay undefined.
+The descriptor at offset r still covers r-14..r, so the branch enters 1 of the
+window's 7 steps at r=0 and does not fill it until r=12; that smear is the price
+of R^21 and fork_curvature_space/measure.py reports it.
 w<8 does NOT give a shorter R^21 -- restrav_features slices d[:, :7] and
 theta[:, :6], which silently return fewer columns -- so descriptor() asserts the
 width and falls back to the named 8-D moment block instead.
 
 Angles are undefined at a zero-length step (geometry.py); a window of all-zero
 steps additionally sends moment4's min/max to +-inf. Both are mapped to NaN here
-and counted by measure.py -- the displacement D is entirely that case for the
-reference branch, which is why the figures descriptor the trajectory.
+-- the displacement D is entirely that case for the reference branch, which is
+why callers descriptor the trajectory and difference in R^21 afterwards.
 """
 
 from dataclasses import dataclass
@@ -43,34 +48,17 @@ import numpy as np
 import torch
 
 from spade.common.study import study_dir
-from spade.figures.paper_style import sae_label
-from spade.othello.taxonomy import CATEGORIES
-from spade.saes.registry import seed42_entries
-from spade.spaces import EXCLUDED_SAE
 from spade.straightness.geometry import (
     N_RAW_D, N_RAW_THETA, RESTRAV_FEATURE_NAMES, moment4, restrav_features,
     temporal_geometry)
+from spade.violation_divergence.branches import FIGURE_GAME, complete_games
 from spade.violation_divergence.compute_divergence import sae_encoder
+from spade.violation_divergence.fork_plane import STRIDE, positions, spaces
 
-STRIDE = 2               # one mover per curve, as in ../game_trajectory
-WINDOW = (-8, 24)        # the study's analysis window, r = t - t0
-FIRST_POS, LAST_POS = 1, 58  # position 0 is the attention sink
 W = 8                    # smallest window filling all 21 coordinates; see the docstring
-# The game the grids draw, picked by a sweep over all 1550 branch-complete games
-# and shared with the sibling fork studies so the panels line up.
-DEFAULT_GAME = 1235
-RAW_SPACE = "raw layer 5 (reference space)"
 # The two descriptor components the straightness study states its results in, and
-# the one fixed plane that is the same named pair in every cell of the grid.
+# the one fixed plane that is the same named pair in every cell of a grid.
 FIXED_AXES = ("mean d", "mean θ")
-
-
-def positions(t0: int, back: int = 0) -> np.ndarray:
-    """The study's window at t0's parity, extended `back` sampled positions
-    earlier -- clipped at the board, so a short game simply yields fewer."""
-    lo = max(FIRST_POS, t0 + WINDOW[0] - STRIDE * back)
-    p = np.arange(lo, min(LAST_POS, t0 + WINDOW[1]) + 1)
-    return p[(p - t0) % STRIDE == 0]
 
 
 def names_of(k: int) -> list[str]:
@@ -95,7 +83,8 @@ def descriptor(Z: torch.Tensor) -> np.ndarray:
 def windowed(Z: np.ndarray, w: int = W) -> np.ndarray:
     """[n, T, D] -> [n, T, K], the descriptor over the w positions ending at t.
 
-    K is 21 for w >= 8 and 8 below it; the first w-1 positions are NaN.
+    K is 21 for w >= 8 and 8 below it; the first w-1 positions are NaN. Rows are
+    independent, which is what lets a caller average members afterwards.
     """
     z = torch.from_numpy(Z)
     out = None
@@ -117,23 +106,14 @@ def jackknife(Z: np.ndarray) -> np.ndarray:
                      for t in range(Z.shape[1])])
 
 
-def spaces() -> list[tuple[str, object]]:
-    """(label, SAE entry or None) -- raw layer 5 first, then the seed-42 families."""
-    return [(RAW_SPACE, None)] + [
-        (sae_label(e.config.replace("Trainer-othello", "")), e)
-        for e in seed42_entries() if e.config not in EXCLUDED_SAE]
-
-
 def usable(n: int | None = None, w: int = W) -> list[int]:
     """Games carrying every branch type whose first full-width window still ends
     before the branch, so at least one drawn point is branch-free and the prefix
     can be seen collapsing rather than asserted. Needs t0 >= 18 at w=8."""
     meta = torch.load(study_dir("divergence") / "branches" / "branches.pt",
                       weights_only=True)
-    n_types = len(CATEGORIES) + 2  # 6 illegal + reference + 2 legal controls
-    t0 = {int(g): int(meta["t0"][(meta["game_id"] == g).nonzero()[0]])
-          for g in meta["game_id"].unique().tolist()
-          if int((meta["game_id"] == g).sum()) == n_types}
+    t0 = {g: int(meta["t0"][(meta["game_id"] == g).nonzero()[0]])
+          for g in complete_games(meta)}
     ids = [g for g, t in t0.items() if positions(t, w - 1)[w - 1] < t]
     return ids[:n]
 
@@ -170,7 +150,7 @@ def stream(gids: list[int], device: str = "cpu", w: int = W):
         yield g
 
 
-def figure_game(gid: int = DEFAULT_GAME, w: int = W, device: str = "cpu") -> dict:
+def figure_game(gid: int = FIGURE_GAME, w: int = W, device: str = "cpu") -> dict:
     """The one game the grids draw, cached so re-rendering skips the 1 GB load."""
     cache = study_dir("divergence") / "fork_curvature" / f"game_{gid}_w{w}.npz"
     if cache.exists():
@@ -209,8 +189,8 @@ def fit_plane(F: np.ndarray, centred: bool, align: np.ndarray | None = None) -> 
     lengths whose absolute variances differ ~450x across dictionaries, so a raw
     PCA reports units, not structure (analysis/straightness/feature_pca reasons
     the same way). Centring is the caller's -- for a difference-from-reference
-    descriptor zero is a real point, as in the incumbent figure's uncentred PCA
-    of D, while for an absolute descriptor there is no origin to preserve.
+    descriptor zero is a real point, as in fork_plane's uncentred PCA of D, while
+    for an absolute descriptor there is no origin to preserve.
     """
     ok = np.isfinite(F).all(1)
     sd = np.nanstd(F, axis=0)

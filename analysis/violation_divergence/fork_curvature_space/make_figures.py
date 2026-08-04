@@ -39,12 +39,12 @@ from matplotlib.ticker import MaxNLocator
 import numpy as np
 import torch
 
-import descriptor as dsc
 from spade.figures.embedding_panels import class_ellipse
 from spade.figures.paper_style import (
     CATEGORY_STYLE, GRID, INK, MUTED, NULL, REFERENCE, apply_style, rule_key,
     save_figure)
 from spade.othello.taxonomy import CATEGORIES
+from spade.violation_divergence import curvature_plane as dsc
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 ELEV, AZIM = 18, -58  # matched to ../game_trajectory so the two grids read alike
@@ -260,7 +260,7 @@ def whole_grid(g: dict, plane: str, camera_ready: bool) -> Path:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--w", type=int, default=dsc.W)
-    parser.add_argument("--game", type=int, default=dsc.DEFAULT_GAME)
+    parser.add_argument("--game", type=int, default=dsc.FIGURE_GAME)
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()
 

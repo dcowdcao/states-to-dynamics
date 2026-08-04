@@ -13,8 +13,13 @@ constraint rules they violate, so the figure carries five series.
 
 ```
 python analysis/violation_divergence/fork_and_board/make_figures.py \
-    [--game 1235] [--embedding pca|isomap] [--camera-ready]
+    [--game 1235] [--plane displacement|r21] [--embedding pca|isomap] [--camera-ready]
 ```
+
+| file | plane (a) is drawn in |
+|---|---|
+| `game_1235_fork_and_board_displacement_pca` | PCA of `Δ(t) = z_b(t) − z_ref(t)` — the default |
+| `game_1235_fork_and_board_r21_pca` | PCA of `Δφ(t) = φ(z_b(t)) − φ(z_ref(t))`, inside the 21-D ReStraV curvature descriptor |
 
 Both panels draw the same game, which is what makes the pairing mean anything.
 The default is **game 1235** (*t0* = 20); `--game` asserts the game it is given
@@ -68,6 +73,43 @@ line style, is what identifies the square. Under the rule grouping the two R1
 squares carry the same colour and marker, so a reader tells them apart by the
 square and by the disc under it — the board note says so.
 
+## The second plane: R^21
+
+`--plane r21` replaces the displacement embedding with a plane inside the 21-D
+ReStraV curvature descriptor (`spade.violation_divergence.curvature_plane`, which
+`../fork_curvature_space` measures in detail). φ is the 7 step lengths, 6 turning
+angles and their 8 moments over the **W = 8 sampled positions ending at *t***, and
+panel (a) embeds `Δφ(t) = φ(z_b(t)) − φ(z_ref(t))`. Panel (b) is unchanged: the
+board does not know what plane the trajectories were drawn in.
+
+Three things the R^21 version has to get right, all of them checked at render
+time or in `spade.violation_divergence.test_curvature_plane`:
+
+- **φ goes on each member category separately, and the rule mean is taken
+  afterwards.** φ is nonlinear, so `mean φ(z_b) ≠ φ(mean z_b)`: averaging the six
+  trajectories first and taking step lengths and angles of the average measures
+  the curvature of a path no branch takes. The plane projection *is* linear, so
+  mean-then-project and project-then-mean agree, and the figure takes the mean in
+  the plane exactly as the displacement version does. The legend says where the
+  mean is taken.
+- **The difference is taken inside R^21, never φ of the displacement.** `D` is
+  identically zero over the shared prefix, so its steps have zero length, its
+  angles are undefined, and the reference branch comes out 53.8% NaN
+  (`../fork_curvature_space/README.md`). Δφ keeps both invariants: the reference
+  is the vertical line at the origin, and the prefix collapses onto it exactly.
+  `project()` asserts `max|Δφ| = 0` over the branch-free offsets, in every one of
+  the nine spaces, on every render.
+- **The window costs offsets.** A full-width window spans 14 plies, so it needs
+  prefix context the study window `r ≥ −8` does not carry. The positions are
+  extended back to the start of the game and the first `W − 1` are dropped: at
+  *t0* = 20, **15 of the study window's 17 offsets carry a descriptor and 2 of
+  those are branch-free**. The figure states this and the *z* axis starts where
+  the descriptor does, not where the study window does.
+
+The `--embedding` choice belongs to the displacement plane; `--plane r21` fits
+its own uncentred PCA of the column-scaled Δφ and asserts that `--embedding` is
+left at `pca` rather than silently ignoring it.
+
 ## One trajectory per rule, and what that costs
 
 The six illegal categories are averaged into the three rules they violate
@@ -91,7 +133,12 @@ both embeddings.
 pairwise distance, on the full 512-d layer-5 displacement trajectories over
 *t* ≥ *t0*, is **0.885** on game 1235 and **median 0.945 [IQR 0.872–1.020]** over
 all 1550 branch-complete games — above 1 in 30% of them
-(`python -m spade.violation_divergence.rule_groups`). A rule's members travel
+(`python -m spade.violation_divergence.rule_groups`). The R^21 figure recomputes
+it in its own space — the same statistic on the column-scaled Δφ, all 21
+components, raw layer 5, *t* ≥ *t0* — and gets **0.902**: the rules cohere no
+better in curvature space than in displacement space, and slightly worse. There
+is no population number in R^21; the 0.945 is a displacement figure and each
+legend says which of the two it is quoting. A rule's members travel
 barely closer to each other than to another rule's. Three confident lines would
 be a lie about that, so each rule's members are drawn **faint behind their mean**
 and the ratio rides in the legend title: the members, not the means, are the
@@ -125,7 +172,10 @@ is comparable across cells anyway.
 
 - Each fork cell: `PC1 (x% var)` / `PC2 (y% var)` per §4.6 — **per component,
   never summed**, and per panel, since the plane is refit per space. Isomap cells
-  read `arb. units`. The two plane axes carry **three sparse ticks, symmetric
+  read `arb. units`. In R^21 the label also names the descriptor component the PC
+  loads hardest on (`PC1 (44% var, Δ mean θ)`), which is the only thing that makes
+  a fitted curvature plane interpretable; the axis is still a mixture, so the
+  component is a lead and not a unit. The two plane axes carry **three sparse ticks, symmetric
   about zero** so the origin — where the reference sits in a displacement plane —
   always gets one. They are a within-panel scale bar and nothing else: the plane
   is refit per space, so the legend title's "NOT comparable across the grid"

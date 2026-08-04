@@ -25,8 +25,9 @@ from itertools import combinations
 import numpy as np
 import torch
 
-import descriptor as dsc
 from spade.straightness.geometry import temporal_geometry
+from spade.violation_divergence import curvature_plane as dsc
+from spade.violation_divergence.fork_plane import RAW_SPACE, STRIDE, spaces
 
 R_POST = 0     # separation is measured at offsets r >= this, i.e. after the branch
 N_BOOT = 2000
@@ -138,14 +139,14 @@ def invariants(g: dict, w: int) -> None:
     r = g["pos"][c:] - g["t0"]
     pre, post = np.flatnonzero(r < 0), np.flatnonzero(r >= 0)
     keep = np.arange(len(g["category"])) != ref
-    names = dsc.names_of(dsc.descriptor(torch.from_numpy(g[dsc.RAW_SPACE][:, :w])).shape[1])
+    names = dsc.names_of(dsc.descriptor(torch.from_numpy(g[RAW_SPACE][:, :w])).shape[1])
 
-    defined = np.flatnonzero(np.isfinite(dsc.windowed(g[dsc.RAW_SPACE], w)[:, c:]
+    defined = np.flatnonzero(np.isfinite(dsc.windowed(g[RAW_SPACE], w)[:, c:]
                                          ).all(-1).all(0))
     print(f"the figure game: {g['game']}, t0={g['t0']}, {len(r)} plotted positions "
-          f"r={r[0]}..{r[-1]} at stride {dsc.STRIDE}, 9 branches; {c} sampled "
+          f"r={r[0]}..{r[-1]} at stride {STRIDE}, 9 branches; {c} sampled "
           f"positions of prefix context reach back to {g['pos'][0]}")
-    print(f"window w={w} sampled positions = {dsc.STRIDE * (w - 1)} plies -> "
+    print(f"window w={w} sampled positions = {STRIDE * (w - 1)} plies -> "
           f"{w - 1} step lengths, {w - 2} angles -> {len(names)}-D descriptor; "
           f"{len(defined)}/{len(r)} curve points defined, r={r[defined[0]]}..{r[-1]}, "
           f"of which {int((r[defined] < 0).sum())} are branch-free\n")
@@ -153,7 +154,7 @@ def invariants(g: dict, w: int) -> None:
     print("1. undefined components (fraction of entries), per space")
     print(f"{'space':34} {'θ NaN z_b':>10} {'θ NaN D':>8} {'θ NaN D, r>=0':>14} "
           f"{'φ(D) NaN':>9} {'φ(D) NaN, ref':>14}")
-    for label, _ in dsc.spaces():
+    for label, _ in spaces():
         Z = g[label]
         D = Z - Z[ref]
         _, th_z = temporal_geometry(torch.from_numpy(Z))
@@ -168,7 +169,7 @@ def invariants(g: dict, w: int) -> None:
           "Δφ(t) = φ(z_b(t)) − φ(z_ref(t))")
     print(f"{'space':34} {'max|Δφ| at r<0':>15} {'max|Δφ_ref|':>12} "
           f"{'PC1/PC2 var':>12} {'PC1 leads on':>14} {'r at half-max':>14}")
-    for label, _ in dsc.spaces():
+    for label, _ in spaces():
         phi = dsc.windowed(g[label], w)[:, c:]
         dphi = phi - phi[ref]
         pl = dsc.fit_plane(dphi.reshape(-1, dphi.shape[2]), centred=False)
@@ -182,16 +183,16 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_games", type=int, default=40)
     parser.add_argument("--w", type=int, default=dsc.W)
-    parser.add_argument("--game", type=int, default=dsc.DEFAULT_GAME)
+    parser.add_argument("--game", type=int, default=dsc.FIGURE_GAME)
     args = parser.parse_args()
 
-    win = {label: {k: [] for k in PLANES} for label, _ in dsc.spaces()}
-    who = {label: {k: [] for k in WHOLE_PLANES} for label, _ in dsc.spaces()}
-    flg = {label: {k: [] for k in FLAGS} for label, _ in dsc.spaces()}
+    win = {label: {k: [] for k in PLANES} for label, _ in spaces()}
+    who = {label: {k: [] for k in WHOLE_PLANES} for label, _ in spaces()}
+    flg = {label: {k: [] for k in FLAGS} for label, _ in spaces()}
     n = 0
     invariants(dsc.figure_game(args.game, args.w), args.w)
     for g in dsc.stream(dsc.usable(args.n_games, args.w), w=args.w):
-        for label, _ in dsc.spaces():
+        for label, _ in spaces():
             a, b, c = per_game(g, label, args.w)
             for k in PLANES:
                 win[label][k].append(a[k])
@@ -208,17 +209,17 @@ def main():
           f"(1.0 = the plane sees nothing), mean over r=0..24,\n   then mean "
           f"[95% bootstrap CI] over n={n} games")
     print(f"{'space':34} " + " ".join(f"{p:>19}" for p in PLANES))
-    for label, _ in dsc.spaces():
+    for label, _ in spaces():
         print(f"{label:34} " + " ".join(f"{boot(win[label][p][:, 1]):>19}"
                                         for p in PLANES))
     paired = np.concatenate([win[l]["Δφ fixed"][:, 1] - win[l]["PCA(D) 2-D"][:, 1]
-                             for l, _ in dsc.spaces()])
+                             for l, _ in spaces()])
     print(f"{'paired Δ, Δφ fixed − PCA(D)':34} {boot(paired)}   (n={n} games x 9 spaces)")
 
     print(f"\n4. whole variant: one 21-D point per branch over r=0..24, "
           f"same null ratio, n={n} games")
     print(f"{'space':34} " + " ".join(f"{p:>19}" for p in WHOLE_PLANES))
-    for label, _ in dsc.spaces():
+    for label, _ in spaces():
         print(f"{label:34} " + " ".join(f"{boot(who[label][p][:, 1]):>19}"
                                         for p in WHOLE_PLANES))
 
@@ -228,7 +229,7 @@ def main():
           f"{'null percentile':>19}")
     for table, planes in ((win, PLANES), (who, WHOLE_PLANES)):
         for p in planes:
-            x = np.concatenate([table[l][p] for l, _ in dsc.spaces()])
+            x = np.concatenate([table[l][p] for l, _ in spaces()])
             print(f"{p:22} {boot(x[:, 0]):>19} {boot(x[:, 1]):>19} "
                   f"{boot(x[:, 2]):>19}")
 
@@ -236,7 +237,7 @@ def main():
           f"controls fall below\n   all six illegal branches on a named R^21 axis. "
           f"Exact chance {CHANCE:.3f}; n={n} games.")
     print(f"{'space':34} " + " ".join(f"{f:>28}" for f in FLAGS))
-    for label, _ in dsc.spaces():
+    for label, _ in spaces():
         print(f"{label:34} " + " ".join(f"{boot(flg[label][f]):>28}" for f in FLAGS))
 
 

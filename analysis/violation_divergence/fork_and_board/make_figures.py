@@ -18,8 +18,16 @@ Planes are refit per space, so cells are comparable in the *shape* of the fork
 and never in position. One game (n=1): an illustration of the design, not a
 claim; the study's numbers are in the parent README.
 
+Two planes, same panels. `displacement` embeds D(t) = z_b(t) - z_ref(t), the
+better-validated default. `r21` embeds the curvature displacement
+Δφ(t) = φ(z_b(t)) - φ(z_ref(t)) inside ReStraV's 21-D descriptor space. φ is
+nonlinear, so it is applied to each member category separately and the rule mean
+is taken afterwards, in the plane; the projection is linear, so mean-then-project
+and project-then-mean agree, while phi-of-a-mean would be a different quantity.
+
 Usage: python analysis/violation_divergence/fork_and_board/make_figures.py
-       [--game 1235] [--embedding pca|isomap] [--camera-ready]
+       [--game 1235] [--plane displacement|r21] [--embedding pca|isomap]
+       [--camera-ready]
 """
 
 import argparse
@@ -35,51 +43,106 @@ from spade.common.study import study_dir
 from spade.figures.branch_panels import (
     AZIM, ELEV, axis_labels, board_note, board_panel, rule_fork_panel)
 from spade.figures.branch_style import ordered_legend
-from spade.figures.paper_style import (
-    MUTED, apply_style, rule_key, sae_label, save_figure)
+from spade.figures.paper_style import MUTED, apply_style, rule_key, save_figure
 from spade.othello.boards import flip_set, replay
-from spade.saes.registry import seed42_entries
-from spade.spaces import EXCLUDED_SAE
 from spade.violation_divergence.branches import (
     FIGURE_GAME, Game, complete_games, load_game, reference_row, selection_note)
+from spade.violation_divergence.curvature_plane import W, fit_plane, windowed
 from spade.violation_divergence.fork_plane import (
-    EMBEDDINGS, STRIDE, positions, space_features)
+    EMBEDDINGS, STRIDE, positions, space_features, spaces)
 from spade.violation_divergence.rule_groups import POPULATION_SPREAD, spread_ratio
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 NCOL = 3
 CELL_W, CELL_H = 3.7, 3.5  # one fork cell, as in ../game_trajectory's grid
 BOARD_H = 5.4              # the board row, tall enough for a square board
+PLANE_NAME = {"displacement": "Displacement", "r21": "R$^{21}$ Curvature Space"}
+METHOD_NAME = {"pca": "PCA", "isomap": "Isomap"}
 
 
-def spaces() -> list[tuple[str, object]]:
-    """Raw layer 5 leads, then one SAE family per cell (FIGURE_GUIDELINES 4.6)."""
-    return [("raw layer 5 (reference space)", None)] + \
-        [(sae_label(e.config.replace("Trainer-othello", "")), e)
-        for e in seed42_entries() if e.config not in EXCLUDED_SAE]
+def project(plane: str, method: str, F: np.ndarray, ref: int, k: int):
+    """(coords [n, T', 2], the two axis labels, positions dropped from the front).
+
+    `k` indexes t0 in the sampled positions. The R^21 plane applies phi to each
+    branch on its own and differences inside R^21: phi(D) is undefined over the
+    shared prefix, where D is exactly zero, and phi of a mean of trajectories
+    would be the curvature of a path no branch takes.
+    """
+    if plane == "displacement":
+        n, T, D = F.shape
+        coords, var, _ = EMBEDDINGS[method]((F - F[ref]).reshape(-1, D))
+        return coords.reshape(n, T, 2), axis_labels(method, var), 0
+    phi = windowed(F, W)
+    dphi = (phi - phi[ref])[:, W - 1:]
+    branch_free = k - (W - 1)
+    assert branch_free > 0, \
+        f"only {k} sampled positions before t0: no branch-free w={W} window"
+    assert np.nanmax(np.abs(dphi[:, :branch_free])) == 0, \
+        "the shared prefix does not collapse onto the origin in R^21"
+    flat = dphi.reshape(-1, dphi.shape[-1])
+    p = fit_plane(flat, centred=False)
+    return (p.project(flat).reshape(dphi.shape[:2] + (2,)),
+            [f"PC{i + 1} ({p.var[i]:.0%} var, Δ {p.lead[i]})" for i in (0, 1)], W - 1)
 
 
-def legend_title(g: Game, method: str, spread: float) -> str:
+def spread_field(plane: str, Z: np.ndarray, ref: int, post: np.ndarray) -> np.ndarray:
+    """What the within/between-rule spread ratio is measured on, in raw layer 5 at
+    full width and never in a 2-D projection: the same quantity the panels embed.
+
+    Δφ is column-scaled first — its 21 components mix degrees with
+    activation-scale lengths, so a raw Euclidean distance is a distance in θ."""
+    if plane == "displacement":
+        return (Z - Z[ref])[:, post]
+    phi = windowed(Z, W)
+    dphi = phi - phi[ref]
+    sd = np.nanstd(dphi.reshape(-1, dphi.shape[-1]), axis=0)
+    return (dphi / np.where(sd > 0, sd, 1))[:, post]
+
+
+def legend_title(g: Game, plane: str, method: str, spread: float,
+                 pos: np.ndarray) -> str:
     n_legal = g.rows[0]["n_legal"]
-    mean_note = ("an uncentred linear map, so that equals projecting the mean displacement"
-                 if method == "pca" else
-                 "not linear, so this is a mean of embedded points, not of displacements")
+    if plane == "displacement":
+        mean_note = ("an uncentred linear map, so that equals projecting the mean "
+                     "displacement" if method == "pca" else
+                     "not linear, so this is a mean of embedded points, not of "
+                     "displacements")
+        quantity = (f"member categories' displacements, taken in the plane\n"
+                    f"      ({method.upper()} is {mean_note})\n")
+        window = ""
+        source = (f"{spread:.2f} here;\n{POPULATION_SPREAD}\n"
+                  f"(raw layer 5, full 512-d, $t\\geq t_0$).")
+    else:
+        quantity = (f"members' Δφ(t) = φ($z_b$(t)) − φ($z_{{ref}}$(t)), taken in the "
+                    f"plane\n"
+                    f"      (φ is ReStraV's 21 step lengths and turning angles over the "
+                    f"{W} sampled positions ending at t,\n"
+                    f"      applied to EACH member on its own: φ is NONLINEAR, so "
+                    f"averaging the trajectories first would\n"
+                    f"      measure a path no branch takes. The projection is linear, so "
+                    f"the mean is the same either side of it)\n")
+        drawn, study = len(pos) - (W - 1), len(positions(g.t0))
+        window = (f"      {drawn} of the study window's {study} offsets carry a "
+                  f"descriptor (the earlier windows run off the board);\n"
+                  f"      {int((pos[W - 1:] < g.t0).sum())} of them are branch-free and "
+                  f"Δφ is exactly 0 there, so the prefix still IS the origin\n")
+        source = (f"{spread:.2f} here;\n"
+                  f"on the column-scaled Δφ in raw layer 5, all 21 components, "
+                  f"$t\\geq t_0$;\n{POPULATION_SPREAD}\n"
+                  f"is the displacement number, and R$^{{21}}$ has none.")
     return (f"the same {len(g.rows)} branches in both panels, game {g.game}, "
             f"$t_0$={g.t0}\n"
-            f"(a) one path per rule: the mean of its member categories' displacements, "
-            f"taken in the plane\n"
-            f"      ({method.upper()} is {mean_note})\n"
+            f"(a) one path per rule: the mean of its {quantity}"
             f"      over those members drawn faint. Plane refit per space — arb. units; "
             f"the three ticks per\n"
             f"      plane axis are a within-panel scale only, cells are NOT comparable "
             f"across the grid;\n"
             f"      view elev={ELEV}, azim={AZIM}; every {STRIDE}nd ply\n"
+            f"{window}"
             f"(b) {n_legal} moves are legal at $t_0$; the played move and one of the "
             f"other {n_legal - 1} are branched\n"
             f"the grouping is weak. within-rule ÷ between-rule mean pairwise distance = "
-            f"{spread:.2f} here;\n"
-            f"{POPULATION_SPREAD}\n"
-            f"(raw layer 5, full 512-d, $t\\geq t_0$). A rule's members travel barely "
+            f"{source} A rule's members travel barely "
             f"closer to each other\n"
             f"than to another rule's, so the faint members and not the three means carry "
             f"the evidence —\n"
@@ -94,10 +157,11 @@ def legend_title(g: Game, method: str, spread: float) -> str:
             f"{selection_note(g.game)}")
 
 
-def figure(g: Game, Z: np.ndarray, pos: np.ndarray, method: str, device: str,
-           spread: float, camera_ready: bool) -> Path:
+def figure(g: Game, Z: np.ndarray, pos: np.ndarray, plane: str, method: str,
+           device: str, spread: float, camera_ready: bool) -> Path:
     cells = spaces()
     ref = reference_row(g.rows)
+    k = int(np.flatnonzero(pos == g.t0)[0])
     nrow = int(np.ceil(len(cells) / NCOL))
 
     fig = plt.figure(figsize=(CELL_W * NCOL, CELL_H * nrow + BOARD_H))
@@ -115,12 +179,10 @@ def figure(g: Game, Z: np.ndarray, pos: np.ndarray, method: str, device: str,
 
     for j, (name, entry) in enumerate(cells):
         F = space_features(Z, entry, device)
-        n, T, D = F.shape
-        coords, var, _ = EMBEDDINGS[method]((F - F[ref]).reshape(-1, D))
+        coords, (xlab, ylab), dropped = project(plane, method, F, ref, k)
         ax = fig.add_subplot(grid[j // NCOL, j % NCOL], projection="3d")
-        rule_fork_panel(ax, coords.reshape(n, T, 2), g.rows, pos, g.t0,
+        rule_fork_panel(ax, coords, g.rows, pos[dropped:], g.t0,
                         legend=(j == 0), zlabel=(j % NCOL == 0))
-        xlab, ylab = axis_labels(method, var)
         ax.set_xlabel(xlab, labelpad=-2, fontsize=8)
         ax.set_ylabel(ylab, labelpad=-2, fontsize=8)
         ax.set_title(name, loc="left", fontsize=8.5)
@@ -136,25 +198,32 @@ def figure(g: Game, Z: np.ndarray, pos: np.ndarray, method: str, device: str,
 
     band = fig.add_subplot(lower[1])
     band.axis("off")
-    ordered_legend(band, keyed, 2, legend_title(g, method, spread),
-                   loc="upper left", bbox_to_anchor=(0.0, 1.0))
-    band.text(0.0, 0.30, board_note(board, by_rule=True), ha="left", va="top",
+    leg = ordered_legend(band, keyed, 2, legend_title(g, plane, method, spread, pos),
+                         loc="upper left", bbox_to_anchor=(0.0, 1.0))
+    # The two keys hang off the legend's own bottom edge: the title block is
+    # several lines longer in one plane than the other, and a fixed y collides.
+    fig.canvas.draw()
+    below = leg.get_window_extent().transformed(band.transAxes.inverted()).y0 - 0.06
+    band.text(0.0, below, board_note(board, by_rule=True), ha="left", va="top",
               fontsize=8, color=MUTED, linespacing=1.5)
-    rule_key(band, ["R1", "R2", "R3"], x=0.0, y=0.14)
+    rule_key(band, ["R1", "R2", "R3"], x=0.0, y=below - 0.16)
 
     if not camera_ready:
-        fig.suptitle(f"Game {g.game}: {len(g.rows)} futures of one position, in nine "
-                     f"representation spaces ({method.upper()})", fontsize=12)
-    return save_figure(fig, FIG_DIR / f"game_{g.game}_fork_and_board_{method}",
+        fig.suptitle(f"Fork Trajectory ({PLANE_NAME[plane]} {METHOD_NAME[method]}) in "
+                     f"Each Representation Space", fontsize=12)
+    return save_figure(fig, FIG_DIR / f"game_{g.game}_fork_and_board_{plane}_{method}",
                        camera_ready)
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--game", type=int, default=FIGURE_GAME)
-    parser.add_argument("--embedding", default="pca", choices=["pca", "isomap"])
+    parser.add_argument("--plane", default="displacement", choices=list(PLANE_NAME))
+    parser.add_argument("--embedding", default="pca", choices=list(METHOD_NAME))
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()
+    assert args.plane == "displacement" or args.embedding == "pca", \
+        "--plane r21 fits its own plane inside R^21; --embedding is the displacement one"
 
     apply_style(args.camera_ready)
     device = select_device()
@@ -170,12 +239,15 @@ def main():
     keep = [i for i, r in enumerate(g.rows) if r["is_control"] != 2]
     g = replace(g, idx=g.idx[keep], rows=[g.rows[i] for i in keep])
 
-    pos = positions(g.t0)
+    # The R^21 window reads 14 plies back, so it needs prefix context the study
+    # window does not carry; the extra offsets are computed and never drawn.
+    pos = positions(g.t0, W - 1 if args.plane == "r21" else 0)
     Z = acts[g.idx][:, pos, :].float().numpy()
-    D = Z[:, pos >= g.t0] - Z[reference_row(g.rows), pos >= g.t0]
-    spread = spread_ratio(D, g.rows)
-    print(f"within/between rule spread ratio, game {g.game}: {spread:.3f}")
-    print(f"wrote {figure(g, Z, pos, args.embedding, device, spread, args.camera_ready)}")
+    field = spread_field(args.plane, Z, reference_row(g.rows), pos >= g.t0)
+    spread = spread_ratio(field, g.rows)
+    print(f"within/between rule spread ratio, game {g.game}, {args.plane}: {spread:.3f}")
+    out = figure(g, Z, pos, args.plane, args.embedding, device, spread, args.camera_ready)
+    print(f"wrote {out}")
 
 
 if __name__ == "__main__":
