@@ -77,9 +77,17 @@ variance explained at an L0 denser than Standard ReLU._
 
 _The row this table used to carry, "SpaDE (initial)" at L0 15.4 / VE 0.352, is
 gone. That is the γ=1e-2 seed-42 checkpoint: its evaluation is degenerate where
-seeds 43–46 of the same config give L0 128 and VE 0.973, its `config.json` is a
-Mac smoke config over real GPU weights, and it is now excluded from every study
-and from the viewer._
+seeds 43–46 of the same config give L0 128 and VE 0.973, and it is now excluded
+from every study and from the viewer. Its `config.json` is stale on `steps` and
+`device` only, and the `ae.pt` on disk does not reproduce that row — Appendix A._
+
+_Coverage and reconstruction F1 for the five `results/main/` baselines (TopK,
+Standard, Gated, p-Anneal, Gated+p-Anneal) reproduce only to ±0.014: the
+activations they were evaluated on no longer exist (MIGRATION.md open question
+14). Differences smaller than that — Gated's 0.5673 against Standard's 0.5679, for
+instance — are not resolvable. L0 and variance explained are stable, and the
+BatchTopK, CosineSpaDE and SpaDE-default rows reproduce exactly
+(`docs/finish_notes/acceptance-eval.md`)._
 
 _γ-sweep addendum (19 γ ∈ [0.05, 1e4] × 5 seeds): γ sweeps CosineSpaDE's L0 across
 179 → 20.5, but only above γ ≈ 16, where the simplex-bounded sparsity regularizer
@@ -442,10 +450,14 @@ Seed 42 throughout.
 | Gamma sweep | 1e-7 | 2.5e-2 | 100.8 | 0.921 | 0.168 | 0.438 | 0.412 |
 | Default | 1e-3 | 1e-4 | 1808.2 | 1.000 | 0.570 | 0.515 | 0.995 |
 
-The former "Initial" row (λ=9.77e-5, γ=0.2, L0 15.4) is dropped. Those λ/γ values
-were read off a `config.json` that is a Mac smoke-test config carrying the stale
-pre-canonicalization class defaults; the weights are the γ=1e-2 production run,
-and that checkpoint is excluded everywhere.
+The former "Initial" row (λ=9.77e-5, γ=0.2, L0 15.4) is dropped because that
+checkpoint is excluded everywhere, not because the configuration is fictional. The
+run is in wandb at exactly those λ and γ — `SpaDETrainer-othello_trainer_5`, 36621
+steps on cuda:0, finished degenerate; what is stale in all six
+`checkpoints/main/*/config.json` is `steps` and `device`. Which weights sit in
+`checkpoints/main/trainer_5` is MIGRATION.md open question 15: the `ae.pt` there
+reruns at L0 127.76 / VE 0.973, not the L0 15.4 / VE 0.352 of its own record
+(`docs/finish_notes/acceptance-eval.md`).
 
 ## Appendix B: figures and data
 

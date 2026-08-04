@@ -52,6 +52,11 @@ claims_status.md won in all of these.
    the *pre-canonicalization* class defaults. So the λ/γ label was read off a
    stale file and the weights are the production run. The row is dropped from
    the results tables in all three documents, with the reason stated in each.
+   *Retracted since: that configuration did run — `SpaDETrainer-othello_trainer_5`,
+   36621 steps on cuda:0, finished degenerate — so λ and γ in the config are
+   correct. What is stale in all six configs is `steps` and `device`, and the
+   `ae.pt` in `trainer_5` is not the production run either. See
+   `docs/finish_notes/acceptance-eval.md`.*
 5. **"BatchTopK was trained but not Karvonen-evaluated; its results directory is
    empty."** Asserted in `Spade_Pipeline_Summary` §8b′, `Spade_vs_Karvonen`
    §3 and the `analysis_spade_vs_baselines` §2 footnote. Not true since the
@@ -129,6 +134,10 @@ recorded in `docs/pipeline.md` §5 and in the conflict list above:
 > stale pair. The SpaDE baseline's does, which is why the source docs list a
 > "SpaDE initial λ=9.77e-5, γ=0.2" configuration that never ran at those values.
 
+*The last clause is retracted: the run exists in wandb at exactly those λ and γ.
+The canonicalization fact stands; the inference from it about `trainer_5` does not.
+See `docs/finish_notes/acceptance-eval.md`.*
+
 The same document also records that the refactor preserved four load-bearing
 contracts — module filenames, the four class names, the `trainer_class` dispatch
 strings with Cosine matched first, and top-level `Ae`/`Ad`/`lambda_pre` state-dict
@@ -163,12 +172,19 @@ duplicated.
 ## Left for someone else
 
 - `docs/claims_status.md` line 55 (above). Parent owns the file.
+  *Done — the entry now records γ=20 as a sweep result considered and declined, and
+  γ=1.0 as the default.*
 - `archive/old_md/` does not exist; `Refactor_Cleanup_Progress.md` has nowhere to
-  land yet.
+  land yet. *Still true as of 2026-08-04; `archive/` holds only `README.md` and
+  `spade_sweep_collapsed/`. The archive zone owns it.*
 - `scripts/slurm/main/run_all.sh` and the other stub scripts still `cd
   "$HOME/spade_sae"` while `scripts/slurm/README.md` mandates `cd
   "${SPADE_REPO:?}"`. `docs/fasrc_commands.md` documents the README's rule, so
   the scripts are what will need to change.
+  *Done — 39 script files anchor on `cd "${SPADE_REPO:?}"`, and the only remaining
+  `$HOME` uses are the HF-token cache path in the two `submit_*_only_eval.sbatch`
+  jobs, which is correct.*
 - Nothing in the source repo is drawn at final printed width, which blocks
   camera-ready output. Recorded in claims_status.md's open defects; no doc in
-  this zone can fix it.
+  this zone can fix it. *Still open — `spade/figures/paper_style.py` sets no figure
+  width.*

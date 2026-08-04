@@ -45,7 +45,9 @@ not. All raw numbers in `analysis/bracket_flip/results/`.
    measurement, and F1(b) is a deterministic reflection of F1(a), not a new panel.
 2. `p_s_unchanged_rel` is weak on its own — a probe that answered `empty`
    everywhere would score 1.0. The strict form `P(theirs, theirs)` = 0.9880 is
-   the number to quote, and here it happens to equal the loose one.
+   the number to quote, and here it happens to equal the loose one. *Both forms
+   were retired afterwards: a board oracle scores 1.0 on either. Quote neither —
+   see the correction above.*
 3. `peak_layer = 4` reports the probe as much as the model. See M5.
 
 ## M1 — decode

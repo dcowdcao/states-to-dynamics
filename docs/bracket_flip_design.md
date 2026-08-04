@@ -163,8 +163,9 @@ rather than silently taking what comes.
   quantity for unflipped squares — the empirical null. Distributions, not point
   estimates. **This is the measurement that held.**
 - **M5 — depth.** Repeat M1 per layer 0–7. Where the flip readout appears
-  should agree with `analysis/rules_causal/pair_patch.png`, which puts flip
-  consequences in mlp5/mlp6. Cross-study check on an existing result.
+  should agree with `analysis/rules_causal/pair_patch.png`, which writes flip
+  consequences mlp4 → mlp6 (0.13 → 0.38 → 0.57). Cross-study check on an existing
+  result.
 
   **Confounded by probe capacity, and the figure must say so.** The TPR trails
   the linear probe by 0.14–0.36 points at layers 0–5 but by 1.53 and 1.87 at

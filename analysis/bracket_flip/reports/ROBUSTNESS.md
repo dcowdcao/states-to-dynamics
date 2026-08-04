@@ -1,3 +1,11 @@
+> **Correction.** The headline this report stabilizes — `p_s_unchanged_rel`, "the
+> flanked square is the one square whose class does not change" — was retired: it is
+> the probe's accuracy at *s* squared, and §3's own result that it tracks accuracy
+> across ranks at r ≈ 0.999 is the evidence that killed it, read here as support.
+> A stable number is not an informative one. `peak_layer` = 4 is the TPR's answer;
+> an independent linear probe gives 5–6. Kept as the record of the sweep, not as a
+> statement of results — `docs/claims_status.md`.
+
 # Robustness — A3's headline numbers under reseeding, retuning and re-ranking
 
 A3 reports one TPR probe at one seed with a weight decay that A1 retuned. This
