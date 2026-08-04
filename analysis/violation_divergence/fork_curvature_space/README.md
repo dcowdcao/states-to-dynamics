@@ -7,6 +7,10 @@ descriptor of `src/spade/straightness/geometry.py`: 7 raw step lengths, 6 raw
 turning angles, and the 4 nan-aware moments of each — and the plane is taken
 *there*.
 
+Eight branches are drawn — the played move, one legal control, and one move per
+illegal category — and the six illegal categories are grouped into the three
+constraint rules they violate, so each grid carries five series.
+
 ```
 python analysis/violation_divergence/fork_curvature_space/make_figures.py [--game 1235] [--w 8] [--camera-ready]
 python analysis/violation_divergence/fork_curvature_space/measure.py [--n_games 40] [--w 8] [--game 1235]
@@ -93,11 +97,75 @@ real point exactly as in the incumbent figure, while absolute `φ` has no origin
 to preserve and is centred.
 
 The whole variant carries the only uncertainty one game supports: a **leave-one-
-position-out jackknife**, 13 replicates per branch, drawn as a 50% Gaussian
-contour. It is a dispersion over which move enters the descriptor, not a
-confidence interval. The windowed grids are n = 1 with no error bars and say so
-on the figure, exactly as `../game_trajectory` does; the separation numbers with
-CIs over 40 games are below.
+position-out jackknife**, 13 replicates per branch — and, for a rule, 13
+replicates of the rule mean — drawn as a 50% Gaussian contour. It is a dispersion
+over which move enters the descriptor, not a confidence interval. The windowed
+grids are n = 1 with no error bars and say so on the figure, exactly as
+`../game_trajectory` does; the separation numbers with CIs over 40 games are
+below.
+
+## One trajectory per rule, and where the mean is taken
+
+The six illegal categories are averaged into the three rules they violate
+(`spade.othello.taxonomy.RULE_MEMBERS`): **R1 placement** = `occupied_own`,
+`occupied_opp`; **R2 bracketing** = `empty_detached`, `empty_own_only`,
+`empty_no_bracket`; **R3 turn** = `opponent_only`. Sizes 2, 3 and 1, so every
+legend entry carries n — including **`R3 turn (mean of 1)`**, which is one branch
+and not an average. Styling comes from the same `spade.figures.branch_style` the
+sibling fork figures use, so a colour means the same rule across the study.
+
+**φ is nonlinear, so it is applied per member and the means are taken after.**
+mean_b φ(z_b) ≠ φ(mean_b z_b): the curvature of an averaged path is not the
+average curvature, and averaging trajectories first would put a quantity on the
+figure that no branch has. Each member gets its own descriptor, its own Δφ, its
+own projection, and only then are the coordinates averaged — the projection is
+linear (windowed, uncentred) or affine (whole, centred), so averaging in the
+plane and averaging in R^21 agree exactly.
+
+**The grouping is weak — weaker here than in the displacement plane, and for the
+whole variant it is gone.** Within-rule ÷ between-rule mean pairwise distance, on
+the column-scaled full R^21 field in raw layer 5 and never on the 2-D plane the
+figure draws:
+
+| field | ratio, game 1235 | over the nine spaces |
+|---|---|---|
+| `Δφ(t)`, `t ≥ t0` (windowed grids) | **0.90** | 0.77–1.01, median 0.85; above 1 in 1 of 9 |
+| `φ`, one point per branch (whole grids) | **1.03** | 0.90–1.06, median 0.96; above 1 in 3 of 9 |
+| full 512-d displacement, same game and window (`../fork_and_board`) | 0.885 | — |
+
+Above 1 means a rule's members sit *further* from each other than from another
+rule's. The windowed number, 0.90, is slightly worse than the 0.885 the
+displacement figure reports on the same game and window — mapping into R^21 does
+not make the rules cohere. The whole variant is at 1.03, i.e. the rule label
+carries no information about where a branch lands, which the panels show directly:
+in `fork_r21_whole_pca` the three `R2` members are scattered across the whole
+cell with their mean in the middle of nothing. Both grids draw the members faint
+behind their mean and print the ratio in the legend title, so the three confident
+means cannot stand in for six trajectories that do not travel together. The
+population context is the displacement statistic's — median 0.945 [IQR
+0.872–1.020] over all 1550 branch-complete games, above 1 in 30% of them
+(`python -m spade.violation_divergence.rule_groups`); there is no 40-game sweep
+of the R^21 ratio, so the R^21 numbers above are n = 1 on a selected game.
+
+## One control, and where the null went
+
+`control_legal_2` is **not drawn**. One legal control remains, in the null
+styling — grey, dashed, last in the legend. It leaves the plane fit too, since
+the plane should be fit on what is drawn: PCA cells shift slightly against the
+nine-branch version, and nothing in them was comparable across cells anyway.
+
+The cost is not cosmetic. `branches.py` builds two legal controls because *one
+gives no null*: control 2 is scored against control 1 exactly as the illegal
+branches are, and the study's first pass shipped with one control and could not
+interpret its own direction result (`../RED_TEAM.md` F1). Dropping it removes the
+reader's visual answer to "is that separation big compared to two legal moves
+differing?" — which matters more here than in `../fork_and_board`, because the
+separation table below is scored against *both* controls. Nothing measured
+changes: `branches.pt` still carries both rows and `measure.py` still uses 6
+illegal vs 2 legal controls. The legal-vs-legal scale lives in
+`../game_trajectory`, which draws all nine branches with per-category styling,
+and in `../README.md`, which carries the numbers with CIs; the legend titles
+point at both.
 
 ## Separation, against each plane's own permutation null
 
@@ -130,8 +198,9 @@ is consistent with the parent study's own headline (`ratio_illegal_control_L5`
 alternative): there is not much signal for any plane to find.
 
 **One finding that did not survive.** In the drawn game, `fork_r21_whole_fixed`
-puts the reference and both legal controls at low `mean d` and low `mean θ` with
-all six illegal branches up and to the right, in all nine spaces at once. Over 40
+puts the reference and the legal control at low `mean d` and low `mean θ` with
+all six illegal branches up and to the right, in all nine spaces at once (the
+panel draws one control; the number below scores both). Over 40
 games, the fraction in which both controls fall below all six illegal branches is
 **0.07–0.17 on `mean d`** and **0.03–0.15 on `mean θ`** against an exact chance of
 **0.036** — elevated, but nowhere near what the single panel suggests. The panel
@@ -145,12 +214,39 @@ arrangement is the same object in all nine panels. `mean d` is on each space's
 own activation scale (SpaDE codes live on a simplex) and is **not** comparable
 across cells; only its sign and the within-cell ordering are.
 
+## Axes and ticks
+
+- Windowed cells: the two plane axes carry **three ticks, symmetric about zero**
+  (`branch_panels.PLANE_TICKS`, shared with `../fork_and_board`) so the origin —
+  where the reference sits, since the figure draws a difference from it — always
+  gets one. They are a within-panel scale bar and nothing more, which is why the
+  legend title's "NOT comparable across the grid" disclaimer stays and matters
+  more, not less (§4.6, §4.8). The ordered axis reads `t − t0 (plies)`, labelled
+  once per row.
+- PCA plane axes read `PC1 (44% var, mean θ)` — **per component, never summed**,
+  per panel since the plane is refit per space, and naming the descriptor
+  component the PC leads on.
+- Fixed plane axes name the quantity, its unit and its direction:
+  `Δ mean d (activation norm)` and `Δ mean θ (deg, ↑ curvier)` on the windowed
+  grids, without the Δ on the whole grids.
+- Whole cells are 2-D scatters of physical quantities, so they keep ordinary
+  ticks: a symmetric locator would put the ticks at ±(max |x|) and leave a panel
+  spanning `mean d ∈ [18, 21]` with none at all.
+
 ## Caveats
 
 - The game drawn is **1235, t0 = 20**, shared with the sibling fork studies.
   `../game_trajectory`'s game 0 (t0 = 10) cannot be used at all here: it has zero
   sampled positions of prefix context, so no full-width window is branch-free.
 - Everything drawn is one game. Every quantitative statement above carries a
-  bootstrap CI over 40 games and an exact permutation null, from `measure.py`.
+  bootstrap CI over 40 games and an exact permutation null, from `measure.py` —
+  except the rule-spread ratios, which are n = 1.
+- **Three lines are six categories.** The rule means are a labelling convenience
+  and, on this evidence, not much more: at 0.90 and 1.03 the members barely
+  cohere, and the whole variant's ratio is above 1. Read the faint members. A
+  claim about a rule has to be scored per category and aggregated with a CI.
+- **Only one control is drawn.** The legal-vs-legal scale is in
+  `../game_trajectory` and `../README.md`; the figures name them rather than
+  showing one.
 - `moment4` returns ±inf, not NaN, for an all-NaN window; `descriptor()` maps
   non-finite to NaN locally so a degenerate window cannot poison a PCA.

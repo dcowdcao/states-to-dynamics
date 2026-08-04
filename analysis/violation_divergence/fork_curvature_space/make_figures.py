@@ -17,8 +17,15 @@ Two variants, both shipped, in two planes each:
             collapsed -- and they are verified exactly.
   whole     one R^21 point per branch over the post-branch trajectory. No move
             axis; this is analysis/straightness/feature_pca's object, cut down to
-            one game's nine branches, with a jackknife spread over which sampled
+            one game's branches, with a jackknife spread over which sampled
             position is dropped.
+
+Eight branches are drawn -- the played move, one legal control (control 2 is the
+null for control 1 and belongs where control 1 is measured), and one move per
+illegal category, the six of them collapsed onto the three rules they violate.
+phi is nonlinear, so it is applied to each member's own trajectory and the rule
+means are taken afterwards, in the plane; the README carries the within- over
+between-rule spread that says how little the grouping is worth.
 
   pca       top-2 uncentred PCs of the column-scaled descriptor, refit per space,
             so cells are comparable in arrangement only.
@@ -40,17 +47,22 @@ import numpy as np
 import torch
 
 import descriptor as dsc
+from spade.figures.branch_panels import PLANE_TICKS
+from spade.figures.branch_style import (
+    MEMBER, MEMBER_LABEL, branch_style, legend_proxy, ordered_legend)
 from spade.figures.embedding_panels import class_ellipse
 from spade.figures.paper_style import (
     CATEGORY_STYLE, GRID, INK, MUTED, NULL, REFERENCE, apply_style, rule_key,
     save_figure)
 from spade.othello.taxonomy import CATEGORIES
+from spade.othello.taxonomy import LEGAL
+from spade.violation_divergence.branches import selection_note
+from spade.violation_divergence.rule_groups import (
+    POPULATION_SPREAD, rule_rows, spread_ratio)
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 ELEV, AZIM = 18, -58  # matched to ../game_trajectory so the two grids read alike
 NCOL = 3
-CONTROL_LABEL = {1: "control: another legal move (null)",
-                 2: "control 2: a third legal move (null)"}
 # FIGURE_GUIDELINES 1.4: units, and the direction of "good" where it is not obvious.
 D_AXIS = "mean step length $d$ (activation norm)"
 THETA_AXIS = "mean turning angle θ (deg, ↑ curvier)"
@@ -58,97 +70,92 @@ THETA_AXIS = "mean turning angle θ (deg, ↑ curvier)"
 D_AXIS_3D = "Δ mean $d$ (activation norm)"
 THETA_AXIS_3D = "Δ mean θ (deg, ↑ curvier)"
 Z_AXIS = "$t-t_0$ (plies)"
-
-
-def branch_style(category: int, is_control: int) -> dict:
-    if is_control:
-        # Both controls are nulls and share NULL's gray; the second is drawn open
-        # so two series are never distinguishable by their legend text alone.
-        return {"color": NULL["color"], "marker": NULL["marker"], "ls": NULL["ls"],
-                "lw": NULL["lw"], "zorder": NULL["zorder"],
-                "mfc": "none" if is_control == 2 else NULL["color"],
-                "label": CONTROL_LABEL[is_control]}
-    if category == 0:
-        return {"color": REFERENCE["color"], "marker": REFERENCE["marker"], "ls": "-",
-                "lw": REFERENCE["lw"], "zorder": REFERENCE["zorder"],
-                "mfc": REFERENCE["color"], "label": "reference (the game as played)"}
-    s = CATEGORY_STYLE[CATEGORIES[category]]
-    return {"color": s["color"], "marker": s["marker"], "ls": "-", "lw": 1.5,
-            "zorder": 3, "mfc": s["color"], "label": s["label"]}
-
-
-def legend_order(labels: list[str]) -> list[int]:
-    """Reference first, nulls last (FIGURE_GUIDELINES 3); taxonomy order between."""
-    names = [CATEGORY_STYLE[c]["label"] for c in CATEGORIES[1:]]
-    rank = {}
-    for i, lab in enumerate(labels):
-        if lab.startswith("window runs off"):
-            rank[i] = 0
-        elif lab.startswith("reference"):
-            rank[i] = 1
-        elif lab.startswith("branch point"):
-            rank[i] = 8
-        elif lab.startswith("control"):
-            rank[i] = 9 + ("2" in lab)
-        else:
-            rank[i] = 2 + (names.index(lab) if lab in names else len(names))
-    return sorted(range(len(labels)), key=lambda i: rank[i])
-
-
-def ordered_legend(fig, ax, y: float, title: str):
-    handles, labels = ax.get_legend_handles_labels()
-    order = legend_order(labels)
-    fig.legend([handles[i] for i in order], [labels[i] for i in order],
-               loc="lower center", ncol=4, fontsize=8, frameon=False,
-               bbox_to_anchor=(0.5, y), title=title, title_fontsize=7.5)
+PREFIX_LABEL = "shared prefix, window runs off the board (no descriptor)"
 
 
 def branches(g: dict) -> tuple[int, list[dict]]:
     rows = [{"category": int(c), "is_control": int(k)}
             for c, k in zip(g["category"], g["is_control"])]
     ref = next(i for i, r in enumerate(rows)
-               if r["category"] == 0 and not r["is_control"])
+               if r["category"] == LEGAL and not r["is_control"])
     return ref, rows
+
+
+def one_control(g: dict) -> dict:
+    """Drop control 2. It is the null *for* control 1 and belongs where control 1
+    is measured, not in an illustration of the construction; dropping the row also
+    drops it from the plane fit, which is fit on what is drawn."""
+    keep = np.flatnonzero(g["is_control"] != 2)
+    per_branch = ["category", "is_control", *(name for name, _ in dsc.spaces())]
+    return {k: v[keep] if k in per_branch else v for k, v in g.items()}
+
+
+def scaled(phi: np.ndarray) -> np.ndarray:
+    """Column-scaled as fit_plane scales: R^21 mixes degrees with activation-scale
+    lengths, so a Euclidean statistic on the raw columns is one about θ alone."""
+    sd = np.nanstd(phi.reshape(-1, phi.shape[-1]), axis=0)
+    return phi / np.where(sd > 0, sd, 1)
+
+
+def _path(ax, seg: np.ndarray, z: np.ndarray, st: dict, label: str | None) -> None:
+    """One branch or one rule mean: the line, its sparse markers, its end marker."""
+    ax.plot(seg[:, 0], seg[:, 1], z, ls=st["ls"], color=st["color"], lw=st["lw"],
+            marker=st["marker"], ms=3.0, markevery=3, markerfacecolor=st["mfc"],
+            markeredgecolor=st["mec"], markeredgewidth=0.3, zorder=st["zorder"],
+            label=label)
+    ax.plot([seg[-1, 0]], [seg[-1, 1]], [z[-1]], marker=st["marker"], ms=6,
+            color=st["color"], markerfacecolor=st["mfc"], markeredgecolor=st["mec"],
+            markeredgewidth=0.7, zorder=st["zorder"] + 1)
 
 
 def fork_panel(ax, coords: np.ndarray, rows: list[dict], r: np.ndarray,
                legend: bool, named: bool, zlabel: bool) -> None:
     """coords [n_branches, n_pos, 2]; offset from the branch is the vertical axis.
 
+    One path per rule -- the mean of its member categories' Δφ -- over the members
+    drawn faint. φ is nonlinear, so it is applied to each member's own trajectory
+    and the means are taken afterwards; the projection is linear, so the mean of
+    the projected members is the projection of their mean Δφ.
+
     `named` means the two plane axes carry units of their own (the fixed pair), so
-    they get ticks and their own ranges; a PCA plane is isotropic and unitless, so
-    it gets one shared range and no ticks.
+    they keep their own ranges; a PCA plane is isotropic and unitless and gets one
+    shared range. Either way both carry three ticks symmetric about zero, a
+    within-panel scale bar for a plane that is refit per cell (§4.6, §4.8).
     """
     k = int(np.flatnonzero(np.isfinite(coords).all(-1).all(0))[0])
     ax.plot([0, 0], [0, 0], [r[0], r[k]], color=MUTED, lw=3.0, alpha=0.6,
             solid_capstyle="round", zorder=1,
-            label="window runs off the board (no descriptor)" if legend else None)
+            label=PREFIX_LABEL if legend else None)
     for i, row in enumerate(rows):
+        if row["category"] != LEGAL:
+            continue
         st = branch_style(row["category"], row["is_control"])
-        seg, z = coords[i, k:], r[k:]
-        ax.plot(seg[:, 0], seg[:, 1], z, ls=st["ls"], color=st["color"], lw=st["lw"],
-                marker=st["marker"], ms=3.0, markevery=3, mfc=st["mfc"],
-                markeredgecolor="white", markeredgewidth=0.3, zorder=st["zorder"],
-                label=st["label"] if legend else None)
-        ax.plot([seg[-1, 0]], [seg[-1, 1]], [z[-1]], marker=st["marker"], ms=6,
-                color=st["color"], mfc=st["mfc"], markeredgecolor="white",
-                markeredgewidth=0.7, zorder=st["zorder"] + 1)
+        _path(ax, coords[i, k:], r[k:], st, st["label"] if legend else None)
+    for members in rule_rows(rows).values():
+        st = branch_style(rows[members[0]]["category"], 0, by_rule=True)
+        for i in members:
+            ax.plot(coords[i, k:, 0], coords[i, k:, 1], r[k:], color=st["color"],
+                    **MEMBER)
+        _path(ax, coords[members, k:].mean(axis=0), r[k:], st,
+              f"{st['label']} (mean of {len(members)})" if legend else None)
     ax.plot([0], [0], [0], marker="*", ms=15, color=INK, markeredgecolor="white",
             markeredgewidth=0.8, zorder=9,
             label="branch point $t_0$" if legend else None)
-    if named:
-        for axis in (ax.xaxis, ax.yaxis):
-            axis.set_major_locator(MaxNLocator(4))
-        ax.tick_params(axis="both", labelsize=6, pad=-3)
-    else:
+    if legend:
+        legend_proxy(ax)
+    if not named:
         lo, hi = np.nanmin(coords), np.nanmax(coords)
         ax.set_xlim(lo, hi)
         ax.set_ylim(lo, hi)
-        ax.set_xticks([])
-        ax.set_yticks([])
+    for axis in (ax.xaxis, ax.yaxis):
+        axis.set_major_locator(MaxNLocator(PLANE_TICKS, symmetric=True))
+        axis.set_major_formatter(lambda v, _: f"{v:g}")
+    ax.tick_params(axis="x", labelsize=6.5, pad=-3)
+    ax.tick_params(axis="y", labelsize=6.5, pad=-3)
     ax.set_zlim(r[0], r[-1])
-    ax.set_zlabel(Z_AXIS, labelpad=-6, fontsize=7)
-    ax.tick_params(axis="z", pad=0)
+    if zlabel:
+        ax.set_zlabel(Z_AXIS, labelpad=-6, fontsize=7)
+    ax.tick_params(axis="z", labelsize=6.5, pad=0)
     ax.view_init(elev=ELEV, azim=AZIM)
     ax.grid(False)
     for pane in (ax.xaxis, ax.yaxis, ax.zaxis):
@@ -156,18 +163,78 @@ def fork_panel(ax, coords: np.ndarray, rows: list[dict], r: np.ndarray,
 
 
 def point_panel(ax, P: np.ndarray, jack: np.ndarray, rows: list[dict]) -> None:
-    """One R^21 point per branch, with its leave-one-position-out jackknife spread."""
+    """One R^21 point per branch, with its leave-one-position-out jackknife spread.
+
+    A rule is one point, the mean of its members', with the jackknife of that mean;
+    the members are drawn faint. φ is applied per member and never to a mean
+    trajectory, and the projection is affine, so mean-then-project agrees.
+    """
     for i, row in enumerate(rows):
+        if row["category"] != LEGAL:
+            continue
         st = branch_style(row["category"], row["is_control"])
-        is_ref = row["category"] == 0 and not row["is_control"]
+        is_ref = not row["is_control"]
         class_ellipse(ax, jack[:, i], st["color"], 2.0 if is_ref else 1.2)
         ax.plot(P[i, 0], P[i, 1], ls="none", marker=st["marker"],
-                ms=9 if is_ref else 7, color=st["color"], mfc=st["mfc"],
-                markeredgecolor="white" if st["mfc"] != "none" else st["color"],
-                markeredgewidth=1.0, zorder=st["zorder"] + 3, label=st["label"])
+                ms=9 if is_ref else 7, color=st["color"], markerfacecolor=st["mfc"],
+                markeredgecolor=st["mec"], markeredgewidth=1.0,
+                zorder=st["zorder"] + 3, label=st["label"])
+    for members in rule_rows(rows).values():
+        st = branch_style(rows[members[0]]["category"], 0, by_rule=True)
+        ax.plot(P[members, 0], P[members, 1], ls="none", marker=st["marker"], ms=5,
+                color=st["color"], **MEMBER)
+        class_ellipse(ax, jack[:, members].mean(1), st["color"], 1.2)
+        ax.plot(P[members, 0].mean(), P[members, 1].mean(), ls="none",
+                marker=st["marker"], ms=7, color=st["color"],
+                markerfacecolor=st["mfc"], markeredgecolor=st["mec"],
+                markeredgewidth=1.0, zorder=st["zorder"] + 3,
+                label=f"{st['label']} (mean of {len(members)})")
+    ax.plot([], [], ls="none", marker="o", color=MUTED, alpha=MEMBER["alpha"],
+            label=MEMBER_LABEL)
 
 
-def windowed_grid(g: dict, w: int, plane: str, camera_ready: bool) -> Path:
+def spreads(g: dict, w: int) -> dict[str, float]:
+    """Within-rule ÷ between-rule mean pairwise distance, one per variant, in the
+    reference space and in full R^21 -- never on the 2-D plane the figure draws.
+    `displacement` is the same statistic on the raw activations, the number
+    ../fork_and_board reports, so the two figures can be compared."""
+    ref, rows = branches(g)
+    c = int(g["n_context"])
+    post = g["pos"][c:] - g["t0"] >= 0
+    Z = g[dsc.RAW_SPACE]
+    phi = dsc.windowed(Z, w)[:, c:]
+    whole = dsc.descriptor(torch.from_numpy(Z[:, c + int(np.flatnonzero(post)[0]):]))
+    return {"windowed": spread_ratio(scaled(phi - phi[ref])[:, post], rows),
+            "whole": spread_ratio(scaled(whole), rows),
+            "displacement": spread_ratio((Z - Z[ref])[:, c:][:, post], rows)}
+
+
+def caveats(g: dict, what: str, spread: float, disp: float) -> str:
+    """What every cell of every grid here owes the reader: how weak the rule
+    grouping is, that only one control is drawn, and n=1 on a selected game."""
+    reading = ("A rule's members travel barely closer to each other than to another "
+               "rule's" if spread < 1 else
+               "That is above 1: a rule's members sit FURTHER from each other than "
+               "from another rule's, and the label carries nothing")
+    return (
+        f"the grouping is weak. within-rule ÷ between-rule mean pairwise distance on "
+        f"the column-scaled {what} in R$^{{21}}$, raw layer 5, is {spread:.2f} here; "
+        f"the same\nstatistic on the full 512-d displacements is {disp:.2f} here and "
+        f"{POPULATION_SPREAD} (../fork_and_board,\n"
+        f"`python -m spade.violation_divergence.rule_groups`). {reading}, so the faint "
+        f"members and not\nthe three means carry the evidence\n"
+        f"one legal control is drawn, as the null. Its own null — control 2, scored "
+        f"against control 1 exactly as the illegal branches are — is not drawn here; it "
+        f"is in\n../game_trajectory and in the parent README, which is where the "
+        f"legal-vs-legal scale lives\n"
+        f"one game (n=1) and no error bars over games: an illustration of the "
+        f"construction, not a claim — the separation numbers, with CIs over 40 games, "
+        f"are in the README\n"
+        f"{selection_note(g['game'])}")
+
+
+def windowed_grid(g: dict, w: int, plane: str, s: dict[str, float],
+                  camera_ready: bool) -> Path:
     ref, rows = branches(g)
     c = int(g["n_context"])
     r = g["pos"][c:] - g["t0"]
@@ -188,30 +255,39 @@ def windowed_grid(g: dict, w: int, plane: str, camera_ready: bool) -> Path:
         ax.set_box_aspect((1, 1, 0.85))
         fork_panel(ax, coords, rows, r, legend=(j == 0), named=(plane == "fixed"),
                    zlabel=(j % NCOL == 0))
-        ax.set_xlabel(labels[0], labelpad=-10, fontsize=5.8)
-        ax.set_ylabel(labels[1], labelpad=-10, fontsize=5.8)
+        ax.set_xlabel(labels[0], labelpad=-2, fontsize=6.5)
+        ax.set_ylabel(labels[1], labelpad=-2, fontsize=6.5)
         ax.set_title(name, loc="left", fontsize=8)
-    axis_note = ("plane refit per space (arb. units, not comparable across cells)"
-                 if plane == "pca" else
-                 "the same named pair of R$^{21}$ axes in every cell; θ in degrees "
-                 "is comparable across cells, d is not")
-    ordered_legend(fig, fig.axes[0], -0.045,
+    axis_note = ("plane refit per space (arb. units), so the three ticks per plane "
+                 "axis are a within-panel scale only and cells are NOT comparable "
+                 "across the grid" if plane == "pca" else
+                 "the same named pair of R$^{21}$ axes in every cell, three ticks "
+                 "each; θ in degrees is comparable across cells, d is on each "
+                 "space's own activation scale and is not")
+    ordered_legend(fig, fig.axes[0], 4,
                    f"game {g['game']}, $t_0$={g['t0']}; Δφ(t) = φ(z_b(t)) − φ(z_ref(t)) "
                    f"in R$^{{21}}$ over the {w} sampled positions (={dsc.STRIDE * (w - 1)} "
-                   f"plies) ending at t; {axis_note};\nview elev={ELEV}, azim={AZIM}; "
-                   f"every {dsc.STRIDE}nd ply. One game (n=1) and no error bars: an "
-                   f"illustration of the construction, not a claim — the separation "
-                   f"numbers, with CIs over 40 games, are in the README.")
+                   f"plies) ending at t; every {dsc.STRIDE}nd ply; view elev={ELEV}, "
+                   f"azim={AZIM}\n"
+                   f"one path per rule: the mean of its member categories' Δφ, taken in "
+                   f"the plane, over those members drawn faint. φ is nonlinear, so it is "
+                   f"applied to each\nmember's own trajectory and never to a mean of "
+                   f"them; the projection is linear, so the mean of the projected "
+                   f"members is the projection of their mean Δφ\n"
+                   f"{axis_note}\n"
+                   + caveats(g, "Δφ(t) at $t\\geq t_0$", s["windowed"],
+                             s["displacement"]),
+                   loc="lower center", bbox_to_anchor=(0.5, -0.27))
     if not camera_ready:
         fig.suptitle(f"The fork inside the 21-D ReStraV descriptor space, "
                      f"game {g['game']} ({plane} plane)", fontsize=11)
     fig.subplots_adjust(left=0.02, right=0.97, top=0.92, bottom=0.07,
                         wspace=0.04, hspace=0.18)
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.085)
+    rule_key(fig, ["R1", "R2", "R3"], y=-0.36)
     return save_figure(fig, FIG_DIR / f"fork_r21_windowed_{plane}", camera_ready)
 
 
-def whole_grid(g: dict, plane: str, camera_ready: bool) -> Path:
+def whole_grid(g: dict, plane: str, s: dict[str, float], camera_ready: bool) -> Path:
     ref, rows = branches(g)
     c = int(g["n_context"])
     k = c + int(np.flatnonzero(g["pos"][c:] - g["t0"] == 0)[0])
@@ -239,21 +315,30 @@ def whole_grid(g: dict, plane: str, camera_ready: bool) -> Path:
         if plane == "fixed":
             ax.set_title(name, loc="left", fontsize=8)
         ax.tick_params(labelsize=6.5)
-    ordered_legend(fig, axes.flat[0], -0.055,
+    ordered_legend(fig, axes.flat[0], 4,
                    f"game {g['game']}, $t_0$={g['t0']}; one R$^{{21}}$ point per branch "
-                   f"over the {n_pos} sampled positions from the branch to $t_0$+24. "
-                   f"Ellipses are the 50% contour of a Gaussian fit to the {n_pos} "
-                   f"leave-one-position-out jackknife replicates\n— a dispersion over "
-                   f"which move enters the descriptor, not a confidence interval, and "
-                   f"the only uncertainty one game supports. "
+                   f"over the {n_pos} sampled positions from the branch to $t_0$+24, and "
+                   f"one per rule: the mean of its member categories' φ,\ntaken in the "
+                   f"plane, over those members drawn faint. φ is nonlinear, so it is "
+                   f"applied to each member's own trajectory and never to a mean of them; "
+                   f"the projection\nis affine, so the mean of the projected members is "
+                   f"the projection of their mean φ. Ellipses are the 50% contour of a "
+                   f"Gaussian fit to the {n_pos} leave-one-\nposition-out jackknife "
+                   f"replicates of the point they surround — a dispersion over which move "
+                   f"enters the descriptor, not a confidence interval, and the only\n"
+                   f"uncertainty one game supports. "
                    + ("PCA refit per space, so cells are comparable in arrangement "
-                      "only." if plane == "pca" else
+                      "only.\n" if plane == "pca" else
                       "Axes are the same named pair in every cell; θ is in degrees, "
-                      "d is on each space's own activation scale."))
+                      "d is on each space's own activation scale.\n")
+                   + caveats(g, "φ, one point per branch", s["whole"],
+                             s["displacement"]),
+                   loc="lower center", bbox_to_anchor=(0.5, -0.30))
     if not camera_ready:
         fig.suptitle(f"One R$^{{21}}$ point per branch, game {g['game']} "
                      f"({plane} plane)", fontsize=11)
     fig.tight_layout(rect=(0, 0.015, 1, 0.955))
+    rule_key(fig, ["R1", "R2", "R3"], y=-0.40)
     return save_figure(fig, FIG_DIR / f"fork_r21_whole_{plane}", camera_ready)
 
 
@@ -265,10 +350,13 @@ def main():
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    g = dsc.figure_game(args.game, args.w)
+    g = one_control(dsc.figure_game(args.game, args.w))
+    s = spreads(g, args.w)
+    print(f"within/between rule spread ratio, game {args.game}: "
+          + ", ".join(f"{k} {v:.3f}" for k, v in s.items()))
     for plane in ("pca", "fixed"):
-        print(f"wrote {windowed_grid(g, args.w, plane, args.camera_ready)}")
-        print(f"wrote {whole_grid(g, plane, args.camera_ready)}")
+        print(f"wrote {windowed_grid(g, args.w, plane, s, args.camera_ready)}")
+        print(f"wrote {whole_grid(g, plane, s, args.camera_ready)}")
 
 
 if __name__ == "__main__":

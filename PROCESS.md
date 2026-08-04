@@ -6,6 +6,52 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## fork_curvature_space: the same three changes, and a worse number (2026-08-04)
+
+`fork_and_board`'s three changes applied to the four R^21 grids. The measurement is the
+point of the entry.
+
+**The rule grouping is worse in R^21 than in the displacement plane, and for the whole
+variant it is gone.** Within-rule ÷ between-rule mean pairwise distance, column-scaled
+full R^21 (never the drawn plane), raw layer 5, game 1235: **0.90** on `Δφ(t)` at
+`t ≥ t0` (0.77–1.01 over the nine spaces) and **1.03** on `φ`, one point per branch
+(0.90–1.06, above 1 in three spaces). The same statistic on the full 512-d displacements
+of the same game and window reproduces `fork_and_board`'s **0.885** exactly, so the
+comparison is apples to apples. Mapping into the curvature descriptor does not make the
+rules cohere; on the whole variant the label carries nothing, and `fork_r21_whole_pca`
+shows it — the three R2 members scatter across the cell with their mean in the middle of
+nothing. Both numbers ride in the legend titles, members drawn faint.
+
+**φ is nonlinear, and that constrains where the mean is taken.** mean φ(z) ≠ φ(mean z):
+each member gets its own descriptor, its own Δφ and its own projection, and only the
+coordinates are averaged. The projection is linear (windowed, uncentred) or affine
+(whole, centred), so plane-mean and R^21-mean agree exactly — which is the only reason
+the cheap version is also the correct one. Column scaling before the distance follows
+`measure.py`: the 21 components mix degrees with activation-scale lengths, so a raw
+Euclidean statistic is a statistic about θ alone.
+
+**`rule_fork_panel` is not reused, deliberately.** It takes `k` from `pos == t0` and
+draws from the branch onward. This figure draws from the first *defined* offset, two
+sampled positions before the branch, because those two points sitting exactly on the
+origin are the visible proof that Δφ collapses over the shared prefix — one of the two
+invariants the sub-study exists to keep. Everything else is shared:
+`branch_style(by_rule=True)`, `MEMBER`, `legend_proxy`, `rule_rows`, `ordered_legend`
+and `PLANE_TICKS`, and the local `branch_style`/`legend_order`/`ordered_legend` copies
+are deleted. What is duplicated is ~8 lines of path drawing.
+
+**Ticks** go on the windowed grids' plane axes, three symmetric about zero. The whole
+grids are 2-D scatters of physical quantities (`mean d ∈ [18, 21]`), where a symmetric
+locator puts every tick off-panel; they keep ordinary ticks. Also honoured the `zlabel`
+argument `windowed_grid` was already passing and `fork_panel` was ignoring, so
+`t − t0 (plies)` is labelled once per row as in the sibling figure.
+
+**Left behind:** `make_figures.py`'s import block is owned by a parallel agent moving
+`descriptor.py` into `src`, so the now-unused `CATEGORY_STYLE`, `NULL`, `REFERENCE`,
+`CATEGORIES` (and the pre-existing `GRID`) are still imported and `LEGAL` came in on its
+own line beside them. Prune on merge.
+
+---
+
 ## fork_and_board: rules instead of categories, one control, ticks on (2026-08-04)
 
 Three requested changes to the shipped figure. The first one produced a number worth
