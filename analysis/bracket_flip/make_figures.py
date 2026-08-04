@@ -18,9 +18,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from spade.figures.othello_board import draw_board, square_xy
 from spade.figures.paper_style import (
-    DISC_EDGE, GRID, INK, MUTED, NULL, PROBE_STYLE, SQUARE_ROLE_STYLE,
-    apply_style, role_key, save_figure)
+    INK, MUTED, NULL, PROBE_STYLE, SQUARE_ROLE_STYLE, apply_style, role_key,
+    save_figure)
 from spade.figures.straightness_panels import kde_ci
 
 HERE = Path(__file__).resolve().parent
@@ -97,32 +98,22 @@ def board_panel(ax, event: pd.DataFrame, meta: pd.Series) -> None:
     """
     s, m = int(meta.square_s), int(meta.square_m)
     for _, r in event.iterrows():
-        col, row = int(r.square) % 8, int(r.square) // 8
+        col, row = square_xy(int(r.square))
         ax.add_patch(plt.Rectangle((col - 0.5, row - 0.5), 1, 1, lw=0,
                                    color=SQUARE_ROLE_STYLE[r.role]["color"],
                                    alpha=0.18, zorder=0))
-        if r.disc_before != 0:  # +1 black, -1 white; empty squares stay bare
-            ax.plot(col, row, marker="o", ms=13, lw=0, zorder=3,
-                    markerfacecolor="#000000" if r.disc_before > 0 else "#ffffff",
-                    markeredgecolor=DISC_EDGE, markeredgewidth=1.0)
+    draw_board(ax, event.sort_values("square").disc_before.to_numpy())
     for square, label, role, ls in [(s, "$s$", "flipped", "-"),
                                     (m, "$m$", "placed", "-"),
                                     (int(meta.square_m_prime), "$m'$", "flipped",
                                      (0, (3, 2)))]:
-        col, row = square % 8, square // 8
+        col, row = square_xy(square)
         ax.add_patch(plt.Rectangle((col - 0.5, row - 0.5), 1, 1, fill=False,
                                    lw=2.2, zorder=4, ls=ls,
                                    edgecolor=SQUARE_ROLE_STYLE[role]["color"]))
         ax.annotate(label, (col, row - 0.52), ha="center", va="bottom", fontsize=9,
                     color=SQUARE_ROLE_STYLE[role]["color"], zorder=5,
                     fontweight="bold")
-    ax.set_xticks(range(8), list("abcdefgh"))
-    ax.set_yticks(range(8), range(1, 9))
-    ax.set_xlim(-0.5, 7.5)
-    ax.set_ylim(7.5, -0.5)
-    ax.set_aspect("equal")
-    ax.grid(color=GRID, lw=0.5)
-    ax.set_axisbelow(True)
     ax.set_title(f"one event ($t$={int(meta.t)}): the board before $m$")
     ax.set_xlabel("discs in absolute colour; shading = role\n"
                   "$m$ flanks $s$, so $s$ turns the mover's colour;\n"

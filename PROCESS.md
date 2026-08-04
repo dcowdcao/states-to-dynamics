@@ -6,6 +6,30 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The branch board, and one board-drawing rule for two studies (2026-08-04)
+
+`analysis/violation_divergence/branch_board/` draws the position the game forks on, with
+all nine branch moves on their squares — the companion the fork figure needed, since a
+projected trajectory never says what a branch *is*.
+
+Two extractions, both because the same rule was about to be written twice.
+`src/spade/figures/othello_board.py` owns "draw an 8×8 board with these discs" (was
+private to bracket_flip's `board_panel`); `src/spade/figures/branch_style.py` owns
+`branch_style` / `legend_order` / `ordered_legend` (was private to the fork figure). Each
+caller keeps its own overlay — role shading, category outlines — out of the shared helper,
+so neither grows a flag per caller. bracket_flip Fig 1 and the fork figure both re-render
+pixel-identical after the move.
+
+**Occupied squares.** Two illegal categories play onto a square that already holds a disc,
+and the disc's colour is exactly what distinguishes `occupied_own` from `occupied_opp` —
+so a centred marker would cover its own evidence. Every branch square is therefore outlined
+in its category's colour and line style, with the marker in the square's **corner**, for all
+nine branches. Uniform grammar, no disc obscured. Only the reference's flips get rings
+(dashed, outside the disc so they read over black and white); drawing all three legal
+branches' flip sets is a knot with no question behind it.
+
+---
+
 ## Wave 8: the docs catch up, and q15 narrows to one hypothesis (2026-08-04)
 
 Three agents on `wave8/*` — the claims ledger, the archive zone, the docs sweep. Per-agent
