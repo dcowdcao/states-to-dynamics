@@ -6,6 +6,25 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The defects the port agents recorded but did not fix (2026-08-04)
+
+Swept all fifteen `docs/port_notes/` files for concrete code defects and fixed five. The
+one that mattered: the sweep merge's baseline filter matched the substring `"SpaDE"`, which
+also matches `"CosineSpaDE"`, so every `combined_results.csv` lost its CosineSpaDE row.
+Latent in the source — `results/karvonen` had no CosineSpaDE row to lose — and live now
+that `results/main` carries all eight baselines. `final_validation` pins it.
+
+The other four are small: a `TypeError` on `--save-counts` (`repo_root` divided, not
+called), `branches.py` importing `classify_prefix` through the rules study after it moved
+into `othello/games.py`, and two docs that contradicted their own code.
+
+Everything the notes flagged and I did *not* touch is written up with the reason in
+`docs/finish_notes/flagged-defects.md`, including the one recommendation worth acting on:
+`figure_karvonen_extension` writes its "no data" placeholder over the real figure's
+filename, and six shell callers depend on that not raising.
+
+---
+
 ## The port is done: 15 parallel agents, one branch each (2026-08-03)
 
 Every zone ported from the frozen source repo — `common`, `othello`, `saes`, `spaces` +

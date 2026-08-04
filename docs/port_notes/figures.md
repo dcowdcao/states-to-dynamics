@@ -104,6 +104,7 @@ to a five-seed config with no variance. §1.2 wants the semantics stated; the fi
 `repo_root / args.save_counts` where `repo_root` is the imported function, not a call —
 `TypeError: unsupported operand type(s) for /`. Only reachable when the optional flag is
 passed, and the flag has no caller in the source repo. Left as found.
+*Fixed since — see `docs/finish_notes/flagged-defects.md`.*
 
 **Dead and unused code carried over.** `norm_diagnostics.collect_activation_norms` is never
 called (`collect_raw_and_standardized` replaced it); in the same file `plot_histogram`

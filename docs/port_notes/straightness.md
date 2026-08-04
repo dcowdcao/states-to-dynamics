@@ -68,6 +68,7 @@ it is left alone.
 
 - `build_games.py`'s docstring says "the four game classes" and then lists five;
   `CLASSES` has five. Source wording, left alone.
+  *Fixed since — see `docs/finish_notes/flagged-defects.md`.*
 - `analysis/straightness/make_figures.py` imports `repo_root` and never uses it.
 - `classify.py`'s `boot_ci` returns `tuple(np.percentile(...))`, annotated
   `tuple[float, float]` but actually a tuple of `np.float64`.

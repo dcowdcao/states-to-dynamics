@@ -96,6 +96,7 @@ matches `CosineSpaDE`, so the "baseline" half of every combined CSV silently dro
 CosineSpaDE row along with the SpaDE ones. Harmless for the sweep this was written for;
 wrong the moment a combined CSV is expected to carry CosineSpaDE as a baseline. Worth a
 decision before these two jobs are run again.
+*Fixed since — see `docs/finish_notes/flagged-defects.md`.*
 
 ## Things to know before submitting
 
