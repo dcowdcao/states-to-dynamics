@@ -31,7 +31,7 @@ a full marker only to the branch position and draw the rest of each path faint.
 And on a single game the plane clears nothing: 0.09-1.05x its own exact label
 permutation null, p 0.36-1.00 across the nine spaces.
 
-Usage: python analysis/curvature_discriminant/make_figures.py [--camera-ready]
+Usage: python analysis/violation_divergence/curvature_discriminant/make_figures.py [--camera-ready]
 """
 
 import argparse

@@ -32,7 +32,7 @@ Score: illegal-vs-control centroid distance in pooled within-group SDs, over
 anchors t >= t0, against the exact permutation null over the 28 ways to split
 the 8 non-reference branches 6/2.
 
-Usage: python analysis/r21_shared_basis/make_figures.py [--camera-ready]
+Usage: python analysis/violation_divergence/r21_shared_basis/make_figures.py [--camera-ready]
 """
 
 import argparse
@@ -451,7 +451,7 @@ def main():
 
     n_state = (f"one game (n=1): {len(branches)} non-reference branches x {nw} windows "
                f"= {n * nw} rows per space in $R^{{{k}}}$ — a shape illustration, not a "
-               f"claim; the separation each plane keeps is in analysis/r21_shared_basis.")
+               f"claim; the separation each plane keeps is in analysis/violation_divergence/r21_shared_basis.")
     common = (f"game {meta['game']}, $t_0$={meta['t0']}; a point is the ReStraV "
               f"descriptor of the {W} sampled positions (every {STRIDE}nd ply) ending "
               f"at $t$, minus the reference's, z-scored per space; view elev={ELEV}, "

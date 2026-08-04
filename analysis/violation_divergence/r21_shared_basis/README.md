@@ -11,7 +11,7 @@ each (`spade/straightness/geometry.py`) — so "mean θ" means the same thing in
 layer 5 and in CosineSpaDE, and one plane can be applied to all nine cells.
 
 ```
-python analysis/r21_shared_basis/make_figures.py [--camera-ready]
+python analysis/violation_divergence/r21_shared_basis/make_figures.py [--camera-ready]
 ```
 
 The first run encodes game 0 through the eight seed-42 dictionaries and caches

@@ -169,7 +169,7 @@ embedding scatter over the full 13,531-branch population, not at n=1.
 
 ## The fork grid can share one basis, if it goes through R^21 (2026-08-04)
 
-`analysis/r21_shared_basis/`, branch `curvproj/r21-shared-basis`. The nine-space fork grid
+`analysis/violation_divergence/r21_shared_basis/`, branch `curvproj/r21-shared-basis`. The nine-space fork grid
 in `violation_divergence/game_trajectory` refits its plane per space and has to disclaim
 that cells are not comparable, because R^512 and R^8192 share no coordinates. Projecting
 the displacement through the 21-D ReStraV descriptor first gives every space the same named

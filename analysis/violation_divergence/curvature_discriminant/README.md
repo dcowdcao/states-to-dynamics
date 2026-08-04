@@ -21,9 +21,9 @@ ReStraV curvature descriptor (R²¹) rather than in activation space:
 ## Pipeline
 
 ```
-python analysis/curvature_discriminant/branch_geometry.py   # d/theta per branch, 9 spaces
-python analysis/curvature_discriminant/evaluate.py          # the honesty numbers
-python analysis/curvature_discriminant/make_figures.py      # -> figures/
+python analysis/violation_divergence/curvature_discriminant/branch_geometry.py   # d/theta per branch, 9 spaces
+python analysis/violation_divergence/curvature_discriminant/evaluate.py          # the honesty numbers
+python analysis/violation_divergence/curvature_discriminant/make_figures.py      # -> figures/
 ```
 
 Intermediates go to `$SPADE_DIVERGENCE_DIR/curvature_discriminant/`.

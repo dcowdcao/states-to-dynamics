@@ -21,7 +21,7 @@ drops exactly those games from the probe's training set.
 Writes $SPADE_DIVERGENCE_DIR/curvature_discriminant/{meta,<space>}.npz.
 Resumable: a space whose npz exists is skipped.
 
-Usage: python analysis/curvature_discriminant/branch_geometry.py
+Usage: python analysis/violation_divergence/curvature_discriminant/branch_geometry.py
 """
 
 from pathlib import Path

@@ -17,7 +17,7 @@ Four questions, in the order that decides whether the figure may be drawn:
    R^21, and on the plain norm of the descriptor difference. A fitted axis has to
    beat a random line through the same space before "supervised" means anything.
 
-Usage: python analysis/curvature_discriminant/evaluate.py
+Usage: python analysis/violation_divergence/curvature_discriminant/evaluate.py
 """
 
 import numpy as np
