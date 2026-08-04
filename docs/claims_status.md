@@ -5,8 +5,16 @@ were killed by red-teaming or overturned by later runs, and the retraction usual
 one study README while the original phrasing survives in three other places. **Read the
 relevant section before writing any prose, caption or abstract about a study.**
 
-Sources are in the source repo: `analysis/<study>/README.md`, `analysis/violation_divergence/RED_TEAM.md`,
-`src/bracket_flip/VERDICT.md`, and `PROCESS.md`.
+Sources: `analysis/<study>/README.md`, `analysis/violation_divergence/RED_TEAM.md`,
+`analysis/bracket_flip/reports/VERDICT.md`, and `PROCESS.md`.
+
+The evaluation pipeline is verified. `checkpoints/{batch_topk,cosine_spade,spade_revival}/trainer_0`
+reproduce their committed reference rows to 0.000000 on L0, variance explained, coverage and
+reconstruction F1 ([docs/finish_notes/acceptance-eval.md](finish_notes/acceptance-eval.md)),
+so a rerun that disagrees with a committed number is an input problem rather than a port bug.
+Two inputs are known bad, and both are flagged below where they bite: the activations behind
+`results/main/`'s reference rows no longer exist (MIGRATION.md q14), and
+`checkpoints/main/trainer_5/ae.pt` is not the run its config names (q15).
 
 ## Retired — do not restate
 
@@ -42,7 +50,7 @@ category shows no parity signature (agreement 0.9930, mid-pack).
 
 **Straightness: "SpaDE destroys the curvature signal that every other family keeps."**
 Retracted twice. First narrowed to configuration-specific, then dropped entirely when the
-γ=1e-2 checkpoint was excluded for degenerate provenance. Current position: every family
+seed-42 SpaDE baseline was excluded for degenerate provenance. Current position: every family
 preserves the separation (0.01–0.21). The companion "SpaDE's response cancels 79% under
 whole-game averaging" died with the same checkpoint; cancellation now ranges 1–40%.
 
@@ -63,23 +71,46 @@ ARCHITECTURE.md § Invariants. Worth knowing that the F₁ peak is thin — 0.01
 with seed dispersion reported for L0 only — so the metric that picked 20 is also the one
 whose margin is unquantified.
 
-**Geometry: "SpaDE γ=1e-2 is broken."** Re-attributed, not confirmed. That seed-42
-checkpoint has a degenerate evaluation (L0 15.4, VE 0.352) where seeds 43–46 of the same
-config give 128 and 0.973, and its `config.json` is a Mac smoke config over real GPU
-weights. It is now excluded from every study and from the viewer, so this conclusion has to
-be re-run on the current set or retired — it cannot be quoted as it stands. The default
-SpaDE configuration is λ=1e-3, γ=1e-4.
+**Geometry: "SpaDE γ=1e-2 is broken."** Re-attributed, not confirmed, and the checkpoint it
+names has since come apart. Three facts about `checkpoints/main/trainer_5` (config
+`SpaDETrainer-othello`), the excluded seed-42 SpaDE baseline:
+
+- **The run is λ=9.77e-5, γ=0.2, not γ=1e-2.** wandb has `SpaDETrainer-othello_trainer_5` at
+  those values, 36621 steps on cuda:0, finished 2026-03-26 — before the 2026-07-12
+  canonicalization that made γ=1e-2 the class default and gave the checkpoint the name it has
+  been quoted under since. `config.json` is stale in `steps=400` and `device=mps` only, and
+  those two are stale in all six `main/` configs.
+- **The run was real and degenerate**, L0 15.43 / VE 0.352 evaluated and 0.3667 at training
+  time, where seeds 43–46 of the same config give L0 ≈ 128 / VE 0.973. The exclusion decision
+  stands, and is firmer than before: the other recorded SpaDE baseline (γ=0.1) is degenerate
+  too, at VE 0.399.
+- **The `ae.pt` in that directory is not that run.** It reruns at L0 127.76 / VE 0.973, its
+  provenance is not recoverable from the tree, and trainer_0–4 all match their records
+  (MIGRATION.md q15). Anything that loaded those weights measured a model other than the one
+  the config and the metrics describe.
+
+The geometry conclusion still has to be re-run on the current set or retired; it cannot be
+quoted as it stands. The default SpaDE configuration is λ=1e-3, γ=1e-4.
+
+Do not restate PROCESS.md's 2026-08-03 reading that this configuration "never ran". It ran.
 
 **SpaDE vs baselines: "the simplex ceiling is a fundamental limitation."** Overturned
 inside its own document. CosineSpaDE keeps the identical sparsemax simplex and no-bias
 decoder, changes only the score to cosine, and reaches VE 0.979 — the ~0.43 ceiling is
 specific to squared-distance scoring under standardized-activation norms. Sections of that
-document written before the overturn must be read as distance-SpaDE only.
+document written before the overturn must be read as distance-SpaDE only, and the ~0.43
+itself carries the seed-42 qualifier under Narrowed.
 
 ## Narrowed — quote with the qualifier
 
-- **Distance-SpaDE VE ≈ 0.43** is single-seed. The multiseed aggregate is 0.849 ± 0.278.
-  Quote the cosine-vs-distance contrast per seed or qualitatively, never as a clean mean.
+- **Distance-SpaDE VE ≈ 0.43** is a seed-42 number, and seed 42 is the odd one out across the
+  whole family. In `results/multiseed/all_seeds.csv` every distance-SpaDE config's seed-42 row
+  sits at 0.35–0.44 while seeds 43–46 of the *same* config sit at 0.93–0.98 with near-zero
+  spread — including the six sweep configs, whose λ and γ are pinned by name, so hyperparameters
+  do not explain it (λ=1e-7, γ=5e-3: 0.4325 at seed 42, 0.9639 at 43). CosineSpaDE is flat at
+  0.979 across all five seeds. The `SpaDETrainer-othello` aggregate of 0.849 ± 0.278 is
+  therefore one outlying seed against four tight ones, not seed dispersion. Quote the
+  cosine-vs-distance contrast per seed or qualitatively, never as a clean mean.
 - **The revived `lam1e-03 gam1e-04` checkpoint is not a reproduction** of the lost
   original: same config, same seed, VE 0.995 vs 0.434, L0 1808 vs 961. The trainer moved
   underneath it. Label it as that config under the current trainer.
@@ -94,6 +125,13 @@ document written before the overturn must be read as distance-SpaDE only.
   vacuously and mislabeled SpaDE as capture; it is shattering. The headline regimes read
   from the curve variant because the raw and centered capture metrics are
   concept-independent by construction.
+- **Manifold capture's distance-SpaDE result is about an unidentified checkpoint.** "The
+  purest tiler — support size 0, shattering on 7/8 concepts" is a claim about
+  `checkpoints/main/trainer_5/ae.pt`, which this study alone keeps and marks `LOW_VE` while
+  every other study excludes it. Those weights reconstruct at VE 0.973, not the ≈0.43 the
+  marker names them for (MIGRATION.md q15). Whether the result survives is the owner's call;
+  it is not re-derived here. The geometry family and the deployed viewer build load the same
+  file and carry the same caveat.
 
 ## Holds
 
@@ -114,10 +152,11 @@ document written before the overturn must be read as distance-SpaDE only.
   conclusion is computed mid-late with attn7 largest. Nothing retracted. One trap: with a
   shared prefix a full-residual patch recovers 1.0 by construction — a labeled ceiling,
   never a result.
-- **Manifold capture.** No SAE × concept reaches capture. Direction SAEs dilute;
-  distance-SpaDE is pure shattering; Lemma 1 confirmed, so SpaDE features are not 1-to-1
-  with concepts. CosineSpaDE at VE 0.98 destroys the rule-category curve while the dense
-  revived SpaDE preserves it: reconstruction quality ≠ concept-manifold preservation.
+- **Manifold capture.** Direction SAEs dilute; Lemma 1 confirmed on the point-based SAEs, so
+  SpaDE features are not 1-to-1 with concepts. CosineSpaDE at VE 0.98 destroys the
+  rule-category curve while the dense revived SpaDE preserves it: reconstruction quality ≠
+  concept-manifold preservation. "No SAE × concept reaches capture" holds for every space but
+  the distance-SpaDE slot, which is under Narrowed.
 - **Straightness.** ReStraV transfers with the sign inverted and a depth flip. Violations
   are graded and localized to t0±1; temperature-1 rollouts are at chance everywhere;
   championship play dissociates rule-OOD from policy-OOD.
@@ -125,7 +164,11 @@ document written before the overturn must be read as distance-SpaDE only.
   dissociate — γ = 1e4 holds VE 0.854 while recovering 0.102 of the loss, so VE alone is
   not a health check for this family.
 - **Baselines.** TopK (k=80) is best overall: coverage 0.7265, reconstruction F1 0.6841,
-  loss recovered 0.9996 at L0 79.9.
+  loss recovered 0.9996 at L0 79.9. Those come from the `results/main/` reference row, whose
+  activations are gone; on the surviving extraction the same weights give coverage 0.7405 and
+  reconstruction F1 0.6981 at L0 79.94, VE 0.9869. Deltas across the five rows are mixed-sign
+  and within ±0.014, and TopK still leads on both, so the ranking survives — but do not print
+  a coverage or F1 figure from this set past two decimals.
 
 ## Open defects
 
@@ -134,3 +177,7 @@ document written before the overturn must be read as distance-SpaDE only.
 - The bracket-flip TPR probe was never retrained on the integrated event set.
 - Three violation-divergence sub-studies were computed on the superseded one-control
   branch set and never re-derived against two controls.
+- `checkpoints/main/trainer_5/ae.pt` has no known provenance (MIGRATION.md q15). Three things
+  loaded it: the geometry family, manifold capture, and the deployed viewer build.
+- Every coverage and reconstruction-F1 number from `results/main/` is good to ±0.014 only —
+  the activation set behind those rows no longer exists (q14). VE and L0 are stable.
