@@ -25,11 +25,20 @@ SAE features capture concept manifolds or shatter them.
 ## Run it
 
 ```bash
-make setup                       # create venv, pip install -e ., vendor the external forks
-make run                         # full pipeline: extract → train → eval → figures
+make setup                       # create .venv, pip install -e . with the pinned deps
+make run                         # full pipeline: train → extract → eval → figures
 ```
 
 ## Dev setup
+
+`make setup` builds `.venv` from `python3.11` and installs the pins in `requirements.txt`
+(~2 GB, mostly torch). On FASRC that stack already exists in the `spade_env` conda env, so
+reuse it instead of re-downloading it:
+
+```bash
+$CONDA_PREFIX/bin/python -m venv --system-site-packages .venv
+.venv/bin/pip install -e . --no-deps
+```
 
 Two vendored runtime dependencies under `external/`: `Karvonen_Research` (`circuits.*` —
 the baseline trainers, the Othello engine, the board-reconstruction eval) and `tpr_othello`
