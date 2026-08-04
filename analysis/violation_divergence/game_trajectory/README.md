@@ -8,7 +8,7 @@ numbers live in the parent `README.md`.
 
 ```
 python analysis/violation_divergence/game_trajectory/make_figures.py \
-    [--n_games 1] [--n_grid 6] [--embedding both] [--camera-ready]
+    [--n_games 1] [--embedding pca|isomap] [--camera-ready]
 ```
 
 ## What is plotted
