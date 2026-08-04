@@ -1,19 +1,23 @@
 # Two-command interface (CLAUDE.md setup-docs target): `make setup`, `make run`.
-# Skeleton — fill in once the code is ported.
+# Everything runs out of ./.venv. SPADE_REPO is what the shell scripts cd to.
 
-.PHONY: setup run test clean
+PYTHON ?= python3.11
+VENV   := .venv
+PY     := $(VENV)/bin/python
 
-setup:              ## create env, install package editable, vendor the external forks
-	# python -m venv .venv && . .venv/bin/activate
-	# pip install -e .            # editable: paths anchor on the repo root marker
-	# ensure external/{Karvonen_Research,tpr_othello} are present, pinned, and complete
-	#   (their own .gitignore hides files circuits needs at runtime — see external/README.md)
+export SPADE_REPO = $(CURDIR)
 
-run:                ## full local pipeline: extract -> train -> eval -> figures
+.PHONY: setup run test
+
+setup:              ## create .venv and install spade editable with the pinned deps
+	$(PYTHON) -m venv $(VENV)
+	$(PY) -m pip install --upgrade pip
+	$(PY) -m pip install -e .
+	$(PY) -c "import spade.common.paths as p; p.karvonen_root(); p.tpr_root(); print('spade ready at', p.repo_root())"
+
+run: export PATH := $(CURDIR)/$(VENV)/bin:$(PATH)
+run:                ## full local pipeline: train -> extract -> eval -> figures
 	bash scripts/run_pipeline.sh all
 
-test:               ## fast self-tests (no GPU)
-	python -m spade.validation.final_validation
-
-clean:              ## remove generated outputs (keeps checkpoints)
-	# rm -rf results/* figures/* data/activations/* logs/*
+test:               ## fast self-tests (no GPU, no weights)
+	$(PY) -m spade.validation.final_validation
