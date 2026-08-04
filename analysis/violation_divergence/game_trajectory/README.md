@@ -44,7 +44,15 @@ not of the trajectory's shape, and it hides everything else. One mover per curve
 is the readable view.
 
 The window is the study's own, r ∈ [−8, 24]. View angle is fixed at
-`elev=18, azim=−58` so the figures are reproducible.
+`elev=18, azim=−58` so the figures are reproducible. The plane axes carry three
+sparse ticks symmetric about zero (§4.6): a within-panel scale bar, refit per
+game, and never comparable between figures.
+
+This figure draws **all nine branches, one per illegal category, and both legal
+controls** — including `control_legal_2`, the null *for* `control_legal`. That
+is deliberate: `../fork_and_board` groups the six categories into their three
+rules and drops the second control, so when a reader wants the legal-vs-legal
+scale or a per-category path, this is the figure that has them.
 
 ## Figures
 

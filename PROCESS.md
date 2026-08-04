@@ -6,6 +6,59 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## fork_and_board: rules instead of categories, one control, ticks on (2026-08-04)
+
+Three requested changes to the shipped figure. The first one produced a number worth
+knowing.
+
+**Six categories → three rules.** `othello.taxonomy` now owns `RULE_MEMBERS` (the domain
+fact — which rule a category violates — belongs beside `CATEGORIES`, not in a style dict),
+`branch_style(..., by_rule=True)` swaps `CATEGORY_STYLE` for the `RULE_STYLE` that was
+already in `paper_style` and unused, and `branch_panels.rule_fork_panel` draws one mean per
+rule. Both panels group, not just (a): if the fork drew rules and the board drew
+categories, the figure's one-legend-for-both property — the whole reason the band beside
+the board exists — would collapse into two legends. The cost is that the two R1 squares are
+now the same colour, so the board note says a rule's members are told apart by their square.
+
+**The grouping is weak, and that is the finding.** Within-rule ÷ between-rule mean pairwise
+distance on the full 512-d layer-5 displacement trajectories: **0.885** on game 1235,
+**median 0.945 [IQR 0.872–1.020]** over all 1550 branch-complete games, **above 1 in 30%**
+of them (`python -m spade.violation_divergence.rule_groups`). A rule's members travel ~5%
+closer to each other than to another rule's. Three confident lines would misrepresent that,
+so members are drawn faint behind their mean and the ratio is in the legend title. Game
+1235 is near the first quartile — its grouping is better than typical, which is selection
+again, since it is the argmax of the mutual separation of those same six trajectories.
+FIGURE_GUIDELINES §1.7 is this rule generalised: a grouped mean carries n, its members, and
+its within/between spread.
+
+The mean is taken **after** projection, not before. For PCA that is identical (`pca2` is an
+uncentred linear map), and for Isomap it is the only thing that means anything — one rule
+covers both embeddings.
+
+**One control.** `control_legal_2` is filtered out of the figure's rows in `main()`, which
+also drops it from the PCA fit, since the plane should be fit on what is drawn. The cost is
+real and is written down in the README rather than swallowed: control 2 exists because *one
+control gives no null* (RED_TEAM F1 — the first pass could not interpret its own direction
+result), so the figure loses the reader's visual answer to "is that separation big compared
+to two legal moves differing?". Nothing measured changes; the legend title now points at
+`game_trajectory` and the parent README, which is where the legal-vs-legal scale lives.
+`game_trajectory` keeps all nine branches and per-category styling on purpose — it is now
+the figure that carries what this one dropped, and its README says so.
+
+**Ticks on the PC axes.** Three per plane axis, `MaxNLocator(3, symmetric=True)` so the
+origin — the reference, in a displacement plane — always gets one, 7 pt, negative tick pad.
+This reverses FIGURE_GUIDELINES §4.6/§4.8, which said ticks off because the coordinates are
+panel-local; both sections are rewritten. Within-panel scale is worth more than the
+ambiguity, and the "not comparable across cells" disclaimer stays and matters more, not
+less. `fork_panel` and `rule_fork_panel` share `_fork_axes`, so `game_trajectory` gets the
+ticks too; its two x/y `labelpad`s went from −8 to −2 to clear the new tick labels.
+
+**Status:** `fork_and_board` PCA re-rendered as PNG and camera-ready PDF, `game_trajectory`
+PCA re-rendered; both isomap variants render (checked, not shipped — neither was shipped
+before).
+
+---
+
 ## One figure: the fork over the board it forks on (2026-08-04)
 
 `analysis/violation_divergence/fork_and_board/` merges the nine-space fork grid and the

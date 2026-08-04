@@ -27,6 +27,17 @@ CATEGORIES = [
 ]
 LEGAL = 0
 
+# Which constraint rule each illegal category violates (docs/othello_rules.md).
+# The groups are not the same size and R3 has a single member, so anything that
+# averages over a rule owes the reader n.
+RULE_MEMBERS = {
+    "R1 placement":  ["occupied_own", "occupied_opp"],
+    "R2 bracketing": ["empty_detached", "empty_own_only", "empty_no_bracket"],
+    "R3 turn":       ["opponent_only"],
+}
+RULE_OF = {c: rule for rule, cats in RULE_MEMBERS.items() for c in cats}
+assert set(RULE_OF) == set(CATEGORIES[1:]), "RULE_MEMBERS does not partition CATEGORIES"
+
 
 def flips(state: np.ndarray, square: int, color: int) -> bool:
     """Would placing `color` on `square` flip at least one opponent disc?"""

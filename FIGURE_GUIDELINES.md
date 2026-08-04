@@ -33,6 +33,14 @@ rewrite.
    color in every figure. (SAEBench's own code gives `batch_topk` and `gated`
    the same purple — that is the failure this rule prevents.)
 6. **Bar charts start at zero; never a dual y-axis.** Two scales → two panels.
+7. **A mean over a group of series carries n and its members.** When several
+   conditions collapse into one line because they share a label (six illegal
+   categories into three rules), the legend entry carries n — `R2 bracketing
+   (mean of 3)`, and `(mean of 1)` when the group has one member, so nobody
+   reads a single condition as an average. Draw the members faint behind their
+   mean, and report within-group ÷ between-group spread **on the figure**. Near
+   1 the grouping is a label rather than a finding, and the figure says so
+   instead of letting three confident lines imply otherwise.
 
 ## 2. House style
 
@@ -193,8 +201,15 @@ that most easily becomes a color-only blob.
   Gaussian fit, not a confidence interval* — in the legend title, and put n per
   class in the legend entry.
 - **Axes carry the per-component variance ratio** (`PC1 (5.5% var)`), never the
-  summed total, and nonlinear embeddings are labeled `arb. units`. Ticks off:
-  the coordinates mean nothing, the geometry does.
+  summed total, and nonlinear embeddings are labeled `arb. units`.
+- **Three sparse ticks per embedding axis, symmetric about zero**
+  (`MaxNLocator(3, symmetric=True)`, ≤7 pt, negative tick pad so they never
+  reach the axis label). They are a within-panel scale bar and nothing more —
+  the coordinates still mean nothing, the geometry does — so a panel carrying
+  them **must** carry the "not comparable across cells" disclaimer too. This
+  reverses a ticks-off rule: knowing how big a structure is inside one panel is
+  worth more than the ambiguity the numbers cost, and the numbers make the
+  disclaimer load-bearing rather than optional.
 - **The dominant nuisance variable gets its own panel** on the same embedding,
   colored by a sequential ramp (here: move number t). A class layout that
   reproduces the nuisance panel is a confound, not a finding — the panel is what
@@ -268,8 +283,11 @@ conditions:
 - **Pair it with a quantitative 2-D panel.** A 3-D projection shows shape, never
   magnitude; the companion panel carries the number the claim rests on, with the
   usual uncertainty and n.
-- **Ticks off on the arbitrary axes, kept on the ordered one.** Per-panel refits
-  are not comparable across panels — say so in the legend title when facetting.
+- **Sparse ticks on the plane axes, full ticks on the ordered one.** Three per
+  plane axis per §4.6, symmetric about zero so the origin — which in a
+  displacement plane *is* the reference — always gets one. Per-panel refits are
+  not comparable across panels: say so in the legend title when facetting, and
+  say it whether or not the ticks are there.
 - Sub-sample an oscillating index rather than drawing every step. A quantity
   whose frame alternates (here: a mover-relative board code flipping each ply)
   draws as a sawtooth that hides everything else; plot one phase and say which.
@@ -318,6 +336,7 @@ conditions:
 - [ ] Colors + markers from `paper_style.py`; no literals
 - [ ] Reference class styled as a reference; null gray/dashed/last
 - [ ] Uncertainty drawn; band semantics + n stated
+- [ ] Grouped means carry n, their members, and the within/between spread
 - [ ] Axes labeled with units; direction of "good" stated if ambiguous
 - [ ] Layer indexing base stated; input space anchored as its own tick
 - [ ] Event-locked: dashed gray line at 0, baseline window shaded and named

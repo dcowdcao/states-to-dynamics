@@ -68,8 +68,8 @@ def fork_figure(g: Game, Z: np.ndarray, pos: np.ndarray, method: str,
     ax3 = fig.add_subplot(gs[0], projection="3d")
     ax3.set_box_aspect((1, 1, 0.85))
     fork_panel(ax3, coords.reshape(n, T, 2), g.rows, pos, g.t0, legend=True)
-    ax3.set_xlabel(xlab, labelpad=-8)
-    ax3.set_ylabel(ylab, labelpad=-8)
+    ax3.set_xlabel(xlab, labelpad=-2)
+    ax3.set_ylabel(ylab, labelpad=-2)
     ax3.set_title("(a) displacement from the reference, by move", loc="left", fontsize=10)
 
     ax2 = fig.add_subplot(gs[1])

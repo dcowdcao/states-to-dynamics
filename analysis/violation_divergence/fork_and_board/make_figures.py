@@ -1,12 +1,18 @@
-"""What the nine branches are, and where they go in every representation space.
+"""What the branches are, and where they go in every representation space.
 
 Two halves of one question, so one figure. (b) is the board the game forks on,
-with each branch move on the square it plays. (a) is where those same nine
-branches travel: one 3-D fork per representation space, raw layer 5 first so the
-eye calibrates on it. Both halves draw from spade.figures.branch_style, so a
-colour and a marker mean the same branch in either half and one legend serves
-both; the free space beside the square board carries that legend and the rule
-key rather than sitting empty.
+with each branch move on the square it plays. (a) is where those same branches
+travel: one 3-D fork per representation space, raw layer 5 first so the eye
+calibrates on it. Both halves draw from spade.figures.branch_style, so a colour
+and a marker mean the same thing in either half and one legend serves both; the
+free space beside the square board carries that legend and the rule key rather
+than sitting empty.
+
+The six illegal categories are grouped into the three constraint rules they
+violate: (a) draws one mean per rule over its members drawn faint, and (b)
+colours a branch square by its rule, so the series and the R1/R2/R3 key match
+exactly. Group sizes are 2, 3 and 1, so the legend carries n and the legend
+title carries the within- over between-rule spread ratio.
 
 Planes are refit per space, so cells are comparable in the *shape* of the fork
 and never in position. One game (n=1): an illustration of the design, not a
@@ -17,6 +23,7 @@ Usage: python analysis/violation_divergence/fork_and_board/make_figures.py
 """
 
 import argparse
+from dataclasses import replace
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -26,7 +33,7 @@ import torch
 from spade.common.device import select_device
 from spade.common.study import study_dir
 from spade.figures.branch_panels import (
-    AZIM, ELEV, axis_labels, board_note, board_panel, fork_panel)
+    AZIM, ELEV, axis_labels, board_note, board_panel, rule_fork_panel)
 from spade.figures.branch_style import ordered_legend
 from spade.figures.paper_style import (
     MUTED, apply_style, rule_key, sae_label, save_figure)
@@ -37,6 +44,7 @@ from spade.violation_divergence.branches import (
     FIGURE_GAME, Game, complete_games, load_game, reference_row, selection_note)
 from spade.violation_divergence.fork_plane import (
     EMBEDDINGS, STRIDE, positions, space_features)
+from spade.violation_divergence.rule_groups import POPULATION_SPREAD, spread_ratio
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 NCOL = 3
@@ -51,21 +59,43 @@ def spaces() -> list[tuple[str, object]]:
         for e in seed42_entries() if e.config not in EXCLUDED_SAE]
 
 
-def legend_title(g: Game, method: str) -> str:
+def legend_title(g: Game, method: str, spread: float) -> str:
     n_legal = g.rows[0]["n_legal"]
-    return (f"the same nine branches in both panels, game {g.game}, $t_0$={g.t0}\n"
-            f"(a) {method.upper()} plane refit per space — arb. units, not comparable "
-            f"across cells;\n"
+    mean_note = ("an uncentred linear map, so that equals projecting the mean displacement"
+                 if method == "pca" else
+                 "not linear, so this is a mean of embedded points, not of displacements")
+    return (f"the same {len(g.rows)} branches in both panels, game {g.game}, "
+            f"$t_0$={g.t0}\n"
+            f"(a) one path per rule: the mean of its member categories' displacements, "
+            f"taken in the plane\n"
+            f"      ({method.upper()} is {mean_note})\n"
+            f"      over those members drawn faint. Plane refit per space — arb. units; "
+            f"the three ticks per\n"
+            f"      plane axis are a within-panel scale only, cells are NOT comparable "
+            f"across the grid;\n"
             f"      view elev={ELEV}, azim={AZIM}; every {STRIDE}nd ply\n"
-            f"(b) {n_legal} moves are legal at $t_0$; the played move and two of the "
+            f"(b) {n_legal} moves are legal at $t_0$; the played move and one of the "
             f"other {n_legal - 1} are branched\n"
+            f"the grouping is weak. within-rule ÷ between-rule mean pairwise distance = "
+            f"{spread:.2f} here;\n"
+            f"{POPULATION_SPREAD}\n"
+            f"(raw layer 5, full 512-d, $t\\geq t_0$). A rule's members travel barely "
+            f"closer to each other\n"
+            f"than to another rule's, so the faint members and not the three means carry "
+            f"the evidence —\n"
+            f"`python -m spade.violation_divergence.rule_groups`\n"
+            f"one legal control is drawn, as the null. Its own null — control 2, scored "
+            f"against control 1\n"
+            f"exactly as the illegal branches are — is not drawn here; it is in "
+            f"../game_trajectory and in\n"
+            f"the parent README, which is where the legal-vs-legal scale lives\n"
             f"one game (n=1): an illustration of the design, not a claim — the study's\n"
             f"numbers, with their CIs over 13,531 branches, are in the parent README\n"
             f"{selection_note(g.game)}")
 
 
 def figure(g: Game, Z: np.ndarray, pos: np.ndarray, method: str, device: str,
-           camera_ready: bool) -> Path:
+           spread: float, camera_ready: bool) -> Path:
     cells = spaces()
     ref = reference_row(g.rows)
     nrow = int(np.ceil(len(cells) / NCOL))
@@ -79,7 +109,8 @@ def figure(g: Game, Z: np.ndarray, pos: np.ndarray, method: str, device: str,
     head = fig.add_subplot(gs[0])
     head.axis("off")
     head.patch.set_visible(False)
-    head.set_title("(a) where the nine branches go: the fork in each representation space",
+    head.set_title("(a) where the branches go: the fork in each representation space, "
+                   "one path per rule",
                    loc="left", fontsize=11, pad=18)
 
     for j, (name, entry) in enumerate(cells):
@@ -87,11 +118,11 @@ def figure(g: Game, Z: np.ndarray, pos: np.ndarray, method: str, device: str,
         n, T, D = F.shape
         coords, var, _ = EMBEDDINGS[method]((F - F[ref]).reshape(-1, D))
         ax = fig.add_subplot(grid[j // NCOL, j % NCOL], projection="3d")
-        fork_panel(ax, coords.reshape(n, T, 2), g.rows, pos, g.t0,
-                   legend=(j == 0), zlabel=(j % NCOL == 0))
+        rule_fork_panel(ax, coords.reshape(n, T, 2), g.rows, pos, g.t0,
+                        legend=(j == 0), zlabel=(j % NCOL == 0))
         xlab, ylab = axis_labels(method, var)
-        ax.set_xlabel(xlab, labelpad=-8, fontsize=8)
-        ax.set_ylabel(ylab, labelpad=-8, fontsize=8)
+        ax.set_xlabel(xlab, labelpad=-2, fontsize=8)
+        ax.set_ylabel(ylab, labelpad=-2, fontsize=8)
         ax.set_title(name, loc="left", fontsize=8.5)
         if j == 0:
             keyed = ax
@@ -99,20 +130,20 @@ def figure(g: Game, Z: np.ndarray, pos: np.ndarray, method: str, device: str,
     board = replay(g.tokens[:g.t0])
     flipped = flip_set(board.state, g.rows[ref]["square"], board.next_hand_color)
     ax_board = fig.add_subplot(lower[0])
-    board_panel(ax_board, board, g.rows, flipped)
+    board_panel(ax_board, board, g.rows, flipped, by_rule=True)
     ax_board.set_title("(b) what they are: the position at $t_0$,\nand the move each "
                        "branch plays there", loc="left", fontsize=11)
 
     band = fig.add_subplot(lower[1])
     band.axis("off")
-    ordered_legend(band, keyed, 2, legend_title(g, method),
+    ordered_legend(band, keyed, 2, legend_title(g, method, spread),
                    loc="upper left", bbox_to_anchor=(0.0, 1.0))
-    band.text(0.0, 0.45, board_note(board), ha="left", va="top", fontsize=8,
-              color=MUTED, linespacing=1.5)
-    rule_key(band, ["R1", "R2", "R3"], x=0.0, y=0.18)
+    band.text(0.0, 0.30, board_note(board, by_rule=True), ha="left", va="top",
+              fontsize=8, color=MUTED, linespacing=1.5)
+    rule_key(band, ["R1", "R2", "R3"], x=0.0, y=0.14)
 
     if not camera_ready:
-        fig.suptitle(f"Game {g.game}: nine futures of one position, in nine "
+        fig.suptitle(f"Game {g.game}: {len(g.rows)} futures of one position, in nine "
                      f"representation spaces ({method.upper()})", fontsize=12)
     return save_figure(fig, FIG_DIR / f"game_{g.game}_fork_and_board_{method}",
                        camera_ready)
@@ -134,9 +165,17 @@ def main():
     assert args.game in complete_games(meta), \
         f"game {args.game} does not carry every branch type"
     g = load_game(meta, args.game)
+    # One control, not two: control 2 is the null *for* control 1 and belongs
+    # where control 1 is measured, not in an illustration of the construction.
+    keep = [i for i, r in enumerate(g.rows) if r["is_control"] != 2]
+    g = replace(g, idx=g.idx[keep], rows=[g.rows[i] for i in keep])
+
     pos = positions(g.t0)
     Z = acts[g.idx][:, pos, :].float().numpy()
-    print(f"wrote {figure(g, Z, pos, args.embedding, device, args.camera_ready)}")
+    D = Z[:, pos >= g.t0] - Z[reference_row(g.rows), pos >= g.t0]
+    spread = spread_ratio(D, g.rows)
+    print(f"within/between rule spread ratio, game {g.game}: {spread:.3f}")
+    print(f"wrote {figure(g, Z, pos, args.embedding, device, spread, args.camera_ready)}")
 
 
 if __name__ == "__main__":
