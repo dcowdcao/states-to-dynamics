@@ -6,6 +6,36 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## `spade` is installable now; the "101 modules import" claim never went through an install (2026-08-04)
+
+Wave 1's stated verification — `pip install -e .` in a clean env, `import spade`,
+`repo_root()` resolving here — had not been run. `spade` was installed in no environment,
+`pyproject.toml` declared no dependencies at all (a commented-out placeholder), and every
+line of `make setup` was a comment. The 101-module claim came from per-agent worktrees with
+ad-hoc `PYTHONPATH`, which is not the thing the package has to do.
+
+Fixed and verified in a throwaway venv built `--system-site-packages` off `spade_env`, so
+the torch 2.5.1+cu124 stack is inherited and only the packaging is under test. **102 of 102
+modules import cleanly** — the old count was one low, nothing was broken. Also verified from
+stock `/usr/bin/python3.11` + pip 22.3.1, which is the fresh-clone path.
+
+Do not `pip install -e` into `spade_env` itself: the editable path points at whatever
+worktree ran it and dangles when that worktree goes.
+
+Three real defects behind the missing install: `requirements.txt` named `python-chess` where
+the working env has the `chess` distribution; `plotly` and `umap-learn` were pinned with no
+importer anywhere we call, which is the exact defect that file's header criticises in the
+source repo's version; and `pydantic` was undeclared although `viewer/server.py` imports it.
+`pyproject.toml` now reads `requirements.txt` as its dependency list, so there is one list.
+
+Still data-blocked, and reported as such rather than skipped: `final_validation` is 23/24
+with the checkpoint round-trip skipped, `saes.registry.entries()` raises on the missing
+`ae.pt`, and the wave-3 acceptance number needs weights this tree does not have. Details,
+plus the `omegaconf` gap in the vendored TPR fork, in
+[docs/finish_notes/env-install.md](docs/finish_notes/env-install.md).
+
+---
+
 ## The port is done: 15 parallel agents, one branch each (2026-08-03)
 
 Every zone ported from the frozen source repo — `common`, `othello`, `saes`, `spaces` +
