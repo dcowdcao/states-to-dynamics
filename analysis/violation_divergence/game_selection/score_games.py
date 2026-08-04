@@ -107,7 +107,7 @@ def mean_pairwise(X: np.ndarray) -> float:
 
 
 def score(F: np.ndarray, category: np.ndarray, is_control: np.ndarray,
-          post: np.ndarray, game: int, t0: int) -> Scores:
+          post: np.ndarray, t0: int, game: int) -> Scores:
     """F is [n_branches, n_positions, width] in one space; `post` selects r >= 0."""
     ref = int(np.flatnonzero((category == 0) & (is_control == 0))[0])
     D = (F - F[ref])[:, post, :]
@@ -143,7 +143,7 @@ def encode(F: np.ndarray, enc, device: str) -> np.ndarray:
 
 
 def sweep(meta: dict, acts: torch.Tensor, games: list[int]) -> list[Scores]:
-    return [score(*game_rows(meta, acts, g)) for g in games]
+    return [score(*game_rows(meta, acts, g), g) for g in games]
 
 
 def transfer(meta: dict, acts: torch.Tensor, games: list[int], device: str
@@ -155,7 +155,7 @@ def transfer(meta: dict, acts: torch.Tensor, games: list[int], device: str
         rows = []
         for g in games:
             F, cat, ctl, post, t0 = game_rows(meta, acts, g)
-            rows.append(score(encode(F, enc, device), cat, ctl, post, g, t0))
+            rows.append(score(encode(F, enc, device), cat, ctl, post, t0, g))
         out[config] = rows
         print(f"  scored {len(rows)} games in {config}")
     return out

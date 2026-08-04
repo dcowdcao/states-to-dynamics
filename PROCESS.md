@@ -6,6 +6,39 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The fork figure's game is now chosen, and the criteria disagree (2026-08-04)
+
+`game_trajectory/` drew `complete[0]` — game 0, *t0*=10, the minimum *t0* over the
+1550 branch-complete games. List order, not a criterion.
+`analysis/violation_divergence/game_selection/` sweeps all 1550 and recommends
+**game 662, *t0*=22**.
+
+Two constraints made the sweep worth trusting, and both were committed before it ran
+(`score_games.py` docstring): score in **raw layer 5 only** — an SAE in the selection
+loop would tilt the nine-space grid toward whichever dictionary drove the choice — and
+score in **full R^512**, since a top-2 PCA criterion selects the game that flatters one
+plane and the plane is being redesigned.
+
+**The four candidate criteria have disjoint top-10s.** ρ(*S3*, *S4*) = −0.442: the games
+whose branches diverge furthest are the games whose illegal categories are *least*
+differentiated, because large δ̂ means everything moving along one shared direction. So
+"pick the biggest divergence" is the worst rule for a category-colored figure.
+
+**Why not *S1*, the illegal-vs-control separation.** It is the study's own scientific
+contrast, and the aggregate says illegal displaces *less* than a legal control (0.978).
+Its argmax is therefore the single game that most contradicts the paper, dressed as an
+illustration. The pick is argmax *S3* instead — scale-free, and no claim rests on it.
+Cost, stated in the sub-study README: game 662 is at the 5.8th percentile of *S1*
+(conservative direction, but not representative of that contrast).
+
+Transfer check: game 662 is rank 1/302 in Standard, TopK and SpaDE latent spaces too,
+ρ = 0.935–0.990 against raw L5. The choice is branch geometry, not the selecting space.
+
+`game_trajectory/make_figures.py` still hardcodes `complete[:n_games]` and needs a
+`--game` flag before it can consume this.
+
+---
+
 ## Wave 8: the docs catch up, and q15 narrows to one hypothesis (2026-08-04)
 
 Three agents on `wave8/*` — the claims ledger, the archive zone, the docs sweep. Per-agent
