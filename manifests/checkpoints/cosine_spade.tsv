@@ -1,0 +1,3 @@
+b92eaaa2c6e9f0d00fae995d6db5781d7a97bdea897103e79f959175d292ab1e	13260	2026-07-14	checkpoints/cosine_spade/standardization_params.json
+94c29f28e2be4af822c2355b2c1a6aa4cfecb1c0ccf007ead3d1edddef995939	33555706	2026-05-11	checkpoints/cosine_spade/trainer_0/ae.pt
+67b13840c9b178845ba2724ba4999e2e37f4d207a0da7d18b9314d902db9cb95	887	2026-07-14	checkpoints/cosine_spade/trainer_0/config.json
