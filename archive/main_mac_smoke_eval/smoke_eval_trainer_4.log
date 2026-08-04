@@ -1,0 +1,41 @@
+/opt/anaconda3/lib/python3.12/site-packages/transformer_lens/utils.py:62: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  return torch.load(file_path, map_location="cpu")
+Device: mps
+
+Loading SAE from /Users/dcao/Downloads/Spade_SAE_Research/Spade_SAE_Research_Codespace/experiments/expt_othello_sae/autoencoders/trainer_4/ ...
+  type=GatedAnnealTrainer, dict_size=8192, activation_dim=512
+  Standardization: scale=0.506374, mean_norm=8.1500
+
+=== Computing Loss Recovered (Fidelity) ===
+  Loading OthelloGPT for loss_recovered computation...
+Loaded pretrained model Baidicoot/Othello-GPT-Transformer-Lens into HookedTransformer
+Moving model to device:  mps
+  loss_orig=2.0156, loss_recon=2.6474, loss_zero=4.9069
+  frac_recovered = 0.7815
+
+Loading test data from /Users/dcao/Downloads/Spade_SAE_Research/Spade_SAE_Research_Codespace/experiments/expt_othello_sae/data/activations ...
+  Loaded blank-mask board states: (520, 8, 8, 3)
+  N=520, d_model=512, classes=3
+
+Encoding test activations ...
+  Encoded in 0.0s, shape=(520, 8192)
+
+Computing F1 per feature (11 thresholds) ...
+  Done in 5.1s
+
+Coverage = 0.5736
+
+Computing board reconstruction ...
+  Reconstruction F1 = 0.4340
+
+--- Blank-mask evaluation ---
+  Blank-mask coverage = 0.3358, F1 = 0.3002
+
+L0 = 392.18
+Variance explained = 0.4528
+Loss Recovered (Fidelity) = 0.7815
+
+Saving results to /Users/dcao/Downloads/Spade_SAE_Research/Spade_SAE_Research_Codespace/experiments/expt_othello_sae/results/karvonen/trainer_4_GatedAnnealTrainer_d8192/ ...
+  Appended to /Users/dcao/Downloads/Spade_SAE_Research/Spade_SAE_Research_Codespace/experiments/expt_othello_sae/results/karvonen/all_results.csv
+
+Done!
