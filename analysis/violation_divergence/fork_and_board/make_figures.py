@@ -61,6 +61,7 @@ FIG_DIR = Path(__file__).resolve().parent / "figures"
 NCOL = 3
 CELL_W, CELL_H = 3.7, 3.5  # one fork cell, as in ../game_trajectory's grid
 BOARD_H = 3.9              # the board row; the board is square, so this is its width too
+ROW_GAP = 0.7              # clear air between the grid's axis labels and (b)'s title
 # R^21 is 11 step-length components and 10 turning-angle ones, so it carries
 # displacement magnitude as well as curvature; the name says both.
 PLANE_NAME = {"displacement": "Displacement",
@@ -114,9 +115,12 @@ def figure(g: Game, Z: np.ndarray, pos: np.ndarray, plane: str, method: str,
     k = int(np.flatnonzero(pos == g.t0)[0])
     nrow = int(np.ceil(len(cells) / NCOL))
 
-    fig = plt.figure(figsize=(CELL_W * NCOL, CELL_H * nrow + BOARD_H))
+    # ROW_GAP buys clear air between the grid's bottom axis labels and (b)'s
+    # title; it is added to the canvas rather than taken out of the panels.
+    fig = plt.figure(figsize=(CELL_W * NCOL, CELL_H * nrow + BOARD_H + ROW_GAP))
     gs = fig.add_gridspec(2, 1, height_ratios=[CELL_H * nrow, BOARD_H],
-                          left=0.03, right=0.97, top=0.93, bottom=0.02, hspace=0.05)
+                          left=0.03, right=0.97, top=0.93, bottom=0.02,
+                          hspace=ROW_GAP / BOARD_H)
     grid = gs[0].subgridspec(nrow, NCOL, wspace=0.06, hspace=0.16)
     # The board cell is as wide as it is tall, so the square board fills it and the
     # band beside it gets the rest rather than a strip of dead space.
