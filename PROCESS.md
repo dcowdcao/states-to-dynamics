@@ -6,6 +6,59 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The real-only curve in Fig 2(b) was labelled a control; it is the effect (2026-08-05)
+
+Branch `bracket/fig2-causal`, on top of the entry below. That entry drew `d_lp_real`
+and called it "the control a merely damaging edit fails", so the orange dotted curve
+diving to −4.6 nats read as degradation. It is the opposite. `real_only` is the
+squares legal on the **real** board and illegal on the counterfactual one, so a
+successful un-flip edit has to push it **down** while it pushes `cf_only` up. Both
+curves are one switch read on its two sides, and the panel now says that: the y-axis
+carries `↑ onto the un-flipped board's squares, ↓ off the real board's`, and the
+legend says "one switch, two sides".
+
+**The damage control was the corner annotation.** `d_lp_legal` — log-mass on the
+whole legal set, which is what a broken edit moves — is now a gray band through zero
+at its worst-case CI bound over both sweeps (±0.08 nats), with a legend entry. A band
+rather than a series or a twin axis: on a y-axis spanning −4.6 to +8.1 the control is
+a hairline by construction, and *that* is the reading. It replaces the dashed zero
+line, so the zero reference and the control are one mark.
+
+**The low-scale asymmetry is a base-mass artifact, not a property of the edit.** At
+tpr/scale 1 `d_lp_cf` is +0.278 [0.267, 0.288] while `d_lp_real` is −0.0005 [−0.0015,
++0.0003] — mass apparently added to the counterfactual squares without being taken
+from the real-only ones. It is not:
+
+- **Not the event sets.** 507 of the 1,370 flipped rows have both sets non-empty
+  (986 have `cf_only`, 891 have `real_only`, none have neither). Restricted to those
+  507 the numbers barely move: `d_lp_cf` +0.278 → +0.294, `d_lp_real` −0.0005 →
+  +0.0003. The differing n is bookkeeping, not the effect.
+- **It is base mass, by four orders of magnitude.** Median base mass is 8·10⁻⁶ on
+  `cf_only` against 0.115 on `real_only` — the sets start 9.7 nats apart. The +0.278
+  nats on `cf_only` is +1·10⁻⁵ of *probability*. Had every bit of it come out of
+  `real_only`, `real_only` would read −0.00008 nats, an order of magnitude inside its
+  own CI. The measurement cannot resolve the exchange at that scale; the flatness is
+  not evidence either way, and the panel now carries that sentence in-figure so
+  nobody reads the flat left end as specificity.
+- **Above ‖δ‖/‖h‖ ≈ 0.07 the exchange is real and visible.** At scale 16 `real_only`
+  loses 0.124 of probability and `cf_only` gains 0.096, with the whole legal set down
+  only 0.075 nats: mass leaves the real board's exclusive squares, and most of it
+  lands on squares the un-flipped board allows. At intermediate scales `real_only`
+  loses far more than `cf_only` gains (86× at scale 4) while `d_lp_legal` sits at
+  10⁻⁴ nats —
+  the difference goes to squares legal on *both* boards, which is also the
+  counterfactual board's legal set. Still the same switch.
+
+The honest summary of the operating point (`‖δ‖/‖h‖` = 0.03): the edit produces a
+large, tight log-scale effect on a set holding 10⁻⁵ of the mass, and nothing else in
+the distribution moves enough to measure. Reading Fig 2(b)'s y-axis as a probability
+budget is the mistake it is now annotated against.
+
+Drawing only; no re-run. `causal_panel` now also reads `intervention_per_event.csv`,
+for the base-mass gap and the transfer floor.
+
+---
+
 ## Fig 2(b) stops grading each edit with its own decoder, and shows the controls (2026-08-05)
 
 Branch `bracket/fig2-causal`. The causal panel had three problems, all of which made
