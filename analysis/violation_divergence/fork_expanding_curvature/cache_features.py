@@ -4,51 +4,73 @@ The acts file is 1 GB and the eight SAE checkpoints take a couple of minutes to
 load; the game itself is 9 branches x 17 positions. Cache it once so the
 accounting and the figures are seconds apart.
 
+`--variant rollout` caches the same game from the branch set whose suffixes are
+sampled from the model, which stores K rows per branch (36, not 9) and a
+`rollout` column naming which sample a row is. The cache is scoped by variant:
+an unscoped path would let a rollout run overwrite the spliced features and
+silently redraw every spliced figure.
+
 Usage: python analysis/violation_divergence/fork_expanding_curvature/cache_features.py
+       [--variant spliced|rollout]
 """
 
+import argparse
 from pathlib import Path
 
 import numpy as np
 import torch
 
 from spade.common.device import select_device
-from spade.common.study import study_dir
+from spade.common.study import variant_dir
 from spade.figures.paper_style import sae_label
-from spade.othello.taxonomy import CATEGORIES
 from spade.saes.registry import seed42_entries
 from spade.spaces import EXCLUDED_SAE
+from spade.violation_divergence.branches import complete_games
 from spade.violation_divergence.compute_divergence import sae_encoder
 
 from window import positions
 
-CACHE = study_dir("divergence") / "fork_expanding" / "game_spaces.npz"
+VARIANT_DIRS = {"spliced": "", "rollout": "rollout"}
 RAW_SPACE = "raw layer 5 (reference space)"
 
 
-def load() -> dict:
-    if not CACHE.exists():
-        raise FileNotFoundError(f"{CACHE} missing; run cache_features.py first")
-    z = np.load(CACHE, allow_pickle=False)
+def cache_path(variant: str) -> Path:
+    return variant_dir("divergence", variant=variant) / "fork_expanding" / "game_spaces.npz"
+
+
+def load(variant: str = "") -> dict:
+    cache = cache_path(variant)
+    if not cache.exists():
+        raise FileNotFoundError(f"{cache} missing; run cache_features.py first")
+    z = np.load(cache, allow_pickle=False)
     names = [str(s) for s in z["names"]]
-    return {"names": names, "F": [z[f"space_{j}"] for j in range(len(names))],
-            "pos": z["pos"], "t0": int(z["t0"]), "game": int(z["game"]),
-            "category": z["category"], "is_control": z["is_control"]}
+    g = {"names": names, "F": [z[f"space_{j}"] for j in range(len(names))],
+         "pos": z["pos"], "t0": int(z["t0"]), "game": int(z["game"]),
+         "category": z["category"], "is_control": z["is_control"]}
+    if "rollout" in z.files:
+        g["rollout"] = z["rollout"]
+    return g
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--variant", default="spliced", choices=list(VARIANT_DIRS))
+    args = parser.parse_args()
+
     device = select_device()
-    base = study_dir("divergence")
+    variant = VARIANT_DIRS[args.variant]
+    base = variant_dir("divergence", variant=variant)
     meta = torch.load(base / "branches" / "branches.pt", weights_only=True)
 
-    n_types = len(CATEGORIES) + 2  # 6 illegal + reference + 2 legal controls
-    game = next(g for g in meta["game_id"].unique().tolist()
-        if int((meta["game_id"] == g).sum()) == n_types)
+    # First branch-complete game, by branch *type*: the rollout set stores K rows
+    # per branch, so a row count finds no complete game there at all.
+    game = complete_games(meta)[0]
     idx = (meta["game_id"] == game).nonzero().flatten()
     t0 = int(meta["t0"][idx[0]])
     pos = positions(t0)
 
-    acts = torch.load(base / "acts" / "resid_post_5.pt", weights_only=True)
+    # mmap: the rollout acts file is 4 GB and is indexed a game at a time.
+    acts = torch.load(base / "acts" / "resid_post_5.pt", weights_only=True, mmap=True)
     Z = acts[idx][:, pos, :].float().to(device)
     del acts
 
@@ -65,12 +87,15 @@ def main():
         out[f"space_{j}"] = f.reshape(Z.shape[0], Z.shape[1], -1).cpu().numpy()
         print(f"{name}: {out[f'space_{j}'].shape}")
 
-    CACHE.parent.mkdir(parents=True, exist_ok=True)
+    extra = {"rollout": meta["rollout"][idx].numpy()} if "rollout" in meta else {}
+    cache = cache_path(variant)
+    cache.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(
-        CACHE, names=np.array([n for n, _ in spaces]), pos=pos, t0=t0, game=game,
+        cache, names=np.array([n for n, _ in spaces]), pos=pos, t0=t0, game=game,
         category=meta["category"][idx].numpy(),
-        is_control=meta["is_control"][idx].numpy(), **out)
-    print(f"wrote {CACHE}  game {game}, t0={t0}, positions {pos[0]}-{pos[-1]}")
+        is_control=meta["is_control"][idx].numpy(), **extra, **out)
+    print(f"wrote {cache}  game {game}, t0={t0}, positions {pos[0]}-{pos[-1]}, "
+          f"{len(idx)} rows")
 
 
 if __name__ == "__main__":

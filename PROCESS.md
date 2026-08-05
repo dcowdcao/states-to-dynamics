@@ -6,6 +6,63 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The two R^21 fork studies get rollout twins, and K=4 buys a horizon (2026-08-05)
+
+Branch `rfig/figs-curvature`. `fork_curvature_space` and `fork_expanding_curvature` both
+take `--variant {spliced,rollout}`; rollout writes `*_rollout` files and the spliced
+defaults are untouched — all six committed PNGs re-render byte-identically before and
+after (`git status` clean on both figure directories), and `feasibility.py` reproduces its
+whole §4 table after the `travel()` signature change.
+
+**The trap these two directories specifically had to avoid.** φ is nonlinear, so a branch's
+descriptor is the mean of its K rows' descriptors and never the descriptor of their mean
+trajectory — the latter is the curvature of a path no rollout took. Every φ call site
+(`windowed`, `descriptor`, `jackknife`, `expanding`) now runs per row and reduces after,
+via `phi_mean` / `window.branch_mean`. The plane projection, the difference from the
+reference and the unit-RMS rescale are linear and commute with it; nothing else does.
+Because every group is a singleton on the spliced set, this is the identity there, which is
+why the byte check passes.
+
+**The prefix survives, verified rather than assumed.** `max|Δφ| = 0.00e+00` at every
+`r < 0` in all nine spaces on the rollout set, and `max|Δφ_ref| = 0.00e+00` everywhere —
+same as spliced. `tokens[:t0+1]` really is bit-identical across rollouts.
+
+**K=4 gives a diagnostic the spliced set cannot have, and it is the finding.** Compare how
+far two rollouts of the *same* branch drift apart against how far the branch drifts from
+the reference. On game 1235's trailing window the ratio is exactly ∞ at `r = 0` (the window
+`−14…0` ends at *t0*, so the rollouts have not diverged yet: `r = 0` is pure branch
+effect), 1.43 at `r = 2`, and below 1 in every space from `r = 12`. So the windowed grids
+are **drawn to `r = 8`** rather than running silently to 24 — independently the same cut
+the divergence read-out's saturation caveat gives. The *whole* grids cannot be cut: R^21
+needs 8 sampled positions and its jackknife 9, so one point per branch is by construction a
+summary of the saturated region. They keep `r = 0…24` and their ellipses were changed to
+the K=4 rollout spread instead of the position jackknife, which is what makes the cost
+visible: in `fork_r21_whole_fixed_rollout` the reference's own ellipse swallows most of the
+panel and every branch mean inside it.
+
+`fork_expanding_curvature` is worse off and now says so. Its expanding window's first point
+is `r = 14`, and there the branch-to-reference distance is only 0.40–0.86 (median 0.54–0.58
+over the nine spaces) of the within-branch rollout spread, at every one of its six points.
+There is no overlap between where R^21 is defined and where the branch is legible. Two of
+its spliced findings reverse — observed travel goes from beating the time-shuffled null in
+all nine spaces to sitting below it in all nine, and the "legal controls diverge most"
+side finding flips — and both are recorded in the README as artifacts of comparing two
+unrelated games, not as results.
+
+**Rule-spread ratios recomputed, not carried over** (raw layer 5, game 1235, n=1): windowed
+0.902 → **0.762** (0.688 over the drawn `r ≤ 8`), whole **1.034 → 0.818**. The whole
+variant's grouping comes back from above 1 to clearly below it. Read with the mechanism in
+hand: averaging K descriptors shrinks each branch toward its group's, and the rollouts are
+paired common random numbers, so part of the tightening is the estimator. The displacement
+ratio moves the other way (0.885 → 0.930) over the same window, so the two fields disagree
+and one game cannot settle it.
+
+**Flagged, not done:** "K rows make one branch" is now written twice —
+`window.branch_groups`/`branch_mean` and `fork_curvature_space.one_control`/`phi_mean`. It
+is one rule about the branch tensor's layout and belongs beside `branches.complete_games`
+in `src/`, which was out of scope here. `measure.py` and `feasibility.py` stay spliced-only:
+nothing in either rollout README section carries a CI.
+
 ## Fig 1 titles each accuracy against its own occupancy ceiling (2026-08-05)
 
 Branch `bracket/basis-ceiling`. Panel (c) said "held-out board accuracy 0.735" and stopped

@@ -22,7 +22,8 @@ from spade.straightness.geometry import (
     RESTRAV_FEATURE_NAMES, restrav_features, temporal_geometry)
 
 from cache_features import load
-from window import MIN_WINDOW, R21_DIM, STRIDE, expanding, rescale, sliding, travel
+from window import (
+    MIN_WINDOW, R21_DIM, STRIDE, branch_groups, expanding, rescale, sliding, travel)
 
 RAW_BLOCK = slice(0, 13)     # d1..d7, theta1..theta6
 MOMENT_BLOCK = slice(13, 21)  # mean/min/max/var of d and of theta
@@ -130,8 +131,9 @@ def expanding_accounting(g: dict, ref: int) -> None:
           f"\n   null (the same {len(ks)} descriptors over a random permutation of the "
           "post-t0 positions,\n   so window growth is the only thing left):\n")
     print(f"   {'space':34s} {'observed':>10s} {'null':>10s}")
+    groups = branch_groups(g["category"], g["is_control"])
     for name, Fs in zip(g["names"], g["F"]):
-        obs, null = travel(Fs, k0, ref)
+        obs, null = travel(Fs, groups, k0, ref)
         print(f"   {name:34s} {np.median(obs):10.2f} {np.median(null):10.2f}")
 
 
