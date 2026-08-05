@@ -42,14 +42,16 @@ against this column's −0.0025 / 0.0550; running their seed here reproduces the
 exactly, and sd across seeds 0/1/2/7/42/1111 spans 0.0497–0.0550. Same statistic, different
 draw — not a disagreement.
 
-**Gotcha for anyone reading a TPR direction:** `tpr_probes/tpr_r52_f2_layer{0..7}.pt` on
-netscratch were saved before `basis` entered the cache key, so `tpr_probe.load(5)` raises
-`FileNotFoundError` looking for `tpr_r52_f2_relative_layer5.pt`. The loader is right — the
-infix is what stops a relative and an absolute fit from overwriting each other — and the
-file names are stale. Refitting layer 5 with the current code reproduces the on-disk weights
-bit-for-bit, so `python -m spade.bracket_flip.tpr_probe` (or a rename) fixes it losslessly;
-neither was run here, since this session could not write `$SPADE_BRACKET_DIR` and reached
-the probe through a symlinked shadow of it.
+**Repaired since:** `tpr_probes/tpr_r52_f2_layer{0..7}.pt` on netscratch were saved before
+`basis` entered the cache key, so `tpr_probe.load(5)` raised `FileNotFoundError` looking for
+`tpr_r52_f2_relative_layer5.pt`. The loader was right — the infix is what stops a relative
+and an absolute fit from overwriting each other — and the file names were stale. But two
+conventions were live at once: `redteam.tpr_checkpoint` and `tpr_intervene`'s manifest line
+each spelled out `tpr_r52_f2_layer{L}.pt` with the dims hardcoded, so renaming alone would
+have broken them. `_path` is now public as `tpr_probe.path(layer, basis="relative")` and is
+the only place the rule lives; the eight files are renamed to match. Refitting layer 5
+reproduces the on-disk weights bit-for-bit, so the rename is the cheap half of a lossless
+repair.
 
 Unrelated but in the same files: `paths.linear_probe_activations()` now owns the
 `$SPADE_LINEAR_PROBE_ACTIVATIONS`-else-repo-relative rule that `tpr_probe`, `act_geometry`

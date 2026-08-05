@@ -132,7 +132,7 @@ def _fit(acts: Tensor, labels: Tensor, seed: int) -> TensorProductBoardProbe:
     return probe.requires_grad_(False)
 
 
-def _path(layer: int, basis: str) -> Path:
+def path(layer: int, basis: str = "relative") -> Path:
     return (study_dir("bracket") / "tpr_probes"
             / f"tpr_r{ROLE_DIM}_f{FILLER_DIM}_{basis}_layer{layer}.pt")
 
@@ -157,8 +157,8 @@ def train(layer: int, seed: int = SEED, labels: Tensor | None = None,
         labels = board_states()
     probe = TPRProbe(_fit(acts[:N_TRAIN], labels[:N_TRAIN], seed), layer)
 
-    path = _path(layer, basis)
-    path.parent.mkdir(parents=True, exist_ok=True)
+    out = path(layer, basis)
+    out.parent.mkdir(parents=True, exist_ok=True)
     torch.save({
         "probe_state_dict": probe.module.state_dict(),
         "layer": layer,
@@ -168,12 +168,12 @@ def train(layer: int, seed: int = SEED, labels: Tensor | None = None,
         "basis": basis,
         "labels": _fingerprint(labels[:N_TRAIN]),
         "n_train": N_TRAIN,
-    }, path)
+    }, out)
     return probe
 
 
 def load(layer: int, basis: str = "relative") -> TPRProbe:
-    artifact = torch.load(_path(layer, basis), map_location="cpu", weights_only=True)
+    artifact = torch.load(path(layer, basis), map_location="cpu", weights_only=True)
     module = TensorProductBoardProbe(
         d_model=artifact["probe_state_dict"]["binding_map"].shape[0],
         role_dim=artifact["role_dim"],

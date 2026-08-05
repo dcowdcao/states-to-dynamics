@@ -351,7 +351,7 @@ def main() -> None:
         "skips": skips, "scales": args.scales, "betas": args.betas,
         "settled_min_age": SETTLED_MIN_AGE, "n_bootstrap": N_BOOT, "seed": SEED,
         "linear_probe_dir": str(LINEAR_PROBE_DIR),
-        "tpr_probe": str(study_dir("bracket") / "tpr_probes" / f"tpr_r52_f2_layer{LAYER}.pt"),
+        "tpr_probe": str(tpr_probe.path(LAYER)),
     }, indent=2))
     print(summary.to_string(index=False))
     print(f"wrote {out / 'intervention_per_event.csv'}")

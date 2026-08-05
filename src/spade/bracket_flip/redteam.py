@@ -28,6 +28,7 @@ from spade.common.paths import repo_root
 REPO = Path(os.environ.get("SPADE_REPO", repo_root()))
 sys.path.insert(0, str(REPO / "external" / "Karvonen_Research"))
 
+from spade.bracket_flip import tpr_probe  # noqa: E402
 from spade.common.study import study_dir  # noqa: E402
 from spade.othello.boards import flip_set, rays_touch, regular_moves, replay  # noqa: E402
 
@@ -61,8 +62,7 @@ def probe_set() -> dict[str, torch.Tensor]:
 
 
 def tpr_checkpoint(layer: int) -> dict:
-    return torch.load(study_dir("bracket") / "tpr_probes" / f"tpr_r52_f2_layer{layer}.pt",
-                      map_location="cpu", weights_only=True)
+    return torch.load(tpr_probe.path(layer), map_location="cpu", weights_only=True)
 
 
 # ---------------------------------------------------------------- engine re-derivation
