@@ -21,9 +21,13 @@ read-out reduces [rows, 33, d] to its own scalars without a [17527, 33, 8192] te
 (L0, variance explained, reconstruction F1) that F4 regresses rule preservation against;
 those, and everything else the branch window measures, are independent of the probe set.
 
-Which positions the probe is fitted on is still being settled, so `$SPADE_LEGALITY_PROBE_ACTS`
-switches the source and every row records a `probe_fingerprint` of it. A cached row whose
-fingerprint no longer matches is a hard error, not a silent reuse.
+The probe fit set is the study's own extraction, whose 200 source games exclude by exact
+token match all 2000 games behind the read-out branches — a probe fitted on the games it is
+later read out on would inflate every number in the study. `$SPADE_LEGALITY_PROBE_ACTS`
+switches the source, and every row records a `probe_fingerprint`: a digest of the fit
+activations themselves, so a different corpus cannot produce the same fingerprint and a
+cached row that no longer matches is a hard error rather than a silent reuse. Repoint it
+and that disjointness is the first thing to re-verify — `fit_set/manifest.json` records it.
 
 Usage: python -m spade.legality_probe.spaces [--spaces raw,TopKTrainer-othello] [--smoke]
 """
@@ -57,17 +61,12 @@ N_BEFORE = sum(r < 0 for r in WINDOW)
 ROW_BATCH = 248
 SMOKE_ROWS, SMOKE_PROBE = 200, 2000
 
-# Same resolution as tpr_probe.ACTIVATIONS: the directory is gitignored, so a worktree
-# needs the override to point at a checkout that has it.
-ACTIVATIONS = Path(os.environ.get(
-    "SPADE_LINEAR_PROBE_ACTIVATIONS",
-    repo_root() / "analysis" / "linear_probe" / "activations"))
-
-# The probe fit set, as a single path, because it is the one input that may be replaced:
-# the committed linear-probe extraction holds positions whose token sequences may not be
-# recoverable, and a freshly extracted [n, 512] set drops in here.
+# The probe fit set: [10000, 512] layer-5 resid_post over 200 games, extracted by
+# legality_probe's own label pipeline. NOT analysis/linear_probe/activations/ — that set
+# holds forfeit positions and 53 mislabeled rows, its positions are not recoverable, and
+# nothing rules out overlap with the read-out games.
 PROBE_ACTS = Path(os.environ.get(
-    "SPADE_LEGALITY_PROBE_ACTS", ACTIVATIONS / "all_layer_activations.pt"))
+    "SPADE_LEGALITY_PROBE_ACTS", study_dir("legality") / "acts" / f"resid_post_{LAYER}.pt"))
 
 
 def roster() -> list[tuple[str, SAEEntry | None]]:
@@ -88,10 +87,14 @@ def quality() -> pd.DataFrame:
 
 
 def probe_acts(path: Path = PROBE_ACTS) -> torch.Tensor:
-    """[n, 512] float32 layer-5 fit set; an [8, n, 512] all-layer stack is sliced to LAYER."""
+    """[n, 512] float32: the probe fit set, already at LAYER — there is nothing to index.
+
+    An [8, n, 512] all-layer stack fails here rather than being silently sliced, because
+    the only such stack in the tree is the unusable one.
+    """
     acts = torch.load(path, map_location="cpu", weights_only=True)
-    assert acts.shape[-1] == D_MODEL, acts.shape
-    return acts[LAYER] if acts.ndim == 3 else acts
+    assert acts.ndim == 2 and acts.shape[-1] == D_MODEL, acts.shape
+    return acts
 
 
 def fingerprint(acts: torch.Tensor) -> str:
