@@ -18,6 +18,7 @@ python analysis/violation_divergence/behavioral/make_figures.py     # F6
 python analysis/violation_divergence/probe_readout/make_figures.py  # F7
 python analysis/violation_divergence/sae_spaces/make_figures.py     # F2, F4, F5
 python analysis/violation_divergence/fork_and_board/make_figures.py # the design, n=1
+python analysis/violation_divergence/rule_curvature/make_figures.py # curvature at the fork, --tree branches|rollout
 python analysis/violation_divergence/suffix_legality/measure.py     # the shared-suffix defect, tokens only
 ```
 
