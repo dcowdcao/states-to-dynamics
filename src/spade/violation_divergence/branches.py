@@ -98,10 +98,15 @@ def reference_row(rows: list[dict]) -> int:
 
 
 def complete_games(meta: dict) -> list[int]:
-    """Games carrying every branch type: the reference, both controls, all six."""
+    """Games carrying every branch type: the reference, both controls, all six.
+
+    Counts distinct branch types rather than rows, because the rollout variant
+    stores K rows per branch: a row count finds no complete game there at all.
+    """
     n_types = len(CATEGORIES) + N_CONTROLS
+    kind = meta["category"].long() * (N_CONTROLS + 1) + meta["is_control"].long()
     return [g for g in meta["game_id"].unique().tolist()
-        if int((meta["game_id"] == g).sum()) == n_types]
+        if len(kind[meta["game_id"] == g].unique()) == n_types]
 
 
 def pick_branches(reference: int, cats: list[int], rng: Random) -> list[tuple[int, int, int]] | None:

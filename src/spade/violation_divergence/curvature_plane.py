@@ -47,7 +47,7 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 
-from spade.common.study import study_dir
+from spade.common.study import study_dir, variant_dir
 from spade.straightness.geometry import (
     N_RAW_D, N_RAW_THETA, RESTRAV_FEATURE_NAMES, moment4, restrav_features,
     temporal_geometry)
@@ -106,11 +106,11 @@ def jackknife(Z: np.ndarray) -> np.ndarray:
                      for t in range(Z.shape[1])])
 
 
-def usable(n: int | None = None, w: int = W) -> list[int]:
+def usable(n: int | None = None, w: int = W, variant: str = "") -> list[int]:
     """Games carrying every branch type whose first full-width window still ends
     before the branch, so at least one drawn point is branch-free and the prefix
     can be seen collapsing rather than asserted. Needs t0 >= 18 at w=8."""
-    meta = torch.load(study_dir("divergence") / "branches" / "branches.pt",
+    meta = torch.load(variant_dir("divergence", variant=variant) / "branches" / "branches.pt",
                       weights_only=True)
     t0 = {g: int(meta["t0"][(meta["game_id"] == g).nonzero()[0]])
           for g in complete_games(meta)}
@@ -118,13 +118,13 @@ def usable(n: int | None = None, w: int = W) -> list[int]:
     return ids[:n]
 
 
-def stream(gids: list[int], device: str = "cpu", w: int = W):
+def stream(gids: list[int], device: str = "cpu", w: int = W, variant: str = ""):
     """Each game's nine branches in all nine representation spaces, one at a time.
 
     A generator, not a list: forty games in nine 8192-wide spaces is 2 GB on top
     of the 1 GB activation file, and the login node kills it.
     """
-    base = study_dir("divergence")
+    base = variant_dir("divergence", variant=variant)
     meta = torch.load(base / "branches" / "branches.pt", weights_only=True)
     # mmap: the 1 GB activation file is indexed nine rows at a time, and
     # materialising it alongside eight SAE checkpoints trips the memory cap.
@@ -140,6 +140,11 @@ def stream(gids: list[int], device: str = "cpu", w: int = W):
              "n_context": len(pos) - len(positions(t0)),
              "category": meta["category"][idx].numpy(),
              "is_control": meta["is_control"][idx].numpy()}
+        # The rollout variant carries K rows per branch, so a caller that assumes
+        # nine rows per game would silently mis-index. Pass the column through and
+        # make every consumer reduce over it explicitly.
+        if "rollout" in meta:
+            g["rollout"] = meta["rollout"][idx].numpy()
         for label, enc in encoders:
             if enc is None:
                 g[label] = Z
@@ -150,13 +155,19 @@ def stream(gids: list[int], device: str = "cpu", w: int = W):
         yield g
 
 
-def figure_game(gid: int = FIGURE_GAME, w: int = W, device: str = "cpu") -> dict:
-    """The one game the grids draw, cached so re-rendering skips the 1 GB load."""
-    cache = study_dir("divergence") / "fork_curvature" / f"game_{gid}_w{w}.npz"
+def figure_game(gid: int = FIGURE_GAME, w: int = W, device: str = "cpu",
+                variant: str = "") -> dict:
+    """The one game the grids draw, cached so re-rendering skips the 1 GB load.
+
+    The cache is scoped by variant: an unscoped path would let a rollout run
+    overwrite the spliced features and silently redraw every spliced figure.
+    """
+    cache = (variant_dir("divergence", variant=variant) / "fork_curvature"
+             / f"game_{gid}_w{w}.npz")
     if cache.exists():
         z = np.load(cache)
         return {k: z[k] if z[k].ndim else z[k].item() for k in z.files}
-    g = next(stream([gid], device, w))
+    g = next(stream([gid], device, w, variant))
     cache.parent.mkdir(parents=True, exist_ok=True)
     np.savez(cache, **g)
     return g
