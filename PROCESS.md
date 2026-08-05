@@ -170,6 +170,56 @@ study owner's call, not this branch's.
 
 ---
 
+---
+
+## The fork figures learn a second branch set, and it saturates (2026-08-05)
+
+Branch `rfig/figs-fork-board`. `fork_and_board` and `game_trajectory` grew
+`--variant {spliced,rollout}`, defaulting to spliced, and now also render out of
+`$SPADE_DIVERGENCE_DIR/rollout/` (17,527 branches × K=4, 2000 games, temp 1.0, seed
+42), where every branch samples its own continuation instead of replaying the
+reference's. Rollout outputs carry a `_rollout` suffix; nothing existing was
+overwritten. Purely additive, and the five spliced outputs re-render byte-identical
+before and after.
+
+**The K reduction is explicit and its position matters.** Rows are K-contiguous per
+branch and a rollout's reference is the one drawn from the same uniform stream, so
+`paired_mean` differences within a sample and averages after — common random numbers.
+For R²¹ the average is taken **after φ**: φ is nonlinear, so the descriptor of an
+averaged trajectory is the curvature of a path no rollout takes. The plane projection
+is linear, so either side of it agrees, and the rule mean over member categories stays
+where it was. In `game_trajectory` the two panels reduce *differently* on purpose: (a)
+averages Δ, (b) averages δ̂ after the norm, because ‖mean Δ‖ cancels sampling noise
+and is a smaller, different quantity.
+
+**Rollout δ̂ saturates, so the drawn window stops at r = +8.** Full set, layer 5,
+per-branch mean over K: δ̂ climbs 0.79 → 1.236 by r = 20 (96% of the 1.293
+two-unrelated-games level RED_TEAM.md measures in this space) where spliced δ̂ decays
+0.79 → 0.46. The illegal ÷ control ratio holds ~0.93 across the spliced window; under
+rollout it is 0.970 at r = 1, 0.9957 [0.9926, 0.9990] at r = 8, and crosses *above* 1
+by r = 13 (95% bootstrap over games, 2000 resamples). `ROLLOUT_RMAX = 8` is that cut;
+both READMEs carry the table and both figures state the cut in-panel.
+
+**r = 0 is bit-identical between the variants** — 0.7915 illegal, 0.7672 control,
+ratio 1.0316 in both — because the activation at t0 depends only on `tokens[:t0+1]`.
+Worth recording, because the task that commissioned this read r = 0 as the one offset
+where rollout still separates, "opposite in sign to the spliced study's 0.979": 0.979
+is the spliced study's *plateau* ratio, not its r = 0 value, and the rollout adds
+nothing at r = 0 by construction. It is also the cheapest check that the rollout
+activations are right, and it passes.
+
+**The prefix still collapses.** Over game 1235's 36 rollout rows, raw layer 5, max
+|z − z_row0| = 0 at every position before t0; `project()`'s `max |Δφ| = 0` assertion
+over the branch-free offsets passes in all nine spaces on every R²¹ render.
+
+**PDF byte-identity needs `SOURCE_DATE_EPOCH`.** Two renders of one figure differ in
+exactly 3 bytes — the seconds of `/CreationDate`. With it pinned, all five spliced
+outputs (2 planes × PNG+PDF, plus `game_1235_fork_pca.png`) are byte-identical across
+the change. Separately: **the two committed spliced PDFs are stale.** Commit a12fa37
+grew `ROW_GAP` and re-rendered only the PNGs, so a fresh PDF is 1094.4 pt tall against
+the committed 1047.0. Left untouched here — this branch is additive — but they need
+one re-render on their own commit.
+
 ## Fig 1 titles each accuracy against its own occupancy ceiling (2026-08-05)
 
 Branch `bracket/basis-ceiling`. Panel (c) said "held-out board accuracy 0.735" and stopped
