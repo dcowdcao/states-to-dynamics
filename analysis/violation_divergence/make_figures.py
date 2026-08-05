@@ -1,7 +1,7 @@
 """Raw-space results for the violation-divergence study (M1, M2, M3).
 
-Reads `$SPADE_DIVERGENCE_DIR/divergence/{token_embed,resid_post_0..7}.npz` and
-writes the summary CSVs and figures F1 and F3. One entry point, because every
+Reads `$SPADE_DIVERGENCE_DIR[/rollout]/divergence/{token_embed,resid_post_0..7}.npz`
+and writes the summary CSVs and figures F1 and F3. One entry point, because every
 number here is a groupby-mean over the same nine arrays that the figures draw.
 
     results/violation_divergence/depth_sweep.csv         space x role, M1/M3
@@ -19,7 +19,17 @@ r = 0 in every space and every category, while the per-branch offset averages
 5.9 at layer 5, because an argmax over 25 offsets of a noisy row is biased late
 and upward. Both columns are in depth_sweep.csv.
 
-Usage: python analysis/violation_divergence/make_figures.py [--camera-ready]
+`--variant rollout` reads the tree where every branch, the reference included,
+samples its own continuation from OthelloGPT instead of replaying the source
+game's, and writes `*_rollout` names beside the spliced ones. That tree holds
+K = 4 rollouts per source branch; `reduce_k` averages them, so a branch is one
+item in every n and every interval. The rollout figures carry their own caveat:
+with a sampled suffix both classes drift for reasons the branch move did not
+cause, and the plateau saturates near the unrelated-activation ceiling, where a
+ratio of 1 means nothing.
+
+Usage: python analysis/violation_divergence/make_figures.py [--variant rollout]
+                                                            [--camera-ready]
 """
 
 import argparse
@@ -30,10 +40,11 @@ import numpy as np
 import pandas as pd
 
 from spade.common.paths import results_dir
-from spade.common.study import study_dir
+from spade.common.study import variant_dir
 from spade.figures.paper_style import (
     CATEGORY_STYLE, GRID, INK, MUTED, NULL, apply_style, rule_key, save_figure)
 from spade.othello.taxonomy import CATEGORIES
+from spade.violation_divergence.rollout_branches import K_ROLLOUTS
 
 HERE = Path(__file__).resolve().parent
 SPACES = ["token_embed"] + [f"resid_post_{i}" for i in range(8)]
@@ -51,14 +62,66 @@ POOLED = "illegal_pooled"
 REPORTED = ROLES + [POOLED]
 BOOT, BOOT_SEED = 1000, 0
 
+VARIANTS = ("spliced", "rollout")
+# Columns that name the branch rather than measure it, so they are read off one
+# rollout instead of averaged over K.
+PER_BRANCH = ("game_id", "t0", "category", "is_control", "n_flipped", "role")
+# delta-hat between two *different* games' layer-5 rollouts at the same absolute
+# position, mean over r in [20, 24], n = 2000 games at seed 0. The rollout curves
+# are read against this: it is what "these activations are unrelated" measures.
+UNRELATED_CEILING = 1.312
+SATURATED_R = 8  # from here on the rollout illegal/control ratio is within 0.5% of 1
 
-def load(space: str) -> dict:
+
+def tree(variant: str) -> Path:
+    return variant_dir("divergence", variant="" if variant == "spliced" else variant)
+
+
+def named(name: str, variant: str) -> str:
+    """Today's names stay with the spliced tree; a variant gets its own."""
+    return name if variant == "spliced" else f"{name}_{variant}"
+
+
+def load(space: str, variant: str) -> dict:
     """The npz plus a `role` column that folds is_control into the category."""
-    z = dict(np.load(study_dir("divergence") / "divergence" / f"{space}.npz"))
+    z = dict(np.load(tree(variant) / "divergence" / f"{space}.npz"))
     role = np.array(CATEGORIES, dtype=object)[z["category"]]
     role[z["is_control"] == 1] = CONTROL
     z["role"] = role
-    return z
+    z["censored"] = np.isinf(z["half_life"])
+    return reduce_k(z) if "rollout" in z else z
+
+
+def mean_k(g: np.ndarray, empty: float = np.nan) -> np.ndarray:
+    """Mean over axis 1 ignoring non-finite entries. Not `np.nanmean`: cos_t0 is
+    undefined for every rollout at r < 0, and an all-NaN slice is expected there."""
+    ok = np.isfinite(g)
+    n = ok.sum(1)
+    return np.where(n > 0, np.where(ok, g, 0).sum(1) / np.maximum(n, 1), empty)
+
+
+def reduce_k(z: dict) -> dict:
+    """One row per source branch, averaging its K rollouts.
+
+    The rollout tree stores K samples of each branch's continuation as contiguous
+    rows (`row = source_row * K + k`), so without this a branch is one item K times
+    in every n and every interval. `half_life` averages over the rollouts that did
+    halve and stays +inf only when none did; `censored` carries the share that did
+    not, which is what F3 draws.
+    """
+    k = int(z["rollout"].max()) + 1
+    assert np.array_equal(z["rollout"], z["row"] % k), "rows are not source_row * K + k"
+    out = {"window": z["window"], "row": z["row"][::k] // k}
+    for key, v in z.items():
+        if key in ("window", "row", "rollout"):
+            continue
+        g = v.reshape(-1, k, *v.shape[1:])
+        if key in PER_BRANCH:
+            assert (g == g[:, :1]).all(), f"{key} differs across a branch's rollouts"
+            out[key] = g[:, 0]
+        else:
+            out[key] = mean_k(g, empty=np.inf if key == "half_life" else np.nan)
+    return out
 
 
 def rows_of(z: dict, role: str) -> np.ndarray:
@@ -112,7 +175,7 @@ def plateau_ratio_ci(z: dict) -> tuple[float, float, float]:
     return ratio, lo, hi
 
 
-def depth_table() -> pd.DataFrame:
+def depth_table(variant: str) -> pd.DataFrame:
     """Per space and role, M1's level and M3's four persistence statistics.
 
     `excess_over_we` is each role's largest gap above the input floor over
@@ -120,11 +183,11 @@ def depth_table() -> pd.DataFrame:
     the value is just the mean curve there; computing it as a max anyway keeps
     the column matching the contract's wording for `peak_layer`.
     """
-    floor = load("token_embed")
+    floor = load("token_embed", variant)
     floor_curve = {role: floor["delta"][rows_of(floor, role)].mean(0) for role in REPORTED}
     rows = []
     for space in SPACES:
-        z = load(space)
+        z = load(space, variant)
         w = z["window"]
         control_plateau = z["plateau"][z["role"] == CONTROL].mean()
         # token_embed's plateau is exactly 0 for every branch, so the ratio to
@@ -152,16 +215,16 @@ def depth_table() -> pd.DataFrame:
                 "plateau_ratio_to_control": (z["plateau"][m].mean() / control_plateau
                                              if ratio_defined else np.nan),
                 "half_life_median": np.median(half_life),
-                "half_life_censored": np.isinf(half_life).mean(),
+                "half_life_censored": z["censored"][m].mean(),
             })
     return pd.DataFrame(rows)
 
 
-def curve_table() -> pd.DataFrame:
+def curve_table(variant: str) -> pd.DataFrame:
     """Event-locked mean and 95% CI per role, for the two spaces F1 draws."""
     rows = []
     for space in ["token_embed", HEADLINE]:
-        z = load(space)
+        z = load(space, variant)
         for role in ROLES:
             m = z["role"] == role
             out = {"space": space, "role": role, "r": z["window"], "n": int(m.sum())}
@@ -176,9 +239,9 @@ def curve_table() -> pd.DataFrame:
     return pd.concat(rows, ignore_index=True)
 
 
-def contract_table(depth: pd.DataFrame) -> pd.DataFrame:
+def contract_table(depth: pd.DataFrame, variant: str) -> pd.DataFrame:
     """The design doc's cross-validation keys, one row each, for a mechanical diff."""
-    z = load(HEADLINE)
+    z = load(HEADLINE, variant)
     at = depth.set_index(["space", "role"])
     we = depth[depth.space == "token_embed"].set_index("role")
     ratio, lo, hi = plateau_ratio_ci(z)
@@ -238,8 +301,37 @@ def legend_order(ax, **kw):
     ax.legend([handles[i] for i in order], [labels[i] for i in order], **kw)
 
 
-def f1_divergence_layer5(camera_ready: bool) -> None:
-    z = load(HEADLINE)
+def saturated_band(ax, w: np.ndarray) -> None:
+    """Shade the offsets where the rollout curves stop carrying a comparison.
+
+    Both classes climb toward the divergence of unrelated activations, so from
+    r = 8 the illegal/control ratio is within 0.5% of 1 whatever legality does.
+    The band says which part of the x-axis is not evidence.
+    """
+    ax.axvspan(SATURATED_R, w[-1] + 0.5, color=GRID, alpha=0.4, lw=0, zorder=0)
+
+
+F1_TITLE = {
+    "spliced": "An illegal move displaces layer 5 no further than a different legal "
+               "move does",
+    "rollout": "Once every branch samples its own future, illegal and legal displace "
+               "layer 5 alike",
+}
+F1_NOTE = {
+    "spliced": "layer 5 resid_post, event-locked to the branch position $t_0$; bands "
+               "are 95% CI of the mean over source games\n"
+               "$t_0$ round-robin over [10, 34], so every game contributes to every "
+               "offset and n is constant across $r$",
+    "rollout": f"layer 5 resid_post, rollout branch set: every branch including the "
+               f"reference samples its own continuation, K={K_ROLLOUTS} per branch, "
+               "averaged so one branch is one item\n"
+               "bands are 95% CI of the mean over source branches; $r=0$ depends only "
+               "on the shared prefix and is the spliced study's own number",
+}
+
+
+def f1_divergence_layer5(variant: str, camera_ready: bool) -> None:
+    z = load(HEADLINE, variant)
     w = z["window"]
     # Two panels, not four. The magnitude story is the result; the two cosine
     # panels it shipped with said "no illegal-specific direction", which is a
@@ -257,40 +349,52 @@ def f1_divergence_layer5(camera_ready: bool) -> None:
 
     for ax in axes[0]:
         event_axes(ax, w)
+    rollout = variant == "rollout"
     axes[0][0].set_ylabel(r"$\hat\delta(r) = \|\Delta\| \,/\, \|z^{\mathrm{ref}}\|$")
-    axes[0][0].set_title(r"(a) divergence from the reference game", loc="left")
+    axes[0][0].set_title("(a) divergence from the reference "
+                         + ("branch's own rollout" if rollout else "game"), loc="left")
     top = ILLEGAL[np.argmax([z["delta"][z["role"] == c][:, w == 0].mean() for c in ILLEGAL])]
     peak = z["delta"][z["role"] == top][:, w == 0].mean()
     axes[0][0].annotate(f"{peak:.3f} at $r$=0 ({CATEGORY_STYLE[top]['label']})",
-                        xy=(0.3, peak), xytext=(4.0, peak + 0.02), fontsize=8, color=INK,
+                        xy=(0.3, peak), xytext=(4.0, peak + 0.02),
+                        fontsize=8, color=INK,
                         arrowprops=dict(arrowstyle="->", color=MUTED, lw=0.9))
     axes[0][0].text(-4.2, 0.62, "$\\hat\\delta \\equiv 0$\nby construction\n(shared prefix)",
                     fontsize=7.5, color=MUTED, style="italic", ha="center", va="center")
-    axes[0][0].set_ylim(-0.03, 0.95)
+    if rollout:
+        saturated_band(axes[0][0], w)
+        axes[0][0].axhline(UNRELATED_CEILING, color=NULL["color"], lw=0.9,
+                           ls=(0, (1, 2)), zorder=1)
+        axes[0][0].text(w[0] + 0.3, UNRELATED_CEILING + 0.015, "unrelated activations: "
+                        "two games' rollouts at the same position", fontsize=7,
+                        color=MUTED, ha="left", va="bottom")
+        axes[0][0].text(SATURATED_R + 0.4, 0.44,
+                        f"$r \\geq {SATURATED_R}$: the two classes are within\n"
+                        "0.5% of each other and still climbing\ntoward that ceiling — a "
+                        "ratio read here\nmeasures saturation, not legality",
+                        fontsize=7.5, color=MUTED, style="italic", ha="left", va="bottom")
+    axes[0][0].set_ylim(-0.03, 1.45 if rollout else 0.95)
     legend_order(axes[0][0], fontsize=7, loc="lower right", ncol=2, columnspacing=0.8)
 
     axes[0][1].axhline(0, color=INK, lw=0.9, ls=(0, (4, 3)), zorder=1)
     axes[0][1].set_ylabel(r"$\hat\delta_{\mathrm{cat}} - \hat\delta_{\mathrm{control}}$"
                           "\n(paired, same source game)")
     axes[0][1].set_title("(b) excess over a different legal move", loc="left")
+    if rollout:
+        saturated_band(axes[0][1], w)
     axes[0][1].set_ylim(-0.155, 0.115)
     axes[0][1].text(-8, -0.152, "above 0: the violation displaces the residual\n"
                     "stream further than a legal move at the same prefix",
                     fontsize=7.5, color=MUTED, style="italic", ha="left", va="bottom")
 
     if not camera_ready:
-        fig.suptitle("An illegal move displaces layer 5 no further than a different "
-                     "legal move does",
-                     fontsize=11, y=1.0)
-    fig.text(0.5, 0.905, "layer 5 resid_post, event-locked to the branch position "
-             "$t_0$; bands are 95% CI of the mean over source games\n"
-             "$t_0$ round-robin over [10, 34], so every game contributes to every "
-             "offset and n is constant across $r$",
+        fig.suptitle(F1_TITLE[variant], fontsize=11, y=1.0)
+    fig.text(0.5, 0.905, F1_NOTE[variant],
              fontsize=8, color=MUTED, style="italic", ha="center", va="top",
              linespacing=1.5)
     fig.tight_layout(rect=(0, 0, 1, 0.86))
     rule_key(fig, ["R1", "R2", "R3"])
-    save_figure(fig, HERE / "figures" / "divergence_layer5", camera_ready)
+    save_figure(fig, HERE / "figures" / named("divergence_layer5", variant), camera_ready)
 
 
 # The two per-branch-peak panels this figure used to carry are gone. `peak` and
@@ -307,7 +411,28 @@ DEPTH_PANELS = [
 ]
 
 
-def f3_depth_sweep(depth: pd.DataFrame, camera_ready: bool) -> None:
+F3_TITLE = {
+    "spliced": "The input difference is a delta function; every layer converts more of "
+               "it into a lasting offset",
+    "rollout": "A sampled suffix moves the token embedding too, so no layer is reading "
+               "against a silent input",
+}
+F3_NOTE = {
+    "spliced": "$W_E$ is the input anchor, separated by a rule: its "
+               r"$\hat\delta$ is $\approx\sqrt{2}$ at $r=0$ and exactly 0 afterwards, "
+               "so everything right of the rule is computed, not inherited\n"
+               "error bars are 95% CI of the mean over source games (panel b: normal "
+               "approximation on a proportion); n per category in the legend",
+    "rollout": "$W_E$ is the input anchor, separated by a rule — and in this variant it "
+               "is no longer silent: the branches' suffixes are different tokens, so its "
+               r"plateau $\hat\delta$ is $\approx 1.23$, not 0."
+               "\nNothing here is 'computed, not inherited'. Error bars are 95% CI of the "
+               f"mean over source branches, K={K_ROLLOUTS} rollouts averaged per branch "
+               "(panel b: normal approximation, conservative on a mean of K indicators)",
+}
+
+
+def f3_depth_sweep(depth: pd.DataFrame, variant: str, camera_ready: bool) -> None:
     at = depth.set_index(["space", "role"])
     fig, axes = plt.subplots(1, 2, figsize=(9.0, 4.1), sharex=True)
 
@@ -328,43 +453,58 @@ def f3_depth_sweep(depth: pd.DataFrame, camera_ready: bool) -> None:
     for ax in axes:
         ax.set_xlabel("representation space (residual stream, 0 = first block)")
 
-    axes[0].annotate("exactly 0: the token embedding\ncarries nothing past $r=0$",
-                     xy=(DEPTH_X[0], 0.0), xytext=(DEPTH_X[2], 0.13), fontsize=8,
-                     color=INK, arrowprops=dict(arrowstyle="->", color=MUTED, lw=0.9))
-    axes[1].set_ylim(-0.03, 0.82)
-    legend_order(axes[1], fontsize=7, loc="upper left", ncol=2, columnspacing=0.8)
+    spliced = variant == "spliced"
+    floor = at.loc[("token_embed", POOLED), "plateau"]
+    axes[0].annotate("exactly 0: the token embedding\ncarries nothing past $r=0$" if spliced
+                     else f"{floor:.2f}, not 0: the branches'\nsuffixes are different "
+                          "tokens here",
+                     xy=(DEPTH_X[0], floor),
+                     xytext=(DEPTH_X[2], floor + 0.13) if spliced
+                     else (DEPTH_X[5], floor - 0.085),
+                     fontsize=8, color=INK,
+                     arrowprops=dict(arrowstyle="->", color=MUTED, lw=0.9))
+    axes[1].set_ylim(-0.03, 0.82 if spliced else 1.09)
+    legend_order(axes[1], fontsize=7, loc="upper left" if spliced else "lower right",
+                 ncol=2, columnspacing=0.8)
 
     if not camera_ready:
-        fig.suptitle("The input difference is a delta function; every layer converts "
-                     "more of it into a lasting offset", fontsize=11, y=1.0)
-    fig.text(0.5, 0.905, "$W_E$ is the input anchor, separated by a rule: its "
-             r"$\hat\delta$ is $\approx\sqrt{2}$ at $r=0$ and exactly 0 afterwards, "
-             "so everything right of the rule is computed, not inherited\n"
-             "error bars are 95% CI of the mean over source games (panel b: normal "
-             "approximation on a proportion); n per category in the legend",
+        fig.suptitle(F3_TITLE[variant], fontsize=11, y=1.0)
+    fig.text(0.5, 0.905, F3_NOTE[variant],
              fontsize=8, color=MUTED, style="italic", ha="center", va="top",
              linespacing=1.5)
     fig.tight_layout(rect=(0, 0, 1, 0.86))
     rule_key(fig, ["R1", "R2", "R3"])
-    save_figure(fig, HERE / "figures" / "depth_sweep", camera_ready)
+    save_figure(fig, HERE / "figures" / named("depth_sweep", variant), camera_ready)
 
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--variant", default="spliced", choices=VARIANTS,
+                    help="rollout: every branch samples its own continuation "
+                         "($DIR/rollout/), K per branch, averaged")
     ap.add_argument("--camera-ready", action="store_true",
                     help="vector PDF, no in-figure title")
     args = ap.parse_args()
     apply_style(camera_ready=args.camera_ready)
+    variant = args.variant
 
     out = results_dir("violation_divergence")
     out.mkdir(parents=True, exist_ok=True)
-    depth = depth_table()
-    depth.to_csv(out / "depth_sweep.csv", index=False, float_format="%.6g")
-    curve_table().to_csv(out / "divergence_curves.csv", index=False, float_format="%.6g")
-    contract_table(depth).to_csv(out / "contract_keys.csv", index=False, float_format="%.6g")
+    depth = depth_table(variant)
+    depth.to_csv(out / f"{named('depth_sweep', variant)}.csv", index=False,
+                 float_format="%.6g")
+    curve_table(variant).to_csv(out / f"{named('divergence_curves', variant)}.csv",
+                                index=False, float_format="%.6g")
+    contract = contract_table(depth, variant)
+    contract.to_csv(out / f"{named('contract_keys', variant)}.csv", index=False,
+                    float_format="%.6g")
 
-    f1_divergence_layer5(args.camera_ready)
-    f3_depth_sweep(depth, args.camera_ready)
+    f1_divergence_layer5(variant, args.camera_ready)
+    f3_depth_sweep(depth, variant, args.camera_ready)
+    ratio = contract.set_index("key")["value"]
+    print(f"{variant}: ratio_illegal_control_L5 {ratio['ratio_illegal_control_L5']:.4f} "
+          f"[{ratio['ratio_illegal_control_L5_lo']:.4f}, "
+          f"{ratio['ratio_illegal_control_L5_hi']:.4f}]")
     print(f"csvs in {out}, figures in {HERE / 'figures'}")
 
 

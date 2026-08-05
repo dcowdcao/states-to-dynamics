@@ -25,6 +25,20 @@ python analysis/violation_divergence/suffix_legality/measure.py     # the shared
 t0 ∈ [10, 34], window r ∈ [−8, 24], so **every game contributes to every offset** —
 n is constant across the whole x-axis, verified, with zero off-board NaN.
 
+The rollout tree replaces the shared suffix with a sampled one (see below). The four
+figure scripts take `--variant rollout` and write `*_rollout` beside today's names;
+`probe_readout/decode.py` needs it too, and `--probe` pointing at a checkout that
+carries the gitignored probe.
+
+```
+python -m spade.violation_divergence.rollout_branches                          # $DIR/rollout/branches/
+python -m spade.violation_divergence.extract_acts --variant rollout            # $DIR/rollout/acts/
+python -m spade.violation_divergence.compute_divergence --variant rollout      # $DIR/rollout/divergence/
+python analysis/violation_divergence/{,behavioral/,sae_spaces/}make_figures.py --variant rollout
+python analysis/violation_divergence/probe_readout/decode.py       --variant rollout --probe ...
+python analysis/violation_divergence/probe_readout/make_figures.py --variant rollout
+```
+
 ## The result in one paragraph
 
 OthelloGPT does not treat an illegal move as illegal. It writes the disc onto its
@@ -155,6 +169,58 @@ the curve's argmax, or `peak` with its null beside it — never `peak_r` alone.
 within-space ratio and cross-space differences are not "excess over the input floor".
 Report the layer maximising plateau δ̂ (7), or drop the key.
 
+## The rollout variant: what removing the shared suffix does to the headline
+
+The paragraph above says the suffix is the confound. `rollout_branches.py` removes
+it: every branch, **the reference included**, samples its own continuation from
+OthelloGPT at temperature 1.0, K = 4 times, 17527 branches × 4 = 70108 rows under
+`$SPADE_DIVERGENCE_DIR/rollout/`. Every figure below is rendered for both trees —
+`--variant {spliced,rollout}` on the four scripts, `*_rollout` names beside today's.
+A branch's K rollouts are averaged before any n or interval, so a branch is one item.
+
+**The headline ratio crosses 1, and the spliced ordering does not survive.**
+
+| tree | `ratio_illegal_control_L5` | plateau: illegal / control |
+|---|---|---|
+| spliced | **0.9797** [0.9715, 0.9871] | 0.4756 / 0.4855 |
+| rollout | **1.0016** [1.0002, 1.0033] | 1.2319 / 1.2299 |
+
+Same estimator both rows (`plateau_ratio_ci`, 1000-resample bootstrap over the 2000
+source games). On the strict-illegal scope `sae_spaces/make_figures.py` prints, the
+two are 0.9758 [0.9673, 0.9828] and 1.0022 [0.9998, 1.0029] — same conclusion.
+So the sub-1 ordering the design was built to test **was the shared suffix**: it
+disappears the moment the control stops being handed an out-of-distribution future.
+
+**But the rollout ratio is not evidence for the opposite ordering either, and the
+figures say so on their face.** With a sampled suffix both classes drift for reasons
+the branch move did not cause. δ̂ climbs monotonically to a plateau of 1.23 against a
+**measured ceiling of 1.31** for unrelated activations (two different games' layer-5
+rollouts at the same absolute position, mean over r ∈ [20, 24], n = 2000) — 94% of
+the way to "these are unrelated". The illegal/control ratio is 0.996 at r = 8 and
+1.004 at r = 24: pinned to 1 by saturation, whatever legality is doing.
+`divergence_layer5_rollout` shades r ≥ 8 and draws the ceiling for exactly this
+reason. The 1.0016 above is read in that shaded region and should be quoted as
+"indistinguishable from 1", not as an effect.
+
+**r = 0 is the same measurement in both trees**, and always was: δ̂(0) depends only on
+`tokens[:t0+1]`, which the rollout copies verbatim. Both give an illegal/control ratio
+of **1.0348** (max |Δδ̂| between the trees 1.1e-5, fp16 batch noise). The spliced
+study's 0.979 was never an r = 0 statement — it is the plateau, and the plateau is
+where the confound lived. Anything the rollout tree reports at r = 0 (the SAE feature
+recurrence, `p_illegal_disc_decoded` 0.979–1.000) is a re-run of the spliced number,
+not independent evidence.
+
+**The variant also removes the other read-outs' anchors, which is a loss, not a
+finding.** With a sampled suffix nothing holds the branches to a common future:
+KL plateau goes 1.64 (illegal) / 1.70 (control) → 7.44 / 7.48, and legal mass on the
+reference board goes 0.830 / 0.825 → 0.289 / 0.289. Findings 2 and 3 above cannot be
+re-derived here; the rollout figures show the collapse and label it. Two more
+constructions break with it: the token embedding is no longer silent after t0 (W_E
+plateau δ̂ 0.000 → 1.233, so "computed, not inherited" has no anchor in this tree),
+and the reference's board only exists while the model keeps playing legally — 1.1% of
+window positions in `probe_rollout_*` and 4.2% of reference rollouts inside the window
+have none, and those positions are dropped rather than scored.
+
 ## Estimator pinning
 
 Three keys have defensible estimators that disagree by more than the
@@ -195,6 +261,11 @@ without importing `src/spade/violation_divergence/divergence.py`:
 `probe_readout/figures/f7_probe_readout` (F7) ·
 `sae_spaces/figures/sae_feature_recurrence`.
 
+Each of the five has a `_rollout` twin from the same script under `--variant rollout`,
+drawn on the sampled-suffix tree and carrying the saturation caveat in-figure. They are
+a robustness check on the shared-suffix confound, not a second set of results: read
+them together with "The rollout variant" above.
+
 **The design itself**, in `fork_and_board/` (see its README):
 `game_1235_fork_and_board_displacement_pca` puts the fork in all nine
 representation spaces over the board the game forks on, so a coloured trajectory
@@ -228,3 +299,12 @@ comes from the aggregates.
 - The plateau window r ∈ [20, 24] is parity-imbalanced (three even offsets, two odd)
   against a δ̂ ripple of ±0.005. Changes no ranking; [21, 24] would be free.
 - Seed 42 only.
+- `make_figures.py`'s `illegal_pooled` scope is every non-`control_legal` row, which
+  puts the 2000 `control_legal_2` rows in the numerator alongside the 11527 illegal
+  ones (n = 13527). `sae_spaces` pools the six illegal categories only (n = 11527).
+  The two disagree by 0.4% on the spliced tree (0.9797 vs 0.9758) and 0.001 on the
+  rollout tree, and cross 1 together, so no conclusion turns on it — but the two
+  scripts do not compute the same `ratio_illegal_control_L5` and should be pinned.
+- The rollout tree is one sample design at one temperature (1.0, seed 42, K = 4).
+  Nothing here separates "the branch move does not matter" from "temperature-1
+  sampling swamps it"; a lower temperature would be the next thing to vary.
