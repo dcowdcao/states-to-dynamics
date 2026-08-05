@@ -28,17 +28,22 @@ the rule set it sits in is `docs/othello_rules.md`.
 > the model is **mover-relative** and barely encodes absolute colour (absolute
 > TPR 0.7349, 0.004 *below* the label-only occupancy ceiling, while the relative
 > probe clears its ceiling by +23.1); the flip has **a specific direction**
-> (median cosine 0.173–0.184 against a matched non-flipping move, null ≈ 0,
-> positive in 1596/1596 strict events, TPR and linear directions agree at 0.822);
-> and it is **causally used** (editing along it moves +1.496 log-units against
-> +0.121 for random).
+> (median cosine +0.188 by the TPR direction and +0.205 by the linear one against
+> a matched non-flipping move, null ≈ 0, positive in 1596/1596 strict events, the
+> two directions agreeing at 0.833); and it is **causally used** (editing along it
+> moves +1.496 log-units against +0.121 for random).
 >
 > One narrowing to quote with its qualifier: `peak_layer` is not one number — 4
 > by the TPR probe, 5–6 by an independent linear probe. That is not a conflict
 > with the causal depth result: board state resolves early, legality consequence
 > late.
 >
-> One open defect: the TPR probe was never retrained on the integrated event set.
+> The open defect this header used to carry — "the TPR probe was never retrained on
+> the integrated event set" (VERDICT §7f) — is closed. Both probe families are now
+> fit on the study's own Karvonen probe set for every measurement, not just for the
+> read-out figure, and the ARENA fits are kept as the off-corpus control
+> (`analysis/bracket_flip/README.md`). The `+1.496` intervention numbers above are
+> the last ones still measured off the ARENA fits, pending a rerun of the M6 sweep.
 
 ## The question
 

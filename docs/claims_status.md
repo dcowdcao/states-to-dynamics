@@ -149,9 +149,11 @@ itself carries the seed-42 qualifier under Narrowed.
 - **Bracket flip, three surviving findings.** The model is mover-relative and barely
   encodes absolute colour (absolute TPR 0.7349, 0.004 *below* the label-only occupancy
   ceiling, while the relative probe clears its ceiling by +23.1). The flip has a specific
-  direction (median cosine 0.173–0.184 against a matched non-flipping move, null ≈ 0,
-  positive in 1596/1596 strict events, TPR and linear directions agree at 0.822). And it is
-  causally used (editing along it moves +1.496 log-units vs +0.121 for random).
+  direction (median cosine +0.188 by the TPR direction and +0.205 by the linear one against
+  a matched non-flipping move, null ≈ 0, positive in 1596/1596 strict events, the two
+  directions agreeing at 0.833). And it is causally used (editing along it moves +1.496
+  log-units vs +0.121 for random — the one number here still measured off the ARENA probe
+  fits, pending a rerun of the M6 sweep on the Karvonen ones).
 - **Violation divergence.** The probe decodes a disc on the illegally played square in
   98.5–99.9% of events; there is no surprise signature; a Standard-SAE feature fires on
   99–100% of empty-square violations versus 25–26% on both legal branches, reproduced by a

@@ -10,6 +10,18 @@ Decoder is the tensor-product-representation probe of Lee, Viégas & Wattenberg
 activations: `logit(s, c) = r_sᵀ M(h) f_c` at `d_r=52, d_f=2`, 56,582
 parameters — 57.6% of the linear probe's, matching the paper's 57.5%.
 
+**Which fit every number here comes from.** Both probe families — this TPR and the
+linear reference it is measured against — are fit on the study's own probe set:
+400 games of `adamkarvonen/othello_45MB_games`, 20,000 positions, labels from
+engine replay, the corpus the events themselves are mined from
+(`probe_space.tpr` / `probe_space.linear`, cached under `$SPADE_BRACKET_DIR/probe_space/`).
+The earlier ARENA fits — 200 games, 10,000 positions, labels from `t % 2`, which
+DATA_REPORT shows mislabelled on 53 rows — are the off-corpus control, reachable at
+`act_geometry.retain_directions(..., corpus="arena")` and
+`tpr_intervene --corpus arena`; the latter writes `*_arena.csv` so the primary
+results survive the run. Moving both families together is what keeps Fig 2's
+headline a comparison of probe class rather than of training corpus.
+
 ## What this study does and does not show
 
 **Retired claim.** An earlier draft led with "the flanked square is the one
@@ -38,10 +50,12 @@ frame, and what carries a claim is the second probe drawn beside it.
 2. **The flip has a specific direction in activation space.** Against the
    matched non-flipping move at the same prefix, position and next mover, the
    displacement aligns with the predicted flip direction at median cos
-   **0.173–0.184** against an unflipped-disc null at ≈0, positive in 1596/1596
-   strict events, and holds whether the direction comes from the TPR or the
-   linear probe (the two agree at cos 0.822). This is not decode arithmetic: it
-   is a claim about where the representation moves.
+   **+0.188 (TPR) / +0.205 (linear)** against an unflipped-disc null at ≈0
+   (median −0.003, sd 0.058 for a single drawn disc), positive in 1596/1596
+   strict events under both, and the two directions agree at cos 0.833. This is
+   not decode arithmetic: it is a claim about where the representation moves.
+   A5's independent re-derivation reported 0.173/0.184 off the ARENA fits
+   (`reports/VERDICT.md` §7f is the corpus objection those numbers predate).
 3. **That direction is causally used.** Editing layer-5 residual along it moves
    next-move probability mass onto the counterfactual board's legal set by
    +1.496 log-units at matched step length, against +0.121 for a
@@ -96,8 +110,8 @@ numbers are below and their CSVs are still in `results/`.
   (after − before within event), which is what an arrow asserts.
 - **Fig 2 — the direction and its causal use** (`make_figures.py`). (a) the
   flip-attributable displacement `act(P+m) − act(P+m′)` aligns with the
-  predicted flip direction at median +0.175 (TPR) / +0.163 (linear) against an
-  unflipped-disc null at −0.002. (b) effect against collateral, one point per
+  predicted flip direction at median +0.188 (TPR) / +0.205 (linear) against an
+  unflipped-disc null at −0.003. (b) effect against collateral, one point per
   edit magnitude: up and to the left is a clean intervention, and the TPR edit
   sits above and left of both the linear edit and the magnitude-matched random
   null everywhere. Three things that panel is careful about, none of them
@@ -154,9 +168,13 @@ numbers are below and their CSVs are still in `results/`.
 
 ## Pipeline
 
-`spade.bracket_flip.events` → `extract_acts` → `tpr_probe` → `probe_space` and
-`geometry_tables`, which write the CSVs in `results/` → the figure scripts here,
-which only draw. One SLURM job: `scripts/slurm/studies/bracket_flip/submit_bracket_flip.sh`.
+`spade.bracket_flip.events` → `extract_acts` → `probe_space`, which fits both probe
+families on the probe set and caches them → `probe_space` and `geometry_tables` write
+the CSVs in `results/` → the figure scripts here, which only draw. `tpr_probe` fits
+the ARENA control set and is otherwise the module the vendored TPR is wrapped in.
+Two GPU jobs under `scripts/slurm/studies/bracket_flip/`: `submit_bracket_flip.sbatch`
+(mine and extract) and `submit_bracket_intervene.sbatch` (the M6 sweep; CSVs only,
+the figure is drawn off the GPU by `make_figures.py`).
 Large artifacts on `$SPADE_BRACKET_DIR`; per-event CSVs in `results/`; the A1–A6
 write-ups in `reports/`.
 

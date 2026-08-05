@@ -19,8 +19,8 @@ export HF_USE_SOFTFILELOCK=1
 cd "${SPADE_REPO:?}"
 mkdir -p logs/bracket_flip
 
-# analysis/linear_probe/activations/ is gitignored, so a worktree has to be told
-# which checkout carries it (PROBE_REPORT.md 6.9).
+# Read only by `--corpus arena`: analysis/linear_probe/activations/ is gitignored, so a
+# worktree has to be told which checkout carries it (PROBE_REPORT.md 6.9).
 export SPADE_LINEAR_PROBE_ACTIVATIONS="${SPADE_LINEAR_PROBE_ACTIVATIONS:-${SPADE_REPO}/analysis/linear_probe/activations}"
 BRACKET_DIR="${SPADE_BRACKET_DIR:-/n/netscratch/ba_lab/Lab/$USER/spade_bracket}"
 
@@ -29,6 +29,5 @@ BRACKET_DIR="${SPADE_BRACKET_DIR:-/n/netscratch/ba_lab/Lab/$USER/spade_bracket}"
   exit 1
 }
 
+# CSVs only. Fig 2(b) is drawn by analysis/bracket_flip/make_figures.py, off the GPU.
 python -m spade.bracket_flip.tpr_intervene "$@"
-python analysis/bracket_flip/intervention_figures.py
-python analysis/bracket_flip/intervention_figures.py --camera-ready

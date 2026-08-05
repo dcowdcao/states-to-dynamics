@@ -7,11 +7,13 @@ counterfactual (s un-flipped) board's legal set, on diagnostic squares only —
 legal on exactly one of the two boards. Scoring is imported from
 `spade.rules.causal.unflip_edit`, so the two methods report the same quantity.
 
-Two edit families over the same events:
+Two edit families over the same events, both read off probes fit on the study's own
+Karvonen probe set — the corpus these events are mined from — so the head-to-head is
+probe class and not training corpus (`--corpus arena` is the off-corpus control):
   tpr     dB = r_s (f_mine - f_theirs)^T mapped back through pinv(M)
           (`TPRProbe.edit_direction`), swept over a multiplicative scale
-  linear  the committed linear probe's mine-vs-theirs direction, moved to the
-          target class's mean projection times `beta` — unflip_edit's protocol
+  linear  that fit's mine-vs-theirs direction, moved to the target class's mean
+          projection times `beta` — unflip_edit's protocol
 
 The two knobs are not the same quantity, so a third family, `tpr_matched`, points
 along the TPR direction at exactly the linear edit's per-event length: that is the
@@ -30,6 +32,7 @@ dimensions (analysis/bracket_flip/reports/PROBE_REPORT.md §5) — so an effect 
 be read next to it.
 
 Usage: python -m spade.bracket_flip.tpr_intervene [--scales 1,2,3,4,6,8,12,16] [--betas 1,2]
+       [--corpus karvonen|arena]
 """
 
 import argparse
@@ -42,7 +45,8 @@ import numpy as np
 import pandas as pd
 import torch
 
-from spade.bracket_flip import tpr_probe
+from spade.bracket_flip import probe_space, tpr_probe
+from spade.bracket_flip.act_geometry import CORPORA, PRIMARY_CORPUS
 from spade.common.config import D_MODEL, HOOK_POINT, LAYER, MODEL_NAME
 from spade.common.device import select_device
 from spade.common.net import force_ipv4
@@ -60,8 +64,6 @@ SETTLED_MIN_AGE = 10  # unflip_edit's `settled`; the engine zeroes age on place 
 BATCH_SIZE = 128
 N_BOOT = 1000
 SEED = 7
-
-LINEAR_PROBE_DIR = linear_probe_activations()
 
 
 @dataclass(frozen=True)
@@ -104,26 +106,54 @@ class Readout:
                 "lin": torch.einsum("bd,scd->bsc", h, self.linear).argmax(-1)}
 
 
-def linear_probe(device: str) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Committed probe as [64, 3, d_model], its mine-vs-theirs unit direction, and mu.
+@dataclass(frozen=True)
+class Probes:
+    """Both decoders at LAYER, plus the probe-set rows their `mine` mean is taken over."""
 
-    Same construction as `unflip_edit.probe_directions` family 0, restricted to the
-    one transition M6 uses; it resolves the activation directory by env override
-    instead of from the repo root, which is the only difference.
+    tpr: tpr_probe.TPRProbe
+    linear: torch.Tensor    # [64, 3, d_model]
+    acts: torch.Tensor      # [n, d_model]
+    labels: torch.Tensor    # [n, 64]
+    provenance: dict[str, str]
+
+
+def probes(corpus: str) -> Probes:
+    """Both probe families fit on the same corpus, so probe class is never confounded with it.
+
+    "karvonen" is the study's own 400-game probe set, labelled by engine replay and the
+    corpus the events are mined from. "arena" is the committed 200-game `t % 2`-labelled
+    set, kept as the off-corpus control.
     """
-    weights = torch.load(LINEAR_PROBE_DIR / "linear_probe.pt", map_location="cpu",
-                         weights_only=False).float()  # [512, 8, 8, 3]
-    w = weights.reshape(D_MODEL, 64, 3).permute(1, 2, 0)  # [64, 3, 512]
-    dhat = w[:, MINE] - w[:, THEIRS]
-    dhat = dhat / dhat.norm(dim=-1, keepdim=True)
+    if corpus == "karvonen":
+        acts = probe_space.probe_acts(LAYER).float()
+        return Probes(
+            tpr=probe_space.tpr(LAYER, "relative"),
+            linear=probe_space.linear(LAYER, "relative").reshape(D_MODEL, 64, 3).permute(1, 2, 0),
+            acts=acts,
+            labels=probe_space.probe_labels("relative").reshape(len(acts), 64),
+            provenance={"tpr_probe": str(probe_space.path("tpr", LAYER, "relative")),
+                        "linear_probe": str(probe_space.path("linear", LAYER, "relative"))})
+    if corpus != "arena":
+        raise ValueError(f"unknown corpus {corpus!r}, expected one of {CORPORA}")
+    d = linear_probe_activations()
+    acts = torch.load(d / "primary_layer_activations.pt", weights_only=True).float()
+    return Probes(
+        tpr=tpr_probe.load(LAYER),
+        linear=torch.load(d / "linear_probe.pt", map_location="cpu", weights_only=False)
+        .float().reshape(D_MODEL, 64, 3).permute(1, 2, 0),
+        acts=acts,
+        labels=torch.load(d / "board_states.pt", weights_only=True).reshape(len(acts), 64),
+        provenance={"tpr_probe": str(tpr_probe.path(LAYER)),
+                    "linear_probe": str(d / "linear_probe.pt")})
 
-    acts = torch.load(LINEAR_PROBE_DIR / "primary_layer_activations.pt",
-                      weights_only=True).float()
-    labels = torch.load(LINEAR_PROBE_DIR / "board_states.pt",
-                        weights_only=True).reshape(len(acts), 64)
-    proj = torch.einsum("nd,sd->ns", acts, dhat)
-    mu = torch.stack([proj[labels[:, s] == MINE, s].mean() for s in range(64)])
-    return w.to(device), dhat.to(device), mu.to(device)
+
+def mine_direction(fit: Probes) -> tuple[torch.Tensor, torch.Tensor]:
+    """Unit mine-vs-theirs direction per square, and the mean projection of true-`mine`
+    rows onto it: `unflip_edit.probe_directions` family 0, restricted to M6's transition."""
+    dhat = fit.linear[:, MINE] - fit.linear[:, THEIRS]
+    dhat = dhat / dhat.norm(dim=-1, keepdim=True)
+    proj = torch.einsum("nd,sd->ns", fit.acts, dhat)
+    return dhat, torch.stack([proj[fit.labels[:, s] == MINE, s].mean() for s in range(64)])
 
 
 def build_rows(events: pd.DataFrame, rng: Random) -> tuple[list[Row], dict]:
@@ -298,7 +328,11 @@ def main() -> None:
     parser.add_argument("--n_events", type=int, default=0, help="0 = every mined event")
     parser.add_argument("--scales", default="1,2,3,4,6,8,12,16")
     parser.add_argument("--betas", default="1,2")
+    parser.add_argument("--corpus", default=PRIMARY_CORPUS, choices=CORPORA,
+                        help="which corpus both probes are fit on; non-primary runs "
+                             "write suffixed CSVs so the committed ones survive")
     args = parser.parse_args()
+    tag = "" if args.corpus == PRIMARY_CORPUS else f"_{args.corpus}"
 
     device = select_device()
     events = pd.read_csv(study_dir("bracket") / "events" / "events.csv")
@@ -309,12 +343,12 @@ def main() -> None:
     print(f"{len(events)} events -> {len(rows)} rows: {counts.to_dict()}; skips {skips}",
           flush=True)
 
-    probe = tpr_probe.load(LAYER)
-    tpr_dirs = torch.stack([probe.edit_direction(q, THEIRS, MINE) for q in range(64)])
-    probe.module.to(device)
-    weights, dhat, mu = linear_probe(device)
-    dirs = Directions(tpr=tpr_dirs.to(device), linear=dhat, mu_mine=mu)
-    readout = Readout(tpr=probe, linear=weights)
+    fit = probes(args.corpus)
+    tpr_dirs = torch.stack([fit.tpr.edit_direction(q, THEIRS, MINE) for q in range(64)])
+    dhat, mu = mine_direction(fit)
+    fit.tpr.module.to(device)
+    dirs = Directions(tpr=tpr_dirs.to(device), linear=dhat.to(device), mu_mine=mu.to(device))
+    readout = Readout(tpr=fit.tpr, linear=fit.linear.to(device))
 
     from transformer_lens import HookedTransformer
     torch.set_grad_enabled(False)
@@ -342,19 +376,18 @@ def main() -> None:
 
     out = repo_root() / "analysis" / "bracket_flip" / "results"
     out.mkdir(parents=True, exist_ok=True)
-    table.round(4).to_csv(out / "intervention_per_event.csv", index=False)
-    summary.round(4).to_csv(out / "intervention_summary.csv", index=False)
-    (out / "intervention_manifest.json").write_text(json.dumps({
+    table.round(4).to_csv(out / f"intervention_per_event{tag}.csv", index=False)
+    summary.round(4).to_csv(out / f"intervention_summary{tag}.csv", index=False)
+    (out / f"intervention_manifest{tag}.json").write_text(json.dumps({
         "model": MODEL_NAME, "hook": HOOK_POINT, "layer": LAYER,
         "n_events": len(events), "n_rows": len(rows),
         "rows_per_population": {k: int(v) for k, v in counts.items()},
         "skips": skips, "scales": args.scales, "betas": args.betas,
         "settled_min_age": SETTLED_MIN_AGE, "n_bootstrap": N_BOOT, "seed": SEED,
-        "linear_probe_dir": str(LINEAR_PROBE_DIR),
-        "tpr_probe": str(tpr_probe.path(LAYER)),
+        "probe_corpus": args.corpus, **fit.provenance,
     }, indent=2))
     print(summary.to_string(index=False))
-    print(f"wrote {out / 'intervention_per_event.csv'}")
+    print(f"wrote {out / f'intervention_per_event{tag}.csv'}")
 
 
 if __name__ == "__main__":

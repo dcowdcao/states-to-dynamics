@@ -6,6 +6,52 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Fig 2 moves onto the Karvonen-fit probes; ARENA becomes the control (2026-08-05)
+
+Branch `bracket/karvonen-probes`. Fig 1 and Fig 2 were reading different instruments.
+`probe_space` fits both probe families on the study's own probe set — 400 Karvonen games,
+20,000 positions, mover derived by engine replay — and Fig 1 used those. Fig 2 went
+through `act_geometry.retain_directions`, which loaded A1's ARENA fits: 200 games, 10,000
+positions, labels from `t % 2`, 53 of them wrong (DATA_REPORT). The events come from the
+Karvonen stream, so Fig 2 was applying an off-distribution probe. VERDICT §7f called this
+out and it is now closed.
+
+**Both families moved together, on purpose.** Fig 2's headline is TPR direction against
+linear direction; moving only the TPR would have confounded probe class with training
+corpus and handed the TPR the home-field advantage. `retain_directions(source, layer,
+corpus)` and `tpr_intervene.probes(corpus)` each take one corpus for both families, so
+that confound cannot be reintroduced by a partial edit.
+
+The effect got **stronger**, on the same 1596 strict events: `cos_flip_after_control`
+median 0.1748 → 0.1883 (TPR), 0.1628 → 0.2049 (linear); after-control `var_flip`
+0.020544 → 0.023925 (TPR), 0.019131 → 0.029711 (linear); still positive in 1596/1596 under
+both. The single-disc null did not move (median −0.0025 → −0.0030, sd 0.0550 → 0.0582), so
+the separation widened rather than the scale drifting. **The ordering of the two arms
+flipped** — the linear direction now beats the TPR's, where it trailed under the ARENA
+fits — which is a finding, not noise: on Karvonen held-out rows the Karvonen linear probe
+reaches 0.9909 against ARENA's 0.9872 while the TPRs sit at 0.9829 / 0.9813, so the linear
+arm gained the most from the better fit. Prose quoting "0.173–0.184" was A5's independent
+ARENA-fit re-derivation and is now labelled as such.
+
+`redteam.py` is deliberately left on the ARENA checkpoints: it is the adversarial
+re-derivation and its whole value is not sharing a code path with the analysis modules.
+
+**ARENA is kept as the off-corpus control**, not deleted: `retain_directions(...,
+corpus="arena")` and `tpr_intervene --corpus arena`, which suffixes its CSVs `_arena` so a
+control run cannot overwrite the committed primary ones. `probe_space` grew `path(kind,
+layer, basis)` so the intervention manifest can name the exact checkpoints it used instead
+of restating the cache-key format.
+
+Two things still ARENA-derived, both flagged in the docs: the M6 intervention CSVs
+(`+1.496` etc.), pending the SLURM rerun, and therefore `fig2_direction_and_cause`, which
+is left un-regenerated — half-Karvonen, half-ARENA would be worse than consistently stale.
+Redraw it after the sweep lands.
+
+**Unrelated blocker fixed in the same commit:** `submit_bracket_intervene.sbatch` ended
+with two calls to `analysis/bracket_flip/intervention_figures.py`, a file that was never
+ported. Under `set -e` the job failed after writing its CSVs. `make_figures.py` owns Fig 2
+now and runs off the GPU, so the sbatch is CSVs only.
+
 ## Fig 1 titles each accuracy against its own occupancy ceiling (2026-08-05)
 
 Branch `bracket/basis-ceiling`. Panel (c) said "held-out board accuracy 0.735" and stopped

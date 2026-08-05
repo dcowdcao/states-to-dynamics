@@ -22,6 +22,7 @@ Usage: python -m spade.bracket_flip.probe_space
 import argparse
 from dataclasses import dataclass
 from functools import lru_cache
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -150,15 +151,20 @@ def probe_labels(basis: str) -> Tensor:
 
 # ---------------------------------------------------------------- probes
 
+def path(kind: str, layer: int, basis: str) -> Path:
+    """Where a fit on this study's probe set lives; `kind` is "tpr" or "linear"."""
+    return CACHE / f"{kind}_{basis}_layer{layer}.pt"
+
+
 def tpr(layer: int, basis: str) -> TPRProbe:
     """TPR fit on this study's probe set.
 
     Cached apart from tpr_probe.train()'s path, which holds A1's committed-set
     fits that the other wave-2 agents load.
     """
-    path = CACHE / f"tpr_{basis}_layer{layer}.pt"
-    if path.exists():
-        artifact = torch.load(path, weights_only=True)
+    cached = path("tpr", layer, basis)
+    if cached.exists():
+        artifact = torch.load(cached, weights_only=True)
         module = TensorProductBoardProbe(**artifact["shape"])
         module.load_state_dict(artifact["probe_state_dict"])
         return TPRProbe(module.requires_grad_(False), layer)
@@ -166,20 +172,20 @@ def tpr(layer: int, basis: str) -> TPRProbe:
     acts = probe_acts(layer)[:N_TRAIN]
     with torch.enable_grad():
         module = _fit(acts, probe_labels(basis)[:N_TRAIN], SEED)
-    path.parent.mkdir(parents=True, exist_ok=True)
+    cached.parent.mkdir(parents=True, exist_ok=True)
     torch.save({"probe_state_dict": module.state_dict(),
                 "shape": {"d_model": acts.shape[-1],
                           "role_dim": module.role_embeddings.shape[-1],
-                          "filler_dim": module.filler_embeddings.shape[-1]}}, path)
+                          "filler_dim": module.filler_embeddings.shape[-1]}}, cached)
     return TPRProbe(module.requires_grad_(False), layer)
 
 
 def linear(layer: int, basis: str) -> Tensor:
     """[512, 8, 8, 3] probe: the capacity reference for the TPR, same split and recipe
     as the layer sweep in analysis/linear_probe/train_linear_probe.py."""
-    path = CACHE / f"linear_{basis}_layer{layer}.pt"
-    if path.exists():
-        return torch.load(path, weights_only=True)
+    cached = path("linear", layer, basis)
+    if cached.exists():
+        return torch.load(cached, weights_only=True)
 
     acts, labels = probe_acts(layer)[:N_TRAIN], probe_labels(basis)[:N_TRAIN]
     torch.manual_seed(SEED)
@@ -192,8 +198,8 @@ def linear(layer: int, basis: str) -> Tensor:
             optimizer.step()
             optimizer.zero_grad()
     probe = probe.detach()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    torch.save(probe, path)
+    cached.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(probe, cached)
     return probe
 
 
