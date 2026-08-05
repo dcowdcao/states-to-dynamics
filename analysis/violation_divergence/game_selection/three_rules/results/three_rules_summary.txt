@@ -1,0 +1,193 @@
+==============================================================================
+1. FEASIBILITY
+==============================================================================
+2000 source games, 1550 branch-complete (all six illegal categories).
+Branch-completeness IS rule-completeness: a complete game carries all six categories, so
+  all three rules are available in 1550/1550 of them.
+Relaxing to one member per rule: 1997/2000 games admit R1, R2 and R3.
+Missing-category counts over all source games:
+  occupied_own       (R1 placement  ) missing in    0 / 2000
+  occupied_opp       (R1 placement  ) missing in    0 / 2000
+  empty_detached     (R2 bracketing ) missing in   49 / 2000
+  empty_own_only     (R2 bracketing ) missing in  370 / 2000
+  empty_no_bracket   (R2 bracketing ) missing in   51 / 2000
+  opponent_only      (R3 turn       ) missing in    3 / 2000
+t0 over the complete games: min 10, median 21, max 34.
+An R^21 curvature panel needs a branch-free W=8 window: 1066/1550 complete games qualify (t0 >= 17).
+
+The games every search has nominated, on one basis. r21_window is 1 where a full-width
+W=8 descriptor window still ends before the branch, which is what an R^21 panel needs:
+          game |             t0 |         t0_pct |     r21_window
+-----------------------------------------------------------------
+          1558 |             18 |        37.7340 |              1
+           191 |             26 |        71.3041 |              1
+           659 |             19 |        42.1562 |              1
+          1442 |             27 |        75.3712 |              1
+           706 |             16 |        28.9864 |              0
+          1202 |             12 |        11.2008 |              0
+          1235 |             20 |        46.3848 |              1
+           662 |             22 |        54.5836 |              1
+   1558  SpaDE argmax (spread_ratio 0.1st pct)
+    191  CosineSpaDE argmax
+    659  high in SpaDE and CosineSpaDE
+   1442  SpaDE runner-up
+    706  SpaDE robust alternative
+   1202  SpaDE robust alternative
+   1235  incumbent FIGURE_GAME
+    662  parent sub-study's pick
+
+==============================================================================
+2. CROSS-SPACE AGREEMENT
+==============================================================================
+sep = mean pairwise distance between the three rule means / RMS rule-mean norm,
+per game in each of the 9 spaces.
+401 games carried into the SAE spaces: the top 120 of all 1550 complete games
+in raw layer 5, the 300-game reference sample (seed 0), and the 8 named candidates.
+pct is against the reference sample in that space, so pct_min reads: in its WORST
+space, this game still separates the rules better than pct_min% of a random
+branch-complete game. pct_max is the peak a single-space search returns.
+
+  raw layer 5 (reference space)    sep median 0.6158 [0.5358-0.7119]  ratio median 0.9600   (reference sample)
+  PAnneal (p-anneal, pen 0.042)    sep median 0.6244 [0.5392-0.7190]  ratio median 0.9647   (reference sample)
+  Standard (L1 0.059)              sep median 0.6318 [0.5561-0.7273]  ratio median 0.9743   (reference sample)
+  GatedSAE (L1 1.37)               sep median 0.6152 [0.5179-0.7117]  ratio median 0.9743   (reference sample)
+  TopK (k=80)                      sep median 0.6114 [0.5220-0.7136]  ratio median 0.9750   (reference sample)
+  GatedAnneal (p-anneal, pen 0.955) sep median 0.5914 [0.5032-0.6947]  ratio median 0.9826   (reference sample)
+  BatchTopK (k=80)                 sep median 0.5946 [0.5155-0.7054]  ratio median 0.9768   (reference sample)
+  CosineSpaDE (γ=1.0)              sep median 0.6689 [0.5774-0.7585]  ratio median 0.9381   (reference sample)
+  SpaDE (λ=1e-3, γ=1e-4)           sep median 0.6366 [0.5672-0.7236]  ratio median 0.9593   (reference sample)
+
+Spearman rho of sep between spaces (n = 300 reference games):
+                                     raw layer   PAnneal  Standard  GatedSAE      TopK GatedAnne BatchTopK CosineSpa     SpaDE
+  raw layer 5 (reference space)          1.000     0.988     0.968     0.954     0.940     0.942     0.955     0.863     0.991
+  PAnneal (p-anneal, pen 0.042)          0.988     1.000     0.963     0.948     0.940     0.939     0.956     0.853     0.980
+  Standard (L1 0.059)                    0.968     0.963     1.000     0.926     0.917     0.921     0.929     0.836     0.972
+  GatedSAE (L1 1.37)                     0.954     0.948     0.926     1.000     0.958     0.950     0.954     0.793     0.933
+  TopK (k=80)                            0.940     0.940     0.917     0.958     1.000     0.942     0.961     0.774     0.915
+  GatedAnneal (p-anneal, pen 0.955)      0.942     0.939     0.921     0.950     0.942     1.000     0.947     0.790     0.925
+  BatchTopK (k=80)                       0.955     0.956     0.929     0.954     0.961     0.947     1.000     0.799     0.940
+  CosineSpaDE (γ=1.0)                    0.863     0.853     0.836     0.793     0.774     0.790     0.799     1.000     0.876
+  SpaDE (λ=1e-3, γ=1e-4)                 0.991     0.980     0.972     0.933     0.915     0.925     0.940     0.876     1.000
+
+Top 12 on consistency (pct_min):
+          game |             t0 |        pct_min |       pct_mean |        pct_max |        sep_min |       sep_mean |         sep_cv
+-------------------------------------------------------------------------------------------------------------------------------------
+          1628 |             13 |       100.0000 |       100.0000 |       100.0000 |         0.9882 |         1.0165 |         0.0210
+           494 |             29 |        99.6667 |        99.9259 |       100.0000 |         0.9813 |         0.9962 |         0.0240
+           499 |             34 |        99.6667 |        99.9630 |       100.0000 |         0.9845 |         1.0233 |         0.0339
+           261 |             21 |        99.3333 |        99.7407 |       100.0000 |         0.9092 |         0.9732 |         0.0488
+           122 |             32 |        98.6667 |        99.5556 |       100.0000 |         0.8958 |         0.9576 |         0.0456
+          1715 |             25 |        98.6667 |        99.8148 |       100.0000 |         0.9193 |         0.9783 |         0.0229
+          1246 |             31 |        98.0000 |        99.2593 |       100.0000 |         0.8827 |         0.9470 |         0.0433
+          1499 |             34 |        98.0000 |        98.5556 |        99.3333 |         0.8789 |         0.9007 |         0.0245
+          1532 |             17 |        98.0000 |        99.2963 |        99.6667 |         0.8848 |         0.9568 |         0.0372
+           193 |             28 |        97.6667 |        98.7407 |        99.3333 |         0.8779 |         0.9090 |         0.0284
+          1068 |             28 |        97.6667 |        99.5185 |       100.0000 |         0.9118 |         0.9649 |         0.0249
+          1541 |             26 |        97.6667 |        98.5926 |        99.3333 |         0.8619 |         0.9082 |         0.0344
+
+Top 12 on peak (pct_max) -- what a single-space search returns:
+          game |             t0 |        pct_min |       pct_mean |        pct_max |        sep_min |       sep_mean |         sep_cv
+-------------------------------------------------------------------------------------------------------------------------------------
+             2 |             12 |        87.0000 |        96.2963 |       100.0000 |         0.7949 |         0.8902 |         0.0730
+           122 |             32 |        98.6667 |        99.5556 |       100.0000 |         0.8958 |         0.9576 |         0.0456
+           261 |             21 |        99.3333 |        99.7407 |       100.0000 |         0.9092 |         0.9732 |         0.0488
+           339 |             24 |        96.0000 |        99.0370 |       100.0000 |         0.8982 |         0.9258 |         0.0185
+           405 |             15 |        97.3333 |        99.1852 |       100.0000 |         0.9035 |         0.9408 |         0.0309
+           494 |             29 |        99.6667 |        99.9259 |       100.0000 |         0.9813 |         0.9962 |         0.0240
+           499 |             34 |        99.6667 |        99.9630 |       100.0000 |         0.9845 |         1.0233 |         0.0339
+           509 |             19 |        86.3333 |        94.5556 |       100.0000 |         0.7638 |         0.8556 |         0.0987
+           662 |             22 |        97.3333 |        99.2963 |       100.0000 |         0.9175 |         0.9545 |         0.0255
+           682 |             17 |        91.6667 |        97.5926 |       100.0000 |         0.7976 |         0.8869 |         0.0642
+          1033 |             18 |        80.6667 |        94.5926 |       100.0000 |         0.7287 |         0.8593 |         0.0910
+          1068 |             28 |        97.6667 |        99.5185 |       100.0000 |         0.9118 |         0.9649 |         0.0249
+
+The named candidates on consistency:
+          game |             t0 |        pct_min |       pct_mean |        pct_max |        sep_min |       sep_mean |         sep_cv
+-------------------------------------------------------------------------------------------------------------------------------------
+           662 |             22 |        97.3333 |        99.2963 |       100.0000 |         0.9175 |         0.9545 |         0.0255
+          1442 |             27 |        96.6667 |        98.3333 |        99.6667 |         0.8574 |         0.9013 |         0.0300
+          1235 |             20 |        96.6667 |        99.5926 |       100.0000 |         0.9200 |         0.9855 |         0.0262
+          1558 |             18 |        95.0000 |        97.7407 |        99.0000 |         0.8373 |         0.8803 |         0.0376
+           706 |             16 |        87.0000 |        92.0000 |        96.0000 |         0.7579 |         0.8141 |         0.0383
+           191 |             26 |        61.6667 |        70.1481 |        84.0000 |         0.6493 |         0.6965 |         0.0643
+          1202 |             12 |        54.3333 |        81.8889 |        93.6667 |         0.6265 |         0.7557 |         0.0660
+           659 |             19 |        24.6667 |        45.0000 |        83.3333 |         0.5184 |         0.6057 |         0.1358
+
+Per-space argmax of sep over the pool, and where that game sits elsewhere:
+  raw layer 5 (reference space)    argmax game  1628 (t0=13)  pct_min 100.0  pct_mean 100.0  pct_max 100.0  legibility  39.6
+  PAnneal (p-anneal, pen 0.042)    argmax game  1628 (t0=13)  pct_min 100.0  pct_mean 100.0  pct_max 100.0  legibility  39.6
+  Standard (L1 0.059)              argmax game   499 (t0=34)  pct_min  99.7  pct_mean 100.0  pct_max 100.0  legibility  67.4
+  GatedSAE (L1 1.37)               argmax game   499 (t0=34)  pct_min  99.7  pct_mean 100.0  pct_max 100.0  legibility  67.4
+  TopK (k=80)                      argmax game   261 (t0=21)  pct_min  99.3  pct_mean  99.7  pct_max 100.0  legibility  51.7
+  GatedAnneal (p-anneal, pen 0.955) argmax game  1628 (t0=13)  pct_min 100.0  pct_mean 100.0  pct_max 100.0  legibility  39.6
+  BatchTopK (k=80)                 argmax game   122 (t0=32)  pct_min  98.7  pct_mean  99.6  pct_max 100.0  legibility  55.6
+  CosineSpaDE (γ=1.0)              argmax game   499 (t0=34)  pct_min  99.7  pct_mean 100.0  pct_max 100.0  legibility  67.4
+  SpaDE (λ=1e-3, γ=1e-4)           argmax game   499 (t0=34)  pct_min  99.7  pct_mean 100.0  pct_max 100.0  legibility  67.4
+  Best pct_min inside the reference sample alone: game 1532 at 98.0 -- if that beats the
+  pool's best, selecting candidates on raw layer 5 missed a game the SAE spaces liked.
+
+==============================================================================
+3. BOARD LEGIBILITY
+==============================================================================
+Chebyshev distances in cells; the board panel prints at 35 pt per cell.
+legibility = mean percentile of min_rule_gap, spread, min_context (up is better)
+and detached_gap (down is better), over all complete games. Argued, not measured.
+
+  min_rule_gap     min  1.00  median  1.00  max  4.00
+  spread           min  1.41  median  3.17  max  4.48
+  min_context      min  1.00  median  1.00  max  3.00
+  detached_gap     min  2.00  median  2.00  max  3.00
+  n_touching > 0 in  1014 / 1550 games (two different-rule squares share an edge or corner)
+  n_glyph_pairs > 0 in   444 / 1550 games (a would-be disc 0.4 cells from the next square's marker)
+  the six squares fall in one board quadrant in     1 / 1550 games
+
+Top 12 on consistency, with their board:
+          game |             t0 |         t0_pct |        pct_min |     legibility |   min_rule_gap |     n_touching |         spread |    min_context |   detached_gap
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+          1628 |             13 |        15.6553 |       100.0000 |        39.5901 |              1 |              1 |         2.9059 |              1 |              2
+           494 |             29 |        82.7954 |        99.6667 |        54.5352 |              2 |              0 |         3.0368 |              1 |              2
+           499 |             34 |        98.5474 |        99.6667 |        67.3580 |              3 |              0 |         3.3871 |              1 |              2
+           261 |             21 |        50.4196 |        99.3333 |        51.6785 |              1 |              1 |         3.4197 |              1 |              2
+           122 |             32 |        92.8341 |        98.6667 |        55.5842 |              2 |              0 |         3.0777 |              1 |              2
+          1715 |             25 |        67.0433 |        98.6667 |        47.2240 |              2 |              0 |         2.5441 |              1 |              2
+          1246 |             31 |        89.6385 |        98.0000 |        61.3622 |              1 |              1 |         3.2872 |              2 |              2
+          1499 |             34 |        98.5474 |        98.0000 |        54.9548 |              1 |              1 |         3.6094 |              1 |              2
+          1532 |             17 |        33.3441 |        98.0000 |        46.8528 |              1 |              2 |         2.4095 |              2 |              2
+           193 |             28 |        79.0833 |        97.6667 |        45.0936 |              1 |              1 |         3.1447 |              1 |              2
+          1068 |             28 |        79.0833 |        97.6667 |        73.7088 |              3 |              0 |         3.8478 |              1 |              2
+          1541 |             26 |        71.3041 |        97.6667 |        70.8844 |              3 |              0 |         3.5785 |              1 |              2
+
+Top 12 on consistency AND legibility (mean of the two percentiles):
+          game |             t0 |         t0_pct |        pct_min |        pct_max |     legibility |   min_rule_gap |         spread |    min_context |   detached_gap
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+          1068 |             28 |        79.0833 |        97.6667 |       100.0000 |        73.7088 |              3 |         3.8478 |              1 |              2
+          1528 |             13 |        15.6553 |        96.6667 |       100.0000 |        72.6436 |              2 |         3.2702 |              2 |              2
+          1541 |             26 |        71.3041 |        97.6667 |        99.3333 |        70.8844 |              3 |         3.5785 |              1 |              2
+           499 |             34 |        98.5474 |        99.6667 |       100.0000 |        67.3580 |              3 |         3.3871 |              1 |              2
+           789 |             24 |        62.9438 |        96.3333 |        99.3333 |        69.9322 |              2 |         4.0069 |              1 |              2
+          1572 |             32 |        92.8341 |        97.0000 |       100.0000 |        68.2456 |              2 |         3.7118 |              1 |              2
+           734 |             19 |        42.1562 |        96.6667 |        99.3333 |        67.1562 |              2 |         3.6209 |              1 |              2
+          1837 |             22 |        54.5836 |        94.6667 |        98.6667 |        68.0600 |              2 |         3.6968 |              1 |              2
+          1269 |             29 |        82.7954 |        92.6667 |       100.0000 |        69.2221 |              2 |         3.8224 |              1 |              2
+           897 |             32 |        92.8341 |        96.0000 |        98.6667 |        65.5504 |              2 |         3.5277 |              1 |              2
+           755 |             15 |        24.4351 |        93.3333 |        97.6667 |        66.5913 |              2 |         3.5785 |              1 |              2
+          1246 |             31 |        89.6385 |        98.0000 |       100.0000 |        61.3622 |              1 |         3.2872 |              2 |              2
+
+The named candidates on the board:
+          game |             t0 |     legibility |   min_rule_gap |     n_touching |  n_glyph_pairs |         spread |      quadrants |    min_context |   detached_gap
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+           191 |             26 |        73.8702 |              2 |              0 |              0 |         3.3208 |              4 |              2 |              2
+          1558 |             18 |        60.2082 |              2 |              0 |              0 |         3.2702 |              3 |              1 |              2
+          1235 |             20 |        54.3092 |              1 |              1 |              0 |         3.5668 |              4 |              1 |              2
+          1442 |             27 |        50.5245 |              1 |              1 |              0 |         3.3706 |              3 |              1 |              2
+           706 |             16 |        48.3699 |              2 |              0 |              0 |         2.6874 |              4 |              1 |              2
+           662 |             22 |        38.5571 |              1 |              2 |              1 |         2.8333 |              3 |              1 |              2
+           659 |             19 |        34.7724 |              1 |              1 |              0 |         2.4777 |              3 |              1 |              2
+          1202 |             12 |        28.1311 |              1 |              4 |              1 |         2.9533 |              4 |              1 |              3
+
+Incumbent FIGURE_GAME 1235 (t0=20): pct_min 96.7, pct_mean 99.6, pct_max 100.0, legibility 54.3, min_rule_gap 1, spread 3.57, min_context 1, detached_gap 2.
+Its within-rule spread in raw layer 5, RMS member-to-rule-mean distance:
+  R1 placement 16.9 (n=2)  R2 bracketing 25.2 (n=3)  R3 turn 0.0 (n=1)
+  R3's 0 is exact: one member is its own mean. It contributes no within-rule
+  pair, so `ratio`'s within set is R1's 1 pair and R2's 3.
+
