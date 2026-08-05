@@ -51,8 +51,19 @@ category shows no parity signature (agreement 0.9930, mid-pack).
 **Straightness: "SpaDE destroys the curvature signal that every other family keeps."**
 Retracted twice. First narrowed to configuration-specific, then dropped entirely when the
 seed-42 SpaDE baseline was excluded for degenerate provenance. Current position: every family
-preserves the separation (0.01–0.21). The companion "SpaDE's response cancels 79% under
+preserves the violation separation, mean-θ AUROC 0.39–0.46 against raw layer 5's 0.40, every
+bootstrap CI below chance. The companion "SpaDE's response cancels 79% under
 whole-game averaging" died with the same checkpoint; cancellation now ranges 1–40%.
+
+**Straightness: everything the random-token class supported.** The class is still built and
+stored — it is a block of `games.pt` and `classify.py` still scores it — but as of
+2026-08-05 no figure draws it, no figure reads its AUROC rows, and no PCA is fitted on it
+(owner's call; the seam is `CLASS_STYLE` in `spade.figures.paper_style`). Three findings go
+with it and must not be restated: "every dictionary keeps the random-token curvature shift",
+the norm-and-L0 "pass-through / suppressed / inverted" regime table in
+`sae_profiles/README.md`, and "PC1 is the random-token axis, everywhere" in
+`feature_pca/README.md`. None of the three was refuted — the study stopped measuring the
+class. Anything reinstating them has to reinstate the class first.
 
 **Straightness: the championship effect at layer 5.** 0.509 [0.483, 0.535] — not
 distinguishable from chance. Adding bootstrap CIs turned a claimed gradual rise into a
