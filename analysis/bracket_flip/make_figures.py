@@ -51,7 +51,7 @@ def panel_letter(ax, i: int) -> None:
             color=INK, fontsize=9)
 
 
-def field_panel(ax, field: pd.DataFrame, basis: str, accuracy: float,
+def field_panel(ax, field: pd.DataFrame, basis: str, accuracy: float, ceiling: float,
                 note_xy: tuple[float, float], annotate: bool = False) -> None:
     """One arrow per square role, tail = before, head = after the flanking move.
 
@@ -60,6 +60,10 @@ def field_panel(ax, field: pd.DataFrame, basis: str, accuracy: float,
     across events, so an endpoint interval is not one for the arrow. The flipped
     square carries a second, dashed arrow to where the matched non-flipping move
     leaves it, and the gap between those two heads is the panel's one contrast.
+
+    Each accuracy is titled against its own occupancy-only ceiling: 0.735 on
+    absolute colour is not "some colour ability", it is what the labels give for
+    free, and only the two panels' distance from their ceilings says so.
     """
     d = field[field.basis == basis].set_index("role")
     for role in ROLES:
@@ -108,8 +112,10 @@ def field_panel(ax, field: pd.DataFrame, basis: str, accuracy: float,
     ax.margins(y=0.12)
     ax.set_xlabel(AXIS[basis][0])
     ax.set_ylabel(AXIS[basis][1])
-    ax.set_title(f"{BASIS_TITLE[basis]}\nheld-out board accuracy {accuracy:.3f}",
-                 fontsize=9)
+    gap = f"{100 * (accuracy - ceiling):+.1f}".replace("-", "\N{MINUS SIGN}")
+    ax.set_title(f"{BASIS_TITLE[basis]}\nheld-out accuracy {accuracy:.4f} vs "
+                 f"occupancy-only ceiling {ceiling:.4f} ({gap} pts)",
+                 fontsize=9, pad=13)  # clears the panel letter the wider title reaches
 
 
 def board_panel(ax, event: pd.DataFrame, meta: pd.Series) -> None:
@@ -161,9 +167,10 @@ def figure_one(camera_ready: bool) -> None:
 
     board_panel(board, event, meta)
     # The note goes in whichever corner the basis leaves empty.
-    field_panel(native, field, "relative", accuracy.acc_tpr_relative, (0.98, 0.04),
-                annotate=True)
-    field_panel(absolute, field, "absolute", accuracy.acc_tpr_absolute, (0.98, 0.96))
+    field_panel(native, field, "relative", accuracy.acc_tpr_relative,
+                accuracy.ceiling_relative, (0.98, 0.04), annotate=True)
+    field_panel(absolute, field, "absolute", accuracy.acc_tpr_absolute,
+                accuracy.ceiling_absolute, (0.98, 0.96))
     for i, ax in enumerate((board, native, absolute)):
         panel_letter(ax, i)
     fig.legend(*native.get_legend_handles_labels(), loc="upper left",
@@ -171,7 +178,9 @@ def figure_one(camera_ready: bool) -> None:
                title=f"layer-{layer} read-out; arrow = the same squares before "
                      r"$\rightarrow$ after $m$, open tail = before, filled head = after"
                      "\nbars = 95% CI of the paired displacement (cluster bootstrap over "
-                     f"{int(field.n_events.iloc[0]):,} strict-control events)",
+                     f"{int(field.n_events.iloc[0]):,} strict-control events)"
+                     "\nceiling = best accuracy without reading colour (empty vs "
+                     "occupied perfect, then the majority colour)",
                title_fontsize=7, labelspacing=0.3, columnspacing=1.0)
     if not camera_ready:
         fig.suptitle(f"Layer {layer} codes the board mover-relatively: a TPR trained "

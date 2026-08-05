@@ -31,6 +31,7 @@ from spade.bracket_flip.probe_space import (
     THEIRS,
     event_acts,
     events,
+    occupancy_ceiling,
     owner,
     probe_acts,
     probe_labels,
@@ -144,14 +145,15 @@ def occupancy_split(probe: TPRProbe, basis: str, device: str) -> dict:
     pred = predictions(probe, MAIN_LAYER, device)
     occupied = labels != EMPTY
     share = [(labels == c).float().mean().item() for c in range(len(CLASSES))]
+    ceiling = occupancy_ceiling(labels)
     acc = (pred == labels).float().mean().item()
     colour = (pred[occupied] == labels[occupied]).float().mean().item()
-    majority = max(share[1:]) / (1 - share[EMPTY])
+    majority = max(share[1:]) / (1 - share[EMPTY])  # the ceiling's colour half, on occupied
     tag = {"relative": "rel", "absolute": "abs"}[basis]
     return {
         f"acc_{tag}_L5": acc,
-        f"ceiling_{tag}": share[EMPTY] + max(share[1:]),
-        f"acc_minus_ceiling_{tag}_pts": 100 * (acc - share[EMPTY] - max(share[1:])),
+        f"ceiling_{tag}": ceiling,
+        f"acc_minus_ceiling_{tag}_pts": 100 * (acc - ceiling),
         f"occupancy_{tag}": ((pred != EMPTY) == occupied).float().mean().item(),
         f"colour_on_occupied_{tag}": colour,
         f"majority_colour_{tag}": majority,
