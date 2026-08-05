@@ -1,6 +1,7 @@
 """Trajectory panels for the straightness study, shared by the raw-space and
-per-SAE figures: profiles over the game, event-locked responses, and per-class
-distributions of the whole-game statistic.
+per-SAE figures, plus the set of classes those figures draw: profiles over the
+game, event-locked responses, and per-class distributions of the whole-game
+statistic.
 
 Two panels make up a curvature_vs_t figure: the per-class profile over the game,
 and the violation-locked response (Δ turning angle against each violation game's
@@ -13,9 +14,24 @@ FIGURE_GUIDELINES.md §4.2 and §4.4 for the conventions these encode.
 import numpy as np
 
 from spade.figures.paper_style import CLASS_STYLE, GRID, INK, MUTED
+from spade.straightness.build_games import CLASSES
 
 REL_WINDOW = (-8, 12)  # positions relative to the injected move
 KDE_GRID, KDE_BOOT, KDE_SEED = 512, 1000, 0
+
+DRAWN_CLASSES = [c for c in CLASSES if c in CLASS_STYLE]
+
+
+def class_blocks(n_total: int) -> dict[str, slice]:
+    """games.pt block layout, restricted to the classes the figures draw.
+
+    CLASSES fixes the block order in the data and every geometry npz indexes into
+    it by position, so a class leaves the study's figures by losing its
+    CLASS_STYLE entry, never by leaving CLASSES.
+    """
+    n = n_total // len(CLASSES)
+    blocks = {c: slice(i * n, (i + 1) * n) for i, c in enumerate(CLASSES)}
+    return {c: blocks[c] for c in DRAWN_CLASSES}
 
 
 def mean_sem(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -37,17 +53,19 @@ def kde_ci(vals: np.ndarray, grid: np.ndarray) -> tuple[np.ndarray, np.ndarray, 
     return kernel.mean(1), lo, hi
 
 
-def density_panel(ax, per_game: np.ndarray, blocks: dict, classes: list[str]) -> None:
+def density_panel(ax, per_game: np.ndarray, blocks: dict) -> None:
     """Per-game mean turning angle, one KDE curve per class with a bootstrap band.
 
     Medians are marked on the baseline: the gap between two triangles is the
-    class separation the AUROC figures score. Set the y-floor once after every
-    panel is drawn — set_ylim freezes autoscale, which on shared axes would clip
-    whichever panel peaks highest.
+    class separation the AUROC figures score. The grid spans the drawn classes
+    only, so an undrawn block cannot stretch the axis. Set the y-floor once after
+    every panel is drawn — set_ylim freezes autoscale, which on shared axes would
+    clip whichever panel peaks highest.
     """
-    pad = 0.03 * np.ptp(per_game)
-    grid = np.linspace(per_game.min() - pad, per_game.max() + pad, KDE_GRID)
-    for i, c in enumerate(classes):
+    drawn = np.concatenate([per_game[b] for b in blocks.values()])
+    pad = 0.03 * np.ptp(drawn)
+    grid = np.linspace(drawn.min() - pad, drawn.max() + pad, KDE_GRID)
+    for i, c in enumerate(blocks):
         style, is_ref = CLASS_STYLE[c], c == "legal"
         vals = per_game[blocks[c]]
         dens, lo, hi = kde_ci(vals, grid)
@@ -100,8 +118,8 @@ def value_delta(values: np.ndarray, t0: np.ndarray, src: np.ndarray,
     return rels, mu, sem
 
 
-def value_profile_panel(ax, values: np.ndarray, blocks: dict, classes: list[str],
-                        ylabel: str, offset: int = 1) -> None:
+def value_profile_panel(ax, values: np.ndarray, blocks: dict, ylabel: str,
+                        offset: int = 1) -> None:
     """A per-position quantity vs. board position, one line per class.
 
     `offset` maps array index to board position: 1 for values attached to a
@@ -109,7 +127,7 @@ def value_profile_panel(ax, values: np.ndarray, blocks: dict, classes: list[str]
     k+1 -> k+2 and is plotted at the position the step ends on.
     """
     positions = np.arange(values.shape[1]) + offset
-    for i, c in enumerate(classes):
+    for i, c in enumerate(blocks):
         style, is_ref = CLASS_STYLE[c], c == "legal"
         mu, sem = mean_sem(values[blocks[c]])
         ax.fill_between(positions, mu - 1.96 * sem, mu + 1.96 * sem,
@@ -122,10 +140,10 @@ def value_profile_panel(ax, values: np.ndarray, blocks: dict, classes: list[str]
     ax.set_ylabel(ylabel)
 
 
-def profile_panel(ax, theta: np.ndarray, blocks: dict, classes: list[str]) -> None:
+def profile_panel(ax, theta: np.ndarray, blocks: dict) -> None:
     """Mean turning angle vs. board position, one line per class."""
     positions = np.arange(theta.shape[1]) + 2
-    for i, c in enumerate(classes):
+    for i, c in enumerate(blocks):
         style, is_ref = CLASS_STYLE[c], c == "legal"
         mu, sem = mean_sem(theta[blocks[c]])
         ax.fill_between(positions, mu - 1.96 * sem, mu + 1.96 * sem,
