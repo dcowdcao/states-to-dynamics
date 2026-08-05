@@ -6,6 +6,53 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The corpus is missing an opening, and `stream_games` reads a window (2026-08-05)
+
+Branch `bracket/corpus-provenance`. Nothing in the repo said what
+`adamkarvonen/othello_45MB_games` is, and three things about it condition every study
+that streams it. Written up in `docs/game_corpus.md`, pointed at from
+`spade/othello/games.py` and the bracket-flip design doc. No code behaviour changed —
+touching the sampler would invalidate every committed result.
+
+**It is synthetic random-legal play.** Every one of the 990,623 games is exactly 60
+plies with no pass token, and the played move is uniform over `regular_moves` at
+essentially every prefix (at 5 plies, 0 of 1,185 prefixes with n ≥ 400 reject at
+p < 1e-3). No opening book: 791,514 of 792,498 train games have a distinct 12-ply
+prefix. Worth stating because `docs/restrav_summary.md` sets "synthetic" against
+"real human championship play" for the ResTrav arm — this is the synthetic side, for
+everything.
+
+**The `e6` opening holds 10.8% of games, not 25%, and it is a truncation rather than a
+bias.** The four first moves are related by the symmetry group that fixes the starting
+position, so random legal play owes them 25% each; observed 0.2968 / 0.2973 / 0.2982 /
+0.1078 (χ² = 85,412, 3 df). The deficit is one cut in lexicographic order of the token
+sequence: down the `41 40 19 28 42 …` branch each prefix has full-strength children,
+then one partial child, then zeros, and walking the largest surviving child to the
+bottom lands on exactly the lexicographically largest game in the corpus. The
+pre-truncation size implied by the full children, ~1.18M, is consistent at every ply.
+A sorted list cut to the 45 MB the dataset is named for.
+
+**`stream_games` is a window on the corpus, not a sample of it.** The split is one
+shard, so `shuffle(seed, buffer_size=10000)` cannot reorder shards and only permutes a
+10,000-row reservoir: drawing n games reads the first n + 10,000 rows and no further.
+Three seeds' 2,400-game draws overlap pairwise at 0.197–0.205 — 2,400/12,400 = 0.194,
+the value for three draws from one window — and a 200,000-row buffer drops that to
+0.013. Every study defaults to `--seed 42`, so `rules`, `straightness`,
+`manifold_capture`, `legality_probe`, `violation_divergence` and `bracket_flip` walk
+one list in one order; their game sets are nested prefixes, not independent draws, and
+`bracket_flip`'s probe and event sets are rows 1–400 and 401–2,400 of it — a fresh
+seed-42 draw reproduces all 400 rows of `probe/tokens.pt` and all 2,000 `events.csv`
+prefixes, in order. A different seed is not a replication: it swaps ~80% of the games
+but stays in the same 1.6% of the corpus. `IterableDataset.skip` is not the way out
+either; on `datasets` 4.8.4 it lands at row 0 for `skip(1000)` and row 1,000 for both
+`skip(5000)` and `skip(300000)`. `extraction.extract_activations.collect_games` has its
+own copy of the same idiom, so this is not only `stream_games`.
+
+**Which explains which.** The sampling defect is real but it does not cause the opening
+skew — the `e6` share is 0.10–0.12 in every draw tried, including one taken from row
+300,000 with no shuffle, and 0.1078 over the whole corpus. The skew is the corpus; the
+window is a separate caveat, and the one that reaches beyond this study.
+
 ## Fig 1 titles each accuracy against its own occupancy ceiling (2026-08-05)
 
 Branch `bracket/basis-ceiling`. Panel (c) said "held-out board accuracy 0.735" and stopped

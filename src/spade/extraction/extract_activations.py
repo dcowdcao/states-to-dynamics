@@ -82,7 +82,7 @@ def collect_games(dataset_name, n_games, seed=42):
 
     print(f"Loading {n_games} games from {dataset_name}...")
     dataset = load_dataset(dataset_name, split="train", streaming=True)
-    # Shuffle in streaming mode — buffer_size controls randomness vs memory tradeoff
+    # A reservoir over the corpus's leading rows, not a sample of it — docs/game_corpus.md
     dataset = dataset.shuffle(seed=seed, buffer_size=10000)
 
     games = []

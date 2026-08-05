@@ -101,6 +101,18 @@ From the legal-game corpus, for each game and move index *t*: prefix `P =
 tokens[:t]`, board `B = replay(P)`, mover *e*, played move *m*, `flip_set(B, m,
 e)`.
 
+The corpus is `adamkarvonen/othello_45MB_games` through
+`spade.othello.games.stream_games`, and it is **synthetic random-legal play, not
+human or engine games** — 60-ply complete games, uniform over the engine's legal
+moves at every prefix, no opening book (1,812 of the 1,817 event games with ≥ 8
+plies have a distinct 8-ply prefix). Two things about it are load-bearing for
+anything read positionally off this study, and neither is specific to it:
+the `e6` opening is missing 64% of its games, so the board's symmetry group is
+broken in the data; and `stream_games` reads the corpus's leading ~1.6%, in an order
+every study with `--seed 42` shares, so the 400 probe games and the 2,000 event
+games are adjacent rows of one list rather than independent samples.
+`docs/game_corpus.md` has both, with the measurements.
+
 - **Headline subset: `|flip_set| == 1`.** The boards before and after differ in
   exactly two squares — *m* (empty→*e*) and *s* (opponent→*e*). This is the
   cleanest minimal pair available and is the scenario as posed.
