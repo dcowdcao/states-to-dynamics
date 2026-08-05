@@ -56,12 +56,17 @@ frame, and what carries a claim is the second probe drawn beside it.
    not decode arithmetic: it is a claim about where the representation moves.
    A5's independent re-derivation reported 0.173/0.184 off the ARENA fits
    (`reports/VERDICT.md` §7f is the corpus objection those numbers predate).
-3. **That direction is causally used.** Editing layer-5 residual along it moves
-   next-move probability mass onto the counterfactual board's legal set by
-   +1.496 log-units at matched step length, against +0.121 for a
-   magnitude-matched random direction, with less collateral than the random
-   control at the operating scale. It is a move and not damage: log-mass on the
-   whole legal set stays inside ±0.08 nats over both sweeps, and from
+3. **That direction is causally used, and the TPR is the better lever even
+   though the linear direction is the better-aligned one.** Editing layer-5
+   residual along it moves next-move probability mass onto the counterfactual
+   board's legal set by **+2.380 nats [2.299, 2.454]** at matched step length
+   (`‖δ‖/‖h‖` = 0.144), against **+0.190** for a magnitude-matched random
+   direction and **+2.035 [1.970, 2.104]** for the linear fit's direction at
+   that same length, with less collateral on both counts (0.123 vs 0.141
+   squares, out-of-family decoder). The ordering in (2) inverts here: being
+   aligned with where the representation moves is not the same property as
+   being the handle that moves it. It is a move and not damage: log-mass on the
+   whole legal set stays inside ±0.07 nats over both sweeps, and from
    `‖δ‖/‖h‖ ≈ 0.07` up the real board's legal-only squares shed mass while the
    counterfactual-only squares gain it — one switch, read on both sides.
 
