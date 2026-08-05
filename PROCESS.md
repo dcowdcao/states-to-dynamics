@@ -100,6 +100,67 @@ passed around: plain accuracy for a probe that has learned nothing is ~0.54 here
 the majority-class baseline for it is 0.175. The composition moves hard with ply, all of it
 mechanical: R1 is exactly (p+5)/64, so R2 falls 0.65 -> 0.004 and R3 0.098 -> 0.024 across
 the window. Any read-out pooled over r has to carry that.
+## The legality-probe space roster, and what it takes to keep the prefix bitwise (2026-08-05)
+
+Branch `legality/spaces`. `src/spade/legality_probe/spaces.py` holds the study's 9-space
+roster and encodes both activation sets through each.
+
+**`representative_spaces()` returns 17 entries, not 11.** raw, the two random controls, the
+8 seed-42 SAEs, and the six seed-43 sweep points that appear as soon as
+`study_dir("multiseed")` exists. The roster filter is therefore `n == "raw" or
+entry.seed == 42`, not a name set. `bracket_flip/sae_arm.py:45`'s
+`{"raw", *BASELINE_CONFIGS}` is wrong twice over — it readmits the degenerate
+`SpaDETrainer-othello` that `spaces.EXCLUDED_SAE` drops, and it never names the default
+SpaDE, `SpaDE-lam1e-03-gam1e-04`.
+
+**Batch shape decides whether the r < 0 prefix survives the encode.** Causal attention makes
+the pre-t0 activations of a game's branches bit-identical, which is what makes r < 0 a
+*paired* in-distribution control rather than an approximate one. Two branches of one game
+have to be rows of the same GEMM, or cuBLAS reduces their shared prefix differently and the
+codes stop being identical for a reason that has nothing to do with the SAE.
+`extract_acts.spans` already encodes that rule for the extraction pass; the encode reuses it
+at `ROW_BATCH = 248`, chosen so `248 x 33 <= spaces.ENCODE_BATCH` and a span goes through
+`batched_apply` as a single matmul. All 9 spaces plus both nulls then keep the prefix
+bitwise on an H100.
+
+**Measured L0 is the standardization check.** SAEs were trained on `scale*(x - mean)`, so an
+unstandardized encode is silently wrong rather than merely inaccurate. Mean L0 on the branch
+window lands within +0-14% of the Karvonen eval L0 for the same checkpoint, in the same rank
+order, and exactly on the analytic value for the three spaces that have one (TopK 80.00,
+random_topk 80.00, random_proj 4101 ≈ half of 8192). The small positive bias is the branch
+set: five of its nine categories are illegal continuations, which fire more features than the
+natural games the eval samples. `results/acceptance/all_results.csv` is the only eval CSV in
+the tree with data — the six paths `multiseed/aggregate_seeds.SEED42_CSVS` names are empty
+directories.
+
+**The branch code is streamed, never cached.** A `[17527, 33, 8192]` fp16 tensor is 9.5 GB
+per space, 76 GB for the roster, on a 90-day tier — written so it can be read once and
+reduced to scalars by the read-out. `stream_branch` yields one `spans()` batch instead, so
+the full code never exists and each consumer reduces `[rows, 33, d]` as it arrives. Sparse
+storage would have cut the 76 GB by ~6x and was rejected for the same reason: a format
+change for a tensor that should not exist. `prefix_bitwise` becomes span-local for free —
+`spans` never splits a game, so a span holds every branch of every game it touches.
+
+**The probe is not fitted on `analysis/linear_probe/activations/`.** That set holds forfeit
+positions and 53 mislabeled rows, its positions cannot be recovered because the extractor
+read a tree that no longer exists, and nothing ruled out overlap with the read-out games —
+a probe fitted on the games it is later read out on inflates every number in the study.
+`PROBE_ACTS` defaults to the label pipeline's own `[10000, 512]` layer-5 extraction, whose
+200 source games exclude by exact token match all 2000 games behind the read-out branches.
+It is already at layer 5, so `probe_acts` asserts `ndim == 2` instead of slicing `[LAYER]`:
+hand it the old all-layer stack and it fails loudly rather than encoding the wrong positions.
+
+**Every row records a fingerprint of that set.** `fingerprint()` is `tpr_probe._fingerprint`'s
+job over floats — shape plus a blake2b digest of the activation bytes, since a float sum
+collides far too easily to key a cache on. Digesting the activations rather than a manifest
+means no other corpus can produce the same fingerprint, so `$SPADE_LEGALITY_PROBE_ACTS`
+repointed at a set that is *not* disjoint changes the fingerprint and every cached row
+asserts. Nothing measured off the branch window — L0, prefix invariance, d, everything in
+`space_quality.csv` — depends on the probe set at all.
+
+Cache: `study_dir("legality")/latents/`, resumable per space on `row_<space>.json`. Only
+`probe_<space>.pt` is written, 164 MB per 8192-wide space, ~1.5 GB for all 11 — refitting a
+probe is the expensive thing to redo, re-encoding a window is not.
 
 ---
 
