@@ -175,13 +175,7 @@ def figure_one(camera_ready: bool) -> None:
         panel_letter(ax, i)
     fig.legend(*native.get_legend_handles_labels(), loc="upper left",
                bbox_to_anchor=(0.44, 0.015), ncol=2, fontsize=7, alignment="left",
-               title=f"layer-{layer} read-out; arrow = the same squares before "
-                     r"$\rightarrow$ after $m$, open tail = before, filled head = after"
-                     "\nbars = 95% CI of the paired displacement (cluster bootstrap over "
-                     f"{int(field.n_events.iloc[0]):,} strict-control events)"
-                     "\nceiling = best accuracy without reading colour (empty vs "
-                     "occupied perfect, then the majority colour)",
-               title_fontsize=7, labelspacing=0.3, columnspacing=1.0)
+               labelspacing=0.3, columnspacing=1.0)
     if not camera_ready:
         fig.suptitle(f"Layer {layer} codes the board mover-relatively: a TPR trained "
                      "on absolute colour separates occupied from empty and no more",
