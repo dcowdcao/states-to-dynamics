@@ -1,0 +1,7 @@
+role,verdict,n
+empty_detached,flips nothing for either colour,1951
+empty_no_bracket,flips nothing for either colour,1949
+empty_own_only,flips nothing for either colour,1630
+occupied_opp,square already holds a disc,2000
+occupied_own,square already holds a disc,2000
+opponent_only,engine forfeit fallback replays it as the opponent's move,1997

@@ -23,7 +23,7 @@ Per branch row, [n_branch]:
 
     peak, peak_r (int), half_life, plateau   divergence.persistence(delta)  M3
     topk_idx     int [n_branch, 10]  the 10 largest |Δ_j| at r = 0, SAE only
-    game_id, t0, category, is_control, n_flipped, row
+    game_id, t0, category, is_control, n_flipped, row, and rollout under --variant rollout
 
 `half_life` is plies elapsed after the peak, +inf where δ̂ never halves inside
 the window; add `peak_r` for the absolute offset. `row` indexes
@@ -34,7 +34,7 @@ Spaces are independent and skip-if-exists, so `--shard I --n_shards N` splits
 them across N SLURM array tasks with no coordination.
 
 Usage: python -m spade.violation_divergence.compute_divergence [--smoke]
-       [--spaces resid_post_5] [--shard 0 --n_shards 6]
+       [--variant rollout] [--spaces resid_post_5] [--shard 0 --n_shards 6]
 """
 
 import argparse
@@ -44,7 +44,7 @@ import numpy as np
 import torch
 
 from spade.common.device import select_device
-from spade.common.study import study_dir
+from spade.common.study import variant_dir
 from spade.evaluation.karvonen_adapter import (
     StandardizedDictionary, load_karvonen_sae, load_standardization_params)
 from spade.saes.registry import seed42_entries
@@ -60,23 +60,31 @@ TOPK = 10
 META_KEYS = ["game_id", "t0", "category", "is_control", "n_flipped"]
 
 
-def _row_of(game_id: torch.Tensor, mask: torch.Tensor, what: str) -> torch.Tensor:
-    """Game id -> the single row of that game satisfying `mask`."""
-    assert int(mask.sum()) == len(game_id.unique()), f"not exactly one {what} per game"
-    out = torch.full((int(game_id.max()) + 1,), -1, dtype=torch.long)
-    out[game_id[mask]] = mask.nonzero().flatten()
+def _row_of(key: torch.Tensor, mask: torch.Tensor, what: str) -> torch.Tensor:
+    """Group key -> the single row of that group satisfying `mask`."""
+    assert int(mask.sum()) == len(key.unique()), f"not exactly one {what} per group"
+    out = torch.full((int(key.max()) + 1,), -1, dtype=torch.long)
+    out[key[mask]] = mask.nonzero().flatten()
     return out
 
 
+def group_key(meta: dict[str, torch.Tensor]) -> torch.Tensor:
+    """The rows a branch is compared within: its game, and in the rollout variant its
+    own sample, since there each of the K rollouts carries its own reference."""
+    if "rollout" not in meta:
+        return meta["game_id"]
+    return meta["game_id"] * (int(meta["rollout"].max()) + 1) + meta["rollout"].long()
+
+
 def pairs(meta: dict[str, torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """(branch rows, and per branch the reference and control_legal row of its game)."""
-    game_id = meta["game_id"]
+    """(branch rows, and per branch the reference and control_legal row of its group)."""
+    key = group_key(meta)
     is_ref = (meta["category"] == 0) & (meta["is_control"] == 0)
     branch = (~is_ref).nonzero().flatten()
-    of_game = game_id[branch]
+    of_group = key[branch]
     return (branch,
-            _row_of(game_id, is_ref, "reference")[of_game],
-            _row_of(game_id, meta["is_control"] == 1, "control_legal")[of_game])
+            _row_of(key, is_ref, "reference")[of_group],
+            _row_of(key, meta["is_control"] == 1, "control_legal")[of_group])
 
 
 def sae_encoder(entry, device: str):
@@ -161,6 +169,9 @@ def checks(space: str, out: dict[str, torch.Tensor]) -> None:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--smoke", action="store_true", help="the 50-game set under $DIR/smoke/")
+    parser.add_argument("--variant", default="", choices=["rollout"],
+                        help="the branches and acts under $DIR[/smoke]/rollout/, where "
+                             "every branch carries its own model-sampled continuation")
     parser.add_argument("--spaces", default="", help="comma-separated filter (smoke tests)")
     parser.add_argument("--shard", type=int, default=0)
     parser.add_argument("--n_shards", type=int, default=1,
@@ -169,7 +180,7 @@ def main():
     assert 0 <= args.shard < args.n_shards, "shard out of range"
 
     device = select_device()
-    base = study_dir("divergence") / "smoke" if args.smoke else study_dir("divergence")
+    base = variant_dir("divergence", args.smoke, args.variant)
     meta = torch.load(base / "branches" / "branches.pt", weights_only=True)
     branch, ref, control = pairs(meta)
     t0 = meta["t0"][branch]
@@ -192,6 +203,8 @@ def main():
 
     row_meta = {key: meta[key][branch].numpy() for key in META_KEYS}
     row_meta["row"] = branch.numpy()
+    if "rollout" in meta:
+        row_meta["rollout"] = meta["rollout"][branch].numpy()
 
     for space, entry in spaces:
         path = out_dir / f"{space}.npz"

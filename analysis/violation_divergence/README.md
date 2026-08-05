@@ -18,6 +18,7 @@ python analysis/violation_divergence/behavioral/make_figures.py     # F6
 python analysis/violation_divergence/probe_readout/make_figures.py  # F7
 python analysis/violation_divergence/sae_spaces/make_figures.py     # F2, F4, F5
 python analysis/violation_divergence/fork_and_board/make_figures.py # the design, n=1
+python analysis/violation_divergence/suffix_legality/measure.py     # the shared-suffix defect, tokens only
 ```
 
 `$DIR` = `$SPADE_DIVERGENCE_DIR` (default `/n/netscratch/ba_lab/Lab/$USER/spade_divergence`).
@@ -133,6 +134,11 @@ in only **76.8%** of games, and a median of **2** suffix moves survive. An illeg
 move carries far less board information, is absorbed as a near-no-op, and its suffix
 stays consistent with the model's belief state. The null therefore carries the
 *larger* handicap, on δ̂ plateau, KL, suffix NLL and legal mass alike.
+
+Measured per branch in `suffix_legality/`, which re-derives the 76.8% on the current
+two-control set (0.7515 [0.7325, 0.7710], median 2) and adds the half this paragraph
+leaves out: an illegal branch has **no** board after *t0*, so its suffix legality is
+not low, it is undefined. Only the reference is ever replayed in its own game.
 
 So the honest effect size is: **the representational effect of an impossible move is
 92–103% of the effect of an ordinary legal one.** No sentence of the form "illegal

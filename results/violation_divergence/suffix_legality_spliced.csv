@@ -1,0 +1,10 @@
+role,rule,n,board,p_first_move_legal,p_first_move_legal_lo,p_first_move_legal_hi,mean_moves_legal,median_moves_legal,p_all_moves_legal,p_continuation_replays_branch_square,p_reuse_before_end,mean_moves_before_reuse
+reference,none,2000,legal,1,1,1,36,36,1,0,0,36
+control_legal,none,2000,legal,0.7515,0.7325,0.771,3.9415,2,0.002,0.988,0,36
+control_legal_2,none,2000,legal,0.7495,0.73,0.768,3.9245,2,0.001,0.984,0,36
+occupied_own,R1 placement,2000,none,,,,,,,0,0,36
+occupied_opp,R1 placement,2000,none,,,,,,,0,0,36
+empty_detached,R2 bracketing,1951,none,,,,,,,0.941056,0,36.2594
+empty_own_only,R2 bracketing,1630,none,,,,,,,0.974233,0,36.4436
+empty_no_bracket,R2 bracketing,1949,none,,,,,,,0.97845,0,36.1416
+opponent_only,R3 turn,1997,none,,,,,,,0.985979,0,36.004

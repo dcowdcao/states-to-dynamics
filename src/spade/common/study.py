@@ -23,3 +23,14 @@ _NETSCRATCH = Path("/n/netscratch/ba_lab/Lab")
 def study_dir(name: str) -> Path:
     default = _NETSCRATCH / os.environ["USER"] / f"spade_{name}"
     return Path(os.environ.get(f"SPADE_{name.upper()}_DIR", default))
+
+
+def variant_dir(name: str, smoke: bool = False, variant: str = "") -> Path:
+    """A study tree, its 50-game smoke copy, or a data variant living under either.
+
+    `variant_dir("divergence", smoke=True, variant="rollout")` -> $DIR/smoke/rollout.
+    Defaults compose to plain `study_dir(name)`, so an unflagged run reads and
+    writes exactly where it always did.
+    """
+    base = study_dir(name) / "smoke" if smoke else study_dir(name)
+    return base / variant if variant else base

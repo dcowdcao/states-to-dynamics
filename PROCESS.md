@@ -179,6 +179,63 @@ than `multinomial`, which is what makes that possible. **No KV cache**: transfor
 to satisfy a mask computation is not worth it for a model this size, so each step re-runs
 the whole prefix — ~40x a cached step's compute, still minutes on one H100.
 
+---
+
+## A `--variant` tree for the divergence pipeline, and the diagnostic that justifies it (2026-08-05)
+
+Branch `rollout/pipeline`. The spliced branch set gives every branch the *source
+game's* continuation, which is a legal game on the reference's board and nowhere
+else. `suffix_legality/measure.py` measures the damage from tokens alone: a legal
+control's continuation survives a median of **2** moves, and an illegal branch has no
+board after *t0* at all, so its suffix legality is **undefined** rather than low.
+Only the reference is ever replayed inside its own game. That asymmetry, not the
+control's handicap alone, is why a rollout variant is being built.
+
+**Two decisions in the diagnostic worth knowing.**
+
+- *No convention is invented for the illegal branches on the spliced set.* Forcing a
+  number there would hide the thing being reported. What is reported instead is the
+  engine's verdict on the branch move, and the one convention-free statement
+  available — the continuation later plays the branch's own square (94–99% of
+  empty-square rows), which is illegal under every convention because occupancy never
+  shrinks. Caveat recorded in that README: a 59-move game covers nearly the whole
+  board, so the number is high partly for structural reasons.
+- *`opponent_only` is the only illegal category the engine will accept*, via
+  `umpire`'s forfeit fallback, and it accepts it by letting the **opponent** play. An
+  engine that returns a board is not the same as a branch that has one. Any future
+  code tempted to replay illegal branches must not read that fallback as the branch's
+  own board.
+
+**The 76.8% reproduces, on a different branch set.** The README's figure was measured
+by the red team on the one-control set (15531 rows); the set on disk is the
+two-control re-run (17527 rows). This gives **0.7515 [0.7325, 0.7710]** (1000-draw
+bootstrap over the 2000 games) and median **2** exactly. The interval contains 0.768
+and the set's two independent controls agree to 0.2 pp, so the difference is the
+branch set and not the engine handling. Settling it exactly needs the one-control set
+regenerated; HF streaming does not work offline here, so it is left open. The script
+**stops** rather than printing a table if it ever misses the check.
+
+**The `--variant` flag composes with `--smoke`.** `variant_dir(study, smoke, variant)`
+in `common/study.py` is the one place the rule lives; `extract_acts` and
+`compute_divergence` take `--variant rollout` and read/write `$DIR[/smoke]/rollout/`.
+Both defaults are unchanged and this was checked rather than asserted: the 50-game
+smoke pipeline was run end to end before and after the change into two scratch trees,
+and all 10 act tensors plus all 17 divergence npz files are **bit-identical** (sha256).
+
+Two things had to change for the rollout set to work at all, both no-ops on the
+spliced set. `check_prefix_invariance` asserted no branch matches the reference at
+*t0*; with K samples per branch that is false by construction, so it now asserts the
+stronger and variant-independent rule that activations at *t0* agree **iff** the
+branch tokens do. `pairs()` keyed on `game_id`, which finds K references per game;
+it now keys on `(game_id, rollout)` when the column is present.
+
+**Not done, deliberately:** the downstream read-outs (`probe_readout/decode.py`,
+`behavioral/make_figures.py`) still hardcode the spliced tree. Plumbing `--variant`
+into them means deciding how their `results/` and `figures/` names separate the
+variants, which is a naming call for the study owner, not a mechanical edit.
+
+---
+
 ## The fork figures' prose moves to their READMEs, and the axes stop naming a component (2026-08-04)
 
 Branch `fig/strip-captions`. Every fork figure — `fork_and_board` (both planes),
