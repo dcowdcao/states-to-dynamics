@@ -24,5 +24,13 @@ cd "${SPADE_REPO:?}"
 mkdir -p logs/violation_divergence
 
 N_SHARDS=$(( SLURM_ARRAY_TASK_MAX - SLURM_ARRAY_TASK_MIN + 1 ))
+
+# SPADE_VARIANT=rollout runs the resampled tree instead of the spliced one. Written
+# as an if, not `[ -n x ] && ...`, which returns 1 when unset and set -e would kill.
+VARIANT_ARG=""
+if [ -n "${SPADE_VARIANT:-}" ]; then
+    VARIANT_ARG="--variant ${SPADE_VARIANT}"
+fi
+
 python -m spade.violation_divergence.compute_divergence \
-    --shard "$SLURM_ARRAY_TASK_ID" --n_shards "$N_SHARDS"
+    --shard "$SLURM_ARRAY_TASK_ID" --n_shards "$N_SHARDS" $VARIANT_ARG
