@@ -49,6 +49,57 @@ accuracy** at 0.29 macro-F1, because R1 is 54% of squares mid-game — so the fl
 Legality is a deterministic function of a board that decodes at 0.98, so a high legality
 macro-F1 is not by itself evidence that the model represents legality; the study's claims
 have to rest on differences between spaces and on the r<0 / r=0 contrast, not on the level.
+## Legality-probe labels and fit set (2026-08-05)
+
+Branch `legality/labels`. New package `src/spade/legality_probe/`: `labels.py` collapses the
+7-way taxonomy into the probe's 4-way filler (0 legal, 1 R1 placement, 2 R2 bracketing,
+3 R3 turn), `fit_set.py` chooses the positions, `extract_acts.py` runs layer 5,
+`frame_check.py` is the validation that the labels are in the right player's frame.
+
+**The transposition is the whole risk.** `taxonomy.classify_all` returns 60 categories in
+TOKEN order (entry i is token i+1); the TPR probe's roles are 64 squares in ROW-MAJOR board
+order. `board_labels` is that scatter via `stoi_indices` and nothing else. `test_labels.py`
+checks it three ways a transposed or shifted board would fail — the scatter must equal
+classifying each of the 64 squares directly, the squares it calls legal must equal
+`board.get_valid_moves()`, and the squares it calls R1 must equal the occupied ones — on
+positions with no diagonal symmetry left.
+
+**The four starting squares are R1 placement**, not a fifth "not applicable" class, because
+that is what `classify` returns for them: they hold a disc at every ply of every game, so
+the rule that makes any occupied square illegal covers them. All 64 squares then carry the
+same alphabet and `build_square_selection_mask(exclude_center_squares=False)` — already
+`bracket_flip/tpr_probe.py`'s choice — scores them like any other occupied square. The cost
+is that 4/64 squares are R1 by construction and readable off the role embedding alone.
+
+**The mover's frame is not checkable against the engine.** `classify` and `get_valid_moves`
+both read `board.next_hand_color`, so they agree even when that colour is wrong. What breaks
+the circle is the game record: the move played at ply t must come out legal. It does, at
+10000/10000 positions in the mover frame and 3047/10000 in the other one (the rest become
+R3). `verify()` asserts it per row. The frame flip is otherwise nearly invisible — it
+relabels 70.3% of legal squares and 100% of R3, but **0% of R1 and 0% of R2**, because
+`occupied_own`/`occupied_opp` and `empty_own_only`/`empty_no_bracket` swap *within* their
+rule. A linear probe fit on the wrong frame still reaches macro-F1 0.902 against 0.939, and
+the whole gap is `legal` (0.824 vs 0.984). Anything that reports only R1/R2 accuracy cannot
+tell the two apart.
+
+**Fit set: 200 games x token positions [5, 55)**, the position range of
+`analysis/linear_probe/activations`, whose own token sequences are gone — that script read
+ARENA's `board_seqs_id_small.npy` from a `reference/research_materials/` tree that no longer
+exists, and the activations carry no game identity. A game is taken whole or not at all, so
+one forfeit anywhere in the window drops it (4 games in 2204) and every accepted game gives
+exactly 50 rows; the 8000/2000 split then lands on a game boundary, 160 games against 40,
+with no game in both. Drawn from the branch stream (seed 42) with the 2000
+violation-divergence source games excluded by exact token match — all 2000 were hit, which
+is also the evidence the exclusion works — because a probe fit on a read-out game would make
+the bitwise-shared r < 0 prefix look preserved for free.
+
+**Class balance** (`analysis/legality_probe/results/class_balance.csv`): legal 14.8%, R1
+53.9%, R2 21.7%, R3 9.6%. R3 is not too rare to fit. Worth correcting a claim that has been
+passed around: plain accuracy for a probe that has learned nothing is ~0.54 here, not ~0.9 —
+0.9 is the number for a binary legal/illegal split. Macro-F1 is still the right metric, and
+the majority-class baseline for it is 0.175. The composition moves hard with ply, all of it
+mechanical: R1 is exactly (p+5)/64, so R2 falls 0.65 -> 0.004 and R3 0.098 -> 0.024 across
+the window. Any read-out pooled over r has to carry that.
 
 ---
 
