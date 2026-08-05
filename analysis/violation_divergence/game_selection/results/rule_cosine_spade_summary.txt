@@ -1,0 +1,62 @@
+n = 1550 branch-complete games, scored in CosineSpaDETrainer-othello (gamma=1.0), full latent width,
+layer 5 displacements over r >= 0 at t0's parity. Criterion: argmax rule_separation = B_min / W.
+
+SELECTED   191  26       2.1102       0.7886       0.3737       0.7886       0.8116       0.8098       0.6029       0.0167       0.7578     1       3
+
+anchors:
+  FIGURE_GAME               1235  20       1.1081       0.7622       0.6878       0.7622       1.2102       0.7874       0.9074       0.1667       0.9970   503     294
+  game_selection S3 argmax   662  22       1.0520       0.8469       0.8051       0.8469       1.0261       0.9498       0.9856       0.1000       1.0429   650     938
+
+top 20 by rule_separation:
+ game  t0 rule_separation  between_min within_spread        r1_r2        r1_r3        r2_r3 member_spread_ratio       perm_p category_differentiation  rank raw_l5_rank
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  191  26       2.1102       0.7886       0.3737       0.7886       0.8116       0.8098       0.6029       0.0167       0.7578     1       3
+  659  19       2.0601       0.7246       0.3517       0.9244       0.7246       0.7541       0.5582       0.0167       0.7585     2       4
+ 1558  18       2.0340       0.8299       0.4080       1.0664       0.9663       0.8299       0.5525       0.0167       0.8790     3       1
+  439  24       1.8396       0.7209       0.3919       0.7982       1.0331       0.7209       0.6242       0.0167       0.8043     4      15
+  708  18       1.8152       0.6727       0.3706       0.6727       1.1915       0.9787       0.5706       0.0167       0.8449     5      34
+  712  22       1.8108       0.7400       0.4087       0.7400       0.9778       0.9058       0.5568       0.0167       0.8032     6      86
+ 1359  19       1.8005       0.6052       0.3361       0.6380       0.6784       0.6052       0.6567       0.0167       0.6217     7      13
+ 1737  22       1.7991       0.5950       0.3307       0.6180       0.8851       0.5950       0.6307       0.0167       0.6674     8     543
+  514  24       1.7858       0.7295       0.4085       0.7295       0.9865       0.7835       0.6593       0.0333       0.7880     9      11
+ 1442  27       1.7688       0.8436       0.4769       0.8436       0.8448       1.0559       0.6805       0.0167       0.8811    10       2
+ 1285  20       1.7431       0.6708       0.3849       0.8470       0.7096       0.6708       0.6278       0.0167       0.7366    11      33
+ 1813  23       1.7341       0.8217       0.4739       0.8217       1.0787       0.9737       0.6491       0.0167       0.9020    12     236
+ 1663  23       1.7138       0.8172       0.4768       0.8172       0.8506       0.8760       0.7054       0.0167       0.8319    13      23
+  811  21       1.7096       0.6000       0.3510       0.6000       0.8981       0.7886       0.5834       0.0167       0.6727    14     138
+  499  34       1.6951       0.9736       0.5743       0.9736       1.0015       1.3076       0.6865       0.0333       1.0178    15       5
+  843  28       1.6710       0.4572       0.2736       0.4858       0.6407       0.4572       0.6867       0.0167       0.5207    16      22
+ 1265  25       1.6688       0.8570       0.5135       1.1028       1.1424       0.8570       0.6350       0.0167       0.9811    17      54
+    9  19       1.6680       0.6744       0.4043       0.7234       0.6744       0.8482       0.6928       0.0167       0.7281    18      14
+ 1337  22       1.6377       0.6558       0.4004       0.6558       0.8339       0.7112       0.6908       0.0167       0.7096    19     145
+ 1913  23       1.6114       0.5692       0.3532       0.6178       0.5692       0.6992       0.7051       0.0167       0.6342    20      10
+
+population spread over all complete games:
+  rule_separation            min 0.5206  q25 0.9090  median 1.0141  q75 1.1511  max 2.1102
+  between_min                min 0.2374  q25 0.4659  median 0.5470  q75 0.6306  max 0.9736
+  within_spread              min 0.2510  q25 0.4554  median 0.5318  q75 0.6122  max 1.0462
+  r1_r2                      min 0.2374  q25 0.4884  median 0.5841  q75 0.6942  max 1.1645
+  r1_r3                      min 0.2527  q25 0.6028  median 0.7246  q75 0.8432  max 1.2774
+  r2_r3                      min 0.2567  q25 0.5535  median 0.6489  q75 0.7759  max 1.3076
+  member_spread_ratio        min 0.5525  q25 0.8497  median 0.9305  q75 1.0062  max 1.2290
+  perm_p                     min 0.0167  q25 0.0500  median 0.1500  q75 0.3167  max 0.9833
+  category_differentiation   min 0.3358  q25 0.6618  median 0.7552  q75 0.8363  max 1.0773
+  null_draw                  min 0.4650  q25 0.7694  median 0.8454  q75 0.9394  max 1.7460
+
+label-permutation null (60 distinct deals of the six illegal branches into (2, 3, 1); floor p = 0.017):
+  median p 0.150 (0.508 if the rule labels carry nothing)
+  p <= 0.05 in 25.7% of games (5.0% under the null); p at the floor in 11.4% (1.7% under the null)
+  members travel closer to their own rule than to another in 73.2% of games
+
+the argmax against a matched null (one wrong labelling per game, so the two columns are
+the same 1550 draws and their maxima are comparable):
+  observed   median 1.0141  q75 1.1511  max 2.1102 (game 191)
+  wrong labels median 0.8454  q75 0.9394  max 1.7460 (game 110)
+  the selected game beats 100.00% of the null draws; 0 of 1550 wrong labellings reach it
+
+rank agreement (Spearman over all complete games):
+  rule_separation, CosineSpaDE vs raw layer 5   0.830
+  rule_separation vs category_differentiation   -0.015   (both in CosineSpaDE)
+  rule_separation vs member_spread_ratio        -0.816
+
+t0: min 10, median 21, max 34; selected t0=26 at percentile 73.5.
