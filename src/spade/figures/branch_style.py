@@ -9,8 +9,10 @@ same marker and the same label for the same branch. A figure may draw a subset
 onto their three rules (`by_rule`); either way the colours still agree.
 """
 
+from matplotlib.axes import Axes
+
 from spade.figures.paper_style import CATEGORY_STYLE, MUTED, NULL, REFERENCE, RULE_STYLE
-from spade.othello.taxonomy import CATEGORIES, RULE_OF
+from spade.othello.taxonomy import CATEGORIES, CATEGORY_GLOSS, RULE_MEMBERS, RULE_OF
 
 CONTROL_LABEL = {1: "control: another legal move (null)",
                  2: "control 2: a third legal move (null)"}
@@ -19,6 +21,7 @@ CONTROL_LABEL = {1: "control: another legal move (null)",
 # is visible rather than asserted. No hue of its own: a member takes its rule's.
 MEMBER = {"lw": 0.7, "alpha": 0.38, "zorder": 2}
 MEMBER_LABEL = "one category inside a rule (within-rule spread)"
+CONTOUR_LABEL = "50% Gaussian contour of {n} jackknife replicates (dispersion, not a CI)"
 
 
 def branch_style(category: int, is_control: int, by_rule: bool = False) -> dict:
@@ -66,6 +69,8 @@ def _rank(lab: str) -> int:
         return 1
     if lab == MEMBER_LABEL:
         return 88
+    if lab.startswith(CONTOUR_LABEL[:24]):
+        return 89
     if lab.startswith("branch point"):
         return 90
     if lab.startswith("control"):
@@ -78,11 +83,37 @@ def legend_order(labels: list[str]) -> list[int]:
     return sorted(range(len(labels)), key=lambda i: _rank(labels[i]))
 
 
-def ordered_legend(owner, ax, ncol: int, title: str, **placement):
+def ordered_legend(owner, ax, ncol: int, **placement):
     """One legend for a whole figure. `owner` is the figure, or the blank axes
-    the legend is parked in; `placement` is that owner's loc/bbox_to_anchor."""
+    the legend is parked in; `placement` is that owner's loc/bbox_to_anchor.
+
+    No title: what a figure of this study owes the reader in prose -- how the
+    game was selected, where the rule mean is taken, the spread ratio, n=1, that
+    cells are not comparable -- is its caption's job and lives in the study
+    README (FIGURE_GUIDELINES 2, 5)."""
     handles, labels = ax.get_legend_handles_labels()
     order = legend_order(labels)
     return owner.legend([handles[i] for i in order], [labels[i] for i in order],
-                        ncol=ncol, fontsize=8, frameon=False, title=title,
-                        title_fontsize=7.5, **placement)
+                        ncol=ncol, fontsize=8, frameon=False, **placement)
+
+
+def below(owner, leg, pad: float = 0.02) -> float:
+    """y just under `leg`, in `owner`'s coordinates. The legend's height depends
+    on how many of its entries wrapped, so a fixed offset collides."""
+    owner.figure.canvas.draw()
+    tr = owner.transAxes if isinstance(owner, Axes) else owner.transFigure
+    return leg.get_window_extent().transformed(tr.inverted()).y0 - pad
+
+
+def rule_member_key(owner, x: float = 0.005, y: float = -0.005) -> None:
+    """One line per rule: its name, how many categories it averages, and what
+    each of them is. The three means hide which violations sit inside them and
+    the faint member lines are unlabelled, so the key names them (§5).
+
+    Driven by RULE_MEMBERS and CATEGORY_GLOSS, so the counts cannot disagree with
+    the legend's `(mean of n)` and the wording cannot drift from the taxonomy."""
+    lines = [f"{rule} ({len(members)}): "
+             + " · ".join(CATEGORY_GLOSS[c] for c in members)
+             for rule, members in RULE_MEMBERS.items()]
+    owner.text(x, y, "\n".join(lines), ha="left", va="top", fontsize=7.5,
+               color=MUTED, linespacing=1.5)

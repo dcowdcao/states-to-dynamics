@@ -25,6 +25,11 @@ nonlinear, so it is applied to each member category separately and the rule mean
 is taken afterwards, in the plane; the projection is linear, so mean-then-project
 and project-then-mean agree, while phi-of-a-mean would be a different quantity.
 
+The figure carries no prose block. Those facts, the selection of the game above
+all, are the figure's caption and live in README.md (FIGURE_GUIDELINES 2, 5);
+the rule key stays inside the figure, because a reader must not need another
+document to know what R2 is.
+
 Usage: python analysis/violation_divergence/fork_and_board/make_figures.py
        [--game 1235] [--plane displacement|r21] [--embedding pca|isomap]
        [--camera-ready]
@@ -41,21 +46,21 @@ import torch
 from spade.common.device import select_device
 from spade.common.study import study_dir
 from spade.figures.branch_panels import (
-    AZIM, ELEV, axis_labels, board_note, board_panel, rule_fork_panel)
-from spade.figures.branch_style import ordered_legend
-from spade.figures.paper_style import MUTED, apply_style, rule_key, save_figure
+    axis_labels, board_note, board_panel, mover_name, rule_fork_panel)
+from spade.figures.branch_style import below, ordered_legend, rule_member_key
+from spade.figures.paper_style import MUTED, apply_style, save_figure
 from spade.othello.boards import flip_set, replay
 from spade.violation_divergence.branches import (
-    FIGURE_GAME, Game, complete_games, load_game, reference_row, selection_note)
+    FIGURE_GAME, Game, complete_games, load_game, reference_row)
 from spade.violation_divergence.curvature_plane import W, fit_plane, windowed
 from spade.violation_divergence.fork_plane import (
-    EMBEDDINGS, STRIDE, positions, space_features, spaces)
-from spade.violation_divergence.rule_groups import POPULATION_SPREAD, spread_ratio
+    EMBEDDINGS, positions, space_features, spaces)
+from spade.violation_divergence.rule_groups import spread_ratio
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 NCOL = 3
 CELL_W, CELL_H = 3.7, 3.5  # one fork cell, as in ../game_trajectory's grid
-BOARD_H = 5.4              # the board row, tall enough for a square board
+BOARD_H = 3.9              # the board row; the board is square, so this is its width too
 PLANE_NAME = {"displacement": "Displacement", "r21": "R$^{21}$ Curvature Space"}
 METHOD_NAME = {"pca": "PCA", "isomap": "Isomap"}
 
@@ -82,7 +87,7 @@ def project(plane: str, method: str, F: np.ndarray, ref: int, k: int):
     flat = dphi.reshape(-1, dphi.shape[-1])
     p = fit_plane(flat, centred=False)
     return (p.project(flat).reshape(dphi.shape[:2] + (2,)),
-            [f"PC{i + 1} ({p.var[i]:.0%} var, Δ {p.lead[i]})" for i in (0, 1)], W - 1)
+            axis_labels(method, p.var), W - 1)
 
 
 def spread_field(plane: str, Z: np.ndarray, ref: int, post: np.ndarray) -> np.ndarray:
@@ -99,66 +104,8 @@ def spread_field(plane: str, Z: np.ndarray, ref: int, post: np.ndarray) -> np.nd
     return (dphi / np.where(sd > 0, sd, 1))[:, post]
 
 
-def legend_title(g: Game, plane: str, method: str, spread: float,
-                 pos: np.ndarray) -> str:
-    n_legal = g.rows[0]["n_legal"]
-    if plane == "displacement":
-        mean_note = ("an uncentred linear map, so that equals projecting the mean "
-                     "displacement" if method == "pca" else
-                     "not linear, so this is a mean of embedded points, not of "
-                     "displacements")
-        quantity = (f"member categories' displacements, taken in the plane\n"
-                    f"      ({method.upper()} is {mean_note})\n")
-        window = ""
-        source = (f"{spread:.2f} here;\n{POPULATION_SPREAD}\n"
-                  f"(raw layer 5, full 512-d, $t\\geq t_0$).")
-    else:
-        quantity = (f"members' Δφ(t) = φ($z_b$(t)) − φ($z_{{ref}}$(t)), taken in the "
-                    f"plane\n"
-                    f"      (φ is ReStraV's 21 step lengths and turning angles over the "
-                    f"{W} sampled positions ending at t,\n"
-                    f"      applied to EACH member on its own: φ is NONLINEAR, so "
-                    f"averaging the trajectories first would\n"
-                    f"      measure a path no branch takes. The projection is linear, so "
-                    f"the mean is the same either side of it)\n")
-        drawn, study = len(pos) - (W - 1), len(positions(g.t0))
-        window = (f"      {drawn} of the study window's {study} offsets carry a "
-                  f"descriptor (the earlier windows run off the board);\n"
-                  f"      {int((pos[W - 1:] < g.t0).sum())} of them are branch-free and "
-                  f"Δφ is exactly 0 there, so the prefix still IS the origin\n")
-        source = (f"{spread:.2f} here;\n"
-                  f"on the column-scaled Δφ in raw layer 5, all 21 components, "
-                  f"$t\\geq t_0$;\n{POPULATION_SPREAD}\n"
-                  f"is the displacement number, and R$^{{21}}$ has none.")
-    return (f"the same {len(g.rows)} branches in both panels, game {g.game}, "
-            f"$t_0$={g.t0}\n"
-            f"(a) one path per rule: the mean of its {quantity}"
-            f"      over those members drawn faint. Plane refit per space — arb. units; "
-            f"the three ticks per\n"
-            f"      plane axis are a within-panel scale only, cells are NOT comparable "
-            f"across the grid;\n"
-            f"      view elev={ELEV}, azim={AZIM}; every {STRIDE}nd ply\n"
-            f"{window}"
-            f"(b) {n_legal} moves are legal at $t_0$; the played move and one of the "
-            f"other {n_legal - 1} are branched\n"
-            f"the grouping is weak. within-rule ÷ between-rule mean pairwise distance = "
-            f"{source} A rule's members travel barely "
-            f"closer to each other\n"
-            f"than to another rule's, so the faint members and not the three means carry "
-            f"the evidence —\n"
-            f"`python -m spade.violation_divergence.rule_groups`\n"
-            f"one legal control is drawn, as the null. Its own null — control 2, scored "
-            f"against control 1\n"
-            f"exactly as the illegal branches are — is not drawn here; it is in "
-            f"../game_trajectory and in\n"
-            f"the parent README, which is where the legal-vs-legal scale lives\n"
-            f"one game (n=1): an illustration of the design, not a claim — the study's\n"
-            f"numbers, with their CIs over 13,531 branches, are in the parent README\n"
-            f"{selection_note(g.game)}")
-
-
 def figure(g: Game, Z: np.ndarray, pos: np.ndarray, plane: str, method: str,
-           device: str, spread: float, camera_ready: bool) -> Path:
+           device: str, camera_ready: bool) -> Path:
     cells = spaces()
     ref = reference_row(g.rows)
     k = int(np.flatnonzero(pos == g.t0)[0])
@@ -168,7 +115,10 @@ def figure(g: Game, Z: np.ndarray, pos: np.ndarray, plane: str, method: str,
     gs = fig.add_gridspec(2, 1, height_ratios=[CELL_H * nrow, BOARD_H],
                           left=0.03, right=0.97, top=0.93, bottom=0.02, hspace=0.05)
     grid = gs[0].subgridspec(nrow, NCOL, wspace=0.06, hspace=0.16)
-    lower = gs[1].subgridspec(1, 2, width_ratios=[1, 1.15], wspace=0.02)
+    # The board cell is as wide as it is tall, so the square board fills it and the
+    # band beside it gets the rest rather than a strip of dead space.
+    lower = gs[1].subgridspec(1, 2, wspace=0.02,
+                              width_ratios=[BOARD_H, CELL_W * NCOL * 0.94 - BOARD_H])
 
     head = fig.add_subplot(gs[0])
     head.axis("off")
@@ -193,20 +143,21 @@ def figure(g: Game, Z: np.ndarray, pos: np.ndarray, plane: str, method: str,
     flipped = flip_set(board.state, g.rows[ref]["square"], board.next_hand_color)
     ax_board = fig.add_subplot(lower[0])
     board_panel(ax_board, board, g.rows, flipped, by_rule=True)
-    ax_board.set_title("(b) what they are: the position at $t_0$,\nand the move each "
-                       "branch plays there", loc="left", fontsize=11)
+    ax_board.set_title(f"(b) what they are: the position at $t_0$ "
+                       f"({mover_name(board).capitalize()} to move),\nand the move each "
+                       f"branch plays there", loc="left", fontsize=11)
 
     band = fig.add_subplot(lower[1])
     band.axis("off")
-    leg = ordered_legend(band, keyed, 2, legend_title(g, plane, method, spread, pos),
-                         loc="upper left", bbox_to_anchor=(0.0, 1.0))
-    # The two keys hang off the legend's own bottom edge: the title block is
-    # several lines longer in one plane than the other, and a fixed y collides.
-    fig.canvas.draw()
-    below = leg.get_window_extent().transformed(band.transAxes.inverted()).y0 - 0.06
-    band.text(0.0, below, board_note(board, by_rule=True), ha="left", va="top",
-              fontsize=8, color=MUTED, linespacing=1.5)
-    rule_key(band, ["R1", "R2", "R3"], x=0.0, y=below - 0.16)
+    # Legend and note are centred in the band, not pinned to its top: the band is
+    # as tall as the square board beside it and the block is shorter than that.
+    # The note hangs off the legend's own bottom edge, which moves with how many
+    # entries wrapped; the rule key goes under the whole figure, which is the only
+    # place with the width its three lines need.
+    leg = ordered_legend(band, keyed, 2, loc="center left", bbox_to_anchor=(0.0, 0.62))
+    band.text(0.0, below(band, leg, 0.06), board_note(board, by_rule=True),
+              ha="left", va="top", fontsize=8, color=MUTED, linespacing=1.5)
+    rule_member_key(fig, x=0.005, y=-0.012)
 
     if not camera_ready:
         fig.suptitle(f"Fork Trajectory ({PLANE_NAME[plane]} {METHOD_NAME[method]}) in "
@@ -243,10 +194,11 @@ def main():
     # window does not carry; the extra offsets are computed and never drawn.
     pos = positions(g.t0, W - 1 if args.plane == "r21" else 0)
     Z = acts[g.idx][:, pos, :].float().numpy()
+    # The ratio is the figure's caption, not the figure's: README.md quotes it.
     field = spread_field(args.plane, Z, reference_row(g.rows), pos >= g.t0)
-    spread = spread_ratio(field, g.rows)
-    print(f"within/between rule spread ratio, game {g.game}, {args.plane}: {spread:.3f}")
-    out = figure(g, Z, pos, args.plane, args.embedding, device, spread, args.camera_ready)
+    print(f"within/between rule spread ratio, game {g.game}, {args.plane}: "
+          f"{spread_ratio(field, g.rows):.3f}")
+    out = figure(g, Z, pos, args.plane, args.embedding, device, args.camera_ready)
     print(f"wrote {out}")
 
 

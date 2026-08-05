@@ -8,6 +8,10 @@ displacement trajectories and never on a 2-D projection of them. Near 1 the
 grouping hides as much structure as it shows; well below 1 the rules are the
 coherent unit and the mean is a fair summary.
 
+At layer 5 it is weak: median 0.945 [IQR 0.872-1.020] over all 1550
+branch-complete games, above 1 in 30% of them. Every figure drawing one mean per
+rule owes the reader that in its caption, and the study READMEs carry it.
+
 Usage: python -m spade.violation_divergence.rule_groups [--layer 5]
        prints the ratio over every branch-complete game, and for FIGURE_GAME.
 """
@@ -19,13 +23,6 @@ import torch
 
 from spade.common.study import study_dir
 from spade.othello.taxonomy import CATEGORIES, RULE_MEMBERS
-
-# What `python -m spade.violation_divergence.rule_groups` prints at layer 5. The
-# grouping is weak: a rule's members travel ~5% closer to each other than to
-# another rule's, and in three games in ten they travel further. Any figure that
-# draws one mean per rule has to say this next to the means.
-POPULATION_SPREAD = "median 0.945 [IQR 0.872–1.020] over all 1550 branch-complete games, above 1 in 30% of them"
-
 
 def rule_rows(rows: list[dict]) -> dict[str, list[int]]:
     """Row indices per rule, in RULE_MEMBERS order; rules with no member drop out."""

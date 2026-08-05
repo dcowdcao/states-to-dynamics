@@ -11,16 +11,18 @@ where the legend goes -- belongs to the caller; these draw one axes each.
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.colors import to_rgba
 from matplotlib.ticker import FuncFormatter, MaxNLocator
 
 from spade.figures.branch_style import MEMBER, branch_style, legend_proxy
 from spade.figures.othello_board import draw_board, square_xy
-from spade.figures.paper_style import INK, MUTED
+from spade.figures.paper_style import DISC_EDGE, DISC_STYLE, INK, MUTED
 from spade.othello.taxonomy import LEGAL
 from spade.violation_divergence.rule_groups import rule_rows
 
 ELEV, AZIM = 18, -58  # fixed so the fork panel is reproducible
 CORNER = 0.30         # marker offset from the cell centre, which may hold a disc
+GHOST_R = 0.12        # would-be disc, in cells: half a real disc, in the far corner
 FLIP_RING = 0.38      # ring radius around a flipped disc, in cells
 PLANE_TICKS = 3       # intervals; symmetric about zero, so the reference always gets a tick
 
@@ -109,10 +111,23 @@ def rule_fork_panel(ax, coords: np.ndarray, rows: list[dict], pos: np.ndarray,
         legend_proxy(ax)
 
 
+def mover_name(board) -> str:
+    return "black" if board.next_hand_color > 0 else "white"
+
+
 def board_panel(ax, board, rows: list[dict], flipped: list[int],
                 by_rule: bool = False) -> None:
-    """The shared prefix's last position, with every branch move on its square."""
+    """The shared prefix's last position, with every branch move on its square.
+
+    Every branch square also carries the disc the move would place, in the
+    mover's colour: half a real disc's size, dashed, translucent, and pinned to
+    the corner opposite the category marker. Two of the six illegal categories
+    play onto a square that already holds a real disc -- that is what makes them
+    illegal, and the disc's colour is the only evidence for which of the two the
+    branch is -- so the would-be disc is never drawn over the centre.
+    """
     draw_board(ax, board.state.flatten())
+    ghost = DISC_STYLE[mover_name(board)]["color"]
     for square in flipped:
         x, y = square_xy(square)
         ax.add_patch(plt.Circle((x, y), FLIP_RING, fill=False, lw=1.1, zorder=5,
@@ -122,6 +137,9 @@ def board_panel(ax, board, rows: list[dict], flipped: list[int],
         x, y = square_xy(r["square"])
         ax.add_patch(plt.Rectangle((x - 0.5, y - 0.5), 1, 1, fill=False, zorder=4,
                                    lw=st["lw"], ls=st["ls"], edgecolor=st["color"]))
+        ax.add_patch(plt.Circle((x + CORNER, y + CORNER), GHOST_R, zorder=5,
+                                facecolor=to_rgba(ghost, 0.45), lw=0.7,
+                                ls=(0, (2, 1.5)), edgecolor=DISC_EDGE))
         ax.plot(x - CORNER, y - CORNER, marker=st["marker"], ms=8, lw=0,
                 color=st["color"], markerfacecolor=st["mfc"], markeredgecolor=st["mec"],
                 markeredgewidth=1.0, zorder=6, label=st["label"])
@@ -129,9 +147,10 @@ def board_panel(ax, board, rows: list[dict], flipped: list[int],
 
 def board_note(board, by_rule: bool = False) -> str:
     """The board panel's grammar, for the caller to place near it."""
-    mover = "black" if board.next_hand_color > 0 else "white"
-    grouped = ("; a rule's member categories share one\ncolour and marker here, "
-               "and are told apart by their square" if by_rule else "")
-    return (f"discs in absolute colour, {mover} to move at $t_0$; outlined cell = a\n"
-            "branch square, its marker in the corner so a disc underneath stays\n"
-            f"visible; dashed ring = a disc the played move flips{grouped}")
+    grouped = ("; a rule's member categories share one colour\nand marker here, and "
+               "are told apart by their square" if by_rule else "")
+    return (f"discs in absolute colour, {mover_name(board)} to move at $t_0$; outlined "
+            "cell = a branch\nsquare, its marker in the corner so a disc underneath "
+            "stays visible; small\ndashed disc in the opposite corner = the disc that "
+            "branch would place, never\na disc on the board; dashed ring = a disc the "
+            f"played move flips{grouped}")

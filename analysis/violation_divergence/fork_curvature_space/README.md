@@ -93,6 +93,104 @@ collapses onto the origin) and `max|Δφ_ref| = 0.00e+00` everywhere (the refere
 | `fork_r21_whole_pca` | one R^21 point per branch over `r = 0..24` | top-2 PCs of the z-scored φ, refit per space |
 | `fork_r21_whole_fixed` | same | `mean d` × `mean θ` |
 
+## Captions
+
+The grids carry no prose. What a reader needs in order not to over-read them is
+here (FIGURE_GUIDELINES §2, §5); what stays inside the figure is the apparatus
+that cannot be looked up while looking at it — per-panel space names, axis
+labels, the legend (which carries n per rule and what the ellipses are), and the
+R1/R2/R3 key naming each rule's member categories.
+
+**Common to all four.** Game **1235**, *t0* = 20, eight branches: the played move,
+one legal control, and one move per illegal category, the six of them collapsed
+onto the three rules they violate, with each rule's members drawn faint behind
+their mean and every legend entry carrying n — including `R3 turn (mean of 1)`,
+which is one branch and not an average. **φ is nonlinear, so it is applied to each
+member's own trajectory and the rule means are taken afterwards, in the plane**;
+the projection is linear (windowed, uncentred) or affine (whole, centred), so
+averaging in the plane and averaging in R^21 agree exactly, while φ of an averaged
+trajectory would be the curvature of a path no branch takes. Scaling is
+column-wise, because the 21 components mix degrees with activation-scale lengths.
+
+**Game 1235 is selected, not typical**: the argmax, over all 1550 branch-complete
+games, of the mutual separation of its six illegal displacement trajectories,
+scored in raw layer 5 in the full 512-dimensional space and never in an SAE space
+or a 2-D projection (`../game_selection`). Population median 0.705; this game
+1.080. A reader who does not know the game was chosen will over-read the panels —
+see "One finding that did not survive" below for exactly that failure.
+
+**One game (n = 1) and no error bars over games**: an illustration of the
+construction, not a claim. The separation numbers, with bootstrap CIs over 40
+games and an exact permutation null, are in the table below and come from
+`measure.py`. The rule-spread ratios quoted per figure are themselves n = 1.
+
+**One legal control is drawn, as the null.** Its own null — control 2, scored
+against control 1 exactly as the illegal branches are — is not drawn here; it is
+in `../game_trajectory` and in `../README.md`, which is where the legal-vs-legal
+scale lives. It leaves the plane fit too, since the plane is fit on what is drawn.
+
+### `fork_r21_windowed_pca`
+
+**The fork drawn inside the 21-D ReStraV curvature descriptor: one path per rule
+through a fitted plane of Δφ, with offset from the branch on the third axis.**
+`Δφ(t) = φ(z_b(t)) − φ(z_ref(t))` over the **w = 8 sampled positions (14 plies)
+ending at *t***, every 2nd ply, view fixed at `elev = 18, azim = −58`. The plane
+is the top-2 uncentred PCs of the column-scaled Δφ, **refit per space**, so the
+axes are arb. units and the three ticks per plane axis are a within-panel scale
+bar only: **cells are not comparable across the grid**, only in the arrangement
+of the classes within a cell. The grey stub below each fork is the shared prefix,
+where the window runs off the board and no descriptor exists.
+
+**The rule grouping is weak.** Within-rule ÷ between-rule mean pairwise distance
+on the column-scaled Δφ at *t* ≥ *t0*, in full R^21 in raw layer 5 and never on
+the 2-D plane drawn: **0.90** here, against **0.885** for the same statistic on
+the full 512-d displacements of the same game and window (`../fork_and_board`) and
+a displacement population of **median 0.945 [IQR 0.872–1.020] over all 1550
+branch-complete games, above 1 in 30% of them**
+(`python -m spade.violation_divergence.rule_groups`). **There is no population
+number in R^21.** A rule's members travel barely closer to each other than to
+another rule's, so the faint members and not the three means carry the evidence.
+
+### `fork_r21_windowed_fixed`
+
+**The same fork against a fixed pair of named R^21 axes instead of a fitted
+plane**, so the arrangement is the same object in all nine cells: `Δ mean d
+(activation norm)` × `Δ mean θ (deg, ↑ curvier)`. **θ in degrees is comparable
+across cells; `mean d` is on each space's own activation scale and is not** —
+SpaDE codes live on a simplex — so only its sign and the within-cell ordering
+mean anything across the grid. Everything else, the spread ratio included, reads
+as for `fork_r21_windowed_pca`.
+
+### `fork_r21_whole_pca`
+
+**One R^21 point per branch over its whole post-branch trajectory, with the only
+uncertainty a single game supports.** φ over the 13 sampled positions from the
+branch to *t0* + 24; the plane is the top-2 PCs of the centred, column-scaled φ,
+**refit per space** (arb. units, cells comparable in arrangement only). The
+ellipse around each point is the **50% contour of a Gaussian fit to its 13
+leave-one-position-out jackknife replicates — a dispersion over which move enters
+the descriptor, not a confidence interval**; for a rule it is the jackknife of the
+rule mean.
+
+**The rule grouping is gone in this variant.** The same within ÷ between statistic
+on φ, one point per branch, is **1.03**: above 1 means a rule's members sit
+*further* from each other than from another rule's, so the rule label carries no
+information about where a branch lands. The panels show it directly — the three
+`R2` members are scattered across the cell with their mean in the middle of
+nothing. Displacement context as above: 0.885 on this game, population median
+0.945 [IQR 0.872–1.020], above 1 in 30% of 1550 games; no R^21 population exists.
+
+### `fork_r21_whole_fixed`
+
+**The same one-point-per-branch view against the fixed named pair**, `mean d
+(activation norm)` × `mean θ (deg, ↑ curvier)`, with the same jackknife ellipses.
+Cells share the axes: **θ is comparable across them, `mean d` is not**. These
+cells keep ordinary ticks rather than the symmetric three, because they are
+scatters of physical quantities and a symmetric locator would leave a panel
+spanning `mean d ∈ [18, 21]` with no tick at all. Spread ratio 1.03 as above, and
+this is the panel "One finding that did not survive" is about: read it with the
+selection of game 1235 in hand.
+
 Scaling follows `analysis/straightness/feature_pca`: the PCA is fit on
 column-scaled features, because the 21 components mix degrees with
 activation-scale lengths whose absolute variances differ ~450× across
@@ -104,10 +202,9 @@ to preserve and is centred.
 The whole variant carries the only uncertainty one game supports: a **leave-one-
 position-out jackknife**, 13 replicates per branch — and, for a rule, 13
 replicates of the rule mean — drawn as a 50% Gaussian contour. It is a dispersion
-over which move enters the descriptor, not a confidence interval. The windowed
-grids are n = 1 with no error bars and say so on the figure, exactly as
-`../game_trajectory` does; the separation numbers with CIs over 40 games are
-below.
+over which move enters the descriptor, not a confidence interval, and the legend
+entry says exactly that. The windowed grids are n = 1 with no error bars; the
+separation numbers with CIs over 40 games are below.
 
 ## One trajectory per rule, and where the mean is taken
 
@@ -145,7 +242,7 @@ not make the rules cohere. The whole variant is at 1.03, i.e. the rule label
 carries no information about where a branch lands, which the panels show directly:
 in `fork_r21_whole_pca` the three `R2` members are scattered across the whole
 cell with their mean in the middle of nothing. Both grids draw the members faint
-behind their mean and print the ratio in the legend title, so the three confident
+behind their mean and their captions print the ratio, so the three confident
 means cannot stand in for six trajectories that do not travel together. The
 population context is the displacement statistic's — median 0.945 [IQR
 0.872–1.020] over all 1550 branch-complete games, above 1 in 30% of them
@@ -169,8 +266,8 @@ separation table below is scored against *both* controls. Nothing measured
 changes: `branches.pt` still carries both rows and `measure.py` still uses 6
 illegal vs 2 legal controls. The legal-vs-legal scale lives in
 `../game_trajectory`, which draws all nine branches with per-category styling,
-and in `../README.md`, which carries the numbers with CIs; the legend titles
-point at both.
+and in `../README.md`, which carries the numbers with CIs; the captions point at
+both.
 
 ## Separation, against each plane's own permutation null
 
@@ -225,12 +322,18 @@ across cells; only its sign and the within-cell ordering are.
   (`branch_panels.PLANE_TICKS`, shared with `../fork_and_board`) so the origin —
   where the reference sits, since the figure draws a difference from it — always
   gets one. They are a within-panel scale bar and nothing more, which is why the
-  legend title's "NOT comparable across the grid" disclaimer stays and matters
+  caption's "not comparable across the grid" disclaimer stays and matters
   more, not less (§4.6, §4.8). The ordered axis reads `t − t0 (plies)`, labelled
   once per row.
-- PCA plane axes read `PC1 (44% var, mean θ)` — **per component, never summed**,
-  per panel since the plane is refit per space, and naming the descriptor
-  component the PC leads on.
+- PCA plane axes read `PC1 (44% var)` — **per component, never summed**, per panel
+  since the plane is refit per space, and **nothing else**. They used to append
+  the descriptor component the PC leads on; they no longer do, because a PC here
+  is a broad mixture and naming one component asserted something false. In raw
+  layer 5 the windowed plane's PC1 loads 0.360 on `mean θ` — 13% of the direction
+  — over a near-tied, same-signed `mean d` 0.328 and `max θ` 0.323, and 16 of 21
+  coordinates are needed to reach 90% of it. Which coordinate leads flips with the
+  variant: the whole plane's PC1, same game and space, leads on `min d` at 0.290,
+  8% of the direction.
 - Fixed plane axes name the quantity, its unit and its direction:
   `Δ mean d (activation norm)` and `Δ mean θ (deg, ↑ curvier)` on the windowed
   grids, without the Δ on the whole grids.

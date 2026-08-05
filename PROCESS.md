@@ -6,6 +6,75 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The fork figures' prose moves to their READMEs, and the axes stop naming a component (2026-08-04)
+
+Branch `fig/strip-captions`. Every fork figure — `fork_and_board` (both planes),
+`fork_curvature_space` (all four), `game_trajectory` — carried a multi-paragraph legend
+title: the selection disclosure, where the rule mean is taken, the spread ratio, n=1, the
+not-comparable-across-cells disclaimer. That is a caption, and §2/§5 put captions outside
+the graphic. All of it now lives in each study's `README.md` under `## Captions`, one
+heading per figure, and **nothing was dropped** — the selection of game 1235 above all,
+which is the one a reader cannot be allowed to miss. What stays inside: panel titles and
+letters, per-panel space names, axis labels, the legend, the board's reading key, and the
+R1/R2/R3 key, because §5 requires domain shorthand to be readable without another document.
+
+Two things that were in the prose became legend *entries* rather than moving out, since the
+legend is in-figure by right: the jackknife ellipse's semantics (`50% Gaussian contour of 13
+jackknife replicates (dispersion, not a CI)`) and the `(mean of n)` already there. An
+uncertainty a reader could mistake for a CI does not belong two documents away.
+
+**Why the axis labels lost their lead component — a correctness fix, not taste.** The R^21
+paths appended the descriptor coordinate the PC loads hardest on, giving
+`PC1 (44% var, Δ mean θ)`. Measured on raw layer 5, the windowed plane's PC1 loads **0.360
+on `mean θ`, which is 13.0% of the direction's squared length**, over a near-tied and
+same-signed `mean d` 0.328, `max θ` 0.323, `min d` 0.267, `max d` 0.249; **16 of 21
+coordinates are needed to reach 90%** of it. PC1 is a broad mixture, not that named
+quantity. Worse, which coordinate "wins" flips between the near-ties with the branch set and
+the variant: the `whole` plane, same game and same space, leads on `min d` at 0.290 — 8.4%
+of its direction, 15 of 21 for 90%. Naming one component asserted something false and would
+have flipped under a `--game` change. Axes now read `PC1 (44% var)` / `PC2 (18% var)` and
+nothing else, from the shared `branch_panels.axis_labels` the displacement paths already
+used; Isomap keeps `arb. units` and no ratio. `Plane.lead` stays — `measure.py` and
+`r21_shared_basis` print it, where a lead is a diagnostic and not a label.
+
+**The rule key now names the members.** Three means hide six categories and the faint member
+lines were unlabelled. `branch_style.rule_member_key` prints one compact line per rule —
+name, member count, and each member's gloss — driven by `RULE_MEMBERS` and the new
+`taxonomy.CATEGORY_GLOSS` (which replaces the comments that used to sit beside
+`CATEGORIES`), so the counts cannot disagree with the legend's `(mean of n)`. It does not
+replace `paper_style.RULE_TEXT`: nine other figures print that three-sentence form, and R4
+and R5 have no members at all.
+
+**Panel (b) gained the would-be disc.** An outline plus a corner marker said "a branch plays
+here" but nothing said a move *puts a disc down*. Each branch square now carries the disc it
+would place, in the mover's colour, at **half a real disc's radius, translucent, dashed, and
+pinned to the corner opposite the category marker** — never at the centre, because
+`occupied_own` and `occupied_opp` already hold a real disc whose colour is the reader's only
+evidence for which of the two the branch is. It survives grayscale: real discs are solid and
+full-size, the would-be disc is grey (or white) with a dashed edge and visibly smaller. It
+is drawn on **all** branch squares including the reference and the control, not only the
+illegal ones — a marking that appeared only on illegal squares would imply the placement is
+what makes them illegal, which is false for four of the six categories. The panel title also
+names the mover, derived from `board.next_hand_color` via `branch_panels.mover_name` (shared
+with the board note), because the mover alternates with *t0* and a hardcoded "Black" goes
+wrong the moment anyone passes `--game`; verified on game 1 (*t0*=11), which renders "White
+to move".
+
+**Layout.** Stripping ten lines of legend title from `fork_and_board` left a hole beside the
+square board, which §5 calls a layout bug. The board's cell is now as wide as it is tall so
+the board fills it, `BOARD_H` drops 5.4 → 3.9, and the legend block is centred in the band
+rather than pinned to its top. The rule key moved out of the band and under the whole
+figure, the only place with the width its three lines need. The three grid figures pinned
+their key at a hardcoded `y` tuned to a ten-line title; `branch_style.below(owner, leg)` now
+measures the rendered legend instead, so the key follows it however the entries wrap.
+
+`selection_note()` and `POPULATION_SPREAD` lost their only callers and are deleted; their
+content is in the READMEs and their reasoning survives as comments beside `FIGURE_GAME` and
+in `rule_groups`'s docstring. Both scripts still *print* the spread ratios they drew, so the
+README numbers can be re-derived without reading a figure.
+
+---
+
 ## The R^21 plane moves into the library, and fork_and_board can draw it (2026-08-04)
 
 Branch `r21/plane-and-combined`. `fork_curvature_space/descriptor.py` was analysis-level,

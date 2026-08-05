@@ -17,15 +17,24 @@ add_karvonen_to_path()
 from circuits.othello_engine_utils import OthelloBoardState, eights, stoi_indices
 
 CATEGORIES = [
-    "legal",             # 0: flips at least one line for the mover
-    "occupied_own",      # 1: square already holds the mover's disc
-    "occupied_opp",      # 2: square already holds the opponent's disc
-    "empty_detached",    # 3: empty, touches no discs at all
-    "empty_own_only",    # 4: empty, touches only the mover's discs
-    "empty_no_bracket",  # 5: empty, touches opponent discs, no line closes
-    "opponent_only",     # 6: flips only for the opponent (turn confusion)
+    "legal", "occupied_own", "occupied_opp", "empty_detached", "empty_own_only",
+    "empty_no_bracket", "opponent_only",
 ]
 LEGAL = 0
+
+# What each category means in one line, ordered by how much board computation the
+# violation takes to detect. This is the wording a figure's in-figure key prints,
+# so it lives beside CATEGORIES rather than being retyped per figure.
+CATEGORY_GLOSS = {
+    "legal":            "flips at least one line for the mover",
+    "occupied_own":     "square holds the mover's disc",
+    "occupied_opp":     "square holds the opponent's disc",
+    "empty_detached":   "empty, touches no discs",
+    "empty_own_only":   "empty, touches only the mover's discs",
+    "empty_no_bracket": "empty, touches opponent discs, no line closes",
+    "opponent_only":    "flips only for the opponent (turn confusion)",
+}
+assert list(CATEGORY_GLOSS) == CATEGORIES, "CATEGORY_GLOSS does not match CATEGORIES"
 
 # Which constraint rule each illegal category violates (docs/othello_rules.md).
 # The groups are not the same size and R3 has a single member, so anything that

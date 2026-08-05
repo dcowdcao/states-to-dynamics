@@ -10,6 +10,9 @@ the plane embeds the displacement D(t) = z_branch(t) - z_ref(t) rather than raw
 activations. Both a linear and a nonlinear plane ship, because the branches need
 not separate linearly.
 
+The figure carries no prose block: how the game was selected, n=1, and the fixed
+camera are its caption and live in README.md (FIGURE_GUIDELINES 2, 5).
+
 Usage: python analysis/violation_divergence/game_trajectory/make_figures.py
        [--game 1235] [--n_games 1] [--embedding pca|isomap] [--camera-ready]
 """
@@ -22,13 +25,13 @@ import numpy as np
 import torch
 
 from spade.common.study import study_dir
-from spade.figures.branch_panels import AZIM, ELEV, axis_labels, fork_panel
-from spade.figures.branch_style import branch_style, ordered_legend
-from spade.figures.paper_style import (
-    GRID, MUTED, apply_style, rule_key, save_figure)
+from spade.figures.branch_panels import axis_labels, fork_panel
+from spade.figures.branch_style import (
+    below, branch_style, ordered_legend, rule_member_key)
+from spade.figures.paper_style import GRID, MUTED, apply_style, save_figure
 from spade.violation_divergence.branches import (
-    FIGURE_GAME, Game, complete_games, load_game, reference_row, selection_note)
-from spade.violation_divergence.fork_plane import EMBEDDINGS, STRIDE, positions
+    FIGURE_GAME, Game, complete_games, load_game, reference_row)
+from spade.violation_divergence.fork_plane import EMBEDDINGS, positions
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 
@@ -76,18 +79,12 @@ def fork_figure(g: Game, Z: np.ndarray, pos: np.ndarray, method: str,
     marginal_panel(ax2, Z, g.rows, pos, g.t0, ref)
     ax2.set_title("(b) the magnitude the projection cannot show", loc="left", fontsize=10)
 
-    ordered_legend(fig, ax3, 4,
-                   f"{method.upper()} plane, a learned basis refit for this game; view "
-                   f"elev={ELEV}, azim={AZIM}; every {STRIDE}nd ply. One game (n=1): an "
-                   f"illustration of the design, not a claim — the study's numbers, with "
-                   f"their CIs over 13,531 branches, are in the parent README.\n"
-                   f"{selection_note(g.game)}",
-                   loc="lower center", bbox_to_anchor=(0.5, -0.28))
+    leg = ordered_legend(fig, ax3, 4, loc="lower center", bbox_to_anchor=(0.5, -0.10))
     if not camera_ready:
         fig.suptitle(f"Game {g.game}: one prefix, {n} futures, forking at $t_0$={g.t0} "
                      f"(layer 5, positions {pos[0]}–{pos[-1]})", fontsize=11)
     fig.tight_layout()
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.325)
+    rule_member_key(fig, y=below(fig, leg))
     return save_figure(fig, FIG_DIR / f"game_{g.game}_fork_{method}", camera_ready)
 
 
