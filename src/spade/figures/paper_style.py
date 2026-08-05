@@ -209,6 +209,71 @@ def sae_label(family: str) -> str:
     return f"{base} ({hp})" if hp else family
 
 
+# The nine representation spaces of the legality-probe study, keyed by the names
+# spade.spaces.representative_spaces() returns, plus the two random controls.
+# hue = architecture family, marker = the dictionary within it, line style = the
+# variant, so eight dictionaries stay separable with no colour at all. raw is the
+# reference space and the two random controls are nulls, so neither takes a slot
+# in the categorical cycle.
+_VARIANT_DASH = (0, (4, 1.5))
+SPACE_STYLE = {
+    "raw": {**REFERENCE, "ls": "-", "short": "raw", "label": "raw residual (reference)"},
+    "StandardTrainer-othello":
+        {"color": OKABE_ITO[0], "marker": "s", "ls": "-", "lw": 1.6, "zorder": 4,
+         "short": "Standard", "label": sae_label("Standard")},
+    "PAnnealTrainer-othello":
+        {"color": OKABE_ITO[0], "marker": "D", "ls": _VARIANT_DASH, "lw": 1.6, "zorder": 4,
+         "short": "PAnneal", "label": sae_label("PAnneal")},
+    "GatedSAETrainer-othello":
+        {"color": OKABE_ITO[1], "marker": "^", "ls": "-", "lw": 1.6, "zorder": 4,
+         "short": "GatedSAE", "label": sae_label("GatedSAE")},
+    "GatedAnnealTrainer-othello":
+        {"color": OKABE_ITO[1], "marker": ">", "ls": _VARIANT_DASH, "lw": 1.6, "zorder": 4,
+         "short": "GatedAnneal", "label": sae_label("GatedAnneal")},
+    "TopKTrainer-othello":
+        {"color": OKABE_ITO[2], "marker": "P", "ls": "-", "lw": 1.6, "zorder": 4,
+         "short": "TopK", "label": sae_label("TopK")},
+    "BatchTopKTrainer-othello":
+        {"color": OKABE_ITO[2], "marker": "X", "ls": _VARIANT_DASH, "lw": 1.6, "zorder": 4,
+         "short": "BatchTopK", "label": sae_label("BatchTopK")},
+    "SpaDE-lam1e-03-gam1e-04":
+        {"color": OKABE_ITO[3], "marker": "*", "ls": "-", "lw": 1.6, "zorder": 4,
+         "short": "SpaDE", "label": sae_label("SpaDE-lam1e-03-gam1e-04")},
+    "CosineSpaDETrainer-othello":
+        {"color": OKABE_ITO[3], "marker": "p", "ls": _VARIANT_DASH, "lw": 1.6, "zorder": 4,
+         "short": "CosineSpaDE", "label": sae_label("CosineSpaDE")},
+    "random_proj": {**NULL, "short": "random proj.", "label": "random projection (null)"},
+    # A second dash pattern, so the two nulls stay apart in a line-only legend.
+    "random_topk": {**NULL, "marker": "<", "ls": (0, (1.6, 1.6)),
+                    "short": "random TopK", "label": "random TopK (null)"},
+}
+
+# Eleven spaces on one axis is past the five-series limit (FIGURE_GUIDELINES 4.1),
+# so any per-r sweep facets by family: two dictionaries plus raw plus the two
+# nulls is five series per panel.
+SPACE_FAMILIES = {
+    "$L_p$ penalty": ["StandardTrainer-othello", "PAnnealTrainer-othello"],
+    "Gated":         ["GatedSAETrainer-othello", "GatedAnnealTrainer-othello"],
+    "TopK":          ["TopKTrainer-othello", "BatchTopKTrainer-othello"],
+    "SpaDE":         ["SpaDE-lam1e-03-gam1e-04", "CosineSpaDETrainer-othello"],
+}
+REFERENCE_SPACE = "raw"
+NULL_SPACES = ["random_proj", "random_topk"]
+SPACES = [REFERENCE_SPACE] + [s for f in SPACE_FAMILIES.values() for s in f] + NULL_SPACES
+assert set(SPACES) == set(SPACE_STYLE), "SPACE_FAMILIES does not partition SPACE_STYLE"
+
+# The 4-way legality probe's filler classes, keyed by the short codes the study's
+# CSVs use. Same identity as RULE_STYLE, so a class keeps one colour and shape
+# whether a figure names it "R2" or "R2 bracketing"; `legal` is an ordinary class
+# here rather than the baseline, so it drops the "(baseline)" suffix.
+PROBE_CLASS_STYLE = {
+    "legal": {**RULE_STYLE["legal"], "label": "legal"},
+    "R1": RULE_STYLE["R1 placement"],
+    "R2": RULE_STYLE["R2 bracketing"],
+    "R3": RULE_STYLE["R3 turn"],
+}
+
+
 def apply_style(camera_ready: bool = False) -> None:
     """Working PNG by default; camera_ready switches to vector PDF + serif."""
     mpl.rcParams.update({
