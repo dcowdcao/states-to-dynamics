@@ -197,6 +197,14 @@ def linear(layer: int, basis: str) -> Tensor:
     return probe
 
 
+def occupancy_ceiling(labels: Tensor) -> float:
+    """Best accuracy reachable without reading colour: call empty/occupied perfectly,
+    then always answer the majority colour. A property of the labels, not of a probe,
+    so it is what an accuracy in either basis has to be read against."""
+    share = [(labels == c).float().mean().item() for c in range(len(CLASSES))]
+    return share[EMPTY] + max(share[1:])
+
+
 def accuracies(layer: int) -> dict:
     """Held-out board-state accuracy over rows N_TRAIN: (games 160-399), all 64 squares."""
     acts = probe_acts(layer)[N_TRAIN:]
@@ -208,6 +216,9 @@ def accuracies(layer: int) -> dict:
         out[f"acc_linear_{basis}"] = round(
             (torch.einsum("nd,drcl->nrcl", acts, linear(layer, basis)).reshape(-1, 64, 3)
              .argmax(-1) == labels).float().mean().item(), 4)
+        # A digit finer than the accuracies: the absolute basis sits 0.004 points
+        # under its ceiling, which four decimals cannot show.
+        out[f"ceiling_{basis}"] = round(occupancy_ceiling(labels), 5)
     return out
 
 

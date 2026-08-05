@@ -84,6 +84,11 @@ numbers are below and their CSVs are still in `results/`.
   collapse. This is finding 1 drawn, and it is the only part of Fig 1 a board
   oracle would fail.
 
+  Each panel titles its accuracy against **its own occupancy-only ceiling**
+  (`ceiling_{relative,absolute}` in `m1_basis.csv`), because 0.7349 alone reads as
+  partial colour ability and is the opposite: (b) clears 0.75181 by +23.1 points,
+  (c) sits 0.004 points under 0.73494. That pair, not either number, is the claim.
+
   Arrows are means over the **1,596 strict-control events**, not all 2,000: the
   control arrow is the panel's one contrast and a control move touching *s*'s
   rays is not a clean one, so the whole panel is read off that population. Bars

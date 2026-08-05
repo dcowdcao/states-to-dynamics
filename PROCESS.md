@@ -6,6 +6,30 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Fig 1 titles each accuracy against its own occupancy ceiling (2026-08-05)
+
+Branch `bracket/basis-ceiling`. Panel (c) said "held-out board accuracy 0.735" and stopped
+there, which reads as partial colour ability. It is the opposite: 0.7349 is 0.004 points
+*below* the 0.73494 the labels give for free — perfect empty/occupied, then always the
+majority colour — while panel (b)'s 0.9829 clears its own 0.75181 by 23.1 points. Both
+titles now carry accuracy, ceiling and the gap, and the shared legend defines "ceiling"
+once for both. Neither number is the claim; the pair is.
+
+The rule lived only inside `robustness.occupancy_split`. It is now
+`probe_space.occupancy_ceiling(labels)` — `probe_space` owns the labels and the accuracy
+table, and `robustness` already imports half its namespace from there — and `m1_basis.csv`
+carries `ceiling_relative` / `ceiling_absolute`. They are a property of the labels, so they
+are constant down the layer column, and they are written to five decimals where the
+accuracies get four: the absolute basis's whole gap to its ceiling lives in the fifth.
+
+**`robustness.py`'s four CSVs do not byte-reproduce on this machine, and it is not the
+refactor.** Running HEAD's code here produces the same four files my version does, bit for
+bit; both differ from the committed ones by one float32 ulp on the mean reductions
+(5.96e-08) plus exactly one flipped argmax out of the 768,000 eval squares in the absolute
+decode (Δacc 1.3e-6 = 1/768,000). CPU here against whatever the committed run used. The
+committed CSVs are left as they are. `probe_space`'s side reproduces exactly: `m1_basis`'s
+six pre-existing columns came back identical, its other seven CSVs byte-identical.
+
 ## The bracket flip's geometry tables get a writer, and a null that is not a median (2026-08-05)
 
 Branch `bracket/regen-driver`. Four CSVs under `analysis/bracket_flip/results/` had no
