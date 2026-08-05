@@ -247,8 +247,11 @@ def f2_readout_window(readout: pd.DataFrame, camera_ready: bool) -> None:
     per-game paired difference against raw at the same r removes it exactly.
 
     Both untrained controls are drawn in every family panel, because the study's sharpest
-    contrast is the step at r = 0: every trained dictionary loses an extra 0.02-0.06 macro-F1
-    at the violation itself, and neither untrained control loses anything there.
+    contrast is the step at r = 0: the six ordinary dictionaries each lose an extra 0.02-0.06
+    macro-F1 at the violation itself, and neither untrained control loses anything there.
+    The SpaDE pair moves the other way, and that is a floor artifact rather than a
+    counterexample -- their r < 0 baselines are 0.49 and 0.43, so raw has more to lose than
+    they do. RED_TEAM.md marks the excess statistic as not scale-free for this reason.
     """
     absolute = pooled_curves(readout, "macro_f1")
     delta = pooled_curves(readout, DELTA_METRIC)
@@ -322,8 +325,8 @@ def f2_readout_window(readout: pd.DataFrame, camera_ready: bool) -> None:
                   loc="upper right")
 
     step = delta[(delta.space == "TopKTrainer-othello") & (delta.r == 0)]["mean"].iloc[0]
-    family_axes[2].annotate("an extra 0.02–0.06 lost here and\nrecovered by $r$ = 1, in every "
-                            "trained\ndictionary; in neither untrained control",
+    family_axes[2].annotate("an extra 0.02–0.06 lost here and\nrecovered by $r$ = 1, in the six "
+                            "ordinary\ndictionaries; in neither untrained control",
                             xy=(0.2, step), xytext=(3.0, 0.55 * shared[0]), fontsize=6.6,
                             color=INK, style="italic", ha="left", va="center",
                             arrowprops={"arrowstyle": "->", "color": INK, "lw": 0.8})
@@ -345,8 +348,9 @@ def f2_readout_window(readout: pd.DataFrame, camera_ready: bool) -> None:
              "branches. (e) has its own y scale.",
              fontsize=8, color=MUTED, style="italic", ha="center", va="top", linespacing=1.5)
     if not camera_ready:
-        fig.suptitle("Every trained dictionary loses macro-F1 at the injected move itself; "
-                     "neither untrained control does", fontsize=11, y=0.99)
+        fig.suptitle("Every dictionary that tracks raw loses macro-F1 at the injected move; "
+                     "neither untrained control does, and the SpaDE pair is at its floor",
+                     fontsize=11, y=0.99)
     rule_key(fig, ["R1", "R2", "R3"], y=0.005)
     save_figure(fig, FIGURES / "f2_readout_window", camera_ready)
 
