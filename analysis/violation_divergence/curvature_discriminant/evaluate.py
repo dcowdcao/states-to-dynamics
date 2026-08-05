@@ -17,20 +17,33 @@ Four questions, in the order that decides whether the figure may be drawn:
    R^21, and on the plain norm of the descriptor difference. A fitted axis has to
    beat a random line through the same space before "supervised" means anything.
 
+5. Is any of it the SUFFIX rather than the move? --variant rollout re-runs all of
+   the above on the copy of the study where every branch, reference included,
+   samples its own continuation instead of replaying the source game's. The probe
+   direction does not move -- it is fit on straightness pairs, which have no
+   variant -- so the two runs differ only in the branches the axis is scored on.
+   The r=0 window is a trailing 8 plies ending at t0 and the rollout copies
+   tokens[:t0+1] verbatim, so r=0 is the same measurement in both variants by
+   construction; `variant_agreement` measures the residual rather than trusting
+   it, and what the rollout can actually change is r > 0.
+
 Usage: python analysis/violation_divergence/curvature_discriminant/evaluate.py
+           [--variant {spliced,rollout}]
 """
+
+import argparse
 
 import numpy as np
 from sklearn.metrics import roc_auc_score
 
-from spade.common.study import study_dir
+from spade.common.study import variant_dir
 
 from spade.straightness.geometry import RESTRAV_FEATURE_NAMES
 
 from curvature_axis import (
     WINDOW_PLIES, CurvatureAxis, fit_axis, residual_plane, spaces, transported_auroc,
     window_features)
-from branch_geometry import OUT_DIR, PLOT_GAME
+from branch_geometry import VARIANTS, PLOT_GAME, out_dir
 
 OFFSETS = np.arange(-8, 25)   # the divergence study's own window, r = t - t0
 FIT_OFFSET = 0                # the one window whose pair differs in a single token
@@ -40,15 +53,56 @@ N_PERM = 1000                 # within-game label permutations for the aggregate
 N_DIRS = 100                  # random directions in R^21, the null for a FITTED axis
 
 
-def meta() -> dict:
-    m = dict(np.load(OUT_DIR / "meta.npz"))
+def meta(variant: str = "") -> dict:
+    """Row-level meta: one row per branch (spliced) or per rollout of a branch."""
+    m = dict(np.load(out_dir(variant) / "meta.npz"))
     assert PLOT_GAME in m["game_id"], f"plotted game {PLOT_GAME} not extracted"
     return m
 
 
-def descriptors(space: str, m: dict) -> np.ndarray:
-    """[n_rows, n_offsets, 21] windowed ReStraV descriptors."""
-    z = np.load(OUT_DIR / f"{space}.npz")
+def rollouts(m: dict) -> int:
+    """Rows per branch: K for the rollout variant, 1 for spliced."""
+    return int(m["rollout"].max()) + 1 if "rollout" in m else 1
+
+
+def fold_rollouts(A: np.ndarray, k: int) -> np.ndarray:
+    """Mean over each branch's K rollouts; rows are `source_row * K + rollout`.
+
+    Applied to the DESCRIPTORS, never to d/theta or to a trajectory: phi is
+    nonlinear, so a mean taken before it is the curvature of a path no rollout
+    took. Everything after it -- the axis projection, the plane -- is linear and
+    gives the same answer on either side, so this is the only place the choice
+    matters and it is made once, here.
+    """
+    return A if k == 1 else A.reshape(len(A) // k, k, *A.shape[1:]).mean(1)
+
+
+def branch_meta(m: dict) -> dict:
+    """Row meta collapsed to one row per branch, to index the folded descriptors.
+
+    Every column is constant across a branch's K rollouts except `row`, the
+    branches.pt index, which runs source_row * K + rollout. It keeps the first
+    rollout's value, which is the row `n_flipped` reads and which recovers the
+    spliced row as row // K.
+    """
+    k = rollouts(m)
+    if k == 1:
+        return m
+    out = {key: v for key, v in m.items() if key != "rollout"}
+    assert np.array_equal(m["row"], np.repeat(m["row"][::k], k)
+                          + np.tile(np.arange(k), len(m["t0"]) // k)), \
+        "rows are not K contiguous rollouts per branch"
+    for key, v in list(out.items()):
+        if v.ndim and len(v) == len(m["t0"]):
+            assert key == "row" or np.array_equal(v, np.repeat(v[::k], k)), \
+                f"{key} differs across a branch's rollouts"
+            out[key] = v[::k]
+    return out
+
+
+def descriptors(space: str, m: dict, variant: str = "") -> np.ndarray:
+    """[n_rows, n_offsets, 21] windowed ReStraV descriptors, one row per rollout."""
+    z = np.load(out_dir(variant) / f"{space}.npz")
     rows = np.arange(len(m["t0"]))
     return np.stack([window_features(z["d"], z["theta"], rows, m["t0"] + r)
         for r in OFFSETS], axis=1)
@@ -62,9 +116,15 @@ def reference_of(m: dict) -> np.ndarray:
 
 
 def deltas(F: np.ndarray, axis: CurvatureAxis, m: dict) -> np.ndarray:
-    """[n_rows, n_offsets, 21] descriptor difference from the game's reference."""
-    ref = reference_of(m)
-    return axis.delta_features(F, F[ref])
+    """[n_branches, n_offsets, 21] descriptor difference from the game's reference.
+
+    `m` is the ROW meta; the K rollouts are averaged here, between phi and the
+    difference, so the result is one row per branch and every caller downstream
+    works in branch_meta(m)'s indexing.
+    """
+    F = fold_rollouts(np.where(np.isnan(F), axis.fill, F), rollouts(m))
+    mb = branch_meta(m)
+    return F - F[reference_of(mb)]
 
 
 def boot_ci(y: np.ndarray, s: np.ndarray, game: np.ndarray) -> tuple[float, float]:
@@ -128,7 +188,8 @@ RULE_NAMES = ["legal controls (null)", "R1 placement", "R2 bracketing", "R3 turn
 CONTROL_BINS = ["legal control, flips 1 (null)", "legal control, flips $\\geq$4 (null)"]
 
 
-def landing_groups(m: dict, split_controls: bool = False) -> dict[str, np.ndarray]:
+def landing_groups(m: dict, split_controls: bool = False,
+                   variant: str = "") -> dict[str, np.ndarray]:
     """The branch groups whose landing point is the honesty evidence.
 
     R1 is the doubly-held-out group: the straightness study injects only
@@ -138,7 +199,7 @@ def landing_groups(m: dict, split_controls: bool = False) -> dict[str, np.ndarra
     """
     control = m["is_control"] > 0
     if split_controls:
-        flips = n_flipped(m)
+        flips = n_flipped(m, variant)
         out = {CONTROL_BINS[0]: control & (flips == 1),
                CONTROL_BINS[1]: control & (flips >= 4)}
     else:
@@ -237,15 +298,15 @@ def parity_amplitude(curve: np.ndarray) -> float:
     return float(np.abs(curve[1:-1] - 0.5 * (curve[:-2] + curve[2:])).mean())
 
 
-def n_flipped(m: dict) -> np.ndarray:
+def n_flipped(m: dict, variant: str = "") -> np.ndarray:
     """Discs the branch move flips, -1 on illegal branches (they flip nothing)."""
     import torch
-    meta_all = torch.load(study_dir("divergence") / "branches" / "branches.pt",
-                          weights_only=True)
+    meta_all = torch.load(variant_dir("divergence", variant=variant) / "branches"
+                          / "branches.pt", weights_only=True)
     return meta_all["n_flipped"][m["row"]].numpy()
 
 
-def flip_confound(score_r0: np.ndarray, m: dict) -> float:
+def flip_confound(score_r0: np.ndarray, m: dict, variant: str = "") -> float:
     """Spearman rho between axis 1 and flip count, among LEGAL control branches.
 
     The straightness study's violation is a no-flip placement on an empty square,
@@ -256,39 +317,73 @@ def flip_confound(score_r0: np.ndarray, m: dict) -> float:
     """
     from scipy.stats import spearmanr
     sel = m["is_control"] > 0
-    return float(spearmanr(score_r0[sel], n_flipped(m)[sel]).statistic)
+    return float(spearmanr(score_r0[sel], n_flipped(m, variant)[sel]).statistic)
+
+
+def variant_agreement(space: str, m: dict, variant: str) -> float:
+    """Max |phi(rollout, K-mean) - phi(spliced)| over the windows ending at t <= t0.
+
+    The descriptor window is TRAILING, so the one ending at t0 sees only
+    tokens[:t0+1] -- which the rollout copies from the spliced branch verbatim.
+    Every r <= 0 measurement, the fitted offset among them, is therefore the SAME
+    measurement in both variants rather than a replication of it.
+
+    The residual is not exactly zero and is not expected to be: the two trees were
+    extracted in separate passes at different batch sizes and stored as fp16, so
+    raw layer 5 lands at 1e-3 (fp16 eps on a step length of 0.65) and a sparse code
+    amplifies it to 1e-1 where a feature sits on its threshold. It is returned
+    rather than asserted away, because its size is the scale on which "identical"
+    should be read -- and every r=0 AUROC does come out equal to three decimals.
+    """
+    k = rollouts(m)
+    spliced = meta()
+    assert np.array_equal(branch_meta(m)["row"] // k, spliced["row"]), \
+        "the two variants' branch rows do not correspond"
+    keep = OFFSETS <= 0
+    a = fold_rollouts(descriptors(space, m, variant), k)[:, keep]
+    b = descriptors(space, spliced)[:, keep]
+    assert np.array_equal(np.isnan(a), np.isnan(b)), "undefined angles differ at r <= 0"
+    return float(np.nanmax(np.abs(a - b)))
 
 
 def main():
-    m = meta()
-    n_games = len(np.unique(m["game_id"]))
-    print(f"{n_games} evaluation games, {len(m['t0'])} branches, "
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--variant", choices=list(VARIANTS), default="spliced")
+    args = parser.parse_args()
+    variant = VARIANTS[args.variant]
+
+    m = meta(variant)
+    mb, k = branch_meta(m), rollouts(m)
+    n_games = len(np.unique(mb["game_id"]))
+    print(f"{n_games} evaluation games, {len(mb['t0'])} branches, "
           f"window {WINDOW_PLIES} plies, fit offset r={FIT_OFFSET}, "
-          f"plotted game {PLOT_GAME}\n")
+          f"plotted game {PLOT_GAME}"
+          + (f", {args.variant}: K={k} rollouts per branch, averaged after phi"
+             if k > 1 else "") + "\n")
 
     r0 = int(np.flatnonzero(OFFSETS == 0)[0])
-    illegal, control = m["category"] != 0, m["is_control"] > 0
+    illegal, control = mb["category"] != 0, mb["is_control"] > 0
     rows = []
     for space in spaces():
         axis = fit_axis(space, FIT_OFFSET, m["held_out_legal"])
-        F = descriptors(space, m)
+        F = descriptors(space, m, variant)
         delta = deltas(F, axis, m)
         score = (delta / axis.sd) @ axis.w
         assert np.abs(score[:, OFFSETS < 0]).max() < 1e-6, \
             "branches differ before t0; the prefix is not shared"
 
         transport = transported_auroc(axis, [0, 2, 4, 8, 16, 24])
-        ct = control_test(score, m)
-        ct_pc1 = control_test(pc1(delta, axis), m)
-        rand95 = random_direction_null(delta, axis, m)
-        ct_norm = control_test(magnitude_only(delta, axis), m)
+        ct = control_test(score, mb)
+        ct_pc1 = control_test(pc1(delta, axis), mb)
+        rand95 = random_direction_null(delta, axis, mb)
+        ct_norm = control_test(magnitude_only(delta, axis), mb)
         lo, hi = boot_ci(illegal[illegal | control].astype(float),
-                         score[illegal | control, r0], m["game_id"][illegal | control])
-        undiff = (np.where(np.isnan(F), axis.fill, F) / axis.sd) @ axis.w
+                         score[illegal | control, r0], mb["game_id"][illegal | control])
+        undiff = (fold_rollouts(np.where(np.isnan(F), axis.fill, F), k) / axis.sd) @ axis.w
         plane = residual_plane(delta.reshape(-1, 21), axis).reshape(*delta.shape[:2], 2)
-        perm = permutation_null(plane, m, PLOT_GAME)
-        perm_named = permutation_null(named_axes_plane(delta, axis), m, PLOT_GAME)
-        null_mu, null_lo, null_hi = control_null(score[:, r0], m)
+        perm = permutation_null(plane, mb, PLOT_GAME)
+        perm_named = permutation_null(named_axes_plane(delta, axis), mb, PLOT_GAME)
+        null_mu, null_lo, null_hi = control_null(score[:, r0], mb)
         rows.append({
             "space": space, "auroc_straightness": axis.auroc,
             "gap_sd_one_game": perm["gap"], "gap_null_mean": perm["null_mean"],
@@ -309,9 +404,10 @@ def main():
             "parity_ratio": parity_amplitude(score[illegal].mean(0)) /
                 parity_amplitude(undiff[illegal].mean(0)),
             "landing": {name: float(score[sel, r0].mean())
-                for name, sel in {**landing_groups(m),
-                                  **landing_groups(m, split_controls=True)}.items()},
-            "flip_rho_controls": flip_confound(score[:, r0], m),
+                for name, sel in {**landing_groups(mb),
+                                  **landing_groups(mb, True, variant)}.items()},
+            "flip_rho_controls": flip_confound(score[:, r0], mb, variant),
+            "r0_vs_spliced": 0.0 if k == 1 else variant_agreement(space, m, variant),
         })
         r = rows[-1]
         print(f"{space:40} probe {r['auroc_straightness']:.3f} | illegal-vs-control "
@@ -341,9 +437,14 @@ def main():
           "of the undifferenced one (low = the mover-frame sawtooth cancels):")
     for r in rows:
         print(f"  {r['space']:40} {r['parity_ratio']:.3f}")
+    if k > 1:
+        print("\nmax |descriptor(rollout, K-mean) - descriptor(spliced)| over r <= 0 "
+              "(the trailing window at r=0 sees only the shared prefix, so this is 0):")
+        for r in rows:
+            print(f"  {r['space']:40} {r['r0_vs_spliced']:.3e}")
 
     import pandas as pd
-    out = OUT_DIR / "evaluation.csv"
+    out = out_dir(variant) / "evaluation.csv"
     flat = [{**{k: v for k, v in r.items() if k not in ("transport", "landing")},
              **{f"landing_{k}": v for k, v in r["landing"].items()},
              **{f"transport_r{k}": v for k, v in r["transport"].items()}} for r in rows]

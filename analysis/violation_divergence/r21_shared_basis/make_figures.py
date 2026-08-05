@@ -32,7 +32,17 @@ Score: illegal-vs-control centroid distance in pooled within-group SDs, over
 anchors t >= t0, against the exact permutation null over the 28 ways to split
 the 8 non-reference branches 6/2.
 
-Usage: python analysis/violation_divergence/r21_shared_basis/make_figures.py [--camera-ready]
+--variant rollout reads the resampled-continuation copy of the study, where every
+branch INCLUDING the reference samples its own K=4 suffixes instead of replaying
+the source game's. A branch is then K rows, and the mean over them is taken AFTER
+phi -- phi is nonlinear, so averaging the four trajectories first would describe a
+path no rollout took. The plane projection is linear, so it does not care which
+side of it the mean is on; the descriptor does. Every anchor this figure draws is
+at r >= +6, which is deep in the regime the rollout study found uninformative
+(ROLLOUT_CAVEAT), so the rollout grids are a shape check, not a result.
+
+Usage: python analysis/violation_divergence/r21_shared_basis/make_figures.py
+           [--variant {spliced,rollout}] [--camera-ready]
 """
 
 import argparse
@@ -44,7 +54,7 @@ import numpy as np
 import torch
 
 from spade.common.device import select_device
-from spade.common.study import study_dir
+from spade.common.study import variant_dir
 from spade.figures.paper_style import (
     CATEGORY_STYLE, GRID, INK, MUTED, NULL, OKABE_ITO, REFERENCE, apply_style,
     rule_key, sae_label, save_figure)
@@ -53,10 +63,18 @@ from spade.saes.registry import seed42_entries
 from spade.spaces import EXCLUDED_SAE
 from spade.straightness.geometry import (
     RESTRAV_FEATURE_NAMES, restrav_features, temporal_geometry)
+from spade.violation_divergence.branches import complete_games
 from spade.violation_divergence.compute_divergence import sae_encoder
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
-CACHE = study_dir("divergence") / "fork_r21" / "game_features.npz"
+VARIANTS = {"spliced": "", "rollout": "rollout"}   # CLI name -> variant_dir() suffix
+ROLLOUT_CAVEAT = (
+    "ROLLOUT CAVEAT: with every branch resampling its own future, $\\hat{\\delta}$ climbs "
+    "monotonically and illegal and control both saturate near 1.23 against a\n"
+    "~1.41 unrelated-activations ceiling; the illegal/control ratio is pinned to 1.00 by "
+    "$r\\geq8$ and only $r=0$ separates (1.032, sign opposite the\nspliced 0.979). "
+    "Long-horizon rollout geometry is not informative, and every anchor drawn here is at "
+    "$r\\geq+6$: this is shape, not a separation.")
 
 W = 8                    # smallest window with a full 21-D descriptor (d[:, :7])
 STRIDE = 2               # one mover per curve; see the parent sub-study
@@ -88,14 +106,24 @@ PLANE_STYLE = {
 
 # ---------------------------------------------------------------- features
 
-def build_cache(path: Path, device: str) -> None:
-    """Game 0's branches in every space, at the study's sampled positions."""
-    base = study_dir("divergence")
+def cache_path(variant: str) -> Path:
+    """Variant-scoped: an unscoped path would let a rollout run overwrite the
+    spliced features and silently redraw every spliced figure."""
+    return variant_dir("divergence", variant=variant) / "fork_r21" / "game_features.npz"
+
+
+def build_cache(path: Path, device: str, variant: str) -> None:
+    """Game 0's branches in every space, at the study's sampled positions.
+
+    Under --variant rollout a branch is K contiguous rows, so this caches all of
+    them and the `rollout` column that says so; the mean over them is taken after
+    the descriptor, not here.
+    """
+    base = variant_dir("divergence", variant=variant)
     meta = torch.load(base / "branches" / "branches.pt", weights_only=True)
-    acts = torch.load(base / "acts" / "resid_post_5.pt", weights_only=True)
-    n_types = len(CATEGORIES) + 2
-    game = next(g for g in meta["game_id"].unique().tolist()
-                if int((meta["game_id"] == g).sum()) == n_types)
+    # mmap: the rollout activation file is 4 GB and one game is 36 of its rows.
+    acts = torch.load(base / "acts" / "resid_post_5.pt", weights_only=True, mmap=True)
+    game = complete_games(meta)[0]
     idx = (meta["game_id"] == game).nonzero().flatten()
     t0 = int(meta["t0"][idx[0]])
     p = np.arange(max(FIRST_POS, t0 + WINDOW[0]), min(LAST_POS, t0 + WINDOW[1]) + 1)
@@ -105,6 +133,8 @@ def build_cache(path: Path, device: str) -> None:
     blobs = {"game": game, "t0": t0, "pos": pos, RAW_SPACE: Z.numpy(),
              "category": np.array([int(meta["category"][i]) for i in idx]),
              "is_control": np.array([int(meta["is_control"][i]) for i in idx])}
+    if "rollout" in meta:
+        blobs["rollout"] = meta["rollout"][idx].numpy()
     for e in seed42_entries():
         if e.config in EXCLUDED_SAE:
             continue
@@ -115,10 +145,11 @@ def build_cache(path: Path, device: str) -> None:
     np.savez_compressed(path, **blobs)
 
 
-def game_features(device: str) -> dict:
-    if not CACHE.exists():
-        build_cache(CACHE, device)
-    z = np.load(CACHE)
+def game_features(device: str, variant: str = "") -> dict:
+    path = cache_path(variant)
+    if not path.exists():
+        build_cache(path, device, variant)
+    z = np.load(path)
     return {k: z[k] for k in z.files}
 
 
@@ -138,13 +169,24 @@ def descriptors(F: np.ndarray) -> np.ndarray:
     return f.reshape(F.shape[0], -1, f.shape[1]).numpy()
 
 
-def displacement21(F: np.ndarray, ref: int) -> np.ndarray:
+def fold_rollouts(A: np.ndarray, k: int) -> np.ndarray:
+    """Mean over each branch's K rollouts; rows are `source_row * K + rollout`.
+
+    Called on DESCRIPTORS, never on trajectories: phi is nonlinear, so a mean over
+    the four paths is the curvature of a fictitious path none of them took.
+    """
+    return A if k == 1 else A.reshape(len(A) // k, k, *A.shape[1:]).mean(1)
+
+
+def displacement21(F: np.ndarray, ref: int, k: int = 1) -> np.ndarray:
     """[n, nw, 21] descriptor displacement from the reference, in per-space SDs.
 
     The mean cancels in the difference, so z-scoring leaves the reference exactly
-    at the origin and only rescales each named component.
+    at the origin and only rescales each named component. The rollout mean is
+    taken here, between phi and the difference, so the SD is the SD of the
+    plotted object.
     """
-    phi = descriptors(F)
+    phi = fold_rollouts(descriptors(F), k)
     sd = phi.reshape(-1, phi.shape[-1]).std(0)
     assert (sd > 0).all(), f"constant component: {np.array(RESTRAV_FEATURE_NAMES)[sd == 0]}"
     return (phi - phi[ref]) / sd
@@ -172,8 +214,13 @@ def named_basis() -> np.ndarray:
     return np.eye(len(RESTRAV_FEATURE_NAMES))[[MEAN_D, MEAN_THETA]]
 
 
-def activation_plane(F: np.ndarray, ref: int) -> np.ndarray:
-    """The status-quo comparison: top-2 of the raw displacement, [n, T, 2]."""
+def activation_plane(F: np.ndarray, ref: int, k: int = 1) -> np.ndarray:
+    """The status-quo comparison: top-2 of the raw displacement, [n, T, 2].
+
+    Everything here is linear, so the rollout mean can be taken on the
+    trajectories; it is the same plane as folding after the projection.
+    """
+    F = fold_rollouts(F, k)
     D = F - F[ref]
     basis, _ = top2(D)
     return D @ basis.T
@@ -298,7 +345,7 @@ def fork_panel(ax, coords: np.ndarray, meta: dict, lim, ticks: bool,
 
 def space_grid(plane: str, coords: dict[str, np.ndarray], meta: dict, note: str,
                axis_labels: tuple[str, str], titles: dict[str, str], shared_lim: bool,
-               camera_ready: bool) -> Path:
+               camera_ready: bool, suffix: str = "") -> Path:
     ncol = 3
     nrow = -(-len(coords) // ncol)
     lim = None
@@ -314,14 +361,17 @@ def space_grid(plane: str, coords: dict[str, np.ndarray], meta: dict, note: str,
         ax.set_xlabel(axis_labels[0], labelpad=-6 + 4 * shared_lim, fontsize=7.5)
         ax.set_ylabel(axis_labels[1], labelpad=-6 + 4 * shared_lim, fontsize=7.5)
         ax.set_title(titles[name], loc="left", fontsize=8.5)
-    ordered_legend(fig, fig.axes[0], 4, -0.06, note)
+    # The legend box grows upward from its anchor, so a longer note would climb into
+    # the bottom row's axis labels; drop the anchor by the lines the note gained.
+    drop = 0.011 * (note.count("\n") - 2)
+    ordered_legend(fig, fig.axes[0], 4, -0.06 - drop, note)
     if not camera_ready:
         fig.suptitle(f"The fork in the 21-D curvature descriptor, game {meta['game']} "
                      f"({plane} plane)", fontsize=11)
     fig.subplots_adjust(left=0.02, right=0.97, top=0.92, bottom=0.06,
                         wspace=0.06, hspace=0.16)
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.105)
-    return save_figure(fig, FIG_DIR / f"space_fork_grid_r21_{plane}", camera_ready)
+    rule_key(fig, ["R1", "R2", "R3"], y=-0.105 - drop)
+    return save_figure(fig, FIG_DIR / f"space_fork_grid_r21_{plane}{suffix}", camera_ready)
 
 
 def plane_series(ax, x, values: dict[str, list[float]], label: bool = True) -> None:
@@ -333,7 +383,9 @@ def plane_series(ax, x, values: dict[str, list[float]], label: bool = True) -> N
 
 
 def separation_figure(scores: dict[str, list[float]], nulls: dict[str, np.ndarray],
-                      names: list[str], camera_ready: bool) -> Path:
+                      names: list[str], camera_ready: bool, suffix: str = "",
+                      foot: str = "", title: str = "$R^{21}$ moves the branches apart "
+                                                   "faster than it moves the null") -> Path:
     """The number the grids cannot show, against the null that explains most of it.
 
     R^21 raises the raw gap and the null by nearly the same factor, so (b) divides
@@ -370,27 +422,30 @@ def separation_figure(scores: dict[str, list[float]], nulls: dict[str, np.ndarra
     fig.legend(*both, loc="lower center", ncol=2, fontsize=8, frameon=False,
                bbox_to_anchor=(0.5, -0.34))
     if not camera_ready:
-        fig.suptitle("$R^{21}$ moves the branches apart faster than it moves the null",
-                     fontsize=10.5)
+        fig.suptitle(title, fontsize=10.5)
     fig.tight_layout()
     fig.text(0.5, -0.44, "one game (n=1), anchors $t\\geq t_0$: 6 illegal x 10 windows "
              "vs 2 control x 10 windows per space. The null is exact — all 28 ways of "
              "relabelling the 8 non-reference branches 6/2 — so the smallest attainable "
-             "p is 1/28 = 0.04.", ha="center", va="top", fontsize=7.5, color=MUTED)
-    return save_figure(fig, FIG_DIR / "separation_by_plane", camera_ready)
+             "p is 1/28 = 0.04." + foot, ha="center", va="top", fontsize=7.5, color=MUTED)
+    return save_figure(fig, FIG_DIR / f"separation_by_plane{suffix}", camera_ready)
 
 
 # ---------------------------------------------------------------- main
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--variant", choices=list(VARIANTS), default="spliced")
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    g = game_features(select_device())
+    g = game_features(select_device(), VARIANTS[args.variant])
+    suffix = "" if args.variant == "spliced" else f"_{args.variant}"
+    n_roll = int(g["rollout"].max()) + 1 if "rollout" in g else 1
     names = space_names()
-    meta = {k: g[k] for k in ("game", "t0", "pos", "category", "is_control")}
+    meta = {k: g[k] for k in ("game", "t0", "pos")}
+    meta["category"], meta["is_control"] = g["category"][::n_roll], g["is_control"][::n_roll]
     meta["anchors"] = meta["pos"][W - 1:]
     ref = meta["ref"] = int(
         np.flatnonzero((meta["category"] == 0) & (meta["is_control"] == 0))[0])
@@ -399,12 +454,14 @@ def main():
     ctl = np.array([i for i in branches if meta["is_control"][i]])
     keep = meta["anchors"] >= meta["t0"]
 
-    X = {name: displacement21(g[name], ref) for name in names}
+    X = {name: displacement21(g[name], ref, n_roll) for name in names}
     n, nw, k = X[RAW_SPACE].shape
     print(f"game {meta['game']}, t0 {meta['t0']}, positions {meta['pos'][0]}-"
           f"{meta['pos'][-1]}, W={W} -> {nw} anchors {meta['anchors'][0]}-"
           f"{meta['anchors'][-1]}; {n * nw} rows per space in R^{k}, "
-          f"{int(keep.sum())} anchors >= t0")
+          f"{int(keep.sum())} anchors >= t0"
+          + (f"; {args.variant}, mean over K={n_roll} rollouts taken after phi"
+             if n_roll > 1 else ""))
 
     shared, shared_var = top2(np.stack(list(X.values())))
     refit = {name: top2(X[name]) for name in names}
@@ -412,7 +469,7 @@ def main():
               "shared": {name: X[name] @ shared.T for name in names},
               "named": {name: X[name] @ named_basis().T for name in names}}
     coords["isomap"] = dict(zip(names, isomap(np.stack([X[nm] for nm in names]))[0]))
-    act = {name: activation_plane(g[name], ref) for name in names}
+    act = {name: activation_plane(g[name], ref, n_roll) for name in names}
     coords["activation refit"] = {name: act[name][:, W - 1:] for name in names}
 
     scores = {p: [separation(c[name][:, keep], ill, ctl) for name in names]
@@ -441,7 +498,7 @@ def main():
     print(f"\n{'space':34}{'SD mean d':>11}{'SD mean θ (deg)':>17}{'1-D sep mean d':>16}"
           f"{'1-D sep mean θ':>16}{'Δmean θ illegal':>17}{'Δmean θ control':>17}")
     for name in names:
-        phi = descriptors(g[name])
+        phi = fold_rollouts(descriptors(g[name]), n_roll)
         sd = phi.reshape(-1, 21).std(0)
         dtheta = (phi - phi[ref])[:, keep, MEAN_THETA]
         one_d = [separation(X[name][:, keep][:, :, [c]], ill, ctl)
@@ -452,6 +509,13 @@ def main():
     n_state = (f"one game (n=1): {len(branches)} non-reference branches x {nw} windows "
                f"= {n * nw} rows per space in $R^{{{k}}}$ — a shape illustration, not a "
                f"claim; the separation each plane keeps is in analysis/violation_divergence/r21_shared_basis.")
+    rollout_note = ("" if n_roll == 1 else
+                    f"\nROLLOUT VARIANT: every branch including the reference samples its "
+                    f"own future, K={n_roll} times. A point is the MEAN OVER THE {n_roll} "
+                    f"ROLLOUTS OF THE DESCRIPTOR, taken after $\\varphi$ and before the "
+                    f"difference:\n$\\varphi$ is nonlinear, so a mean over the {n_roll} "
+                    f"trajectories would be the curvature of a path none of them took. The "
+                    f"plane projection is linear and does not care.\n{ROLLOUT_CAVEAT}")
     common = (f"game {meta['game']}, $t_0$={meta['t0']}; a point is the ReStraV "
               f"descriptor of the {W} sampled positions (every {STRIDE}nd ply) ending "
               f"at $t$, minus the reference's, z-scored per space; view elev={ELEV}, "
@@ -481,10 +545,21 @@ def main():
                    {name: name for name in names}),
     }
     for plane, (note, labels, shared_lim, titles) in grids.items():
-        out = space_grid(plane, coords[plane], meta, f"{common}{note}\n{n_state}",
-                         labels, titles, shared_lim, args.camera_ready)
+        out = space_grid(plane, coords[plane], meta,
+                         f"{common}{note}\n{n_state}{rollout_note}",
+                         labels, titles, shared_lim, args.camera_ready, suffix)
         print(f"wrote {out}")
-    print(f"wrote {separation_figure(scores, nulls, names, args.camera_ready)}")
+    foot = "" if n_roll == 1 else (
+        f"\nRollout variant: each of those windows is the mean over the branch's "
+        f"K={n_roll} sampled futures, taken after the descriptor and before the "
+        f"difference.\n{ROLLOUT_CAVEAT}")
+    # The spliced claim inverts here: with every branch resampling its future the
+    # displacement is in the activations, and routing it through R^21 costs.
+    title = ("$R^{21}$ moves the branches apart faster than it moves the null"
+             if n_roll == 1 else
+             "When every branch resamples its own future, the activation plane beats "
+             "$R^{21}$ against each plane's own null")
+    print(f"wrote {separation_figure(scores, nulls, names, args.camera_ready, suffix, foot, title)}")
 
 
 if __name__ == "__main__":

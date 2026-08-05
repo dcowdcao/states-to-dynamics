@@ -99,6 +99,77 @@ skew — the `e6` share is 0.10–0.12 in every draw tried, including one taken 
 300,000 with no shuffle, and 0.1078 over the whole corpus. The skew is the corpus; the
 window is a separate caveat, and the one that reaches beyond this study.
 
+---
+
+## The R^21 figures get `--variant rollout`, and the suffix confound turns out to be unreachable (2026-08-05)
+
+Branch `rfig/figs-r21-basis`. `r21_shared_basis` and `curvature_discriminant` now take
+`--variant {spliced,rollout}` (default spliced, rollout figures get a `_rollout` suffix,
+intermediates go to `$DIR/rollout/...`). The question was whether
+`curvature_discriminant`'s headline — illegal-vs-control AUROC 0.859 in GatedAnneal
+against raw layer 5's 0.634 — was reading the spliced tree's broken suffix rather than
+the move at *t0*.
+
+**It was not, and the rollout is not what shows that.** The descriptor at *r* = 0 is a
+**trailing** 8-ply window ending at *t0*, so it sees `tokens[:t0+1]` and nothing after,
+and `rollout_branches` copies exactly those tokens. The r = 0 column is therefore the
+*same measurement* in the two trees, not a replication of it — and it comes out equal to
+three decimals in all nine spaces (0.634 / 0.803 / 0.635 / 0.859 / 0.824 / 0.631 / 0.609
+/ 0.553 / 0.812), along with the random-direction 95th percentile, ‖Δφ‖ alone, the flip
+ρ and the permutation null. `evaluate.variant_agreement` returns the residual instead of
+asserting it away: 1e-3 (raw L5) to 1e-1 (GatedSAE), which is two separate extraction
+passes' fp16 noise amplified by a latent sitting on its threshold, not the suffix.
+
+**What the rollout could test, it also clears.** The *r* = 2 inversion — the four sparse
+dictionaries at 0.32–0.37, illegal branches landing *below* the legal controls — is the
+shape a broken replayed suffix would produce. It survives resampling at 0.35–0.41, moved
+0.02–0.04 toward chance and no further; by *r* ≥ 4 both variants are at chance
+everywhere. The inversion belongs to the axis, not to the inherited future.
+
+**Three decisions worth knowing.**
+
+- *The K = 4 mean is taken after φ and before the difference from the reference.* φ is
+  nonlinear, so averaging the four trajectories first reports the curvature of a path no
+  rollout took; the axis projection and the plane are linear and agree on either side of
+  the mean, so this is the only place the choice exists, and `evaluate.fold_rollouts` is
+  the one place it is made. `axis.fill` imputation happens per rollout, before the mean.
+- *The straightness mapping is read from the SPLICED branches.pt even on a rollout run.*
+  A rollout reference has resampled its own suffix, so its tokens are no longer in the
+  straightness token table; the lookup would return -1 for every game and silently empty
+  `held_out_legal`, which is the exclusion list the whole honesty guard rests on. game_id
+  carries over, so the mapping is looked up in the spliced tensor and applied by id.
+- *Do not read `r21_shared_basis`'s rollout grids as a result.* W = 8 at stride 2 is 14
+  plies of span, so the first anchor it can draw is *r* = +6 — deep inside the regime the
+  rollout divergence read-out found uninformative (δ̂ saturating near 1.23 against a ~1.41
+  ceiling, illegal/control pinned to 1.00 by *r* ≥ 8, only *r* = 0 separating at 1.032,
+  sign opposite the spliced 0.979). The grids are a shape check on the reduction. The
+  claim in `separation_by_plane` does invert there — the activation plane goes from
+  0.45–1.05× its own null to 2.5–4.7×, while R^21 stays flat — because with every branch
+  resampling, the divergence *is* in the activations and a step-length/turning-angle
+  summary discards it. Both figures carry the caveat in-panel, and the suptitle is
+  variant-dependent rather than asserting the spliced claim over rollout data.
+
+**A stale-figure trap found on the way.** The committed spliced PNGs under
+`r21_shared_basis/figures/` do not match what the script renders, and did not before this
+branch: commit 94a7dc2 moved the study under `analysis/violation_divergence/` and updated
+the path string inside the figure's own caption without re-rendering. The four grids
+therefore differ from a fresh render by that one line of text. This branch leaves them at
+their committed bytes so the change stays additive; a re-render is a one-line commit for
+whoever wants it. `space_fork_grid_discriminant.png` needed no such care — it re-renders
+**byte-identical**, which is the proof that the variant plumbing is a no-op on the default
+path. `separation_by_plane`, `..._named` and `..._refit` also re-render byte-identically
+run to run; `..._isomap` does not, by 1 grey level on 1e-5 of its pixels, because
+`Isomap(n_jobs=-1)`'s eigensolver is not bit-reproducible. That is pre-existing and worth
+knowing before anyone byte-compares that one file.
+
+**Not done:** `branch_geometry.py --variant rollout` is 20700 rows through nine spaces and
+was killed twice on the login node around 12 minutes in. It was run under SLURM instead
+(`kempner_h100`, 8 CPU, 96 GB, ~20 min). There is no committed sbatch for it — the study's
+scripts live in `scripts/slurm/studies/violation_divergence/` and adding one there is the
+study owner's call, not this branch's.
+
+---
+
 ## Fig 1 titles each accuracy against its own occupancy ceiling (2026-08-05)
 
 Branch `bracket/basis-ceiling`. Panel (c) said "held-out board accuracy 0.735" and stopped

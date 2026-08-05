@@ -31,7 +31,23 @@ a full marker only to the branch position and draw the rest of each path faint.
 And on a single game the plane clears nothing: 0.09-1.05x its own exact label
 permutation null, p 0.36-1.00 across the nine spaces.
 
-Usage: python analysis/violation_divergence/curvature_discriminant/make_figures.py [--camera-ready]
+--variant rollout redraws all of it on the copy of the study where every branch,
+the reference included, samples its own K=4 continuations rather than replaying
+the source game's. The axis does not move: it is fit on straightness pairs, which
+have no variant. The K rollouts are averaged AFTER phi, because phi is nonlinear
+and a mean over the four paths is the curvature of a path none of them took; the
+axis projection is linear and agrees on either side of the mean. What that run
+answers is whether the illegal-vs-control separation was reading the branch move
+or the out-of-distribution suffix a spliced branch inherits -- and the answer is
+structural: the descriptor window is trailing, so the one ending at t0 sees only
+tokens the rollout copies verbatim, and panel (k) at r <= 0 is the same number in
+both variants, to three decimals in all nine spaces (evaluate.variant_agreement
+returns the residual, 1e-3 to 1e-1, which is two extraction passes' fp16 noise).
+Only r > 0 can differ, and that is the regime the rollout study found
+uninformative (ROLLOUT_CAVEAT).
+
+Usage: python analysis/violation_divergence/curvature_discriminant/make_figures.py
+           [--variant {spliced,rollout}] [--camera-ready]
 """
 
 import argparse
@@ -48,15 +64,23 @@ from spade.othello.taxonomy import CATEGORIES
 
 from curvature_axis import (
     WINDOW_PLIES, fit_axis, residual_plane, spaces, transported_auroc)
-from branch_geometry import PLOT_GAME
+from branch_geometry import VARIANTS, PLOT_GAME
 from evaluate import (
     CONTROL_BINS, FIT_OFFSET, N_DIRS, OFFSETS, PLOT_STRIDE, RULE_NAMES, boot_ci,
-    control_null, control_test, descriptors, deltas, flip_confound, landing_groups,
-    magnitude_only, meta, named_axes_plane, permutation_null, random_direction_null)
+    branch_meta, control_null, control_test, descriptors, deltas, flip_confound,
+    landing_groups, magnitude_only, meta, named_axes_plane, permutation_null,
+    random_direction_null, rollouts, variant_agreement)
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 ELEV, AZIM = 18, -58              # the parent figure's camera, so the two compare
 UNCAL_ALPHA = 0.22                # r > 0 is drawn as shape, not as a coordinate
+ROLLOUT_CAVEAT = (
+    "ROLLOUT CAVEAT: with every branch resampling its own future, $\\hat{\\delta}$ climbs "
+    "monotonically and illegal and control both saturate near 1.23 against a ~1.41 "
+    "unrelated-activations ceiling; the illegal/control ratio is pinned to 1.00 by "
+    "$r\\geq8$, and only $r=0$ separates (1.032, sign opposite the spliced 0.979). "
+    "Long-horizon rollout geometry is not informative, so the $r>0$ part of these panels "
+    "is shape, not a result.")
 R0 = int(np.flatnonzero(OFFSETS == 0)[0])
 CONTROL_LABEL = {1: "control: another legal move (null)",
                  2: "control 2: a third legal move (null)"}
@@ -234,42 +258,45 @@ def landing_panel(ax, landing: dict, space_labels: list[str], rho: float) -> Non
 
 # --- assembly ---
 
-def collect(m: dict, game: int) -> dict:
-    idx = np.flatnonzero(m["game_id"] == game)
-    groups = landing_groups(m, split_controls=True)
-    illegal, control = m["category"] != 0, m["is_control"] > 0
+def collect(m: dict, game: int, variant: str = "") -> dict:
+    mb, k = branch_meta(m), rollouts(m)
+    idx = np.flatnonzero(mb["game_id"] == game)
+    groups = landing_groups(mb, True, variant)
+    illegal, control = mb["category"] != 0, mb["is_control"] > 0
     keep = illegal | control
     y = illegal[keep].astype(float)
 
     out = {}
     for space in spaces():
         axis = fit_axis(space, FIT_OFFSET, m["held_out_legal"])
-        delta = deltas(descriptors(space, m), axis, m)
+        delta = deltas(descriptors(space, m, variant), axis, m)
         score = (delta / axis.sd) @ axis.w
         assert np.abs(score[:, OFFSETS < 0]).max() < 1e-6, "branches differ before t0"
         plane = residual_plane(delta.reshape(-1, 21), axis).reshape(*delta.shape[:2], 2)
         out[space] = {
             "coords": plane[idx],
-            "rows": {k: m[k][idx] for k in ("category", "is_control")},
+            "rows": {key: mb[key][idx] for key in ("category", "is_control")},
             "auroc": axis.auroc,
             "transport": transported_auroc(axis, list(OFFSETS[OFFSETS >= 0])),
-            "control": control_test(score, m),
-            "control_norm": control_test(magnitude_only(delta, axis), m),
-            "random95": random_direction_null(delta, axis, m),
-            "control_ci": boot_ci(y, score[keep, R0], m["game_id"][keep]),
-            "perm": permutation_null(plane, m, game),
-            "perm_named": permutation_null(named_axes_plane(delta, axis), m, game),
-            "control_null": control_null(score[:, R0], m),
+            "control": control_test(score, mb),
+            "control_norm": control_test(magnitude_only(delta, axis), mb),
+            "random95": random_direction_null(delta, axis, mb),
+            "control_ci": boot_ci(y, score[keep, R0], mb["game_id"][keep]),
+            "perm": permutation_null(plane, mb, game),
+            "perm_named": permutation_null(named_axes_plane(delta, axis), mb, game),
+            "control_null": control_null(score[:, R0], mb),
             "landing": {name: (score[sel, R0].mean(),
-                               *boot_ci_mean(score[sel, R0], m["game_id"][sel]))
+                               *boot_ci_mean(score[sel, R0], mb["game_id"][sel]))
                         for name, sel in groups.items()},
-            "flip_rho": flip_confound(score[:, R0], m),
+            "flip_rho": flip_confound(score[:, R0], mb, variant),
         }
         print(f"{space:40} illegal-vs-control {out[space]['control'][R0]:.3f} "
               f"(random dir 95th {out[space]['random95'][R0]:.3f}, norm alone "
               f"{out[space]['control_norm'][R0]:.3f})  one game "
               f"{out[space]['perm']['ratio']:.2f}x null "
-              f"(p={out[space]['perm']['p_exact']:.2f})")
+              f"(p={out[space]['perm']['p_exact']:.2f})"
+              + ("" if k == 1 else
+                 f"  r<=0 vs spliced {variant_agreement(space, m, variant):.1e}"))
     return out
 
 
@@ -288,7 +315,10 @@ def space_label(space: str) -> str:
     return sae_label(space.removeprefix("sae_").removesuffix("Trainer-othello"))
 
 
-def figure(res: dict, m: dict, game: int, camera_ready: bool) -> Path:
+def figure(res: dict, m: dict, game: int, camera_ready: bool, n_roll: int = 1,
+           suffix: str = "") -> Path:
+    """`m` is the per-branch meta; under the rollout variant a branch's row is the
+    mean over its K descriptors, taken after phi."""
     idx = np.flatnonzero(m["game_id"] == game)
     t0 = int(m["t0"][idx[0]])
     n_games = len(np.unique(m["game_id"]))
@@ -358,25 +388,50 @@ def figure(res: dict, m: dict, game: int, camera_ready: bool) -> Path:
         f"divergence games ({len(m['t0'])} branches) and held-out straightness pairs; "
         f"band = IQR over the 8 dictionaries, error bars = percentile bootstrap 95% CI "
         f"over games, 1000 resamples.")
-    fig.text(0.005, -0.075, "\n".join(fill(line, 178) for line in caption.split("\n")),
+    extra = [] if n_roll == 1 else [
+        f"ROLLOUT VARIANT: every branch, the reference included, samples its own future "
+        f"K={n_roll} times instead of replaying the source game's, and a branch's "
+        f"descriptor is the MEAN OVER THOSE {n_roll} ROLLOUTS — taken after phi and "
+        f"before the difference from the reference, because phi is nonlinear and a mean "
+        f"over the {n_roll} trajectories is the curvature of a path none of them took. "
+        f"The axis itself is unchanged: it is fit on straightness pairs, which have no "
+        f"variant. The descriptor window is TRAILING, so the one ending at t0 sees only "
+        f"tokens the rollout copies verbatim — panel (k) at r ≤ 0, the fitted offset "
+        f"among them, is the SAME measurement as the spliced figure's and not a "
+        f"replication of it. Its AUROCs agree to three decimals in all nine spaces; the "
+        f"descriptors agree to 1e-3 (raw L5) to 1e-1 (GatedSAE), which is the fp16 noise "
+        f"of two separate extraction passes and not the suffix. Only r > 0 differs.",
+        ROLLOUT_CAVEAT]
+    wrapped = [fill(line, 178) for line in caption.split("\n") + extra]
+    fig.text(0.005, -0.075, "\n".join(wrapped),
              ha="left", va="top", fontsize=7.5, color=MUTED, linespacing=1.45)
     if not camera_ready:
         fig.suptitle("Most of the separation in $R^{21}$ is magnitude, not direction — "
-                     "and on one game the plane does not beat its own null",
+                     "and on one game the plane does not beat its own null"
+                     if n_roll == 1 else
+                     "Resampling every branch's future changes nothing at $r=0$: the "
+                     "trailing window there never saw the suffix",
                      fontsize=12, y=0.996)
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.178)
-    return save_figure(fig, FIG_DIR / "space_fork_grid_discriminant", camera_ready)
+    # The rule key sits under the caption, so it has to fall by whatever the
+    # rollout paragraphs added; zero extra lines leaves the spliced figure alone.
+    n_extra = sum(w.count("\n") + 1 for w in wrapped[len(caption.split("\n")):])
+    rule_key(fig, ["R1", "R2", "R3"], y=-0.178 - 0.0115 * n_extra)
+    return save_figure(fig, FIG_DIR / f"space_fork_grid_discriminant{suffix}", camera_ready)
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--game", type=int, default=PLOT_GAME)
+    parser.add_argument("--variant", choices=list(VARIANTS), default="spliced")
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()
     apply_style(args.camera_ready)
 
-    m = meta()
-    print(f"wrote {figure(collect(m, args.game), m, args.game, args.camera_ready)}")
+    variant = VARIANTS[args.variant]
+    suffix = "" if args.variant == "spliced" else f"_{args.variant}"
+    m = meta(variant)
+    res = collect(m, args.game, variant)
+    print(f"wrote {figure(res, branch_meta(m), args.game, args.camera_ready, rollouts(m), suffix)}")
 
 
 if __name__ == "__main__":

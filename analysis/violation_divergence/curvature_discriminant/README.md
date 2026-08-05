@@ -26,7 +26,10 @@ python analysis/violation_divergence/curvature_discriminant/evaluate.py         
 python analysis/violation_divergence/curvature_discriminant/make_figures.py      # -> figures/
 ```
 
-Intermediates go to `$SPADE_DIVERGENCE_DIR/curvature_discriminant/`.
+All three take `--variant {spliced,rollout}`, default spliced. Intermediates go
+to `$SPADE_DIVERGENCE_DIR/[rollout/]curvature_discriminant/`; the rollout figure
+is `space_fork_grid_discriminant_rollout.png` and today's names stay with
+spliced.
 
 ## The three design choices, and why
 
@@ -121,11 +124,16 @@ a full marker only to the branch position and draw the rest of the path faint.
 `figures/space_fork_grid_discriminant.png` — the nine spaces, plus a bottom row
 carrying the numbers a 3-D projection cannot: (j) does the axis survive the move
 index, (k) legality or novelty, (l) where each rule group lands.
+`figures/space_fork_grid_discriminant_rollout.png` is the same figure on the
+resampled-continuation tree; see *The suffix confound* below before reading
+anything but its *r* = 0 column.
 
 ## Results (575 held-out games, 5175 branches; probe trained on 1000 pairs)
 
 At *r* = 0, illegal vs the two **held-out legal controls**, against a within-game
-label-permutation null of 0.500 [0.483, 0.517]:
+label-permutation null of 0.500 [0.483, 0.517]. Every number in this table is
+unchanged under `--variant rollout` — see *The suffix confound* below for why
+that is structural rather than a replication:
 
 | space | probe AUROC | illegal-vs-control | random dir. (95th) | ‖Δφ‖ alone | flip ρ |
 |---|---|---|---|---|---|
@@ -176,3 +184,77 @@ board-change read-out. Weak axis ⇒ board-change read-out; strong axis ⇒ lega
 **Parity.** Differencing against the reference removes only 3–46% of the
 mover-frame alternating component (`parity_ratio` 0.54–0.97), so the plotted
 points stay at stride 2.
+
+## The suffix confound: rollout vs spliced
+
+Every spliced branch replays the source game's `tokens[t0+1:]`, which is a legal
+continuation of the **reference's** board and of no other. A legal control's copy
+of it goes illegal after a median of 2 moves; after an illegal branch no board
+exists for it at all. So the obvious objection to the table above is that the
+axis reads "this sequence stopped making sense" rather than "the move at *t0* was
+illegal". `--variant rollout` re-runs the whole evaluation on the tree where every
+branch, **the reference included**, samples its own K = 4 continuations from the
+model at temperature 1.0.
+
+**The probe direction is the same object in both runs.** It is fit on straightness
+violation/source-legal pairs, which have no variant, so the two runs differ only
+in the branches the axis is scored on. All four guards above hold unchanged, and
+guard 1 needs one thing said: a rollout reference has resampled its own suffix, so
+its tokens are no longer in the straightness token table and the lookup would
+return −1 for every game — silently emptying `held_out_legal`, which is what
+actually enforces the disjointness. `game_id` carries over from the spliced
+tensor, so `branch_geometry` reads the mapping from **the spliced branches.pt**
+whatever the variant, and the same 575 games are excluded from the probe fit.
+
+**Where the K rollouts are averaged.** After φ and before the difference from the
+reference (`evaluate.fold_rollouts`, called from `deltas`). φ is nonlinear, so
+averaging the four trajectories first would report the curvature of a path no
+rollout took; the axis projection is linear and gives the same answer on either
+side of the mean, so this is the only place the choice exists and it is made
+once. `axis.fill` imputation happens before the mean, on each rollout.
+
+### The r = 0 result does not move, and cannot
+
+| space | illegal-vs-control at *r*=0, spliced | rollout | *r*=2, spliced | *r*=2, rollout | max ‖Δφ‖∞ at *r*≤0 |
+|---|---|---|---|---|---|
+| raw layer 5 | 0.634 | 0.634 | 0.554 | 0.581 | 1.1e-3 |
+| GatedAnneal | **0.859** | **0.859** | 0.342 | 0.377 | 2.0e-3 |
+| GatedSAE | 0.824 | 0.824 | 0.317 | 0.351 | 1.1e-1 |
+| TopK | 0.812 | 0.812 | 0.340 | 0.377 | 1.1e-3 |
+| BatchTopK | 0.803 | 0.803 | 0.374 | 0.410 | 1.1e-2 |
+| CosineSpaDE | 0.635 | 0.635 | 0.486 | 0.501 | 2.2e-2 |
+| PAnneal | 0.631 | 0.631 | 0.530 | 0.534 | 1.3e-3 |
+| SpaDE | 0.609 | 0.609 | 0.651 | 0.692 | 7.6e-4 |
+| Standard | 0.553 | 0.553 | 0.573 | 0.584 | 5.6e-3 |
+
+The random-direction 95th percentile, ‖Δφ‖ alone, the flip ρ, and the
+permutation null are equal in both runs as well, to every digit printed.
+
+**The sparse-dictionary advantage is not a suffix artifact — and the rollout is
+not what proves it, the window is.** The descriptor at *r* = 0 is the trailing
+8-ply window **ending at t0**, so it sees `tokens[:t0+1]` and nothing after; the
+rollout copies exactly those tokens verbatim. The r = 0 column is therefore the
+same measurement in the two trees rather than a replication of it, which is
+stronger than agreement: the number never had access to the suffix. The last
+column is the check, not the claim (`evaluate.variant_agreement`), and it is
+nonzero only at fp16 scale — the two trees were extracted in separate passes and
+stored as fp16, so raw L5 sits at 1e-3 on a step length of 0.65, and GatedSAE
+amplifies that to 1e-1 where a latent sits on its threshold. 0.859 vs 0.634 stands.
+
+**What the rollout does test, and also clears.** The *r* = 2 inversion — the four
+sparse dictionaries scoring 0.32–0.37, i.e. illegal branches landing *below* the
+legal controls — is exactly the kind of thing a broken replayed suffix would
+produce. It survives resampling: 0.35–0.41, moved 0.02–0.04 toward chance and no
+further. By *r* ≥ 4 both variants are at chance in every space. The inversion is
+a property of the axis, not of the branch's inherited future.
+
+**Read nothing else from the rollout run.** Everything past *r* = 0 in it lives
+in the regime the rollout divergence read-out found uninformative: δ̂ climbs
+monotonically, illegal and control both saturate near 1.23 against a ~1.41
+unrelated-activations ceiling, and the illegal/control ratio is pinned to 1.00 by
+*r* ≥ 8 — only *r* = 0 separates, at 1.032, with the sign opposite the spliced
+0.979. In particular the one-game permutation ratios **improve** under rollout
+(game 1235: 0.09–1.05× → 0.44–1.70×, exact *p* 0.18–0.82) and that is not the
+plane getting better at legality. Axis 2 is the leading PC of the residual over
+all offsets, so under rollout it picks up the branches' divergent futures, which
+are a large real signal that says nothing about the move at *t0*.
