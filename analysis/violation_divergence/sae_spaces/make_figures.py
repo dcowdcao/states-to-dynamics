@@ -19,12 +19,21 @@ every number. What is worth a figure is the one place the dictionaries do
 separate from the residual stream: a handful of features that fire on a
 violation and almost never on either legal branch.
 
-Reads $SPADE_DIVERGENCE_DIR/divergence/*.npz written by
+Reads $SPADE_DIVERGENCE_DIR[/rollout]/divergence/*.npz written by
 src/spade/violation_divergence/compute_divergence.py — no re-encoding.
 
+`--variant rollout` reads the tree where every branch, the reference included,
+samples its own continuation, and writes `*_rollout` names beside the spliced
+ones. That tree holds K rollouts per source branch as contiguous rows, so every
+per-branch score the figure draws is averaged over them first (`per_branch`);
+otherwise a branch is one item K times in the bootstrap and the interval is ~2x
+too tight. The CSVs stay row-level and say so in `n_rows`.
+
 Usage: python analysis/violation_divergence/sae_spaces/make_figures.py
+       [--variant rollout]
 """
 
+import argparse
 import csv
 from functools import lru_cache
 from pathlib import Path
@@ -33,21 +42,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from spade.common.paths import results_dir
-from spade.common.study import study_dir
+from spade.common.study import variant_dir
 from spade.figures.paper_style import (
     CATEGORY_STYLE, MUTED, NULL, OKABE_ITO, apply_style,
     rule_key, sae_label, save_figure)
 from spade.othello.taxonomy import CATEGORIES
-
-apply_style()
+from spade.violation_divergence.rollout_branches import K_ROLLOUTS
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 CSV_DIR = results_dir("violation_divergence")
-DIV = study_dir("divergence") / "divergence"
+VARIANTS = ("spliced", "rollout")
 
 RAW = "resid_post_5"                 # the dense space the dictionaries encode
 ILLEGAL = CATEGORIES[1:]             # the six violation categories, taxonomy order
 SERIES = ILLEGAL + ["control_legal"]
+EMPTY_SQUARE = ILLEGAL[2:]           # the four violations that place on an empty square
 POOLED = "illegal_pooled"
 DICT_WIDTH = 8192                    # every seed-42 dictionary; config.json dict_size
 TOPK = 10                            # topk_idx width, and k in topk_share
@@ -75,10 +84,26 @@ def label(space: str) -> str:
 
 
 @lru_cache
-def load(space: str):
+def load(space: str, variant: str):
     """Every array of one space, materialized once — the figures read the same
     npz a few dozen times each."""
-    return dict(np.load(DIV / f"{space}.npz"))
+    tree = variant_dir("divergence", variant="" if variant == "spliced" else variant)
+    return dict(np.load(tree / "divergence" / f"{space}.npz"))
+
+
+def named(name: str, variant: str) -> str:
+    """Today's names stay with the spliced tree; a variant gets its own."""
+    return name if variant == "spliced" else f"{name}_{variant}"
+
+
+def per_branch(values: np.ndarray, k: int) -> np.ndarray:
+    """Average a per-row score over the K rollouts of its source branch.
+
+    The rollout tree stores them as contiguous rows (`row = source_row * K + k`)
+    and every mask here selects on columns constant within a branch, so a reshape
+    is the grouping. k = 1 in the spliced tree, where this is the identity.
+    """
+    return values if k == 1 else values.reshape(-1, k, *values.shape[1:]).mean(1)
 
 
 def masks(meta) -> dict[str, np.ndarray]:
@@ -141,40 +166,43 @@ def recurrence(idx: np.ndarray) -> np.ndarray:
     return np.bincount(idx.ravel(), minlength=DICT_WIDTH) / len(idx)
 
 
-def split_half(idx: np.ndarray, gid: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Per-event overlap with the 10 features most recurrent on the other games.
+def split_half(idx: np.ndarray, gid: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
+    """Per-branch overlap with the 10 features most recurrent on the other games.
 
     Fitting and scoring on the same events would make any ranking look
     predictive; splitting on game parity is what turns "these ten indices came
     up often" into "the next event's top-10 is predictable". Returns the
-    per-event scores of each half, so the CI is over held-out games.
+    per-branch scores of each half, so the CI is over held-out games.
     """
     half = gid % 2 == 0
     out = []
     for fit, score in [(half, ~half), (~half, half)]:
         top = np.argsort(-recurrence(idx[fit]))[:TOPK]
-        out.append(np.isin(idx[score], top).sum(1) / TOPK)
+        out.append(per_branch(np.isin(idx[score], top).sum(1) / TOPK, k))
     return tuple(out)
 
 
-def feature_recurrence(meta, mask) -> None:
+def feature_recurrence(meta, mask, variant: str, k: int) -> None:
     gid = meta["game_id"]
     fig, axes = plt.subplots(1, 2, figsize=(9.6, 4.4))
     x = np.arange(len(SPACES))
     dodge = np.linspace(-0.3, 0.3, len(SERIES))
+    empty_square_rates = []
     for i, cond in enumerate(SERIES):
         style, rows = style_of(cond), mask[cond]
         top_rate, top_ci, gen, gen_ci = [], [], [], []
         for space in SPACES:
-            idx = load(space)["topk_idx"][rows]
+            idx = load(space, variant)["topk_idx"][rows]
             rec = recurrence(idx)
-            hit = np.isin(idx, int(rec.argmax())).any(1).astype(float)
+            hit = per_branch(np.isin(idx, int(rec.argmax())).any(1).astype(float), k)
             top_rate.append(hit.mean())
             top_ci.append(boot_ci(hit))
-            a, b = split_half(idx, gid[rows])
+            a, b = split_half(idx, gid[rows], k)
             scores = np.r_[a, b]
             gen.append(scores.mean())
             gen_ci.append(boot_ci(scores))
+        if cond in EMPTY_SQUARE:
+            empty_square_rates += top_rate
         for ax, mu, ci in [(axes[0], top_rate, top_ci), (axes[1], gen, gen_ci)]:
             mu, ci = np.array(mu), np.array(ci).T
             ax.errorbar(x + dodge[i], mu, yerr=np.abs(ci - mu), fmt=style["marker"],
@@ -207,19 +235,29 @@ def feature_recurrence(meta, mask) -> None:
     fig.legend([handles[i] for i in order], [labels[i] for i in order],
                loc="lower center", ncol=4, fontsize=8, bbox_to_anchor=(0.5, -0.03))
     fig.suptitle("One feature carries the divergence for 43-99% of empty-square "
-                 "violations in every dictionary, and for almost no legal move",
+                 "violations in every dictionary, and for almost no legal move"
+                 if variant == "spliced" else
+                 f"The same features still carry it when the suffix is sampled: "
+                 f"{min(empty_square_rates):.0%}-{max(empty_square_rates):.0%} of "
+                 "empty-square violations",
                  fontsize=11, y=1.02)
     fig.text(0.5, 0.95, "Top-$|\\Delta|$ features at $r = 0$, dictionary width 8192. "
              "Error bars are 95% percentile bootstrap over source games (1000 "
              "resamples); n per category is 1636-2000 games, 2000 for the control. "
              "Log y.\nIn (b) the ranking is fit on even-numbered games and scored on odd, "
              "and vice versa, so no event contributes to the ranking it is scored "
-             "against.",
+             "against." if variant == "spliced" else
+             "Top-$|\\Delta|$ features at $r = 0$, dictionary width 8192. $r = 0$ "
+             "depends only on the shared prefix, so this panel is the spliced study's "
+             f"own measurement read over K={K_ROLLOUTS} rollouts per branch.\n"
+             "Error bars are 95% percentile bootstrap over source branches (1000 "
+             "resamples), each branch's K scores averaged first; n per category is "
+             "1630-2000 branches, 2000 for the control. Log y.",
              fontsize=8, color=MUTED, style="italic", ha="center", va="top",
              linespacing=1.5)
     fig.tight_layout(rect=(0, 0.02, 1, 0.87))
     rule_key(fig, ["R1", "R2", "R3"], y=-0.12)
-    save_figure(fig, FIG_DIR / "sae_feature_recurrence")
+    save_figure(fig, FIG_DIR / named("sae_feature_recurrence", variant))
 
 
 # --- CSVs ------------------------------------------------------------------
@@ -233,19 +271,25 @@ DIVERGENCE_COLS = ["space", "condition", "n_rows", "n_games", "delta_r0",
                    "topk10_share_r0", "pr_r0", "dl0_r0"]
 
 
-def divergence_csv(meta, mask) -> None:
+def divergence_csv(meta, mask, variant: str) -> None:
     """Both peak conventions, labelled. `persistence()` takes each branch's own
     argmax and the mean of those lands at r ~ 4; the mean curve peaks at r = 0 in
     every space. The per-branch distribution is right-skewed (median 0), so its
-    mean is the weaker summary — but it is the one the npz stores, so both ship."""
+    mean is the weaker summary — but it is the one the npz stores, so both ship.
+
+    Row-level, and `n_rows` says so: in the rollout tree a row is one (branch,
+    rollout) pair. The means are unaffected -- K is the same for every branch --
+    but the medians and fractions here are over the pooled K samples, and nothing
+    in this file carries an interval."""
     window, gid = meta["window"], meta["game_id"]
     i0 = int(np.flatnonzero(window == 0)[0])
     post = window >= 0
-    with (CSV_DIR / "sae_divergence_by_space.csv").open("w", newline="") as fh:
+    with (CSV_DIR / f"{named('sae_divergence_by_space', variant)}.csv").open(
+            "w", newline="") as fh:
         out = csv.DictWriter(fh, DIVERGENCE_COLS)
         out.writeheader()
         for space in [RAW] + SPACES:
-            z = load(space)
+            z = load(space, variant)
             control = np.nanmean(z["plateau"][mask["control_legal"]])
             for cond in ILLEGAL + ["control_legal", POOLED]:
                 rows = mask[cond]
@@ -283,20 +327,21 @@ RECURRENCE_COLS = ["space", "condition", "n_rows", "top_feature", "top_recurrenc
                    "splithalf_chance", "n_features_half_mass"]
 
 
-def recurrence_csv(meta, mask) -> None:
+def recurrence_csv(meta, mask, variant: str, k: int) -> None:
     gid = meta["game_id"]
-    with (CSV_DIR / "sae_feature_recurrence.csv").open("w", newline="") as fh:
+    with (CSV_DIR / f"{named('sae_feature_recurrence', variant)}.csv").open(
+            "w", newline="") as fh:
         out = csv.DictWriter(fh, RECURRENCE_COLS)
         out.writeheader()
         for space in SPACES:
-            idx_all = load(space)["topk_idx"]
+            idx_all = load(space, variant)["topk_idx"]
             in_control = idx_all[mask["control_legal"]]
             for cond in ILLEGAL + ["control_legal", POOLED]:
                 rows = mask[cond]
                 idx = idx_all[rows]
                 rec = recurrence(idx)
                 order = np.argsort(-rec)[:3]
-                a, b = split_half(idx, gid[rows])
+                a, b = split_half(idx, gid[rows], k)
                 cum = np.cumsum(np.sort(rec)[::-1]) / TOPK
                 out.writerow({
                     "space": space, "condition": cond, "n_rows": int(rows.sum()),
@@ -310,21 +355,25 @@ def recurrence_csv(meta, mask) -> None:
                     "n_features_half_mass": int(np.searchsorted(cum, 0.5)) + 1})
 
 
-def contract(meta, mask) -> None:
+def contract(meta, mask, variant: str) -> None:
     """The cross-validation keys of the design doc, printed so RESULTS.md quotes
-    a run instead of a memory. A3 and A5 report the same names."""
+    a run instead of a memory. A3 and A5 report the same names.
+
+    `by_game` collapses each game's rows before the bootstrap, which absorbs the
+    rollout tree's K rows per branch as well as its six illegal rows per game."""
     window, gid = meta["window"], meta["game_id"]
     i0 = int(np.flatnonzero(window == 0)[0])
-    print(f"\nn_games {len(np.unique(gid))}"
-          f"  n_branches {len(meta['row'])} non-reference rows (15531 sequences)")
-    pl = load(RAW)["plateau"]
+    print(f"\nn_games {len(np.unique(gid))}  n_branches {len(meta['row'])} non-reference "
+          + ("rows (15531 sequences)" if variant == "spliced"
+             else f"rows = {len(meta['row']) // K_ROLLOUTS} branches x K={K_ROLLOUTS}"))
+    pl = load(RAW, variant)["plateau"]
     ill, con = mask[POOLED], mask["control_legal"]
     lo, hi = boot_ratio_ci(by_game(pl[ill], gid[ill]), by_game(pl[con], gid[con]))
     print(f"ratio_illegal_control_L5 {np.nanmean(pl[ill]) / np.nanmean(pl[con]):.4f}"
           f"  [{lo:.4f}, {hi:.4f}] 95% CI over games")
     print(f"{'space':32}{'jaccard_min':>12}{'at r':>6}{'topk10_share':>14}{'pr(0)':>9}")
     for space in SPACES:
-        z = load(space)
+        z = load(space, variant)
         j = np.nanmean(by_game(z["jaccard"][ill], gid[ill]), 0)[window >= 0]
         print(f"{space:32}{np.nanmin(j):12.4f}{window[window >= 0][int(np.nanargmin(j))]:6d}"
               f"{np.nanmean(z['topk_share'][ill, i0]):14.4f}"
@@ -332,20 +381,32 @@ def contract(meta, mask) -> None:
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--variant", default="spliced", choices=VARIANTS,
+                    help="rollout: every branch samples its own continuation "
+                         "($DIR/rollout/), K per branch, averaged")
+    variant = ap.parse_args().variant
+    apply_style()
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     CSV_DIR.mkdir(parents=True, exist_ok=True)
-    meta = load(RAW)
+    meta = load(RAW, variant)
     for space in SPACES:
-        assert np.array_equal(load(space)["row"], meta["row"]), f"{space}: row order"
+        assert np.array_equal(load(space, variant)["row"], meta["row"]), \
+            f"{space}: row order"
+    k = K_ROLLOUTS if variant == "rollout" else 1
+    assert k == 1 or np.array_equal(meta["rollout"], meta["row"] % k), \
+        "rows are not source_row * K + k"
     mask = masks(meta)
-    print(f"{len(np.unique(meta['game_id']))} games, {len(meta['row'])} branch rows")
+    rows = len(meta["row"])
+    print(f"{len(np.unique(meta['game_id']))} games, {rows} branch rows"
+          + (f" ({rows // k} branches x K={k})" if k > 1 else ""))
     for cond in ILLEGAL + ["control_legal", POOLED]:
         print(f"  {cond:18} {mask[cond].sum():6d}")
 
-    feature_recurrence(meta, mask)
-    divergence_csv(meta, mask)
-    recurrence_csv(meta, mask)
-    contract(meta, mask)
+    feature_recurrence(meta, mask, variant, k)
+    divergence_csv(meta, mask, variant)
+    recurrence_csv(meta, mask, variant, k)
+    contract(meta, mask, variant)
     print(f"\n{len(list(FIG_DIR.glob('*.png')))} figures in {FIG_DIR}")
     print(f"2 csvs in {CSV_DIR}")
 

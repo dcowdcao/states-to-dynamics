@@ -11,7 +11,14 @@ game's frame; decode.py's docstring states the convention and RESULTS.md spells
 it out. Conventions: FIGURE_GUIDELINES.md 4.2 (event-locked panels) and 3
 (reference styled as a reference, null gray/dashed/last).
 
-Usage: python analysis/violation_divergence/probe_readout/make_figures.py [--camera-ready]
+`--variant rollout` draws the same three read-outs off `probe_rollout_*.csv`,
+where every branch samples its own continuation. The panels are read the same
+way, with one caveat they carry: the reference's board is itself sampled there
+and ends at its first illegal move, so the anchors thin out with r and the
+per-offset n in the CSV is not constant.
+
+Usage: python analysis/violation_divergence/probe_readout/make_figures.py
+                                            [--variant rollout] [--camera-ready]
 """
 
 import argparse
@@ -27,6 +34,7 @@ from spade.violation_divergence.divergence import WINDOW
 
 RESULTS = results_dir("violation_divergence")
 FIGURES = Path(__file__).resolve().parent / "figures"
+VARIANTS = ("spliced", "rollout")
 
 EMPTY_SQUARE_CATEGORIES = ["empty_detached", "empty_own_only", "empty_no_bracket", "opponent_only"]
 OCCUPIED_CATEGORIES = ["occupied_own", "occupied_opp"]
@@ -66,7 +74,7 @@ def band_legend(ax, note: str = "", **kw) -> None:
     ax.legend(title=BAND + note, fontsize=7.4, title_fontsize=7, alignment="left", **kw)
 
 
-def occupancy_panel(ax, square: pd.DataFrame) -> None:
+def occupancy_panel(ax, square: pd.DataFrame, notes: bool) -> None:
     p = square[square.metric == "p_disc"]
     illegal = p[p.role == "illegal"]
     for i, category in enumerate(EMPTY_SQUARE_CATEGORIES):
@@ -82,6 +90,8 @@ def occupancy_panel(ax, square: pd.DataFrame) -> None:
     curve(ax, pooled[pooled.role == "control"], NULL,
           "control_legal branch, same square (coincides)", offset=3,
           ls=NULL["ls"], lw=NULL["lw"], zorder=4)
+    if not notes:
+        return
     ax.annotate("a disc that really was placed", xy=(18, 0.995), xytext=(14, 0.87),
                 fontsize=7, color=MUTED, ha="center",
                 arrowprops={"arrowstyle": "-", "color": MUTED, "lw": 0.6})
@@ -91,7 +101,7 @@ def occupancy_panel(ax, square: pd.DataFrame) -> None:
     band_legend(ax, loc="center left", bbox_to_anchor=(0.28, 0.62))
 
 
-def recolor_panel(ax, square: pd.DataFrame) -> None:
+def recolor_panel(ax, square: pd.DataFrame, notes: bool) -> None:
     p = square[square.metric == "p_mover_colour"]
     for i, category in enumerate(OCCUPIED_CATEGORIES):
         short = CATEGORY_STYLE[category]["label"].removeprefix("R1 ")
@@ -101,6 +111,8 @@ def recolor_panel(ax, square: pd.DataFrame) -> None:
         curve(ax, p[(p.category == category) & (p.role == "reference")],
               CATEGORY_STYLE[category], f"{short}, reference branch",
               offset=i + 3, ls=(0, (1, 1.4)), lw=1.3, zorder=3)
+    if not notes:
+        return
     gap = p[(p.category == "occupied_opp") & (p.r == 0)].set_index("role")["mean"]
     ax.annotate("", xy=(0.7, gap["illegal"]), xytext=(0.7, gap["reference"]),
                 arrowprops={"arrowstyle": "<->", "color": MUTED, "lw": 0.8})
@@ -127,26 +139,47 @@ def parity_panel(ax, parity: pd.DataFrame) -> None:
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--variant", default="spliced", choices=VARIANTS,
+                        help="rollout: every branch samples its own continuation")
     parser.add_argument("--camera-ready", action="store_true")
     args = parser.parse_args()
     apply_style(camera_ready=args.camera_ready)
+    stem = "probe" if args.variant == "spliced" else f"probe_{args.variant}"
+    figure = "f7_probe_readout" + ("" if args.variant == "spliced" else f"_{args.variant}")
 
-    square = pd.read_csv(RESULTS / "probe_illegal_square.csv")
+    square = pd.read_csv(RESULTS / f"{stem}_illegal_square.csv")
 
     # The parity panel is dropped: engine-replay mover and t%2 disagree on 0.20%
     # of cells in this window and the probe is at chance on exactly those, so the
     # curve sits flat at ~1 and carries no result. probe_parity.csv keeps it.
+    spliced = args.variant == "spliced"
     fig, axes = plt.subplots(1, 2, figsize=(9.0, 4.2))
-    occupancy_panel(axes[0], square)
+    occupancy_panel(axes[0], square, spliced)
     event_axes(axes[0], "P(illegally played square decodes as occupied)", "a",
                "" if args.camera_ready else "the illegal disc is written, and it stays")
-    recolor_panel(axes[1], square)
+    recolor_panel(axes[1], square, spliced)
     event_axes(axes[1], "P(that square decodes the mover's own colour)", "b",
                "" if args.camera_ready else "occupied squares: no-op or recolor")
 
     fig.tight_layout()
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.01)
-    print(save_figure(fig, FIGURES / "f7_probe_readout", camera_ready=args.camera_ready))
+    if not spliced:
+        # The in-panel legends and annotations are placed against the spliced
+        # curves; here the anchors move, so both legends go under the figure.
+        for i, ax in enumerate(axes):
+            handles, labels = ax.get_legend_handles_labels()
+            fig.legend(handles, labels, loc="upper left", fontsize=7,
+                       bbox_to_anchor=(0.04 + 0.5 * i, -0.02), title=BAND,
+                       title_fontsize=7, alignment="left")
+        fig.text(0.5, -0.45, "rollout branch set: every branch samples its own "
+                 "continuation, K=4 averaged per branch, so a branch is one item.\n"
+                 "The reference's board is sampled too and ends at its first illegal "
+                 "move: 1.1% of window positions have no board and are dropped, so n "
+                 "falls with $r$.\nBoth anchors now rise as each branch's own rollout "
+                 "fills the square, not as a shared suffix does.",
+                 ha="center", va="top", fontsize=7.5, color=MUTED, style="italic",
+                 linespacing=1.5)
+    rule_key(fig, ["R1", "R2", "R3"], y=-0.01 if spliced else -0.62)
+    print(save_figure(fig, FIGURES / figure, camera_ready=args.camera_ready))
 
 
 if __name__ == "__main__":

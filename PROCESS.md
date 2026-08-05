@@ -1504,3 +1504,58 @@ it is what F2 is now drawn to show.
 
 Read every CSV in this study with `keep_default_na=False`; `category` and `rule` are empty
 strings on the aggregate rows and NaN drops every aggregate silently.
+
+## The violation-divergence figures against the rollout branch set
+
+`rollout_branches.py` regenerates every branch's continuation from the model, the
+reference included, so the shared suffix that made `control_legal` the *largest*
+perturbation in the study is gone. The four quantitative surfaces —
+`violation_divergence/make_figures.py`, `sae_spaces/`, `behavioral/`,
+`probe_readout/` — now take `--variant {spliced,rollout}` and write `*_rollout`
+beside today's names. Nothing on the default path changed: all 21 spliced figures and
+CSVs re-render byte-identically, checked with `cmp` before and after.
+
+**The headline flips sign and stops meaning anything, in that order.**
+`ratio_illegal_control_L5` goes 0.9797 [0.9715, 0.9871] spliced to 1.0016 [1.0002,
+1.0033] rollout, same estimator. So the "an illegal move displaces layer 5 *less*"
+ordering was the confound. But the rollout plateau is 1.23 against a measured
+unrelated-activation ceiling of 1.31, the ratio is 0.996 at r = 8 and 1.004 at
+r = 24, and both classes are still climbing — the interval excludes 1 because it is
+tight, not because the effect is there. `divergence_layer5_rollout` shades r >= 8 and
+draws the ceiling so the figure cannot be read the other way.
+
+**r = 0 is not new evidence.** delta-hat(0) depends only on `tokens[:t0+1]`, which the
+rollout copies verbatim, so the two trees agree to 1.1e-5 there (fp16 batch noise).
+The r = 0 ratio is 1.0348 in *both*. Anything the rollout reports at r = 0 — SAE
+feature recurrence, `p_illegal_disc_decoded` — is the spliced number again. The
+spliced 0.979 was always a plateau statement.
+
+**Two constructions break in the rollout tree and the figures say so.** The token
+embedding is no longer silent after t0 (plateau delta-hat 0 -> 1.233), so F3's
+"computed, not inherited" anchor does not exist there; and the reference's board is
+itself sampled, so it stops existing at the model's first illegal move — 4.2% of
+reference rollouts inside the window for F6, 1.1% of window positions for the probe
+read-out. Those positions are NaN and dropped, never scored as zero. Never fake a
+panel: F6's legal-mass and KL curves collapse onto one another in the rollout tree
+(0.289 vs 0.289, 7.44 vs 7.48 nats) and the panel titles were rewritten to say that
+rather than keep "legality still tracks the true board" over a curve that falls to
+0.29.
+
+**K = 4 is a trap.** The rollout tree stores K rows per source branch
+(`row = source_row * K + k`, contiguous), so anything that treats a row as an item
+inflates n fourfold and halves every interval. Every per-branch score is averaged over
+its K before the bootstrap (`reduce_k` / `per_branch` in each script, identity at
+K = 1 so the spliced path is bit-for-bit untouched); the pooled probe anchor collapses
+categories and rollouts in one `per_game`; the game-level bootstraps were already
+correct because a game's K rows resample together. Point estimates are unaffected —
+K is balanced — so only n and the intervals were ever at risk.
+
+`probe_readout/decode.py` now loads the layer-5 activations with `mmap=True`: the
+rollout tensor is 4.2 GB and a login session's cgroup caps at 8 GiB.
+
+Two things left open. `make_figures.py`'s `illegal_pooled` is every non-control row,
+which includes `control_legal_2`, while `sae_spaces` pools only the six illegal
+categories; the two `ratio_illegal_control_L5` values differ by 0.4% and should be
+pinned to one scope. And the rollout tree is temperature 1.0, seed 42, K = 4 only —
+nothing here separates "the branch move does not matter" from "temperature-1 sampling
+swamps it".

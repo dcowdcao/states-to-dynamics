@@ -23,8 +23,18 @@ reader can see how little it carries. `fp16_floor` measures what the fp16
 storage of acts/logits.pt costs a KL, since a KL read off quantised logits has a
 floor.
 
+`--variant rollout` reads the tree where every branch, the reference included,
+samples its own continuation. Two things change and the figure says both. Each
+of the K rollouts of a game carries its own reference, so the pairing is per
+(game, rollout) and the K rows of a branch are K samples of it -- the bootstrap
+resamples source games, which holds them together, and the legend counts
+branches. And the reference is now a *sampled* game, so its board exists only
+while OthelloGPT keeps playing legally: the legal-set mask stops at the first
+illegal move of the reference rollout and the positions after it are NaN, not
+zero. KL needs no board and keeps its full n.
+
 Usage: python analysis/violation_divergence/behavioral/make_figures.py [--smoke]
-                                                                      [--camera-ready]
+                                            [--variant rollout] [--camera-ready]
 """
 
 import argparse
@@ -37,13 +47,13 @@ import torch
 
 from spade.common.config import CTX_LEN
 from spade.common.paths import results_dir
-from spade.common.study import study_dir
+from spade.common.study import variant_dir
 from spade.figures.paper_style import (
     CATEGORY_STYLE, GRID, INK, MUTED, NULL, REFERENCE, apply_style, rule_key,
     save_figure)
 from spade.othello.boards import regular_moves, replay, tokens_of
 from spade.violation_divergence.branches import role
-from spade.violation_divergence.compute_divergence import pairs
+from spade.violation_divergence.compute_divergence import group_key, pairs
 from spade.violation_divergence.divergence import PLATEAU_R, WINDOW, align, persistence
 
 from circuits.othello_engine_utils import OthelloBoardState, to_string
@@ -57,6 +67,14 @@ SQUARES = 60        # the chance model: uniform over the tokens that name a squa
 ROW_BATCH = 1024    # 1024 seqs x 59 positions x 61 tokens x 4 B = 15 MB per tensor
 N_BOOT = 1000
 FLOAT16_SAMPLE = 20000  # (row, position) pairs behind the quantisation floor
+
+VARIANTS = ("spliced", "rollout")
+
+
+def stem(name: str, variant: str) -> str:
+    """Today's names stay with the spliced tree; a variant gets its own."""
+    return name if variant == "spliced" else f"{name}_{variant}"
+
 
 ILLEGAL = [c for c in CATEGORY_STYLE if c != "legal"]
 CURVES = ["reference", *ILLEGAL, "control_legal"]  # baseline first, null last
@@ -72,11 +90,20 @@ PLATEAU = (np.asarray(WINDOW) >= PLATEAU_R[0]) & (np.asarray(WINDOW) <= PLATEAU_
 # ---------------------------------------------------------------- measurement
 
 def reference_rows(meta: dict[str, torch.Tensor]) -> torch.Tensor:
-    return ((meta["category"] == 0) & (meta["is_control"] == 0)).nonzero().flatten()
+    """The reference row of each comparison group, in group order.
+
+    A group is a source game, or in the rollout tree one (game, rollout) sample,
+    since there each rollout carries its own reference.
+    """
+    rows = ((meta["category"] == 0) & (meta["is_control"] == 0)).nonzero().flatten()
+    assert torch.equal(group_key(meta)[rows], torch.arange(len(rows))), \
+        "reference rows are not one per group in group order"
+    return rows
 
 
-def legal_masks(meta: dict[str, torch.Tensor]) -> tuple[np.ndarray, np.ndarray, int]:
-    """Per game and board position, which tokens are legal on the reference board,
+def legal_masks(meta: dict[str, torch.Tensor],
+                sampled: bool) -> tuple[np.ndarray, np.ndarray, int, int]:
+    """Per group and board position, which tokens are legal on the reference board,
     and which colour moves next there.
 
     Only window positions are filled; everything else stays False and is never
@@ -84,27 +111,35 @@ def legal_masks(meta: dict[str, torch.Tensor]) -> tuple[np.ndarray, np.ndarray, 
     opponent play (R4 forfeit) and that is what the next token is, so that is the
     set scored. An all-False window position is a finished game, and the legal
     mass there is undefined rather than zero.
+
+    `sampled` says the reference's continuation came from the model rather than
+    from the source game, so it can leave the legal game and stop having a board
+    at all. Filling stops there and the rest of the window stays undefined; the
+    count of references that do this is returned and reported on the figure.
     """
     rows = reference_rows(meta)
-    assert torch.equal(meta["game_id"][rows], torch.arange(len(rows))), \
-        "reference rows are not one per game in game order"
     mask = np.zeros((len(rows), CTX_LEN, VOCAB), dtype=bool)
     to_move = np.zeros((len(rows), CTX_LEN), dtype=np.int8)
-    forfeits = 0
-    for game, row in enumerate(rows.tolist()):
+    forfeits, left_legal = 0, 0
+    for group, row in enumerate(rows.tolist()):
         tokens = meta["tokens"][row].long().tolist()
         window = {int(meta["t0"][row]) + r for r in WINDOW}
         board = OthelloBoardState()
         for s, token in enumerate(tokens):
-            board.umpire(to_string(token))
+            square = to_string(token)
+            if sampled and square not in (regular_moves(board.state, board.next_hand_color)
+                                          or regular_moves(board.state, -board.next_hand_color)):
+                left_legal += s <= max(window)
+                break
+            board.umpire(square)
             if s not in window:
                 continue
             mover = regular_moves(board.state, board.next_hand_color)
             forfeits += not mover
             legal = mover or regular_moves(board.state, -board.next_hand_color)
-            mask[game, s, tokens_of(legal)] = True
-            to_move[game, s] = board.next_hand_color if mover else -board.next_hand_color
-    return mask, to_move, forfeits
+            mask[group, s, tokens_of(legal)] = True
+            to_move[group, s] = board.next_hand_color if mover else -board.next_hand_color
+    return mask, to_move, forfeits, left_legal
 
 
 def branch_board_mass(logits: torch.Tensor, meta: dict[str, torch.Tensor],
@@ -143,7 +178,9 @@ def read_out(logits: torch.Tensor, meta: dict[str, torch.Tensor],
     own = reference_rows(meta)
     rows = torch.cat([branch, own])
     against = torch.cat([reference, own])
-    game = meta["game_id"][rows]
+    # `group` indexes the legal-set mask (one reference per group); `game` is the
+    # bootstrap's cluster, and in the rollout tree one game holds K groups.
+    group, game = group_key(meta)[rows], meta["game_id"][rows]
     mask = torch.from_numpy(mask)
 
     per_position = {key: torch.empty(len(rows), CTX_LEN)
@@ -152,7 +189,7 @@ def read_out(logits: torch.Tensor, meta: dict[str, torch.Tensor],
         sl = slice(i, i + ROW_BATCH)
         logp = logits[rows[sl]].float().log_softmax(-1)
         p = logp.exp()
-        legal = mask[game[sl]]
+        legal = mask[group[sl]]
         per_position["kl"][sl] = (p * (logp - logits[against[sl]].float().log_softmax(-1))).sum(-1)
         per_position["legal_mass"][sl] = (p * legal).sum(-1)
         per_position["top1_legal"][sl] = legal.gather(
@@ -222,6 +259,12 @@ def game_ci(values: np.ndarray, game: np.ndarray,
 
 
 def curves(data: dict[str, np.ndarray], rng: np.random.Generator) -> pd.DataFrame:
+    """Per branch class, the three read-outs against r, with a game bootstrap.
+
+    `n_rows` counts sequences, so in the rollout tree it is K per branch and the
+    figure divides it down. The column means are over rows and a branch's K are
+    balanced, so the estimate is a branch mean either way; the interval is a game
+    bootstrap, which holds a branch's K rows together."""
     rows = []
     for name in [*CURVES, "illegal_pooled"]:
         sel = np.isin(data["branch"], ILLEGAL) if name == "illegal_pooled" \
@@ -303,11 +346,25 @@ def named(curve_data: pd.DataFrame, metric: str) -> pd.DataFrame:
                                       f"{metric}_hi": "hi"})
 
 
-def kl_panel(ax, curve_data: pd.DataFrame) -> None:
+KL_TITLE = {"spliced": "the break is immediate and never heals",
+            "rollout": "two independent samples of the future, drifting apart"}
+KL_PLATEAU_TAIL = {"spliced": "of the peak — no recovery",
+                   "rollout": "of the peak — still climbing at the window edge"}
+LEGAL_TITLE = {"spliced": "legality still tracks the true board",
+               "rollout": "with a sampled reference board, no class tracks it"}
+LEGAL_YLABEL = {
+    "spliced": "probability on the reference board's legal moves\n"
+               "higher = legality still tracks the true board",
+    "rollout": "probability on the reference rollout's legal moves\n"
+               "higher = the branch still predicts the reference's board",
+}
+
+
+def kl_panel(ax, curve_data: pd.DataFrame, k: int, variant: str) -> None:
     for name in [*ILLEGAL, "control_legal"]:
         c = named(curve_data[curve_data.branch == name], "kl")
         curve(ax, c, BRANCH_STYLE[name],
-              f"{BRANCH_STYLE[name]['label']} (n={int(c.n_rows.iloc[0]):,})")
+              f"{BRANCH_STYLE[name]['label']} (n={int(c.n_rows.iloc[0]) // k:,})")
     pooled = curve_data[curve_data.branch == "illegal_pooled"].reset_index(drop=True)
     peak = int(pooled.kl_mean.where(pooled.r >= 0).idxmax())
     plateau = float(pooled.kl_mean[PLATEAU].mean())
@@ -317,21 +374,22 @@ def kl_panel(ax, curve_data: pd.DataFrame) -> None:
                 textcoords=("data", "axes fraction"), va="top", fontsize=7.5, color=INK,
                 arrowprops={"arrowstyle": "->", "lw": 0.8, "color": MUTED})
     ax.annotate(f"plateau over $r\\in[{PLATEAU_R[0]}, {PLATEAU_R[1]}]$: {plateau:.2f} nats,\n"
-                f"{plateau / pooled.kl_mean[peak]:.0%} of the peak — no recovery",
+                f"{plateau / pooled.kl_mean[peak]:.0%} {KL_PLATEAU_TAIL[variant]}",
                 xy=(22, plateau), xytext=(11.5, 0.30), textcoords=("data", "axes fraction"),
                 va="top", fontsize=7.5, color=INK,
                 arrowprops={"arrowstyle": "->", "lw": 0.8, "color": MUTED})
     ax.set_ylim(bottom=0)
     ax.set_ylabel("$KL(p_{\\mathrm{branch}} \\Vert p_{\\mathrm{reference}})$ (nats)\n"
                   "higher = the prediction has moved further")
-    ax.set_title("the break is immediate and never heals", fontsize=9.5)
+    ax.set_title(KL_TITLE[variant], fontsize=9.5)
 
 
-def legal_panel(ax, curve_data: pd.DataFrame, control_own_board: float) -> None:
+def legal_panel(ax, curve_data: pd.DataFrame, control_own_board: float, k: int,
+                variant: str) -> None:
     for name in CURVES:
         c = named(curve_data[curve_data.branch == name], "legal_mass")
         curve(ax, c, BRANCH_STYLE[name],
-              f"{BRANCH_STYLE[name]['label']} (n={int(c.n_rows.iloc[0]):,})")
+              f"{BRANCH_STYLE[name]['label']} (n={int(c.n_rows.iloc[0]) // k:,})")
     reference = curve_data[curve_data.branch == "reference"].reset_index(drop=True)
     baseline = float(reference.legal_mass_mean[PRE].mean())
     ax.axhline(baseline, color=MUTED, lw=0.8, ls=(0, (1, 2)), zorder=1)
@@ -341,24 +399,36 @@ def legal_panel(ax, curve_data: pd.DataFrame, control_own_board: float) -> None:
             fontsize=7.5, color=MUTED)
     pooled = curve_data[curve_data.branch == "illegal_pooled"].reset_index(drop=True)
     low = int(pooled.legal_mass_mean.where(pooled.r >= 0).idxmin())
+    control = curve_data[curve_data.branch == "control_legal"].reset_index(drop=True)
+    tail = (f"control_legal is lowest\nbecause it puts {control_own_board:.3f} on its "
+            "*own* board's legal set" if variant == "spliced" else
+            "the legal control falls\nwith it, to "
+            f"{float(control.legal_mass_mean[PLATEAU].mean()):.2f} — this read-out no "
+            "longer\nseparates legality from a different legal move")
     ax.annotate(f"pooled illegal falls to {pooled.legal_mass_mean[low]:.3f} at $r$={pooled.r[low]}\n"
                 f"and settles near {float(pooled.legal_mass_mean[PLATEAU].mean()):.2f}. "
-                f"control_legal is lowest\nbecause it puts {control_own_board:.3f} on its "
-                "*own* board's legal set",
+                + tail,
                 xy=(pooled.r[low], pooled.legal_mass_mean[low]), xytext=(3.0, 0.52),
                 textcoords=("data", "axes fraction"), va="top", fontsize=7.5, color=INK,
                 arrowprops={"arrowstyle": "->", "lw": 0.8, "color": MUTED})
     ax.set_ylim(0, 1.04)
-    ax.set_ylabel("probability on the reference board's legal moves\n"
-                  "higher = legality still tracks the true board")
-    ax.set_title("legality still tracks the true board", fontsize=9.5)
+    ax.set_ylabel(LEGAL_YLABEL[variant])
+    ax.set_title(LEGAL_TITLE[variant], fontsize=9.5)
+
+
+F6_TITLE = {
+    "spliced": "An illegal move changes what OthelloGPT predicts, immediately and for "
+               "the rest of the game",
+    "rollout": "Sampling every branch's future removes the shared suffix, and most of "
+               "the read-out gap with it",
+}
 
 
 def f6(curve_data: pd.DataFrame, control_own_board: float, odd_r_parity: float,
-       camera_ready: bool) -> None:
+       variant: str, k: int, left_legal: float, camera_ready: bool) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(11.0, 5.2))
-    kl_panel(axes[0], curve_data)
-    legal_panel(axes[1], curve_data, control_own_board)
+    kl_panel(axes[0], curve_data, k, variant)
+    legal_panel(axes[1], curve_data, control_own_board, k, variant)
     for i, (ax, note, y) in enumerate(zip(axes, ("zero by construction",
                                                 "identical by construction"), (0.965, 0.88))):
         pre_event(ax, note, y)
@@ -366,8 +436,12 @@ def f6(curve_data: pd.DataFrame, control_own_board: float, odd_r_parity: float,
         ax.set_xlabel("move offset $r = s - t_0$ (plies since the branch move)")
         ax.set_xlim(WINDOW[0], WINDOW[-1] + 0.4)
     axes[0].text(0.02, 0.21, "the sawtooth is turn parity, not noise: at odd $r$ the\n"
-                             "colour that played the branch move is to move again\n"
-                             f"({odd_r_parity:.1%} of window positions)",
+                 "colour that played the branch move is to move again\n"
+                 f"({odd_r_parity:.1%} of window positions)" if variant == "spliced" else
+                 "no sawtooth: the branches no longer share a suffix, so\n"
+                 "turn parity is not aligned across them\n"
+                 f"(the branch's colour still moves at odd $r$ in {odd_r_parity:.1%} "
+                 "of positions)",
                  transform=axes[0].transAxes, ha="left", va="top", fontsize=7.5, color=MUTED)
     handles, labels = axes[1].get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 0.04), ncol=4,
@@ -375,13 +449,19 @@ def f6(curve_data: pd.DataFrame, control_own_board: float, odd_r_parity: float,
                title="bands: 95% CI, 1000-resample percentile bootstrap over source games; "
                      "n = branch sequences, one per source game.\n"
                      "The reference branch scored against itself is 0 nats at every $r$ "
-                     "and is drawn only in (b), where it is the ceiling.")
+                     "and is drawn only in (b), where it is the ceiling."
+               if variant == "spliced" else
+               f"bands: 95% CI, 1000-resample percentile bootstrap over source games, which "
+               f"holds a branch's K={k} rollouts together; n = source branches.\n"
+               "Each branch is scored against the reference of its own rollout. In (b) the "
+               "reference's board is itself sampled and ends at its first illegal move, "
+               f"which {left_legal:.1%} of reference rollouts reach inside the window; "
+               "those positions are dropped, not scored as zero.")
     if not camera_ready:
-        fig.suptitle("An illegal move changes what OthelloGPT predicts, immediately and "
-                     "for the rest of the game", y=1.0)
+        fig.suptitle(F6_TITLE[variant], y=1.0)
     fig.tight_layout()
     rule_key(fig, ["R1", "R2", "R3"], y=-0.17)
-    save_figure(fig, FIGURES / "f6_behavioral_divergence", camera_ready)
+    save_figure(fig, FIGURES / stem("f6_behavioral_divergence", variant), camera_ready)
 
 
 # ---------------------------------------------------------------- driver
@@ -389,24 +469,35 @@ def f6(curve_data: pd.DataFrame, control_own_board: float, odd_r_parity: float,
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--smoke", action="store_true", help="the 50-game set under $DIR/smoke/")
+    ap.add_argument("--variant", default="spliced", choices=VARIANTS,
+                    help="rollout: every branch samples its own continuation "
+                         "($DIR[/smoke]/rollout/), K per branch")
     ap.add_argument("--camera-ready", action="store_true",
                     help="vector PDF, no in-figure title")
     args = ap.parse_args()
     apply_style(camera_ready=args.camera_ready)
     rng = np.random.default_rng(0)
+    variant = args.variant
+    sampled = variant == "rollout"
 
-    base = study_dir("divergence") / "smoke" if args.smoke else study_dir("divergence")
+    base = variant_dir("divergence", args.smoke, "" if variant == "spliced" else variant)
     meta = torch.load(base / "branches" / "branches.pt", weights_only=True)
     logits = torch.load(base / "acts" / "logits.pt", weights_only=True)
     assert logits.shape[1:] == (CTX_LEN, VOCAB), f"unexpected logits shape {logits.shape}"
+    k = int(meta["rollout"].max()) + 1 if sampled else 1
 
-    mask, to_move, forfeits = legal_masks(meta)
+    mask, to_move, forfeits, left_legal = legal_masks(meta, sampled)
     data = read_out(logits, meta, mask)
     assert (data["kl"][data["branch"] == "reference"] == 0).all(), \
         "a reference row diverges from itself"
     assert (data["kl"][:, PRE] == 0).all(), "KL nonzero before t0"
 
+    # A spliced reference replays a real game, so it cannot leave the legal game and
+    # the count is reported only where it can be nonzero.
+    left_legal_frac = left_legal / len(reference_rows(meta))
     extra = {"n_forfeit_positions": forfeits, "n_finished_positions": int(data["n_finished"]),
+             **({"n_reference_left_legal": left_legal,
+                 "frac_reference_left_legal": left_legal_frac} if sampled else {}),
              "mean_reference_legal_moves": float(np.nanmean(data["n_legal_ref"])),
              **turn_parity(to_move, meta["t0"][reference_rows(meta)].numpy()),
              **branch_board_mass(logits, meta, rng), **fp16_floor(logits, rng)}
@@ -414,10 +505,13 @@ def main() -> None:
     table = summary(data, curve_data, extra)
 
     RESULTS.mkdir(parents=True, exist_ok=True)
-    curve_data.to_csv(RESULTS / "behavioral_curves.csv", index=False, float_format="%.6g")
-    table.to_csv(RESULTS / "behavioral_summary.csv", index=False, float_format="%.6g")
+    curve_data.to_csv(RESULTS / f"{stem('behavioral_curves', variant)}.csv", index=False,
+                      float_format="%.6g")
+    table.to_csv(RESULTS / f"{stem('behavioral_summary', variant)}.csv", index=False,
+                 float_format="%.6g")
     f6(curve_data, extra["legal_mass_control_own_board_r0"],
-       extra["same_mover_as_branch_odd_r"], args.camera_ready)
+       extra["same_mover_as_branch_odd_r"], variant, k, left_legal_frac,
+       args.camera_ready)
     print(table[table.branch.isin(["illegal_pooled", "control_legal", "reference", "all"])]
           .to_string(index=False))
 
