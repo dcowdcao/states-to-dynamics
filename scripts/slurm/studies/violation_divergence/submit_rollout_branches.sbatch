@@ -5,7 +5,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=96G
-#SBATCH --time=0-01:00:00
+#SBATCH --time=0-03:00:00
 #SBATCH --output=logs/violation_divergence/%x_%j.out
 #SBATCH --error=logs/violation_divergence/%x_%j.err
 
@@ -27,3 +27,7 @@ DIR="${SPADE_DIVERGENCE_DIR:-/n/netscratch/ba_lab/Lab/$USER/spade_divergence}"
 # H100 at batch 1024. The hour is model download plus headroom.
 [ -f "$DIR/branches/branches.pt" ] || python -m spade.violation_divergence.branches
 [ -f "$DIR/rollout/branches/branches.pt" ] || python -m spade.violation_divergence.rollout_branches
+
+# Tokens alone draw nothing. K=4 rollouts per row, so this pass is 4x the spliced
+# tree's; the wall clock above covers it.
+[ -f "$DIR/rollout/acts/acts.pt" ] || python -m spade.violation_divergence.extract_acts --variant rollout
