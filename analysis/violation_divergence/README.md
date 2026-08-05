@@ -208,6 +208,11 @@ comes from the aggregates.
 
 ## Known gaps
 
+- **This study's `mean θ` is not the straightness study's, and the two must never
+  share an axis.** Both call `temporal_geometry` and both report degrees, but the
+  fork samples every `STRIDE=2` plies and straightness samples every ply. On the
+  same games the levels are 107.7° and 142.0°, they are anticorrelated across games
+  (r = −0.51), and every class contrast flips sign. `theta_comparability/`.
 - ~~M2's illegal-vs-control cosine has no matched null.~~ **Closed** — `control_legal_2`
   supplies it; see finding 5. The answer is that no illegal-specific direction exists.
 - The probe read-out (finding 1), the behavioural read-out (finding 2) and the SAE
