@@ -11,19 +11,25 @@ part of the 9, but encoded in the same pass because every figure needs them.
 
 Cached to `study_dir("legality")/latents/`, resumable per space:
 
-    probe_<space>.pt   [10000, d] fp16   the layer-5 probe fit set
-    row_<space>.json                     d, measured L0, prefix invariance
+    probe_<space>.pt   [n, d] fp16   the layer-5 probe fit set
+    row_<space>.json                 d, measured L0, prefix invariance, probe fingerprint
 
 The probe fit set is cached because refitting a probe is the expensive thing. The branch
 window is not cached: `stream_branch` yields it one `spans()` batch at a time, so a
 read-out reduces [rows, 33, d] to its own scalars without a [17527, 33, 8192] tensor —
 9.5 GB per space — ever existing. `space_quality.csv` joins the Karvonen eval metrics
-(L0, variance explained, reconstruction F1) that F4 regresses rule preservation against.
+(L0, variance explained, reconstruction F1) that F4 regresses rule preservation against;
+those, and everything else the branch window measures, are independent of the probe set.
+
+Which positions the probe is fitted on is still being settled, so `$SPADE_LEGALITY_PROBE_ACTS`
+switches the source and every row records a `probe_fingerprint` of it. A cached row whose
+fingerprint no longer matches is a hard error, not a silent reuse.
 
 Usage: python -m spade.legality_probe.spaces [--spaces raw,TopKTrainer-othello] [--smoke]
 """
 
 import argparse
+import hashlib
 import json
 import os
 from collections.abc import Iterator
@@ -32,7 +38,7 @@ from pathlib import Path
 import pandas as pd
 import torch
 
-from spade.common.config import LAYER
+from spade.common.config import D_MODEL, LAYER
 from spade.common.device import select_device
 from spade.common.paths import repo_root
 from spade.common.study import study_dir
@@ -57,6 +63,12 @@ ACTIVATIONS = Path(os.environ.get(
     "SPADE_LINEAR_PROBE_ACTIVATIONS",
     repo_root() / "analysis" / "linear_probe" / "activations"))
 
+# The probe fit set, as a single path, because it is the one input that may be replaced:
+# the committed linear-probe extraction holds positions whose token sequences may not be
+# recoverable, and a freshly extracted [n, 512] set drops in here.
+PROBE_ACTS = Path(os.environ.get(
+    "SPADE_LEGALITY_PROBE_ACTS", ACTIVATIONS / "all_layer_activations.pt"))
+
 
 def roster() -> list[tuple[str, SAEEntry | None]]:
     """(space_name, entry_or_None) for raw + the 8 seed-42 SAEs. Never the nulls."""
@@ -75,10 +87,19 @@ def quality() -> pd.DataFrame:
     return evals.set_index("space")[["l0", "variance_explained", "reconstruction_f1"]]
 
 
-def probe_acts() -> torch.Tensor:
-    """[10000, 512] float32: the linear-probe fit set at layer 5."""
-    return torch.load(ACTIVATIONS / "all_layer_activations.pt",
-        map_location="cpu", weights_only=True)[LAYER]
+def probe_acts(path: Path = PROBE_ACTS) -> torch.Tensor:
+    """[n, 512] float32 layer-5 fit set; an [8, n, 512] all-layer stack is sliced to LAYER."""
+    acts = torch.load(path, map_location="cpu", weights_only=True)
+    assert acts.shape[-1] == D_MODEL, acts.shape
+    return acts[LAYER] if acts.ndim == 3 else acts
+
+
+def fingerprint(acts: torch.Tensor) -> str:
+    """Identifies the probe position set, so encodings of one are never mistaken for
+    encodings of another. `tpr_probe._fingerprint`'s job, over floats: shape plus a
+    digest of the bytes, since a float sum collides far too easily to key a cache on."""
+    digest = hashlib.blake2b(acts.contiguous().numpy().tobytes(), digest_size=8)
+    return f"{tuple(acts.shape)}:{digest.hexdigest()}"
 
 
 def branch_window() -> tuple[torch.Tensor, torch.Tensor]:
@@ -132,7 +153,8 @@ def measure(name: str, entry: SAEEntry | None, probe: torch.Tensor, branch: torc
         bitwise &= prefix_bitwise(code, game_id[rows])
     return {"space": name, "d_space": probe_code.shape[-1],
             "l0_window": round(nonzero / positions, 3),
-            "prefix_bitwise": bitwise, "n_window_positions": positions}
+            "prefix_bitwise": bitwise, "n_window_positions": positions,
+            "probe_fingerprint": fingerprint(probe)}
 
 
 def main() -> None:
@@ -150,6 +172,8 @@ def main() -> None:
     branch, game_id = branch_window()
     if args.smoke:
         probe, branch, game_id = probe[:SMOKE_PROBE], branch[:SMOKE_ROWS], game_id[:SMOKE_ROWS]
+    fp = fingerprint(probe)
+    print(f"probe set {PROBE_ACTS}\nfingerprint {fp}", flush=True)
     for start, end in spans(game_id, ROW_BATCH):
         assert prefix_bitwise(branch[start:end], game_id[start:end]), \
             "raw r < 0 activations are not bitwise shared"
@@ -163,7 +187,11 @@ def main() -> None:
     for name, entry in chosen:
         row_path = out / f"row_{name}.json"
         if row_path.exists():
-            rows.append(json.loads(row_path.read_text()))
+            row = json.loads(row_path.read_text())
+            assert row["probe_fingerprint"] == fp, (
+                f"{row_path} holds encodings of probe set {row['probe_fingerprint']}, "
+                f"not the current {fp}; delete the cache rather than mixing the two")
+            rows.append(row)
             print(f"skip {name} (cached)", flush=True)
             continue
         row = measure(name, entry, probe, branch, game_id, out, device)

@@ -47,6 +47,15 @@ storage would have cut the 76 GB by ~6x and was rejected for the same reason: a 
 change for a tensor that should not exist. `prefix_bitwise` becomes span-local for free —
 `spans` never splits a game, so a span holds every branch of every game it touches.
 
+**Every row records a fingerprint of the probe position set.** Which positions the probe is
+fitted on is still being settled: the committed `analysis/linear_probe/activations/` set is
+not known to be disjoint from the read-out branch games, and a freshly extracted set that is
+may replace it. `$SPADE_LEGALITY_PROBE_ACTS` switches the source, and `fingerprint()` does
+`tpr_probe._fingerprint`'s job over floats — shape plus a blake2b digest of the bytes, since
+a float sum collides far too easily to key a cache on. A cached row whose fingerprint no
+longer matches is an assertion, not a silent reuse. Nothing measured off the branch window —
+L0, prefix invariance, d, everything in `space_quality.csv` — depends on the probe set.
+
 Cache: `study_dir("legality")/latents/`, resumable per space on `row_<space>.json`. Only
 `probe_<space>.pt` is written, 164 MB per 8192-wide space, ~1.5 GB for all 11 — refitting a
 probe is the expensive thing to redo, re-encoding a window is not.
