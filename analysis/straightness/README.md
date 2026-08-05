@@ -4,12 +4,14 @@ Does the perceptual-straightening result (ReStraV, arXiv:2507.00583; summary in
 `docs/ReStraV_Summary.md`) transfer to OthelloGPT? There, natural videos trace
 straighter trajectories in DINOv2 space than AI-generated ones. Here, the
 "video" is a game's 59-move sequence, the "frame embedding" is the activation
-at each position, and the classes are: legal games (training distribution, the
-baseline every comparison is scored against), OthelloGPT temp-1 rollouts, games
-with one injected illegal move (no-flip placement at t0, then random legal
-continuation), uniform random token sequences, and real human championship games
-(WTHOR 2014-2023). Metrics are ReStraV's verbatim: step lengths d, turning
-angles θ, and the 21-D feature vector (`src/spade/straightness/geometry.py`).
+at each position, and the classes drawn are: legal games (training distribution,
+the baseline every comparison is scored against), OthelloGPT temp-1 rollouts,
+games with one injected illegal move (no-flip placement at t0, then random legal
+continuation), and real human championship games (WTHOR 2014-2023). A fifth
+class of uniform random token sequences is built and stored but neither drawn nor
+scored (see Design notes). Metrics are ReStraV's verbatim: step lengths d,
+turning angles θ, and the 21-D feature vector
+(`src/spade/straightness/geometry.py`).
 
 ## Pipeline
 
@@ -27,6 +29,14 @@ One GPU job runs the whole chain:
 
 ## Design notes
 
+- The random-token class stays in the data and is out of every figure. `CLASSES`
+  in `build_games.py` fixes the block layout of `games.pt` and every geometry npz
+  indexes into it by position, so dropping it there would silently re-slice every
+  array. The figures take their class set from `CLASS_STYLE` instead, through
+  `spade.figures.straightness_panels.class_blocks`, and that dict has no entry for
+  it: nothing draws it, scores it, or fits on it. `classify.py` still writes its
+  `legal_vs_random_tokens` rows into `auroc.csv` and nothing reads them. What the
+  class supported is under *Retired* in `docs/claims_status.md`.
 - Position 0 is an attention sink (norm ~300 vs ~22) and is dropped; trajectories
   cover positions 1..58.
 - Every space ships raw + centered (minus the mean legal train-split trajectory)
@@ -48,22 +58,26 @@ One GPU job runs the whole chain:
 
 ## Results (n=2000/class, seed 42)
 
-The hypothesis transfers with the **sign inverted and a depth flip**. AUROCs are
-mean-turning-angle scores of the non-legal side (>0.5 = that side curvier), raw
-variant, n=2000/class (championship = real WTHOR tournament games 2014-2023):
+The hypothesis transfers with the **sign inverted**, and the two out-of-distribution
+classes flip against each other with depth. AUROCs are mean-turning-angle scores
+of the non-legal side (>0.5 = that side curvier), raw variant, n=2000/class
+(championship = real WTHOR tournament games 2014-2023):
 
 | pair | W_E | L0 | L5 | L7 | LR-21 @ L7 |
 |---|---|---|---|---|---|
-| legal vs random_tokens | 0.81 | 1.00 | 0.01 | 0.02 | 1.00 |
 | legal vs violation | 0.52 | 0.56 | 0.40 | 0.37 | 0.84 |
 | legal vs rollout | 0.49 | 0.49 | 0.50 | 0.51 | 0.50 |
 | legal vs championship | 0.23 | 0.34 | 0.51 | 0.73 | 0.92 |
 
-- Early layers see OOD input as *curvier*; layers 4-7 flip: OOD trajectories
-  become much *straighter* with near-zero step lengths — the deep layers only do
-  large, direction-changing computation on in-distribution games and collapse to
-  small straight steps (toward an elevated-norm state) on garbage. ReStraV's
-  natural-video signature (low mean / high variance) is likewise inverted.
+- Rule violations are indistinguishable from legal games through layer 3 — the
+  0.52-0.56 they score there is the legal-vs-legal null's own reading (0.52-0.56;
+  the empirical noise floor is not centered on 0.5 early, which is why the figure
+  draws it as a band). They fall away from it at layer 4 (0.454, CIs still
+  touching) and are clear of it from layer 5 (0.397 [0.372, 0.421] against a null
+  of 0.504 [0.469, 0.541]), reaching 0.370 at L7, with step lengths following the
+  angle (mean-d 0.37 at L5, 0.20 at L7). That is ReStraV's result with the sign
+  inverted: here the out-of-distribution class is the straighter one, and only in
+  the deep layers.
 - The violation effect is exactly localized: Δθ against the matched source game
   is 0.00 at every position before t0 and peaks in magnitude at t0±1 (positive
   at L0, negative at L5/L7), decaying slowly with a mover-parity oscillation.
@@ -74,16 +88,17 @@ variant, n=2000/class (championship = real WTHOR tournament games 2014-2023):
   are *straighter* than synthetic games early (stereotyped strategic move
   statistics; W_E step lengths much smaller, d-AUROC 0.02) but *curvier with
   larger steps* at L6-L7 (θ 0.73, d 0.72) — deep layers work harder on legal
-  but unusual board states instead of collapsing. The straightness collapse is
-  therefore specific to rule violations, not distribution shift per se.
+  but unusual board states. Late-layer straightening is therefore specific to
+  rule violations; policy shift alone moves the geometry the other way.
 - Bootstrap 95% CIs over games are ~±0.025 wide. They matter in one place: the
   championship effect at L5 (0.509 [0.483, 0.535]) is *not* distinguishable from
   chance — the human-game signal is genuinely a late-layer phenomenon (L7 0.730
   [0.707, 0.752]), not a gradual rise.
-- SAE latents (layer 5): **every** family preserves the random-token separation
-  (PAnneal 0.01, BatchTopK 0.04, TopK 0.05, GatedSAE 0.11, GatedAnneal 0.14,
-  CosineSpaDE 0.16, SpaDE γ=1e-4 0.20, Standard 0.21), and every one localizes
-  the violation at t0±1. On violations CosineSpaDE (0.39) matches raw L5.
+- SAE latents (layer 5): **every** family preserves the violation separation
+  (CosineSpaDE 0.39, SpaDE γ=1e-4 0.42, PAnneal 0.41, GatedAnneal 0.43, TopK
+  0.44, Standard 0.44, BatchTopK 0.45, GatedSAE 0.46, against raw L5's 0.40) and
+  every one localizes the violation at t0±1. On championship games 7 of 8
+  separate where raw L5 does not (0.23-0.54, `sae_profiles/README.md`).
   All results hold under per-t centering. The SpaDE γ=1e-2 baseline is excluded
   — see `sae_profiles/README.md` for why.
 
@@ -91,13 +106,13 @@ variant, n=2000/class (championship = real WTHOR tournament games 2014-2023):
 
 | file | question |
 |---|---|
-| theta_dist_layer5.png | only rule-breaking games shift the layer-5 curvature distribution: random tokens sit ~4° left of legal with little overlap, while rollout and championship sit on top of it. Gaussian KDE per class with a bootstrap 95% band; triangles mark class medians; raw + per-t centered |
+| theta_dist_layer5.png | only games carrying an illegal move shift the layer-5 curvature distribution: the violation median sits 0.34° left of legal (mean-θ AUROC 0.40), while rollout and championship sit on top of it. Gaussian KDE per class with a bootstrap 95% band; triangles mark class medians; raw + per-t centered |
 | auroc_vs_depth.png | **headline.** where in depth does straightening emerge? mean-θ AUROC per class across W_E (input-space control) and layers 0-7, raw + per-t centered. Gray band = legal-vs-legal empirical null (the measured noise floor); shaded bands are stratified bootstrap 95% CIs over games; >0.5 = that class is curvier than legal, <0.5 = straighter |
 | curvature_vs_t.png | (a) curvature profile over the game per class, 95% CI bands &mdash; note all classes share a strong t-dependent "clock"; (b) violation-locked response: Δ turning angle vs. the matched source legal game, aligned at t0. Δ ≡ 0 before t0 by construction (shaded), troughs −4.3° at t0+1, decays with a mover-parity oscillation |
-| step_vs_t.png | the displacement-magnitude counterpart of curvature_vs_t, raw layer 5: (a) step-length ‖Δz‖ profile per class — random tokens sit ~20% below every other class across the whole game, and championship slightly *above* legal; (b) violation-locked Δ step length, −1.73 at t0+1 with a monotone decaying tail (no parity oscillation, unlike the angle) |
-| mean_vs_var_theta.png | ReStraV's signature is inverted here — the in-distribution class has HIGH mean and LOW variance (legal 142.0°/28.1 vs random 138.1°/35.8). One point per game, large markers are class medians |
-| sae_families_auroc.png | every SAE family preserves the curvature separation: on random tokens the bars run 0.01 (PAnneal) to 0.21 (Standard), all far below chance, and every family reaches LR-21 = 1.00. Rows are representation spaces, each panel one legal-vs-X comparison. Bars are mean-θ AUROC with bootstrap 95% CI, dots are LR-21; our methods outlined |
-| norm_diagnostics.png | step lengths corroborate the angle result with the same signs, so the effect is not a pure magnitude artifact: (a) random-token norms swell to 26.7 while other classes sit flat at ~23.4; (b) step-length AUROC by depth, with the legal-vs-legal null band |
+| step_vs_t.png | the displacement-magnitude counterpart of curvature_vs_t, raw layer 5: (a) step-length ‖Δz‖ profile per class — championship steps run ~5% above legal through the opening and cross below it at t≈36, while rollout and violation track legal; (b) violation-locked Δ step length, −1.73 at t0+1 with a monotone decaying tail (no parity oscillation, unlike the angle) |
+| mean_vs_var_theta.png | the two OOD classes leave legal on different axes: violations shift the mean turning angle, championship games its variance (medians legal 142.0°/27.7, violation 141.7°/27.3, championship 142.1°/30.6). One point per game, large markers are class medians |
+| sae_families_auroc.png | every SAE family keeps the violation separation (bars 0.39-0.46 against raw L5's 0.40, all below chance) and 7 of 8 separate championship games, which raw L5 does not. Rows are representation spaces, each panel one legal-vs-X comparison. Bars are mean-θ AUROC with bootstrap 95% CI, dots are LR-21; our methods outlined |
+| norm_diagnostics.png | the classes share one layer-5 norm profile (means 23.35-23.46), so the angle result is not a magnitude artifact, and step lengths carry the same signs as the angles: (a) per-position norms per class; (b) step-length AUROC by depth, with the legal-vs-legal null band |
 
 Two sibling studies extend these figures into the SAE latent spaces:
 `sae_profiles/` (per-position profiles and violation-locked responses per family,

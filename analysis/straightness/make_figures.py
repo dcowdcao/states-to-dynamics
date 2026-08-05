@@ -20,18 +20,17 @@ import torch
 
 from spade.common.paths import repo_root, results_dir
 from spade.common.study import study_dir
-from spade.straightness.build_games import CLASSES
 
 from spade.figures.straightness_panels import (
-    REL_WINDOW, density_panel, mean_sem as _mean_sem, profile_panel,
-    value_profile_panel, violation_delta, violation_panel)
+    DRAWN_CLASSES, REL_WINDOW, class_blocks, density_panel,
+    mean_sem as _mean_sem, profile_panel, value_profile_panel, violation_delta,
+    violation_panel)
 from spade.figures.paper_style import (
     CLASS_STYLE, GRID, INK, MUTED, NULL, REFERENCE, apply_style, sae_label)
 
-CLASS_COLORS = {c: s["color"] for c, s in CLASS_STYLE.items()}
 DEPTH_SPACES = ["token_embed"] + [f"resid_post_{i}" for i in range(8)]
 DEPTH_LABELS = ["W_E"] + [f"L{i}" for i in range(8)]
-OOD_PAIRS = [f"legal_vs_{c}" for c in CLASSES[1:]]
+OOD_PAIRS = [f"legal_vs_{c}" for c in DRAWN_CLASSES[1:]]
 
 apply_style()
 
@@ -43,11 +42,6 @@ def load(space: str, variant: str) -> dict[str, np.ndarray]:
     return dict(np.load(GEOM / f"{space}_{variant}.npz"))
 
 
-def class_blocks(n_total: int) -> dict[str, slice]:
-    n = n_total // len(CLASSES)
-    return {c: slice(i * n, (i + 1) * n) for i, c in enumerate(CLASSES)}
-
-
 def mean_theta_per_game(theta: np.ndarray) -> np.ndarray:
     return np.nanmean(theta, axis=1)
 
@@ -56,15 +50,15 @@ def f1_theta_dist(blocks):
     fig, axes = plt.subplots(1, 2, figsize=(9, 3.6), sharey=True)
     for ax, variant, panel in zip(axes, ["raw", "centered"], "ab"):
         mt = mean_theta_per_game(load("resid_post_5", variant)["theta"])
-        density_panel(ax, mt, blocks, CLASSES)
+        density_panel(ax, mt, blocks)
         ax.set_title(f"({panel}) {'raw' if variant == 'raw' else 'per-t centered'}",
                      loc="left")
     axes[1].set_ylabel("")
     axes[0].set_ylim(bottom=0)
     axes[0].legend(fontsize=7.5, loc="upper left")
-    fig.suptitle("Only rule-breaking games shift the curvature distribution "
-                 "(layer 5)", fontsize=11, y=1.00)
-    fig.text(0.5, 0.93, "Gaussian KDE, per-class Scott bandwidth (h = 0.21-0.35°); "
+    fig.suptitle("Only games carrying an illegal move shift the curvature "
+                 "distribution (layer 5), and by 0.3°", fontsize=11, y=1.00)
+    fig.text(0.5, 0.93, "Gaussian KDE, per-class Scott bandwidth (h = 0.21-0.25°); "
              "bands are 95% percentile bootstrap over games (1000 resamples)\n"
              "triangles mark class medians; n = 2000 games per class",
              fontsize=8, color=MUTED, style="italic", ha="center", va="top",
@@ -73,8 +67,7 @@ def f1_theta_dist(blocks):
     fig.savefig(FIG_DIR / "theta_dist_layer5.png", dpi=300, bbox_inches="tight")
 
 
-DEPTH_SERIES = [f"legal_vs_{c}" for c in ["random_tokens", "championship",
-                                          "violation", "rollout"]]
+DEPTH_SERIES = [f"legal_vs_{c}" for c in ["championship", "violation", "rollout"]]
 
 
 def f2_auroc_vs_depth(auroc: pd.DataFrame):
@@ -118,9 +111,9 @@ def f2_auroc_vs_depth(auroc: pd.DataFrame):
     axes[1].text(8.25, 0.5, "chance", fontsize=8, color=MUTED, ha="left", va="center",
                  clip_on=False)
     handles, labels = axes[0].get_legend_handles_labels()
-    order = [1, 2, 3, 4, 0]  # null last: it is a reference, not a condition
+    order = [1, 2, 3, 0]  # null last: it is a reference, not a condition
     fig.legend([handles[i] for i in order], [labels[i] for i in order],
-               loc="lower center", ncol=5, fontsize=8, bbox_to_anchor=(0.5, -0.03),
+               loc="lower center", ncol=4, fontsize=8, bbox_to_anchor=(0.5, -0.03),
                handlelength=2.0, columnspacing=1.2)
     fig.tight_layout(rect=(0, 0.07, 1, 0.95))
     fig.savefig(FIG_DIR / "auroc_vs_depth.png", dpi=300, bbox_inches="tight")
@@ -130,7 +123,7 @@ def f3_curvature_vs_t(blocks, data):
     theta = load("resid_post_5", "raw")["theta"]
     fig, axes = plt.subplots(1, 2, figsize=(9, 3.9))
 
-    profile_panel(axes[0], theta, blocks, CLASSES)
+    profile_panel(axes[0], theta, blocks)
     axes[0].set_title("(a) curvature profile over the game", loc="left")
     axes[0].legend(fontsize=7.5, loc="lower center", ncol=2, columnspacing=1.0)
 
@@ -161,7 +154,7 @@ def f3b_step_vs_t(blocks, data):
     d = load("resid_post_5", "raw")["d"]
     fig, axes = plt.subplots(1, 2, figsize=(9, 3.9))
 
-    value_profile_panel(axes[0], d, blocks, CLASSES, "mean step length ‖Δz‖", offset=2)
+    value_profile_panel(axes[0], d, blocks, "mean step length ‖Δz‖", offset=2)
     axes[0].set_xlabel("board position t (step ending at t)")
     axes[0].set_title("(a) step-length profile over the game", loc="left")
     axes[0].legend(fontsize=7.5, loc="best", ncol=2, columnspacing=1.0)
@@ -188,10 +181,10 @@ def f3b_step_vs_t(blocks, data):
 def f4_mean_vs_var(blocks):
     theta = load("resid_post_5", "raw")["theta"]
     mt, vt = np.nanmean(theta, 1), np.nanvar(theta, 1)
-    ood = CLASSES[1:]
+    ood = DRAWN_CLASSES[1:]
     fig, axes = plt.subplots(1, len(ood), figsize=(2.6 * len(ood), 3.3),
                              sharex=True, sharey=True)
-    for ax, c, panel in zip(axes, ood, "abcd"):
+    for ax, c, panel in zip(axes, ood, "abc"):
         for name in ["legal", c]:
             b, style = blocks[name], CLASS_STYLE[name]
             ax.scatter(mt[b], vt[b], s=5, alpha=0.22, lw=0, color=style["color"],
@@ -205,11 +198,13 @@ def f4_mean_vs_var(blocks):
         for h in leg.legend_handles:
             h.set_alpha(1)
     axes[0].set_ylabel("turning-angle variance")
-    fig.suptitle("ReStraV's signature is inverted: the in-distribution class has "
-                 "HIGH mean and LOW variance", fontsize=11, y=1.00)
+    fig.suptitle("Violations shift the mean turning angle; human games shift its "
+                 "variance", fontsize=11, y=1.00)
     fig.text(0.5, 0.925, "one point per game (layer 5, raw); large markers are "
-             "class medians; n = 2000 per class",
-             fontsize=8, color=MUTED, style="italic", ha="center")
+             "class medians; n = 2000 per class\nmedians: legal 142.0°/27.7, "
+             "violation 141.7°/27.3, championship 142.1°/30.6, rollout 142.0°/28.2",
+             fontsize=8, color=MUTED, style="italic", ha="center", va="top",
+             linespacing=1.5)
     fig.tight_layout(rect=(0, 0, 1, 0.91))
     fig.savefig(FIG_DIR / "mean_vs_var_theta.png", dpi=300, bbox_inches="tight")
 
@@ -228,7 +223,7 @@ def f5_sae_families(auroc: pd.DataFrame):
     fig, axes = plt.subplots(1, len(OOD_PAIRS), figsize=(2.9 * len(OOD_PAIRS), 3.6),
                              sharey=True)
     ypos = np.arange(len(spaces))
-    for ax, pair, panel in zip(axes, OOD_PAIRS, "abcd"):
+    for ax, pair, panel in zip(axes, OOD_PAIRS, "abc"):
         c = pair.removeprefix("legal_vs_")
         th = np.array([sub.loc[(s, pair), "auc_mean_theta"] for s in spaces])
         lo = np.array([sub.loc[(s, pair), "auc_mean_theta_lo"] for s in spaces])
@@ -256,8 +251,8 @@ def f5_sae_families(auroc: pd.DataFrame):
     handles, leg_labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, leg_labels, loc="lower center", ncol=2, fontsize=8,
                bbox_to_anchor=(0.5, -0.05))
-    fig.suptitle("Every SAE family preserves the curvature separation "
-                 "(layer-5 latents)", fontsize=11, y=1.00)
+    fig.suptitle("Every SAE family keeps the violation separation, and most also "
+                 "split human games (layer-5 latents)", fontsize=11, y=1.00)
     fig.text(0.5, 0.945,
              "each panel separates legal games from one other class; rows are the "
              "representation space it is measured in\nbars = AUROC from mean turning "
@@ -273,7 +268,7 @@ def f6_norm_diagnostics(blocks, auroc: pd.DataFrame):
     norm = load("resid_post_5", "raw")["norm"]
     fig, axes = plt.subplots(1, 2, figsize=(9, 3.9))
     positions = np.arange(norm.shape[1]) + 1
-    for i, c in enumerate(CLASSES):
+    for i, c in enumerate(blocks):
         style, is_ref = CLASS_STYLE[c], c == "legal"
         mu, sem = _mean_sem(norm[blocks[c]])
         axes[0].fill_between(positions, mu - 1.96 * sem, mu + 1.96 * sem,
@@ -313,11 +308,11 @@ def f6_norm_diagnostics(blocks, auroc: pd.DataFrame):
     ax.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
     ax.grid(axis="x", visible=False)
     h, l = ax.get_legend_handles_labels()
-    ax.legend([h[i] for i in [1, 2, 3, 4, 0]], [l[i] for i in [1, 2, 3, 4, 0]],
+    ax.legend([h[i] for i in [1, 2, 3, 0]], [l[i] for i in [1, 2, 3, 0]],
               fontsize=6.5, loc="upper right", ncol=1)
 
-    fig.suptitle("Norm-confound check: step lengths corroborate the angle result, "
-                 "with the same signs", fontsize=11, y=1.00)
+    fig.suptitle("Norm-confound check: the classes share one norm profile, and "
+                 "step lengths carry the angle result's signs", fontsize=11, y=1.00)
     fig.text(0.5, 0.925, "shaded bands are 95% CI (panel a: mean ± 95% CI over "
              "games; panel b: stratified bootstrap); n = 2000 per class",
              fontsize=8, color=MUTED, style="italic", ha="center")

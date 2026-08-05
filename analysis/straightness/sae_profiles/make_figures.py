@@ -30,10 +30,9 @@ import torch
 
 from spade.common.study import study_dir
 from spade.figures.straightness_panels import (
-    REL_WINDOW, density_panel, event_axes, profile_panel, value_delta,
-    value_profile_panel, violation_delta, violation_panel)
+    REL_WINDOW, class_blocks, density_panel, event_axes, profile_panel,
+    value_delta, value_profile_panel, violation_delta, violation_panel)
 from spade.figures.paper_style import MUTED, QUANTITY_STYLE, apply_style, sae_label
-from spade.straightness.build_games import CLASSES
 
 apply_style()
 
@@ -59,15 +58,14 @@ def theta(space: str) -> np.ndarray:
 
 
 def per_family_step(space: str, label: str, blocks: dict, t0: np.ndarray,
-                    src: np.ndarray, viol: np.ndarray) -> float:
+                    src: np.ndarray, viol: np.ndarray) -> None:
     """Step length ‖Δz‖ — the trajectory-geometry counterpart of curvature, and
-    the quantity ReStraV actually uses alongside the turning angle. Returns the
-    random/legal ratio."""
+    the quantity ReStraV actually uses alongside the turning angle."""
     d = field(space, "d")
     rels, mu, sem = violation_delta(d, t0, src, viol)  # d index k is the step ending at k+2
 
     fig, axes = plt.subplots(1, 2, figsize=(9, 3.9))
-    value_profile_panel(axes[0], d, blocks, CLASSES, "mean step length ‖Δz‖", offset=2)
+    value_profile_panel(axes[0], d, blocks, "mean step length ‖Δz‖", offset=2)
     axes[0].set_xlabel("board position t (step ending at t)")
     axes[0].set_title("(a) step-length profile over the game", loc="left")
     axes[0].legend(fontsize=7, loc="best", ncol=2, columnspacing=1.0)
@@ -85,17 +83,16 @@ def per_family_step(space: str, label: str, blocks: dict, t0: np.ndarray,
     fig.tight_layout(rect=(0, 0, 1, 0.92))
     fig.savefig(FIG_DIR / f"step_vs_t_{label}.png", dpi=300, bbox_inches="tight")
     plt.close(fig)
-    return d[blocks["random_tokens"]].mean() / d[blocks["legal"]].mean()
 
 
 def per_family_norm(space: str, label: str, blocks: dict, t0: np.ndarray,
-                    src: np.ndarray, viol: np.ndarray) -> float:
-    """Latent-norm counterpart of per_family. Returns the random/legal ratio."""
+                    src: np.ndarray, viol: np.ndarray) -> None:
+    """Latent-norm counterpart of per_family."""
     norm = field(space, "norm")
     rels, mu, sem = value_delta(norm, t0, src, viol)
 
     fig, axes = plt.subplots(1, 2, figsize=(9, 3.9))
-    value_profile_panel(axes[0], norm, blocks, CLASSES, "mean latent norm")
+    value_profile_panel(axes[0], norm, blocks, "mean latent norm")
     axes[0].set_title("(a) latent-norm profile over the game", loc="left")
     axes[0].legend(fontsize=7, loc="best", ncol=2, columnspacing=1.0)
 
@@ -112,7 +109,6 @@ def per_family_norm(space: str, label: str, blocks: dict, t0: np.ndarray,
     fig.tight_layout(rect=(0, 0, 1, 0.92))
     fig.savefig(FIG_DIR / f"norm_vs_t_{label}.png", dpi=300, bbox_inches="tight")
     plt.close(fig)
-    return norm[blocks["random_tokens"]].mean() / norm[blocks["legal"]].mean()
 
 
 def per_family(space: str, label: str, blocks: dict, t0: np.ndarray,
@@ -121,7 +117,7 @@ def per_family(space: str, label: str, blocks: dict, t0: np.ndarray,
     rels, mu, sem = violation_delta(th, t0, src, viol)
 
     fig, axes = plt.subplots(1, 2, figsize=(9, 3.9))
-    profile_panel(axes[0], th, blocks, CLASSES)
+    profile_panel(axes[0], th, blocks)
     axes[0].set_title("(a) curvature profile over the game", loc="left")
     axes[0].legend(fontsize=7, loc="best", ncol=2, columnspacing=1.0)
 
@@ -207,8 +203,8 @@ def combined_comparison(blocks: dict, t0: np.ndarray, src: np.ndarray,
 def theta_dist_comparison(blocks: dict) -> None:
     """Small multiples: the whole-game curvature distribution in every space.
 
-    The per-panel gap between the legal and random-token median triangles is the
-    separation sae_families_auroc.png scores; here it is readable in degrees.
+    The per-panel gap between the legal median triangle and another class's is
+    the separation sae_families_auroc.png scores; here it is readable in degrees.
     """
     spaces = [(RAW_SPACE, "raw L5 (reference)")]
     spaces += [(s, sae_label(label)) for s, label in families()]
@@ -218,12 +214,12 @@ def theta_dist_comparison(blocks: dict) -> None:
                              sharex=True, sharey=True)
     for ax, (space, label) in zip(axes.flat, spaces):
         per_game = np.nanmean(theta(space), 1)
-        density_panel(ax, per_game, blocks, CLASSES)
+        density_panel(ax, per_game, blocks)
         legal = np.median(per_game[blocks["legal"]])
         gap = {c: np.median(per_game[blocks[c]]) - legal
-               for c in ["random_tokens", "championship"]}
-        ax.set_title(f"{label}\nmedian vs legal:  random {gap['random_tokens']:+.1f}°"
-                     f"   ·   champ {gap['championship']:+.1f}°", loc="left", fontsize=8.5)
+               for c in ["violation", "championship"]}
+        ax.set_title(f"{label}\nΔmedian:  viol {gap['violation']:+.2f}°"
+                     f"   ·   champ {gap['championship']:+.2f}°", loc="left", fontsize=8.5)
         ax.set_xlabel("")
         ax.set_ylabel("")
     for ax in axes.flat[len(spaces):]:
@@ -236,15 +232,15 @@ def theta_dist_comparison(blocks: dict) -> None:
     axes.flat[0].set_ylim(bottom=0)  # after every panel: shared axes freeze on set_ylim
 
     handles, labels = axes.flat[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", ncol=5, fontsize=8,
+    fig.legend(handles, labels, loc="lower center", ncol=4, fontsize=8,
                bbox_to_anchor=(0.5, -0.015))
-    fig.suptitle("Every dictionary keeps the random-token shift — and most surface a "
+    fig.suptitle("Every dictionary keeps the violation shift — and most surface a "
                  "human-game shift that raw layer 5 hides", fontsize=11, y=1.00)
     fig.text(0.5, 0.962, "per-class Gaussian KDE (Scott bandwidth); bands are 95% "
              "percentile bootstrap over games (1000 resamples); triangles mark class "
-             "medians\nshared axes; raw variant; n = 2000 games per class. Rollout "
-             "overlaps legal in every space; championship separates in 7 of 8 SAE "
-             "latents but not raw L5",
+             "medians\nΔmedian = class median − legal median; shared axes; raw variant; "
+             "n = 2000 games per class. Rollout overlaps legal in every space; "
+             "championship separates in 7 of 8 SAE latents but not raw L5",
              fontsize=8, color=MUTED, style="italic", ha="center", va="top",
              linespacing=1.5)
     fig.tight_layout(rect=(0, 0.02, 1, 0.925))
@@ -297,9 +293,8 @@ def comparison(profiles: dict[str, np.ndarray], rels: np.ndarray,
 def main():
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     data = torch.load(study_dir("straightness") / "games" / "games.pt", weights_only=True)
-    n = len(data["cls"]) // len(CLASSES)
-    blocks = {c: slice(i * n, (i + 1) * n) for i, c in enumerate(CLASSES)}
-    viol = np.arange(2 * n, 3 * n)
+    blocks = class_blocks(len(data["cls"]))
+    viol = np.arange(blocks["violation"].start, blocks["violation"].stop)
     t0, src = data["t0"].numpy()[viol], data["src_game"].numpy()[viol]
 
     raw_rels, raw_mu, raw_sem = violation_delta(theta(RAW_SPACE), t0, src, viol)
@@ -311,10 +306,9 @@ def main():
             f"{label}: prefix delta nonzero — alignment or matching is wrong"
         profiles[label], sems[label] = mu, sem
         per_family(space, label, blocks, t0, src, viol)
-        d_ratio = per_family_step(space, label, blocks, t0, src, viol)
-        n_ratio = per_family_norm(space, label, blocks, t0, src, viol)
-        print(f"{label:24} theta trough {mu.min():+.2f}°  |  random/legal "
-              f"step {d_ratio:.3f}  norm {n_ratio:.3f}")
+        per_family_step(space, label, blocks, t0, src, viol)
+        per_family_norm(space, label, blocks, t0, src, viol)
+        print(f"{label:24} theta trough {mu.min():+.2f}°")
 
     comparison(profiles, raw_rels, sems, raw_mu)
     theta_dist_comparison(blocks)

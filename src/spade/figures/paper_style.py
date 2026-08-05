@@ -19,12 +19,14 @@ INK, MUTED, GRID = "#0b0b0b", "#6e6e6e", "#dcdcdc"
 REFERENCE = {"color": "#000000", "marker": "o", "lw": 2.4, "zorder": 5}
 NULL = {"color": "#8c8c8c", "marker": "v", "ls": (0, (5, 2)), "lw": 1.5, "zorder": 2}
 
-# Straightness-study game classes. color = class identity, marker = redundant cue.
+# Straightness-study game classes, in legend order: the figures draw exactly
+# these. random_tokens is a block of games.pt but has no entry here, so it is
+# neither drawn nor scored (docs/claims_status.md).
+# color = class identity, marker = redundant cue.
 CLASS_STYLE = {
     "legal":         {"color": "#000000", "marker": "o", "label": "legal (baseline)"},
     "rollout":       {"color": "#0072B2", "marker": "D", "label": "OthelloGPT rollout"},
     "violation":     {"color": "#009E73", "marker": "^", "label": "violation (1 illegal move)"},
-    "random_tokens": {"color": "#D55E00", "marker": "s", "label": "random tokens"},
     "championship":  {"color": "#CC79A7", "marker": "P", "label": "championship (human)"},
 }
 

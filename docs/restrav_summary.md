@@ -68,7 +68,7 @@ arrow-of-time violations are invisible; encoder bias.
 | video | one game's 59-token move sequence |
 | frame embedding (DINOv2) | activation at position t (resid_post, layer ℓ) |
 | natural video | legal game from the training distribution |
-| AI-generated video | OOD game: injected rule violation, random tokens; also OthelloGPT's own temp-1 rollouts |
+| AI-generated video | OOD game: injected rule violation; also OthelloGPT's own temp-1 rollouts and real human championship play |
 | pixel-space control | token-embedding-space (`W_E`) trajectories |
 | per-encoder comparison | per-layer sweep + SAE latent spaces (SpaDE/CosineSpaDE vs baselines) |
 
@@ -82,9 +82,10 @@ sign inverted and a depth flip; violations are graded and localized to t0±1;
 temperature-1 rollouts are at chance everywhere; championship play dissociates
 rule-OOD from policy-OOD. Two claims did not survive and must not be restated:
 "SpaDE destroys the curvature signal that every other family keeps" (every
-family preserves the separation, 0.01–0.21) and the layer-5 championship effect
-(0.509 [0.483, 0.535], not distinguishable from chance). See
-`docs/claims_status.md`.
+family preserves the violation separation, 0.39–0.46 against raw layer 5's 0.40)
+and the layer-5 championship effect (0.509 [0.483, 0.535], not distinguishable
+from chance). A third set of claims was retired with the random-token class,
+which the study no longer draws or scores. See `docs/claims_status.md`.
 
 ## Related: tpr_othello (arXiv:2605.09967, Lee/Viégas/Wattenberg)
 
