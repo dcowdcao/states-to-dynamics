@@ -1,7 +1,7 @@
 #!/bin/bash
-# Encode the probe fit set and the violation-divergence branch window through the 9
-# spaces. Skip-if-exists per space, so a rerun only fills what is missing; pass
-# --spaces to redo one. Run after the violation-divergence acts exist.
+# Cache the probe fit set in each of the 9 spaces + 2 nulls, and stream the branch window
+# through each for L0 and prefix invariance. Skip-if-exists per space, so a rerun only
+# fills what is missing; pass --spaces to redo one. Needs the violation-divergence acts.
 #SBATCH --job-name=legality_spaces
 #SBATCH --account=kempner_ba_lab
 #SBATCH --partition=kempner_h100

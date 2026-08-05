@@ -6,18 +6,19 @@ once the multiseed netscratch tree exists, the six seed-43 sweep points — 17 e
 all — so the filter is on `entry.seed`, not on a name set. `{"raw", *BASELINE_CONFIGS}`
 (`bracket_flip/sae_arm.py:45`) is the wrong filter twice over: it readmits the degenerate
 SpaDETrainer-othello that `spaces.EXCLUDED_SAE` drops, and it never names the default
-SpaDE, `SpaDE-lam1e-03-gam1e-04`. `random_proj` / `random_topk` are NULLS, encoded only
-when asked for by name.
+SpaDE, `SpaDE-lam1e-03-gam1e-04`. `random_proj` / `random_topk` ride along as NULLS: not
+part of the 9, but encoded in the same pass because every figure needs them.
 
-Cached to `study_dir("legality")/latents/`, fp16, resumable per space:
+Cached to `study_dir("legality")/latents/`, resumable per space:
 
-    probe_<space>.pt   [10000, d]              the layer-5 probe fit set
-    branch_<space>.pt  [17527, 33, d]          branch window, positions t0 + WINDOW
-    row_<space>.json   d, measured L0, prefix-invariance
+    probe_<space>.pt   [10000, d] fp16   the layer-5 probe fit set
+    row_<space>.json                     d, measured L0, prefix invariance
 
-`branch_*.pt` is ~9.5 GB for an 8192-wide space; load it with `mmap=True`.
-`space_quality.csv` joins the Karvonen eval metrics (L0, variance explained,
-reconstruction F1) that F4 regresses rule preservation against.
+The probe fit set is cached because refitting a probe is the expensive thing. The branch
+window is not cached: `stream_branch` yields it one `spans()` batch at a time, so a
+read-out reduces [rows, 33, d] to its own scalars without a [17527, 33, 8192] tensor —
+9.5 GB per space — ever existing. `space_quality.csv` joins the Karvonen eval metrics
+(L0, variance explained, reconstruction F1) that F4 regresses rule preservation against.
 
 Usage: python -m spade.legality_probe.spaces [--spaces raw,TopKTrainer-othello] [--smoke]
 """
@@ -25,6 +26,7 @@ Usage: python -m spade.legality_probe.spaces [--spaces raw,TopKTrainer-othello] 
 import argparse
 import json
 import os
+from collections.abc import Iterator
 from pathlib import Path
 
 import pandas as pd
@@ -41,6 +43,7 @@ from spade.violation_divergence.divergence import WINDOW
 from spade.violation_divergence.extract_acts import spans
 
 NULLS = ("random_proj", "random_topk")
+N_BEFORE = sum(r < 0 for r in WINDOW)
 # extract_acts.spans keeps a game's branches inside one chunk, and 248 x 33 <= the
 # ENCODE_BATCH of 8192 keeps that chunk inside one GEMM, so two branches of a game are
 # rows of the same matmul. Split them across GEMMs of different shape and cuBLAS reduces
@@ -88,48 +91,53 @@ def branch_window() -> tuple[torch.Tensor, torch.Tensor]:
     return acts[torch.arange(len(pos)).unsqueeze(1), pos], meta["game_id"]
 
 
-def first_of_game(game_id: torch.Tensor) -> torch.Tensor:
-    """Per row, the row index of the first branch of that row's game."""
-    _, inverse = game_id.unique(return_inverse=True)
-    first = torch.full((int(inverse.max()) + 1,), len(game_id))
-    first.scatter_reduce_(0, inverse, torch.arange(len(game_id)), "amin")
-    return first[inverse]
-
-
-def prefix_bitwise(code: torch.Tensor, ref_row: torch.Tensor) -> bool:
+def prefix_bitwise(code: torch.Tensor, game_id: torch.Tensor) -> bool:
     """Are the r < 0 columns bitwise identical across every branch of a game?
 
     Causal attention makes the pre-t0 activations of a game's branches bit-identical;
     whether an encoder preserves that is what makes r < 0 a paired in-distribution
-    control rather than an approximate one.
+    control rather than an approximate one. `spans` never splits a game, so a span holds
+    every branch of every game it touches and the question is answerable span by span.
     """
-    before = code[:, :sum(r < 0 for r in WINDOW)]
-    return bool(before.eq(before[ref_row]).all())
+    _, inverse = game_id.unique(return_inverse=True)
+    first = torch.full((int(inverse.max()) + 1,), len(game_id))
+    first.scatter_reduce_(0, inverse, torch.arange(len(game_id)), "amin")
+    before = code[:, :N_BEFORE]
+    return bool(before.eq(before[first[inverse]]).all())
 
 
-def encode(name: str, entry: SAEEntry | None, probe: torch.Tensor, branch: torch.Tensor,
-           game_id: torch.Tensor, ref_row: torch.Tensor, out: Path, device: str) -> dict:
+def stream_branch(name: str, entry: SAEEntry | None, branch: torch.Tensor,
+                  game_id: torch.Tensor, device: str) -> Iterator[tuple[slice, torch.Tensor]]:
+    """The branch window in this space, one `spans` batch at a time: [rows, 33, d] fp16.
+
+    Never holds more than one span, so a caller that reduces each span as it arrives
+    never materializes the whole [n, 33, d] code.
+    """
     fn = load_space(name, entry, device)
-    probe_code = batched_apply(fn, probe, device).half()
-    torch.save(probe_code, out / f"probe_{name}.pt")
-
-    d = probe_code.shape[-1]
-    code = torch.empty(*branch.shape[:2], d, dtype=torch.float16)
     for start, end in spans(game_id, ROW_BATCH):
         rows = branch[start:end]
-        code[start:end] = batched_apply(
+        yield slice(start, end), batched_apply(
             fn, rows.flatten(0, 1).float(), device).half().unflatten(0, rows.shape[:2])
-    torch.save(code, out / f"branch_{name}.pt")
 
-    return {"space": name, "d_space": d,
-            "l0_window": round(float((code != 0).sum(-1).double().mean()), 3),
-            "prefix_bitwise": prefix_bitwise(code, ref_row),
-            "n_window_positions": int(code.shape[0] * code.shape[1])}
+
+def measure(name: str, entry: SAEEntry | None, probe: torch.Tensor, branch: torch.Tensor,
+            game_id: torch.Tensor, out: Path, device: str) -> dict:
+    probe_code = batched_apply(load_space(name, entry, device), probe, device).half()
+    torch.save(probe_code, out / f"probe_{name}.pt")
+
+    nonzero, positions, bitwise = 0, 0, True
+    for rows, code in stream_branch(name, entry, branch, game_id, device):
+        nonzero += int((code != 0).sum())
+        positions += code.shape[0] * code.shape[1]
+        bitwise &= prefix_bitwise(code, game_id[rows])
+    return {"space": name, "d_space": probe_code.shape[-1],
+            "l0_window": round(nonzero / positions, 3),
+            "prefix_bitwise": bitwise, "n_window_positions": positions}
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--spaces", default="", help=f"comma-separated; nulls are {NULLS}")
+    parser.add_argument("--spaces", default="", help="comma-separated filter")
     parser.add_argument("--smoke", action="store_true",
         help=f"{SMOKE_ROWS} branches, {SMOKE_PROBE} probe positions, into latents_smoke/")
     args = parser.parse_args()
@@ -142,13 +150,14 @@ def main() -> None:
     branch, game_id = branch_window()
     if args.smoke:
         probe, branch, game_id = probe[:SMOKE_PROBE], branch[:SMOKE_ROWS], game_id[:SMOKE_ROWS]
-    ref_row = first_of_game(game_id)
-    assert prefix_bitwise(branch, ref_row), "raw r < 0 activations are not bitwise shared"
+    for start, end in spans(game_id, ROW_BATCH):
+        assert prefix_bitwise(branch[start:end], game_id[start:end]), \
+            "raw r < 0 activations are not bitwise shared"
 
-    chosen = roster()
+    chosen = roster() + [(n, None) for n in NULLS]
     if args.spaces:
         keep = set(args.spaces.split(","))
-        chosen = [s for s in chosen + [(n, None) for n in NULLS] if s[0] in keep]
+        chosen = [s for s in chosen if s[0] in keep]
 
     rows = []
     for name, entry in chosen:
@@ -157,7 +166,7 @@ def main() -> None:
             rows.append(json.loads(row_path.read_text()))
             print(f"skip {name} (cached)", flush=True)
             continue
-        row = encode(name, entry, probe, branch, game_id, ref_row, out, device)
+        row = measure(name, entry, probe, branch, game_id, out, device)
         row_path.write_text(json.dumps(row, indent=2))
         rows.append(row)
         print(f"{name:28} d {row['d_space']:5}  L0 {row['l0_window']:9.2f}  "

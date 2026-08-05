@@ -39,8 +39,17 @@ natural games the eval samples. `results/acceptance/all_results.csv` is the only
 the tree with data — the six paths `multiseed/aggregate_seeds.SEED42_CSVS` names are empty
 directories.
 
-Cache: `study_dir("legality")/latents/`, fp16, resumable per space on `row_<space>.json`.
-A branch tensor is `[17527, 33, d]`; 9.5 GB per 8192-wide space, ~78 GB for the 9.
+**The branch code is streamed, never cached.** A `[17527, 33, 8192]` fp16 tensor is 9.5 GB
+per space, 76 GB for the roster, on a 90-day tier — written so it can be read once and
+reduced to scalars by the read-out. `stream_branch` yields one `spans()` batch instead, so
+the full code never exists and each consumer reduces `[rows, 33, d]` as it arrives. Sparse
+storage would have cut the 76 GB by ~6x and was rejected for the same reason: a format
+change for a tensor that should not exist. `prefix_bitwise` becomes span-local for free —
+`spans` never splits a game, so a span holds every branch of every game it touches.
+
+Cache: `study_dir("legality")/latents/`, resumable per space on `row_<space>.json`. Only
+`probe_<space>.pt` is written, 164 MB per 8192-wide space, ~1.5 GB for all 11 — refitting a
+probe is the expensive thing to redo, re-encoding a window is not.
 
 ---
 
