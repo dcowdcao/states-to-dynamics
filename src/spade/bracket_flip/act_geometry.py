@@ -11,9 +11,7 @@ square s that step is what actually happens; for every unflipped disc it is the
 opposite of what happens, which is the empirical null.
 """
 
-import os
 from dataclasses import dataclass
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -21,7 +19,7 @@ import torch
 from scipy.signal import fftconvolve
 
 from spade.common.config import D_MODEL, LAYER
-from spade.common.paths import repo_root
+from spade.common.paths import linear_probe_activations
 from spade.common.study import study_dir
 
 CLASSES = ("empty", "theirs", "mine")
@@ -31,11 +29,7 @@ CODE = {"empty": 0, "placed": 1, "flipped": 2, "unflipped_own": 3, "unflipped_op
 NULL_CODES = (CODE["unflipped_own"], CODE["unflipped_opp"])
 SOURCES = ("tpr", "linear")
 
-# Same resolution as tpr_probe.ACTIVATIONS: the directory is gitignored, so a
-# worktree needs the override to point at a checkout that has it.
-LINEAR_PROBE = Path(os.environ.get(
-    "SPADE_LINEAR_PROBE_ACTIVATIONS",
-    repo_root() / "analysis" / "linear_probe" / "activations")) / "linear_probe.pt"
+LINEAR_PROBE = linear_probe_activations() / "linear_probe.pt"
 
 
 @dataclass(frozen=True)

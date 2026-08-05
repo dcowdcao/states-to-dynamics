@@ -54,7 +54,10 @@ Algorithms are untouched. Every change is an import, a path, or a docstring cita
   redteam's `SPADE_REPO` one, so the repo-root fork wins when both exist.
 - `sae_arm.py` wrote its CSV through `Path(__file__).resolve().parents[2]`; that is now
   `repo_root()`, matching how `probe_space.py` and `tpr_intervene.py` already resolved it.
-- `act_geometry.py` and `tpr_intervene.py` keep `$SPADE_LINEAR_PROBE_ACTIVATIONS`.
+- `$SPADE_LINEAR_PROBE_ACTIVATIONS` still selects the probe directory, but the env-var-plus-
+  repo-relative-default rule is written once, in `paths.linear_probe_activations()`, rather
+  than copied into `tpr_probe.py`, `act_geometry.py` and `tpr_intervene.py`. `redteam.py` is
+  the exception above and still routes through `SPADE_REPO`.
 
 ## Cannot be run in this worktree
 
@@ -95,13 +98,26 @@ Algorithms are untouched. Every change is an import, a path, or a docstring cita
   `shell/slurm/*.sh` in their reproduce blocks. They are dated records of what was run, so
   only RESULTS_A3.md was touched, and only to add the correction header. Module docstrings
   and the README were updated to the new paths.
-- `make_figures.py` reads `f2_event_meta.csv` and `flip_cos_per_event.csv`, and the README
-  cites `depth_reconciliation.csv`, `variance_shares.csv`, `sanity.csv` and `summary.csv`.
-  **Nothing in the ported tree writes any of them.** `act_geometry.py` has no `main()` — it
-  is a library the A4 driver called, and that driver is not in the source repo either. The
-  CSVs are committed, so the figures redraw, but Fig 1 and Fig 2(a) cannot currently be
-  re-derived from scratch. Same for `f2_event_meta.csv`, which `probe_space.py` does not
-  write although it writes `f2_event.csv` beside it.
+- The A4 driver that `act_geometry.py` was written for never reached the source repo, so
+  four of the CSVs it produced had no writer here. Its table half is now `geometry_tables.py`
+  (`flip_cos_per_event`, `variance_shares`, `summary`, `sanity`) and `probe_space.py` writes
+  `f2_event_meta.csv` beside `f2_event.csv`; the plotting half stays dropped, because
+  `make_figures.py` owns the two surviving figures. Regenerated against the netscratch
+  artifacts: `variance_shares`, `summary` and `sanity` come back byte-identical, the meta row
+  is the committed one, and `flip_cos_per_event` differs only by four added columns.
+  `depth_reconciliation.csv`, which the README cites, still has no writer.
+- **The TPR checkpoints on netscratch carry pre-port names.** `tpr_probes/` holds
+  `tpr_r52_f2_layer{0..7}.pt`, saved before `basis` entered the cache key, so
+  `tpr_probe.load(5)` looks for `tpr_r52_f2_relative_layer5.pt` and raises
+  `FileNotFoundError` — every path that reads a TPR direction hits this. The loader is right
+  and the file names are stale: `basis` really does vary (`train(layer, basis="absolute")`,
+  and `probe_space.py` fits both bases in its own cache), and without the infix a relative
+  and an absolute fit overwrite each other, which is what the `basis` key was added to stop.
+  Refitting layer 5 with the current code reproduces the on-disk weights **bit-for-bit** (max
+  abs difference 0.0 on all three tensors, held-out accuracy 0.9827 either way), so
+  `python -m spade.bracket_flip.tpr_probe` is a lossless repair, and renaming the eight files
+  is the cheap equivalent. Neither was done here: this session had no write permission on
+  `$SPADE_BRACKET_DIR`, and reached the probe through a symlinked shadow of it.
 - `sae_pca_figure.py`'s suptitle still reads "F8 — …", the figure's number before the prune
   to three; the README calls it Fig 3. Left as found. It also imports `INK` without using it.
 - `sae_arm.py` communicates through six module-level globals declared inside `main()`

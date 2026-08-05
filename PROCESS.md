@@ -6,6 +6,57 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The bracket flip's geometry tables get a writer, and a null that is not a median (2026-08-05)
+
+Branch `bracket/regen-driver`. Four CSVs under `analysis/bracket_flip/results/` had no
+writer: `act_geometry.py` is a library, and the A4 driver that called it was never ported
+(it survives only as a copy under the frozen repo's `.claude/worktrees/`). Its
+table-writing half is now `spade.bracket_flip.geometry_tables`; the plotting half stays
+dropped, since `make_figures.py` owns the two surviving figures. `probe_space.py` gained the
+`f2_event_meta.csv` write beside its `f2_event.csv`, same canonical event, with `move` and
+`control_move` converted from vocab tokens to squares.
+
+**The null Fig 2(a) draws was a median of ~29 draws.** `cos_null_*` is a per-event
+`nanmedian` over that event's unflipped discs while `cos_flip_*` is a single cosine, so the
+panel set one draw against an average of thirty and the null came out several times tighter
+than an unflipped disc really is. `act_geometry.null_direction()` picks exactly one
+unflipped disc per event — it exists for this reason and the table never called it. It now
+feeds four `cos_null1_*` columns. Same centre (median −0.0025 vs −0.0024, TPR,
+after-control), 6.5× the spread (sd 0.0550 vs 0.0085, IQR 0.0426 vs 0.0105). The finding
+survives: the flip median +0.175 is 3.2 single-disc-null sds out and no null event reaches
+it. But 3.2 is the honest number, not 21, and 0.5% of single-disc nulls clear the flip's
+2.5th percentile where none of the medians did. The median columns stay — where the null
+*centres* is a real question and they answer it — so both live in the file and the module
+docstring says which is which.
+
+Regeneration reproduced everything committed: `variance_shares.csv`, `summary.csv`,
+`sanity.csv` and all seven of `probe_space`'s CSVs came back byte-identical,
+`f2_event_meta.csv` reproduced its committed row (game 1882, *t*=25), and
+`flip_cos_per_event.csv` differs only by the four new columns.
+
+The seed is 42, this table's `SEED` and the source driver's. That is not free choice: the
+same draw feeds `var_flip_null` in `variance_shares.csv`, so the two files' nulls name the
+same discs, and a different seed would have broken that file's byte-identical reproduction.
+The Fig 2(a) agent's independent implementation at seed 0 gives median −0.0025, sd 0.0525
+against this column's −0.0025 / 0.0550; running their seed here reproduces their two numbers
+exactly, and sd across seeds 0/1/2/7/42/1111 spans 0.0497–0.0550. Same statistic, different
+draw — not a disagreement.
+
+**Gotcha for anyone reading a TPR direction:** `tpr_probes/tpr_r52_f2_layer{0..7}.pt` on
+netscratch were saved before `basis` entered the cache key, so `tpr_probe.load(5)` raises
+`FileNotFoundError` looking for `tpr_r52_f2_relative_layer5.pt`. The loader is right — the
+infix is what stops a relative and an absolute fit from overwriting each other — and the
+file names are stale. Refitting layer 5 with the current code reproduces the on-disk weights
+bit-for-bit, so `python -m spade.bracket_flip.tpr_probe` (or a rename) fixes it losslessly;
+neither was run here, since this session could not write `$SPADE_BRACKET_DIR` and reached
+the probe through a symlinked shadow of it.
+
+Unrelated but in the same files: `paths.linear_probe_activations()` now owns the
+`$SPADE_LINEAR_PROBE_ACTIVATIONS`-else-repo-relative rule that `tpr_probe`, `act_geometry`
+and `tpr_intervene` each spelled out separately.
+
+---
+
 ## The fork figures' prose moves to their READMEs, and the axes stop naming a component (2026-08-04)
 
 Branch `fig/strip-captions`. Every fork figure — `fork_and_board` (both planes),

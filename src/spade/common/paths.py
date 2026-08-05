@@ -13,6 +13,7 @@ fallback; $SPADE_REPO is already the convention in the cluster job scripts.
 Study working dirs are NOT here — they live outside the repo, see spade.common.study.
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -61,6 +62,16 @@ def add_tpr_to_path() -> None:
 
 def data_dir() -> Path:
     return repo_root() / "data"
+
+
+def linear_probe_activations() -> Path:
+    """The committed board probe and its cached activations.
+
+    Gitignored and 220 MB (MIGRATION.md), so a worktree that does not carry it sets
+    $SPADE_LINEAR_PROBE_ACTIVATIONS to a checkout that does.
+    """
+    return Path(os.environ.get("SPADE_LINEAR_PROBE_ACTIVATIONS",
+                               repo_root() / "analysis" / "linear_probe" / "activations"))
 
 
 def results_dir(experiment: str) -> Path:
