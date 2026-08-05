@@ -24,7 +24,7 @@ spade_sae/
 ├── src/spade/                the code package (one import root: `import spade.*`)
 │   ├── common/               config, paths, device, net, study dirs  (leaf; everything imports these)
 │   ├── othello/              game/board layer shared by every study
-│   │   ├── games.py              stream games from HF, legal-prefix collection
+│   │   ├── games.py              stream games from HF, legal-prefix collection (docs/game_corpus.md)
 │   │   ├── boards.py             replay, flip_set, regular_moves, rays_touch, tokens_of
 │   │   └── taxonomy.py           the 7-category legality taxonomy, mapped to rules R1–R3
 │   ├── saes/                 ALL SAE definitions + the checkpoint registry

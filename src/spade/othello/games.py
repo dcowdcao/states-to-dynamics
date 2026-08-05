@@ -2,7 +2,10 @@
 
 Imported by the rules, straightness, violation-divergence, manifold-capture and
 bracket-flip pipelines — they all start from the same legal-prefix corpus, and they
-must agree on it. `stream_games` and `classify_prefix` come from the rules study's
+must agree on it. That corpus is synthetic random-legal play with one opening line
+truncated out of it, and `stream_games` reads a window of it rather than sampling it;
+both are documented in docs/game_corpus.md and both bear on every study here.
+`stream_games` and `classify_prefix` come from the rules study's
 build_pairs.py; `collect_legal` and `first_illegal_pos` from the straightness study's
 build_games.py.
 
@@ -32,6 +35,14 @@ assert all(stoi[sq] == i + 1 for i, sq in enumerate(stoi_indices))
 
 
 def stream_games(dataset_name: str, seed: int):
+    """The corpus's leading n + 10000 rows in a seeded order — a window, not a sample.
+
+    The split is a single shard, so `shuffle` only permutes a 10,000-row reservoir:
+    every seed reads the same ~1% slice, and every study defaulting to seed 42 walks
+    that one list in the same order. Left as it is because changing the sampler
+    invalidates every committed result. What the corpus is, what is missing from it,
+    and the measurements behind both: docs/game_corpus.md.
+    """
     from datasets import load_dataset
     dataset = load_dataset(dataset_name, split="train", streaming=True)
     return iter(dataset.shuffle(seed=seed, buffer_size=10000))
