@@ -110,10 +110,14 @@ the plane exactly as the displacement figure takes it.
 
 **The rule grouping is no better here.** The same within ÷ between statistic on
 the column-scaled Δφ, raw layer 5, all 21 components, *t* ≥ *t0*, is **0.902** —
-slightly worse than the 0.885 the displacement figure reports on the same game and
-window. **There is no population number in R^21**: the 0.945 median above is a
-displacement statistic, and the R^21 figure is n = 1 on a selected game with
-nothing behind it.
+against the 0.885 the displacement figure reports on the same game and window.
+**Do not read that pair as R^21 being worse.** Over a population the ordering
+reverses and the two are indistinguishable: R^21 median **0.936 [IQR 0.827–0.998],
+above 1 in 25%** over 60 games with *t0* ≥ 18
+(`python -m spade.violation_divergence.rule_groups --field r21`), against the
+displacement median 0.945. The two sweeps are not the same games — the R^21 one
+needs *t0* ≥ 18 so that a drawn window is branch-free — so the medians are not a
+paired comparison. What replicates is that the grouping is weak in both fields.
 
 ## Game 1235 is selected, and the figure says so
 
@@ -245,10 +249,12 @@ pairwise distance, on the full 512-d layer-5 displacement trajectories over
 all 1550 branch-complete games — above 1 in 30% of them
 (`python -m spade.violation_divergence.rule_groups`). The R^21 figure recomputes
 it in its own space — the same statistic on the column-scaled Δφ, all 21
-components, raw layer 5, *t* ≥ *t0* — and gets **0.902**: the rules cohere no
-better in curvature space than in displacement space, and slightly worse. There
-is no population number in R^21; the 0.945 is a displacement figure and each
-caption says which of the two it is quoting. A rule's members travel
+components, raw layer 5, *t* ≥ *t0* — and gets **0.902** on the same game, with a
+population of **median 0.936 [IQR 0.827–0.998], above 1 in 25%** over 60 games
+with *t0* ≥ 18 (`--field r21`). The rules cohere no better in curvature space than
+in displacement space; the single-game pair (0.902 vs 0.885) orders them the other
+way from the medians, which is why neither ordering is worth quoting. Each caption
+says which field its number comes from. A rule's members travel
 barely closer to each other than to another rule's. Three confident lines would
 be a lie about that, so each rule's members are drawn **faint behind their mean**
 and the ratio rides in the caption: the members, not the means, are the

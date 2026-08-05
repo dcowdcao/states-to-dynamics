@@ -147,9 +147,14 @@ the 2-D plane drawn: **0.90** here, against **0.885** for the same statistic on
 the full 512-d displacements of the same game and window (`../fork_and_board`) and
 a displacement population of **median 0.945 [IQR 0.872–1.020] over all 1550
 branch-complete games, above 1 in 30% of them**
-(`python -m spade.violation_divergence.rule_groups`). **There is no population
-number in R^21.** A rule's members travel barely closer to each other than to
-another rule's, so the faint members and not the three means carry the evidence.
+(`python -m spade.violation_divergence.rule_groups`). R^21 has its own population:
+**median 0.936 [IQR 0.827–0.998], above 1 in 25%** over 60 games with *t0* ≥ 18
+(`--field r21`; the sweep needs a branch-free window, so it is a different and
+smaller game set, not a subset comparison). The two fields are indistinguishable
+at population scale — the single-game pair orders them the other way from the
+medians, so neither ordering means anything. A rule's members travel barely closer
+to each other than to another rule's, so the faint members and not the three means
+carry the evidence.
 
 ### `fork_r21_windowed_fixed`
 
