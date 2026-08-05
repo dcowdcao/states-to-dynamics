@@ -1,0 +1,89 @@
+{
+  "fit_set": {
+    "rows": 10000,
+    "square_mismatches": 0,
+    "played_move_labelled_legal": 10000,
+    "engine_vs_my_legal_set_disagreements": 0
+  },
+  "branch_window": {
+    "n_branch_rows": 17527,
+    "n_games": 2000,
+    "n_illegal_rows": 11527,
+    "window_positions": 66000,
+    "masked_as_forfeit": 85,
+    "games_with_any_mask": 68,
+    "masked_by_offset": {
+      "-4": 1,
+      "-3": 1,
+      "11": 1,
+      "12": 2,
+      "15": 1,
+      "17": 1,
+      "18": 2,
+      "19": 3,
+      "20": 4,
+      "21": 6,
+      "22": 10,
+      "23": 13,
+      "24": 40
+    },
+    "truth_at_r-1_equals_rule_class": 1.0,
+    "truth_at_r0_equals_rule_class": 0.7699314652554872,
+    "per_category": {
+      "occupied_own": {
+        "n": 2000,
+        "truth_at_r-1_equals_rule_class": 1.0,
+        "truth_at_r0_equals_rule_class": 1.0
+      },
+      "occupied_opp": {
+        "n": 2000,
+        "truth_at_r-1_equals_rule_class": 1.0,
+        "truth_at_r0_equals_rule_class": 1.0
+      },
+      "empty_detached": {
+        "n": 1951,
+        "truth_at_r-1_equals_rule_class": 1.0,
+        "truth_at_r0_equals_rule_class": 0.9666837519220912
+      },
+      "empty_own_only": {
+        "n": 1630,
+        "truth_at_r-1_equals_rule_class": 1.0,
+        "truth_at_r0_equals_rule_class": 0.9619631901840491
+      },
+      "empty_no_bracket": {
+        "n": 1949,
+        "truth_at_r-1_equals_rule_class": 1.0,
+        "truth_at_r0_equals_rule_class": 0.7244740892765521
+      },
+      "opponent_only": {
+        "n": 1997,
+        "truth_at_r-1_equals_rule_class": 1.0,
+        "truth_at_r0_equals_rule_class": 0.004506760140210316
+      }
+    },
+    "rows_per_game": {
+      "min": 7,
+      "max": 9,
+      "mean": 8.7635
+    }
+  },
+  "labels_at_ply": {
+    "offsets_where_helper_returns_None": {
+      "-4": 1,
+      "-3": 1,
+      "11": 1,
+      "12": 2,
+      "15": 1,
+      "17": 1,
+      "18": 2,
+      "19": 3,
+      "20": 4,
+      "21": 6,
+      "22": 10,
+      "23": 13,
+      "24": 96
+    },
+    "positions_compared": 65859,
+    "label_row_disagreements": 0
+  }
+}
