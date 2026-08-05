@@ -18,6 +18,12 @@ INK, MUTED, GRID = "#0b0b0b", "#6e6e6e", "#dcdcdc"
 # Reference/baseline and null styling: never in the categorical cycle.
 REFERENCE = {"color": "#000000", "marker": "o", "lw": 2.4, "zorder": 5}
 NULL = {"color": "#8c8c8c", "marker": "v", "ls": (0, (5, 2)), "lw": 1.5, "zorder": 2}
+# An untrained control that is *not* matched to the conditions on the axis the
+# conditions are argued on. A wide random expansion preserves nearly all the
+# input's information, so a probe reads it; it bounds what "the probe reads this
+# space" can show rather than nulling it. Darker than NULL and dotted, so it never
+# reads as the matched null and never as a condition.
+CEILING = {"color": "#4d4d4d", "marker": "h", "ls": (0, (1, 1.6)), "lw": 1.5, "zorder": 3}
 
 # Straightness-study game classes. color = class identity, marker = redundant cue.
 CLASS_STYLE = {
@@ -210,11 +216,18 @@ def sae_label(family: str) -> str:
 
 
 # The nine representation spaces of the legality-probe study, keyed by the names
-# spade.spaces.representative_spaces() returns, plus the two random controls.
+# spade.spaces.representative_spaces() returns, plus the two untrained controls.
 # hue = architecture family, marker = the dictionary within it, line style = the
 # variant, so eight dictionaries stay separable with no colour at all. raw is the
-# reference space and the two random controls are nulls, so neither takes a slot
-# in the categorical cycle.
+# reference space and neither untrained control takes a slot in the categorical
+# cycle.
+#
+# The two untrained controls are NOT interchangeable and must never be drawn as
+# one gray dashed pair. `random_topk` has L0 80, exactly TopK's k, so it is the
+# sparsity-matched null the k=80 dictionaries are argued against. `random_proj` is
+# a ReLU of a dense 512 -> 8192 projection at L0 ~4100, matched to nothing: it is
+# near information-preserving by construction, so it bounds what any probe read-out
+# in an 8192-d space can demonstrate. CEILING, not NULL.
 _VARIANT_DASH = (0, (4, 1.5))
 SPACE_STYLE = {
     "raw": {**REFERENCE, "ls": "-", "short": "raw", "label": "raw residual (reference)"},
@@ -242,15 +255,16 @@ SPACE_STYLE = {
     "CosineSpaDETrainer-othello":
         {"color": OKABE_ITO[3], "marker": "p", "ls": _VARIANT_DASH, "lw": 1.6, "zorder": 4,
          "short": "CosineSpaDE", "label": sae_label("CosineSpaDE")},
-    "random_proj": {**NULL, "short": "random proj.", "label": "random projection (null)"},
-    # A second dash pattern, so the two nulls stay apart in a line-only legend.
-    "random_topk": {**NULL, "marker": "<", "ls": (0, (1.6, 1.6)),
-                    "short": "random TopK", "label": "random TopK (null)"},
+    "random_topk": {**NULL, "marker": "<", "short": "random TopK\n($L_0$ 80, null)",
+                    "label": "random TopK, $L_0$ 80 — sparsity-matched null"},
+    "random_proj": {**CEILING, "short": "random proj.\n($L_0$ 4101, ceiling)",
+                    "label": "random projection, $L_0$ 4101 — "
+                             "information-preservation ceiling"},
 }
 
 # Eleven spaces on one axis is past the five-series limit (FIGURE_GUIDELINES 4.1),
 # so any per-r sweep facets by family: two dictionaries plus raw plus the two
-# nulls is five series per panel.
+# untrained controls is five series per panel.
 SPACE_FAMILIES = {
     "$L_p$ penalty": ["StandardTrainer-othello", "PAnnealTrainer-othello"],
     "Gated":         ["GatedSAETrainer-othello", "GatedAnnealTrainer-othello"],
@@ -258,8 +272,11 @@ SPACE_FAMILIES = {
     "SpaDE":         ["SpaDE-lam1e-03-gam1e-04", "CosineSpaDETrainer-othello"],
 }
 REFERENCE_SPACE = "raw"
-NULL_SPACES = ["random_proj", "random_topk"]
-SPACES = [REFERENCE_SPACE] + [s for f in SPACE_FAMILIES.values() for s in f] + NULL_SPACES
+MATCHED_NULL_SPACE = "random_topk"   # L0 80 = TopK's k; the k=80 dictionaries' null
+CEILING_SPACE = "random_proj"        # L0 4101, matched to nothing
+CONTROL_SPACES = [MATCHED_NULL_SPACE, CEILING_SPACE]
+DICTIONARIES = [s for f in SPACE_FAMILIES.values() for s in f]
+SPACES = [REFERENCE_SPACE] + DICTIONARIES + CONTROL_SPACES
 assert set(SPACES) == set(SPACE_STYLE), "SPACE_FAMILIES does not partition SPACE_STYLE"
 
 # The 4-way legality probe's filler classes, keyed by the short codes the study's

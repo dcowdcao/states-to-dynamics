@@ -38,5 +38,3 @@ wandb/
 # transient locks
 *.lock
 
-# Legality-probe smoke output (fake CSVs for figure development, regenerable)
-analysis/legality_probe/smoke/results/

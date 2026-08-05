@@ -952,3 +952,39 @@ keeps all four decisions and corrects the layout they were applied to.
 Moved to [ARCHITECTURE.md](ARCHITECTURE.md) § *Invariants a port must not break* — dispatch
 ordering, checkpoint state-dict contracts, hyperparameter canonicalization, the known-stale
 configs, the figure-style contract, and the environment pins.
+
+## Legality-probe figures against the real CSVs (F1-F4)
+
+The four figures were written against synthetic data and then re-cut when
+`analysis/legality_probe/results/` landed. Three things changed, and each was a
+substantive finding rather than a plotting fix.
+
+**The two untrained controls are not one control.** `random_topk` has L0 80, exactly
+TopK's k; `random_proj` is a ReLU of a dense 512 -> 8192 projection at L0 4101. Drawn as
+one gray dashed pair they imply the study has a null, which it does not: `random_proj`
+reads legality at 0.904, above three trained dictionaries, and takes the smallest hit of
+any space on `drop_agreement_with_raw`. `paper_style` now carries `CEILING` beside `NULL`,
+`CONTROL_SPACES = [MATCHED_NULL_SPACE, CEILING_SPACE]` replaces `NULL_SPACES`, and F1 makes
+the distinction the panel's subject.
+
+**F3 moved from r = 0 to r = -1.** At r = 0 the illegal move has been played and the square
+is occupied, so R3's ground truth becomes R1: correct-rule recall is 0.000-0.007 in all
+eleven spaces including raw. Degenerate in the data, not in the probe. r = -1 is the
+bitwise-shared pre-move board, which also makes the panel a read-out property of the space
+rather than an effect of the violation, and it is the right phase of the mover-relative
+frame -- R3 is near zero at every even offset by construction.
+
+**`excess_macro_f1` is not plotted.** It is not scale-free: SpaDE's is negative only
+because its r < 0 baseline is already 0.42. It is quoted in the README exactly where the
+baselines are comparable (trained dictionaries against `random_proj`, whose baseline sits
+inside their range) and nowhere else. `drop_agreement_with_raw` has a milder version of the
+same problem, which is why F4 reads its bottom row against its top row. No normalisation
+was invented.
+
+The finding the re-cut surfaced: on the paired difference from raw, every trained
+dictionary steps down 0.023-0.057 at r = 0 and recovers by r = 1, and neither untrained
+control has a step at all. That is SAEs failing off-distribution, not rules being lost, and
+it is what F2 is now drawn to show.
+
+Read every CSV in this study with `keep_default_na=False`; `category` and `rule` are empty
+strings on the aggregate rows and NaN drops every aggregate silently.
