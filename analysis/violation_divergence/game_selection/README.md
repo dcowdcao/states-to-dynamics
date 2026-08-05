@@ -9,7 +9,14 @@ nine branch trajectories are, and hands the fork figure an argmax it can disclos
 ```
 python analysis/violation_divergence/game_selection/score_games.py   # ~4 min, cpu
 python analysis/violation_divergence/game_selection/make_figures.py
+python analysis/violation_divergence/game_selection/score_rules.py   # ~15 min, cpu
 ```
+
+`score_games.py` answers the **category** question in raw layer 5 and is what
+`branches.FIGURE_GAME` was picked under. `score_rules.py` answers the **rule**
+question — R1/R2/R3, three means over 2/3/1 members — in SpaDE latents, for a
+figure that draws rules rather than categories; the two are separate criteria
+with separate answers, and the second is at the bottom of this file.
 
 ## Answer: game 662, *t0* = 22
 
@@ -225,8 +232,120 @@ than one axis.
 | `results/transfer_check.csv` | the same scores in three SAE spaces, on 302 sampled games |
 | `results/summary.txt` | top-10 tables, Spearman agreement, *t0* placement, transfer ranks |
 | `figures/selection_disclosure` | the population the pick came from, the criteria disagreeing, the transfer check |
+| `results/rule_ranking.csv` | the rule-level sweep below: one row per game per space |
+| `results/rule_summary.txt` | its anchors, population spreads, null, and top-10s |
 
 ## Consuming it
 
 `game_trajectory/make_figures.py` still hardcodes `complete[:n_games]`; it needs a
 `--game` flag before it can draw 662. That change is not made here.
+
+---
+
+# The rule-level question: R1/R2/R3 in SpaDE latents
+
+A figure that draws **one mean per constraint rule** asks something the sweep
+above does not. R1 placement has 2 member categories, R2 bracketing 3, R3 turn 1,
+so three lines stand in for six trajectories, and the question is whether those
+three lines are separable — in the **distance-SpaDE latent space**, since that is
+the architecture the paper argues for. `score_rules.py` sweeps all 1550 games in
+SpaDE and, as a reference, in raw layer 5.
+
+Field and window are unchanged from above: `D(t) = f_b(t) − f_ref(t)` over the 13
+positions *r* = 0, 2, …, 24 at *t0*'s parity, at full width (8192 in SpaDE, 512
+raw), never a projection. A rule mean is formed **per member and averaged last**;
+the pooled within-rule RMS radius carries **dof = Σ(n_r − 1) = 3**, so R3's single
+member contributes zero to the sum *and* zero to the dof rather than a silent inf.
+
+| key | definition | units |
+|---|---|---|
+| `sep_min` | **min** over rule pairs ‖M_i − M_j‖ ÷ pooled within-rule RMS radius | pooled SDs |
+| `sep_mean` | mean over rule pairs, same denominator | pooled SDs |
+| `cone_min` / `cone_mean` | the same numerators ÷ RMS ‖M_r‖ | [0, √2] |
+| `null_beats` | fraction of the 59 other 2/3/1 partitions of the same six branches that the true R1/R2/R3 grouping beats on `sep_min` | [0, 1] |
+
+`sep_min` decides, because a reader has to tell **all three** lines apart and the
+closest pair is the binding constraint; `sep_mean` hides a collapsed pair behind a
+distant third.
+
+## Answer: game 1558, *t0* = 18
+
+| | SpaDE | where it sits among the 1550 |
+|---|---|---|
+| `sep_min` | **2.070** | **1 / 1550** (median 1.007) |
+| `sep_mean` | 2.205 | 3 / 1550 (median 1.204) |
+| `cone_min` | 0.840 | 6 / 1550 (median 0.527) |
+| `cone_mean` | 0.895 | 33 / 1550 (median 0.636) |
+| `null_beats` | 1.00 | beats all 59 alternative partitions |
+| *S1* (from `score_games.py`) | 1.044 | 656 / 1550 — **passes** the at-or-above-median-*S1* guard |
+| `spread_ratio` | 0.605 | **0.1st percentile** — see the caveat |
+| *t0* | 18 | 40th percentile |
+
+The two anchors, same sweep:
+
+| game | `sep_min` (rank) | `cone_min` (rank) | `cone_mean` (rank) | `spread_ratio` (pct) | `null_beats` |
+|---|---|---|---|---|---|
+| **1558** (this pick) | **2.070** (1) | 0.840 (6) | 0.895 (33) | 0.605 (0.1) | 1.00 |
+| **1235** (`FIGURE_GAME`) | 1.121 (391) | 0.790 (25) | 0.968 (**9**) | 0.904 (33.8) | 0.86 |
+| **662** (the *S3* argmax) | 0.946 (1010) | 0.851 (**3**) | 0.963 (10) | 1.031 (79.4) | 0.66 |
+
+The incumbent is not a bad rule game: it is 25th and 9th on the *direction*
+criteria and only middling on `sep_min`. Game 662 is the sharpest split of all
+three by direction and a below-median one by `sep_min` — the same property that
+made it the *S3* argmax. Six categories spraying in mutually different directions
+give large mutual angles between rule means **and** a large within-rule scatter,
+so the two criteria pull apart.
+
+## Does SpaDE separate the rules at all?
+
+**Yes, but weakly, and no better than raw layer 5.**
+
+- The taxonomy is not arbitrary: the true R1/R2/R3 grouping beats a median of
+  **0.86** of the 59 shape-matched partitions (chance 0.50), is the argmax in 11%
+  of games, and falls below chance in 11%. The exact 60-partition null is the test
+  that matters — six trajectories split 2/3/1 look "separated" for free.
+- The margin is small in absolute terms. Median `sep_min` is **1.01 pooled SDs**:
+  in the typical game the closest two rule means are one within-rule SD apart, so
+  the members of one rule reach the other rule's mean. Median `cone_min` **0.53**
+  against a √2 ceiling.
+- **SpaDE is not the reason.** Spearman(`sep_min` in SpaDE, in raw layer 5) =
+  **0.989** over all 1550 games; population medians 1.007 (SpaDE) against 1.001
+  (raw); the SpaDE argmax is also the raw argmax. On direction SpaDE is ~5% better
+  (`cone_min` median 0.527 vs 0.502) — a real but marginal edge. Rule separation
+  here is a property of the branch geometry, not of the dictionary.
+- **R1 and R2 are the pair that collides**, in 69.5% of games. Pairs involving R3
+  are ~20% wider (median separation 1.31 and 1.23 SDs against R1–R2's 1.05). Part
+  of that is mechanical: R3's "mean" is one branch and is not shrunk toward the
+  illegal centroid the way a 2- or 3-member mean is. A figure should not read R3's
+  distinctness as evidence that turn confusion is represented apart.
+
+## The caveat that has to go in the caption
+
+Unlike *S3*, **this criterion is not independent of a claim the study makes.**
+`rule_groups.spread_ratio` (within-rule ÷ between-rule mean pairwise distance,
+population median 0.945, above 1 in 30%) is a reported result, and
+Spearman(`sep_min`, `spread_ratio`) = **−0.82**. Game 1558 sits at the **0.1st
+percentile** of `spread_ratio` (0.605): it is very nearly the tightest rule
+grouping in the entire population. A figure drawn on it shows the grouping working
+far better than it typically does, and saying so is not optional.
+
+Games that are strong on `sep_min` without being `spread_ratio` outliers, above
+median on *S1*, and beating every null partition — recorded as observations, not
+as the pre-registered pick:
+
+| game | *t0* | `sep_min` (rank) | `cone_min` (rank) | `spread_ratio` (pct) | *S1* rank |
+|---|---|---|---|---|---|
+| 706 | 16 | 1.415 (45) | 0.789 (28) | 0.834 (14.9) | 563 |
+| 1202 | 12 | 1.424 (42) | 0.759 (46) | 0.813 (12.0) | 554 |
+| 1285 | 20 | 1.456 (30) | 0.585 (484) | 0.804 (10.5) | 176 |
+
+## Caveats
+
+- **n = 1 stays n = 1.** An argmax over 1550 games supports no claim; the
+  population numbers above do.
+- **One dictionary.** Seed-42 `SpaDE-lam1e-03-gam1e-04`, the non-degenerate
+  distance-SpaDE checkpoint (`SpaDETrainer-othello` is excluded repo-wide). The
+  raw-L5 column is the control, not a second dictionary.
+- **Displacement field only.** The R^21 curvature descriptor is a different field
+  with a different population (*t0* ≥ 18, 60 games); `rule_groups.r21_ratios`
+  already covers the grouping statistic there, and nothing here was recomputed in it.
