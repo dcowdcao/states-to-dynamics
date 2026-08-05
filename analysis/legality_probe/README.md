@@ -9,6 +9,30 @@ illegal move at *t0*. The four classes collapse the seven-way taxonomy of
 The question is not whether legality is decodable. It is whether a sparse dictionary
 that keeps the *board* also keeps the *rules*.
 
+## Read RED_TEAM.md first
+
+`RED_TEAM.md` re-derived every claim below through independent code, and reached its
+verdicts *after* this file was written. Where the two disagree, the red team wins.
+
+| claim | verdict |
+|---|---|
+| the legality probe measures something board-reading does not | **DEAD** — board argmax + the rules engine beats it in 11/11 spaces (raw 0.9838 vs 0.9382), pearson 0.9981, and the residual orders nothing |
+| the untrained nulls sink the between-space story | **WEAKENED both ways** — among the 6 ordinary SAEs macro-F1 is perfectly monotone in L₀ (ρ = +1.000, n=6), but no information model orders the full roster (SpaDE R² 0.973 at F1 0.429, against `random_topk` R² 0.579 at 0.774). At matched k = 80, training wins by +0.151 |
+| `random_proj` scores 0.9036 | **does not replicate** — seed sd 0.0094 over 6 seeds (0.900–0.926, mean 0.916); the shipped seed sits near its own floor and its ±0.0036 CI is 2.6× too narrow |
+| SpaDE selectively destroys R3 (turn) | **WEAKENED, misattributed** — it is a colour/frame failure. `legal` (14.8%, not rare) dies with R3; rarity is perfectly confounded with frame sensitivity, and the same pattern appears in the 3-class board probe, so it is not a sparsemax artifact |
+| r < 0 is a clean paired control | **SURVIVES bitwise** in all 11 spaces at code *and* prediction level; **WEAKENED as a control** — the `reference` role drifts and is never subtracted (49% of CosineSpaDE's agreement drop), and raw's *legal* control drops more than the illegal branches (0.1513 vs 0.1253), the same inversion `violation_divergence` found |
+| bootstrap CIs | **SURVIVES** — the unit is genuinely the game; ±0.002 reproduced to ≤0.0004 |
+
+One defect the red team found in the shipped CSV: `p_pred_correct_rule` is exact at
+r = −1 (11527/11527), but at r ≥ 0 its target is right for only 77% of illegal branches
+and **0.45%** of `opponent_only` — once the move is played the square is occupied, so
+R3's truth becomes R1. **The r ≥ 0 columns of that metric are not recall.** F3 is drawn
+at r = −1 for this reason.
+
+`RED_TEAM.md` also carries a "Not tested" section listing nine gaps, including fit-set
+disjointness (taken on faith from the manifest) and whether the SpaDE colour collapse is
+checkpoint-specific.
+
 ## Pipeline
 
 ```
