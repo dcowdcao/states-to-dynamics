@@ -75,8 +75,8 @@ rather than passing it through, which is the same story the rest of the study
 tells about sparsemax spaces. Standard is a milder version of it. These
 alignments are much lower than a fit over all five stored classes gives: one
 gross OOD direction then dominates every space's PC1, and the spaces agree
-about that direction rather than about the descriptor. It is the reason the fit
-is restricted to the drawn classes.
+about that direction rather than about the descriptor. Restricting the fit to
+the drawn classes is what exposes the disagreement.
 
 ## What the CosineSpaDE cluster is
 
