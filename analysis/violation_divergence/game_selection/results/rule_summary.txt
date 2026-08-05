@@ -1,0 +1,84 @@
+n = 1550 branch-complete games. Field: D(t) = f_branch(t) - f_ref(t) over the 13 positions r = 0, 2, ..., 24 at t0's parity, at full width, never a projection.
+Recommendation space: SpaDE (lam=1e-3, gam=1e-4). Reference space: raw layer 5 (reference space).
+Rule means: R1 placement (n=2), R2 bracketing (n=3), R3 turn (n=1); each mean is formed per member and averaged last. Pooled within-rule RMS radius has dof 3 (R3 contributes no within-rule term and no dof).
+Criterion: sep_min = min over rule pairs ||M_i - M_j|| / pooled within-rule RMS radius, in pooled SDs. cone_* is the same numerator over RMS ||M_r||, in [0, sqrt(2)].
+
+=== SpaDE (lam=1e-3, gam=1e-4) (width 8192) ===
+SELECTED   game 1558, t0=18  sep_min=2.0702 (rank 1/1550)  sep_mean=2.2049 (rank 3/1550)  cone_min=0.8403 (rank 6/1550)  cone_mean=0.8950 (rank 33/1550)  spread_ratio=0.6047  null_beats=1.00  S1=1.0441 (rank 656/1550)
+FIGURE_GAME game 1235, t0=20  sep_min=1.1211 (rank 391/1550)  sep_mean=1.3728 (rank 357/1550)  cone_min=0.7904 (rank 25/1550)  cone_mean=0.9679 (rank 9/1550)  spread_ratio=0.9040  null_beats=0.86  S1=1.1325 (rank 351/1550)
+PRIOR PICK game 662, t0=22  sep_min=0.9462 (rank 1010/1550)  sep_mean=1.0707 (rank 1174/1550)  cone_min=0.8510 (rank 3/1550)  cone_mean=0.9629 (rank 10/1550)  spread_ratio=1.0310  null_beats=0.66  S1=0.8037 (rank 1460/1550)
+
+selected game's spread_ratio 0.6047 is at percentile 0.1 (lower is a tighter grouping; population median 0.9464, above 1 in 30%)
+selected game's S1 rank 656/1550 (score_games.py, raw layer 5): passes the at-or-above-median-S1 guard FIGURE_GAME was picked under
+Spearman(sep_min, spread_ratio) = -0.820  -- how far maximising the criterion also selects the grouping claim
+
+null (60 shape-matched 2/3/1 partitions of the same six branches, exact): the true R1/R2/R3 grouping beats a median of 0.86 of the other 59; it is the argmax in 11.2% of games and below chance in 11.4%
+
+bottleneck rule pair (which two means are closest):
+  R1_R2    closest in  69.5% of games; separation median 1.048 pooled SDs [IQR 0.944-1.173]
+  R1_R3    closest in  12.1% of games; separation median 1.314 pooled SDs [IQR 1.125-1.540]
+  R2_R3    closest in  18.5% of games; separation median 1.233 pooled SDs [IQR 1.060-1.424]
+
+population spread over all complete games:
+  sep_min        min 0.5024  q25 0.9094  median 1.0071  q75 1.1231  max 2.0702
+  sep_mean       min 0.7479  q25 1.0761  median 1.2038  q75 1.3533  max 2.5133
+  cone_min       min 0.2370  q25 0.4564  median 0.5271  q75 0.6069  max 0.8814
+  cone_mean      min 0.2663  q25 0.5520  median 0.6357  q75 0.7206  max 1.0087
+  spread_ratio   min 0.5754  q25 0.8776  median 0.9464  q75 1.0155  max 1.2177
+  null_beats     min 0.0169  q25 0.6653  median 0.8644  q75 0.9661  max 1.0000
+
+top 10 by sep_min:
+         game |            t0 |       sep_min |      sep_mean |      cone_min |     cone_mean |  spread_ratio |    null_beats |    bottleneck |       rank_s1
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+         1558 |            18 |        2.0702 |        2.2049 |        0.8403 |        0.8950 |        0.6047 |        1.0000 |         R2_R3 |           656
+         1442 |            27 |        1.7587 |        1.8944 |        0.8500 |        0.9156 |        0.6848 |        1.0000 |         R1_R3 |           663
+          659 |            19 |        1.7587 |        1.9118 |        0.6043 |        0.6568 |        0.6595 |        1.0000 |         R1_R3 |            22
+          499 |            34 |        1.7353 |        2.0043 |        0.8733 |        1.0087 |        0.6644 |        0.9831 |         R1_R2 |          1125
+          191 |            26 |        1.7270 |        1.8248 |        0.6873 |        0.7262 |        0.6928 |        1.0000 |         R1_R3 |           998
+          514 |            24 |        1.7146 |        2.0195 |        0.6619 |        0.7796 |        0.6740 |        1.0000 |         R1_R2 |           704
+          339 |            24 |        1.6768 |        2.5133 |        0.6207 |        0.9303 |        0.5754 |        1.0000 |         R1_R2 |           108
+         1954 |            14 |        1.6272 |        1.9798 |        0.6862 |        0.8348 |        0.6783 |        1.0000 |         R1_R2 |          1022
+         1913 |            23 |        1.6260 |        1.7411 |        0.6136 |        0.6570 |        0.7181 |        1.0000 |         R1_R2 |            71
+          718 |            28 |        1.6205 |        1.7943 |        0.6753 |        0.7478 |        0.7052 |        1.0000 |         R1_R2 |          1227
+
+=== raw layer 5 (reference space) (width 512) ===
+SELECTED   game 1558, t0=18  sep_min=2.0977 (rank 1/1550)  sep_mean=2.2232 (rank 3/1550)  cone_min=0.8227 (rank 7/1550)  cone_mean=0.8719 (rank 45/1550)  spread_ratio=0.6030  null_beats=1.00  S1=1.0441 (rank 656/1550)
+FIGURE_GAME game 1235, t0=20  sep_min=1.1570 (rank 294/1550)  sep_mean=1.4187 (rank 331/1550)  cone_min=0.8022 (rank 14/1550)  cone_mean=0.9837 (rank 4/1550)  spread_ratio=0.8850  null_beats=0.93  S1=1.1325 (rank 351/1550)
+PRIOR PICK game 662, t0=22  sep_min=0.9597 (rank 938/1550)  sep_mean=1.0753 (rank 1146/1550)  cone_min=0.8558 (rank 3/1550)  cone_mean=0.9589 (rank 10/1550)  spread_ratio=1.0288  null_beats=0.71  S1=0.8037 (rank 1460/1550)
+
+selected game's spread_ratio 0.6030 is at percentile 0.1 (lower is a tighter grouping; population median 0.9445, above 1 in 31%)
+selected game's S1 rank 656/1550 (score_games.py, raw layer 5): passes the at-or-above-median-S1 guard FIGURE_GAME was picked under
+Spearman(sep_min, spread_ratio) = -0.808  -- how far maximising the criterion also selects the grouping claim
+
+null (60 shape-matched 2/3/1 partitions of the same six branches, exact): the true R1/R2/R3 grouping beats a median of 0.85 of the other 59; it is the argmax in 11.4% of games and below chance in 14.1%
+
+bottleneck rule pair (which two means are closest):
+  R1_R2    closest in  70.7% of games; separation median 1.041 pooled SDs [IQR 0.935-1.165]
+  R1_R3    closest in  11.4% of games; separation median 1.329 pooled SDs [IQR 1.121-1.576]
+  R2_R3    closest in  17.9% of games; separation median 1.254 pooled SDs [IQR 1.064-1.476]
+
+population spread over all complete games:
+  sep_min        min 0.4807  q25 0.8949  median 1.0008  q75 1.1210  max 2.0977
+  sep_mean       min 0.7340  q25 1.0702  median 1.2114  q75 1.3840  max 2.6028
+  cone_min       min 0.2149  q25 0.4294  median 0.5017  q75 0.5823  max 0.8864
+  cone_mean      min 0.2403  q25 0.5287  median 0.6153  q75 0.7025  max 1.0171
+  spread_ratio   min 0.5652  q25 0.8719  median 0.9445  q75 1.0195  max 1.2274
+  null_beats     min 0.0000  q25 0.6610  median 0.8475  q75 0.9492  max 1.0000
+
+top 10 by sep_min:
+         game |            t0 |       sep_min |      sep_mean |      cone_min |     cone_mean |  spread_ratio |    null_beats |    bottleneck |       rank_s1
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+         1558 |            18 |        2.0977 |        2.2232 |        0.8227 |        0.8719 |        0.6030 |        1.0000 |         R1_R2 |           656
+         1442 |            27 |        1.7629 |        1.9943 |        0.8308 |        0.9399 |        0.6659 |        1.0000 |         R1_R2 |           663
+          191 |            26 |        1.7401 |        1.8276 |        0.6488 |        0.6814 |        0.6948 |        1.0000 |         R1_R3 |           998
+          659 |            19 |        1.7155 |        1.8880 |        0.5533 |        0.6089 |        0.6620 |        1.0000 |         R1_R3 |            22
+          499 |            34 |        1.7142 |        2.0547 |        0.8359 |        1.0019 |        0.6566 |        0.9831 |         R1_R2 |          1125
+          339 |            24 |        1.6777 |        2.6028 |        0.6038 |        0.9367 |        0.5652 |        1.0000 |         R1_R2 |           108
+          223 |            33 |        1.6248 |        1.6994 |        0.6779 |        0.7090 |        0.7504 |        1.0000 |         R1_R2 |          1155
+          880 |            15 |        1.6105 |        1.7128 |        0.4436 |        0.4717 |        0.7519 |        1.0000 |         R1_R2 |            75
+          305 |            15 |        1.6053 |        1.9895 |        0.5919 |        0.7335 |        0.6562 |        1.0000 |         R1_R2 |           359
+         1913 |            23 |        1.6038 |        1.7365 |        0.5696 |        0.6168 |        0.7263 |        1.0000 |         R1_R2 |            71
+
+
+space agreement: Spearman(sep_min in SpaDE, sep_min in raw layer 5) = 0.989 over all 1550 games.
+SpaDE's pick ranks 1/1550 in raw layer 5.

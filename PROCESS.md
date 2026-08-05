@@ -6,6 +6,213 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The legality read-out runs end to end, and the level is not where the signal is (2026-08-05)
+
+Branch `legality/readout`. `src/spade/legality_probe/readout.py` fits four probe arms per
+space and reads the legality arm out over the branch window; 11 spaces, 17527 branches,
+4m47s on one H100. Writes `probe_fit.csv` (484 rows) and `readout.csv` (50193 rows).
+
+**The board arm reproduces `bracket_flip/sae_arm.py` to ±0.0026.** Same architecture, same
+target, a different fit corpus, 8 shared spaces: every delta is between +0.0005 and +0.0026,
+all positive. That is the strongest evidence the label scatter, the frame, the encode and the
+fit loop are all right. Only 7 SAEs overlap plus raw — `sae_arm.csv` carries the degenerate
+`SpaDETrainer-othello` and has no row at all for the default SpaDE, which is `sae_arm.py:45`'s
+roster bug showing up as missing data.
+
+**The four arms on raw**: legality 0.9379, board 0.9820, wrong player 0.9072, shuffled 0.2856
+(accuracy 0.5554). Every space's shuffled arm lands in 0.28-0.31, so the floor is a property
+of the class balance, not of the space. The wrong-player arm tracks the real one within 0.03
+in every space, which is why no claim here rests on the level.
+
+**Where the signal actually is: `p_pred_correct_rule` at r = -1, on the R3 panel.** At r = 0
+the illegal move has been played and every space reads that square as occupied, so R3 recall
+is ~0 everywhere and the panel is degenerate. At r = -1 — the shared pre-move board, so this
+is a read-out of the space and not of the branch — raw gets R3 right 0.814 of the time, the
+seven ordinary SAEs 0.71-0.83, `random_topk` 0.473, and the two SpaDE spaces **0.048 and
+0.006**. R1 and R2 barely separate the spaces (0.87-0.98, 0.79-0.94). Turn is the rule the
+SpaDE bottleneck destroys, and it is the rule with one taxonomy member.
+
+**`excess_macro_f1` is not scale-free, and the two SpaDE spaces make that visible.** It is
+`drop(space) - drop(raw)`, drop being the r<0 to r=0 fall in macro-F1, and CosineSpaDE and
+SpaDE-lam come out *negative* (-0.061, -0.079) only because their r<0 baseline is already
+0.49 and 0.42 — there is less left to lose. `drop_agreement_with_raw` is the version to
+trust: no ground truth, no floor, and it puts GatedAnneal (0.079) above everything else.
+
+**Masking.** 85 of 66000 window positions are forfeits in the reference game and are dropped
+from the F1 metrics; the agreement and played-square metrics need no truth and keep all of
+them. Building the labels from an incrementally replayed board rather than through
+`labels_at_ply` matters: that helper's `len(game) < t + 1` guard would have masked r = +24
+for all 80 games with t0 = 34, since the label needs no next move but the guard demands one.
+
+**Prefix invariance is now checked through the probe**, span by span, in all 11 spaces: for
+r < 0 every branch of a game decodes to the identical 64 labels. Strictly stronger than the
+encoder-level check, and it is the assumption the r<0 baseline rests on.
+
+**Two things the frozen schemas could not carry** and now do, as values rather than columns:
+rule-level rows are `category=""` with `rule` set, and R1 without the four starting squares
+is `class="R1_no_start"` / `metric="f1_R1_no_start"`. Reading either CSV needs
+`pd.read_csv(..., keep_default_na=False)` or those empty strings come back as NaN.
+
+---
+
+## The 4-way legality probe, and the filler dimension it needs (2026-08-05)
+
+Branch `legality/probe`. `src/spade/legality_probe/probe.py` is `bracket_flip/tpr_probe.py`'s
+bilinear TPR with the filler alphabet widened from the 3 board classes to
+{legal, R1, R2, R3}, fit at whatever input dimension the activations carry (raw 512, SAE
+8192) and saved keyed by space name.
+
+**Upstream's class count is a module global imported by value.** `train_tpr_probe` does
+`from train_probe import BOARD_LABEL_OPTIONS` (3), and that one name sizes
+`filler_embeddings`, sizes `bias`, and multiplies the loss (`train_tpr_probe.py:227`).
+Building a 4-class probe without rebinding it gives 3 fillers and *no error*, and leaves the
+loss scaled by 3 — a 25% effective-LR shift on top. `filler_classes(n)` rebinds it for the
+duration of a fit and restores it, so 3-class board fits and 4-class legality fits coexist in
+one process. `test_probe.py` pins both effects, including that the same logits under n=3 and
+n=4 differ by exactly 3/4.
+
+**The loop is the committed one, verified.** Refitting the 3-class board task through
+`legality_probe.fit` at layer 5 reproduces `tpr_probe._fit` *parameter for parameter*
+(`torch.allclose` on all three tensors), accuracy 0.9827 — the number in
+`analysis/bracket_flip/reports/PROBE_REPORT.md`.
+
+**d_f = 3.** Sweep on raw layer 5, 8000 train / 2000 held out, 4-class labels derived from
+the reconstructed mover-relative board (`taxonomy.classify` collapsed by `RULE_OF`):
+
+| d_f | macro-F1 | accuracy | F1 legal / R1 / R2 / R3 |
+|-----|----------|----------|-------------------------|
+| 2   | 0.8891   | 0.9342   | 0.944 / 0.984 / 0.887 / 0.742 |
+| 3   | 0.9374   | 0.9631   | 0.974 / 0.993 / 0.932 / 0.851 |
+| 4   | 0.9378   | 0.9635   | 0.974 / 0.993 / 0.933 / 0.851 |
+
+d_f=2 costs 4.8 points, nearly all of it on R3 and R2; d_f=4 buys 0.0004 over d_f=3 and
+makes the filler geometry uninformative (4 classes in 4 dimensions can be exactly
+orthogonal, so the angles the bracket-flip study reads off the fillers stop meaning
+anything). Default is 3.
+
+**Two things about the metric.** Fit on shuffled labels the probe still scores **0.56
+accuracy** at 0.29 macro-F1, because R1 is 54% of squares mid-game — so the floor to beat is
+0.56, not chance, and accuracy alone says almost nothing. And legality computed for the
+*wrong* player (the one who just moved) is still decodable at **0.9101** macro-F1 against
+0.9374 for the right one, the whole difference sitting on the `legal` class (0.832 vs 0.974).
+Legality is a deterministic function of a board that decodes at 0.98, so a high legality
+macro-F1 is not by itself evidence that the model represents legality; the study's claims
+have to rest on differences between spaces and on the r<0 / r=0 contrast, not on the level.
+## Legality-probe labels and fit set (2026-08-05)
+
+Branch `legality/labels`. New package `src/spade/legality_probe/`: `labels.py` collapses the
+7-way taxonomy into the probe's 4-way filler (0 legal, 1 R1 placement, 2 R2 bracketing,
+3 R3 turn), `fit_set.py` chooses the positions, `extract_acts.py` runs layer 5,
+`frame_check.py` is the validation that the labels are in the right player's frame.
+
+**The transposition is the whole risk.** `taxonomy.classify_all` returns 60 categories in
+TOKEN order (entry i is token i+1); the TPR probe's roles are 64 squares in ROW-MAJOR board
+order. `board_labels` is that scatter via `stoi_indices` and nothing else. `test_labels.py`
+checks it three ways a transposed or shifted board would fail — the scatter must equal
+classifying each of the 64 squares directly, the squares it calls legal must equal
+`board.get_valid_moves()`, and the squares it calls R1 must equal the occupied ones — on
+positions with no diagonal symmetry left.
+
+**The four starting squares are R1 placement**, not a fifth "not applicable" class, because
+that is what `classify` returns for them: they hold a disc at every ply of every game, so
+the rule that makes any occupied square illegal covers them. All 64 squares then carry the
+same alphabet and `build_square_selection_mask(exclude_center_squares=False)` — already
+`bracket_flip/tpr_probe.py`'s choice — scores them like any other occupied square. The cost
+is that 4/64 squares are R1 by construction and readable off the role embedding alone.
+
+**The mover's frame is not checkable against the engine.** `classify` and `get_valid_moves`
+both read `board.next_hand_color`, so they agree even when that colour is wrong. What breaks
+the circle is the game record: the move played at ply t must come out legal. It does, at
+10000/10000 positions in the mover frame and 3047/10000 in the other one (the rest become
+R3). `verify()` asserts it per row. The frame flip is otherwise nearly invisible — it
+relabels 70.3% of legal squares and 100% of R3, but **0% of R1 and 0% of R2**, because
+`occupied_own`/`occupied_opp` and `empty_own_only`/`empty_no_bracket` swap *within* their
+rule. A linear probe fit on the wrong frame still reaches macro-F1 0.902 against 0.939, and
+the whole gap is `legal` (0.824 vs 0.984). Anything that reports only R1/R2 accuracy cannot
+tell the two apart.
+
+**Fit set: 200 games x token positions [5, 55)**, the position range of
+`analysis/linear_probe/activations`, whose own token sequences are gone — that script read
+ARENA's `board_seqs_id_small.npy` from a `reference/research_materials/` tree that no longer
+exists, and the activations carry no game identity. A game is taken whole or not at all, so
+one forfeit anywhere in the window drops it (4 games in 2204) and every accepted game gives
+exactly 50 rows; the 8000/2000 split then lands on a game boundary, 160 games against 40,
+with no game in both. Drawn from the branch stream (seed 42) with the 2000
+violation-divergence source games excluded by exact token match — all 2000 were hit, which
+is also the evidence the exclusion works — because a probe fit on a read-out game would make
+the bitwise-shared r < 0 prefix look preserved for free.
+
+**Class balance** (`analysis/legality_probe/results/class_balance.csv`): legal 14.8%, R1
+53.9%, R2 21.7%, R3 9.6%. R3 is not too rare to fit. Worth correcting a claim that has been
+passed around: plain accuracy for a probe that has learned nothing is ~0.54 here, not ~0.9 —
+0.9 is the number for a binary legal/illegal split. Macro-F1 is still the right metric, and
+the majority-class baseline for it is 0.175. The composition moves hard with ply, all of it
+mechanical: R1 is exactly (p+5)/64, so R2 falls 0.65 -> 0.004 and R3 0.098 -> 0.024 across
+the window. Any read-out pooled over r has to carry that.
+## The legality-probe space roster, and what it takes to keep the prefix bitwise (2026-08-05)
+
+Branch `legality/spaces`. `src/spade/legality_probe/spaces.py` holds the study's 9-space
+roster and encodes both activation sets through each.
+
+**`representative_spaces()` returns 17 entries, not 11.** raw, the two random controls, the
+8 seed-42 SAEs, and the six seed-43 sweep points that appear as soon as
+`study_dir("multiseed")` exists. The roster filter is therefore `n == "raw" or
+entry.seed == 42`, not a name set. `bracket_flip/sae_arm.py:45`'s
+`{"raw", *BASELINE_CONFIGS}` is wrong twice over — it readmits the degenerate
+`SpaDETrainer-othello` that `spaces.EXCLUDED_SAE` drops, and it never names the default
+SpaDE, `SpaDE-lam1e-03-gam1e-04`.
+
+**Batch shape decides whether the r < 0 prefix survives the encode.** Causal attention makes
+the pre-t0 activations of a game's branches bit-identical, which is what makes r < 0 a
+*paired* in-distribution control rather than an approximate one. Two branches of one game
+have to be rows of the same GEMM, or cuBLAS reduces their shared prefix differently and the
+codes stop being identical for a reason that has nothing to do with the SAE.
+`extract_acts.spans` already encodes that rule for the extraction pass; the encode reuses it
+at `ROW_BATCH = 248`, chosen so `248 x 33 <= spaces.ENCODE_BATCH` and a span goes through
+`batched_apply` as a single matmul. All 9 spaces plus both nulls then keep the prefix
+bitwise on an H100.
+
+**Measured L0 is the standardization check.** SAEs were trained on `scale*(x - mean)`, so an
+unstandardized encode is silently wrong rather than merely inaccurate. Mean L0 on the branch
+window lands within +0-14% of the Karvonen eval L0 for the same checkpoint, in the same rank
+order, and exactly on the analytic value for the three spaces that have one (TopK 80.00,
+random_topk 80.00, random_proj 4101 ≈ half of 8192). The small positive bias is the branch
+set: five of its nine categories are illegal continuations, which fire more features than the
+natural games the eval samples. `results/acceptance/all_results.csv` is the only eval CSV in
+the tree with data — the six paths `multiseed/aggregate_seeds.SEED42_CSVS` names are empty
+directories.
+
+**The branch code is streamed, never cached.** A `[17527, 33, 8192]` fp16 tensor is 9.5 GB
+per space, 76 GB for the roster, on a 90-day tier — written so it can be read once and
+reduced to scalars by the read-out. `stream_branch` yields one `spans()` batch instead, so
+the full code never exists and each consumer reduces `[rows, 33, d]` as it arrives. Sparse
+storage would have cut the 76 GB by ~6x and was rejected for the same reason: a format
+change for a tensor that should not exist. `prefix_bitwise` becomes span-local for free —
+`spans` never splits a game, so a span holds every branch of every game it touches.
+
+**The probe is not fitted on `analysis/linear_probe/activations/`.** That set holds forfeit
+positions and 53 mislabeled rows, its positions cannot be recovered because the extractor
+read a tree that no longer exists, and nothing ruled out overlap with the read-out games —
+a probe fitted on the games it is later read out on inflates every number in the study.
+`PROBE_ACTS` defaults to the label pipeline's own `[10000, 512]` layer-5 extraction, whose
+200 source games exclude by exact token match all 2000 games behind the read-out branches.
+It is already at layer 5, so `probe_acts` asserts `ndim == 2` instead of slicing `[LAYER]`:
+hand it the old all-layer stack and it fails loudly rather than encoding the wrong positions.
+
+**Every row records a fingerprint of that set.** `fingerprint()` is `tpr_probe._fingerprint`'s
+job over floats — shape plus a blake2b digest of the activation bytes, since a float sum
+collides far too easily to key a cache on. Digesting the activations rather than a manifest
+means no other corpus can produce the same fingerprint, so `$SPADE_LEGALITY_PROBE_ACTS`
+repointed at a set that is *not* disjoint changes the fingerprint and every cached row
+asserts. Nothing measured off the branch window — L0, prefix invariance, d, everything in
+`space_quality.csv` — depends on the probe set at all.
+
+Cache: `study_dir("legality")/latents/`, resumable per space on `row_<space>.json`. Only
+`probe_<space>.pt` is written, 164 MB per 8192-wide space, ~1.5 GB for all 11 — refitting a
+probe is the expensive thing to redo, re-encoding a window is not.
+
+---
+
 ## The fork figures' prose moves to their READMEs, and the axes stop naming a component (2026-08-04)
 
 Branch `fig/strip-captions`. Every fork figure — `fork_and_board` (both planes),
