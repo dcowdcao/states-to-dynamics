@@ -7,7 +7,7 @@ branch tensors, probe fits) live outside the repo under a netscratch root, are r
 regenerate a figure.
 
 `study_dir("bracket")` -> $SPADE_BRACKET_DIR, else /n/netscratch/ba_lab/Lab/$USER/spade_bracket
-Names in use: rules, bracket, straightness, manifold, divergence, multiseed.
+Names in use: rules, bracket, straightness, manifold, divergence, multiseed, legality.
 
 $USER unset is a KeyError, not a fallback to a hardcoded username: the source repo's
 multiseed and registry copies defaulted to `dcao`, which silently points another user at
