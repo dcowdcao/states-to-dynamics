@@ -6,6 +6,55 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The legality read-out runs end to end, and the level is not where the signal is (2026-08-05)
+
+Branch `legality/readout`. `src/spade/legality_probe/readout.py` fits four probe arms per
+space and reads the legality arm out over the branch window; 11 spaces, 17527 branches,
+4m47s on one H100. Writes `probe_fit.csv` (484 rows) and `readout.csv` (50193 rows).
+
+**The board arm reproduces `bracket_flip/sae_arm.py` to ±0.0026.** Same architecture, same
+target, a different fit corpus, 8 shared spaces: every delta is between +0.0005 and +0.0026,
+all positive. That is the strongest evidence the label scatter, the frame, the encode and the
+fit loop are all right. Only 7 SAEs overlap plus raw — `sae_arm.csv` carries the degenerate
+`SpaDETrainer-othello` and has no row at all for the default SpaDE, which is `sae_arm.py:45`'s
+roster bug showing up as missing data.
+
+**The four arms on raw**: legality 0.9379, board 0.9820, wrong player 0.9072, shuffled 0.2856
+(accuracy 0.5554). Every space's shuffled arm lands in 0.28-0.31, so the floor is a property
+of the class balance, not of the space. The wrong-player arm tracks the real one within 0.03
+in every space, which is why no claim here rests on the level.
+
+**Where the signal actually is: `p_pred_correct_rule` at r = -1, on the R3 panel.** At r = 0
+the illegal move has been played and every space reads that square as occupied, so R3 recall
+is ~0 everywhere and the panel is degenerate. At r = -1 — the shared pre-move board, so this
+is a read-out of the space and not of the branch — raw gets R3 right 0.814 of the time, the
+seven ordinary SAEs 0.71-0.83, `random_topk` 0.473, and the two SpaDE spaces **0.048 and
+0.006**. R1 and R2 barely separate the spaces (0.87-0.98, 0.79-0.94). Turn is the rule the
+SpaDE bottleneck destroys, and it is the rule with one taxonomy member.
+
+**`excess_macro_f1` is not scale-free, and the two SpaDE spaces make that visible.** It is
+`drop(space) - drop(raw)`, drop being the r<0 to r=0 fall in macro-F1, and CosineSpaDE and
+SpaDE-lam come out *negative* (-0.061, -0.079) only because their r<0 baseline is already
+0.49 and 0.42 — there is less left to lose. `drop_agreement_with_raw` is the version to
+trust: no ground truth, no floor, and it puts GatedAnneal (0.079) above everything else.
+
+**Masking.** 85 of 66000 window positions are forfeits in the reference game and are dropped
+from the F1 metrics; the agreement and played-square metrics need no truth and keep all of
+them. Building the labels from an incrementally replayed board rather than through
+`labels_at_ply` matters: that helper's `len(game) < t + 1` guard would have masked r = +24
+for all 80 games with t0 = 34, since the label needs no next move but the guard demands one.
+
+**Prefix invariance is now checked through the probe**, span by span, in all 11 spaces: for
+r < 0 every branch of a game decodes to the identical 64 labels. Strictly stronger than the
+encoder-level check, and it is the assumption the r<0 baseline rests on.
+
+**Two things the frozen schemas could not carry** and now do, as values rather than columns:
+rule-level rows are `category=""` with `rule` set, and R1 without the four starting squares
+is `class="R1_no_start"` / `metric="f1_R1_no_start"`. Reading either CSV needs
+`pd.read_csv(..., keep_default_na=False)` or those empty strings come back as NaN.
+
+---
+
 ## The 4-way legality probe, and the filler dimension it needs (2026-08-05)
 
 Branch `legality/probe`. `src/spade/legality_probe/probe.py` is `bracket_flip/tpr_probe.py`'s

@@ -17,12 +17,13 @@ Labelling all 64 squares uniformly is what
 committed in `bracket_flip/tpr_probe.py` — expects.
 """
 
+import copy
 from collections import Counter
 
 import numpy as np
 
 from spade.othello.games import classify_prefix
-from spade.othello.taxonomy import CATEGORIES, RULE_MEMBERS, RULE_OF, classify
+from spade.othello.taxonomy import CATEGORIES, RULE_MEMBERS, RULE_OF, classify, classify_all
 
 from circuits.othello_engine_utils import OthelloBoardState, stoi_indices, to_string
 
@@ -43,6 +44,26 @@ def board_labels(board: OthelloBoardState, categories: list[int]) -> np.ndarray:
     for square in STARTING_SQUARES:
         out[square] = LABEL_OF_CATEGORY[classify(board, square)]
     return out
+
+
+def disc_labels(board: OthelloBoardState) -> np.ndarray:
+    """[64] int8 over {0 empty, 1 theirs, 2 mine}, row-major: `bracket_flip.tpr_probe`'s
+    3-class board target, which the fit set does not store.
+
+    Class 2 is the player TO MOVE, never the one who just moved. The mover comes from
+    `next_hand_color`, i.e. from engine replay, because forfeits are unmarked in this
+    corpus and t % 2 desynchronises from the mover as soon as one happens.
+    """
+    state = board.state.reshape(64)
+    return np.where(state == 0, 0,
+                    np.where(state == board.next_hand_color, 2, 1)).astype(np.int8)
+
+
+def opponent_labels(board: OthelloBoardState) -> np.ndarray:
+    """`board_labels` for the player who just moved: legality computed in the wrong frame."""
+    other = copy.copy(board)
+    other.next_hand_color = -board.next_hand_color
+    return board_labels(other, classify_all(other))
 
 
 def labels_at_ply(game: list[int], t: int, skips: Counter) -> np.ndarray | None:

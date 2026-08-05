@@ -14,7 +14,6 @@ measure a space.
 Usage: python -m spade.legality_probe.frame_check
 """
 
-import copy
 import json
 
 import numpy as np
@@ -24,7 +23,7 @@ from spade.common.config import D_MODEL
 from spade.common.paths import repo_root
 from spade.common.study import study_dir
 from spade.legality_probe.fit_set import N_TRAIN
-from spade.legality_probe.labels import LABELS, board_labels
+from spade.legality_probe.labels import LABELS, board_labels, opponent_labels
 from spade.othello.taxonomy import classify_all
 
 from circuits.othello_engine_utils import OthelloBoardState, to_string
@@ -37,10 +36,8 @@ def both_frames(game: list[int], t: int) -> tuple[np.ndarray, np.ndarray, int]:
     the record plays next."""
     board = OthelloBoardState()
     board.update(to_string(game[:t]))
-    opponent = copy.copy(board)
-    opponent.next_hand_color = -board.next_hand_color
     return (board_labels(board, classify_all(board)),
-            board_labels(opponent, classify_all(opponent)),
+            opponent_labels(board),
             to_string(game[t]))
 
 
