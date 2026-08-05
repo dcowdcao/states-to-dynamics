@@ -6,6 +6,54 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Fig 2(b) stops grading each edit with its own decoder, and shows the controls (2026-08-05)
+
+Branch `bracket/fig2-causal`. The causal panel had three problems, all of which made
+the intervention look better or simpler than the run actually was.
+
+**Collateral was scored by `collateral_tpr` for all three series**, so the TPR edit was
+graded by the TPR decoder it is built from while the linear edit was graded by a
+decoder it has no stake in. Each family is now scored **out of family** —
+`collateral_lin` for the TPR edit, `collateral_tpr` for the probe edit. The verdict
+does not change: at every magnitude the TPR curve is above and left of the probe
+curve, and out-of-family scoring actually moves the TPR points slightly *left* at low
+scale (0.044 vs 0.058 changed squares at scale 1). Mixing two instruments on one axis
+is defensible here because the two readings of the same edit stay within ~35% of each
+other; the axis label says which instrument each series used.
+
+**The legend claimed one knob for two families.** The TPR edit is additive
+(`scale · d`, 8 scales 1–16) and the probe edit projects to the class mean (`β`, 2
+betas) — `tpr_intervene.edit_vectors` — so "one point per edit scale (1–16)" was false
+for the probe arm and implied a shared x. Resolution: nothing is placed by knob value.
+x is measured collateral, and each point carries `‖δ‖/‖h‖` (`rel_edit_norm_mean`) as a
+label, which is the one magnitude both families share. The probe's betas sit at 0.11
+and 0.23, inside the TPR sweep's 0.03–0.53, so the curves overlap in magnitude rather
+than merely in ink. x is log-scaled because collateral spans 0.04–2.3 and the
+interesting operating point is at the bottom of that range.
+
+**The strongest controls were computed and not drawn.** `d_lp_real` and `d_lp_legal`
+were in the CSV and invisible. `d_lp_real` is now a dotted, open-marker companion in
+each family's own colour (hue is spent on the family, line style carries which legal
+set is read — the `BRANCH_ROLE_STYLE` convention), and `d_lp_legal` is an in-panel
+line stating its worst-case bound over the whole sweep. That is what answers "the edit
+just damaged the model": at TPR scale 1 the counterfactual set gains +0.278 nats while
+the real board's legal-only squares move −0.0005 [−0.0015, +0.0003] and whole-set
+legality does not move. Specificity is a *low-collateral* property, and the panel now
+shows where it ends — past `‖δ‖/‖h‖ ≈ 0.2` the control collapses.
+
+**Three n's, not one.** `n_events` is 1,370, but a set-log-mass is NaN when its token
+set is empty (`unflip_edit.set_logmass`), so the counterfactual set has n = 986 and the
+real-only set n = 891. Both are constant across every scale — the sets are fixed by the
+event, not by the edit — and `causal_panel` asserts that, since it prints one n per
+quantity. Collateral and legality keep n = 1,370.
+
+Not re-run: this is drawing only, off the committed `intervention_summary.csv`.
+`tpr_matched` (the TPR direction at the probe edit's per-event length) is still in the
+CSV and still not drawn; the per-point magnitude labels carry the same information
+without a fourth curve.
+
+---
+
 ## The fork figures' prose moves to their READMEs, and the axes stop naming a component (2026-08-04)
 
 Branch `fig/strip-captions`. Every fork figure — `fork_and_board` (both planes),

@@ -179,31 +179,72 @@ def specificity_panel(ax, cos: pd.DataFrame) -> None:
 
 
 def causal_panel(ax, summary: pd.DataFrame) -> None:
-    """Effect against collateral over the edit-scale sweep. Up and to the left is
-    a clean intervention; to the right the effect is bought with board damage."""
-    series = [(("tpr", "flipped"), PROBE_STYLE["tpr"], "TPR edit"),
-              (("linear", "flipped"), PROBE_STYLE["linear"], "linear-probe edit"),
-              (("tpr", "random"), NULL, "random direction (null)")]
-    for (method, pop), style, label in series:
+    """Effect against collateral over both edit sweeps, with the control the
+    effect has to survive drawn beside it.
+
+    Up and to the left is a clean intervention. The dotted companion is the same
+    edit read on the real board's legal-only squares: a merely damaging edit
+    moves it, a flip-specific one leaves it at zero. `collateral_{lin,tpr}` are
+    swapped in so neither family is graded by the decoder it was built from, and
+    x is a measured quantity, which is what puts the additive TPR knob and the
+    linear probe's project-to-mean knob on one axis at all.
+    """
+    series = [(("tpr", "flipped"), PROBE_STYLE["tpr"], "TPR edit", "lin"),
+              (("linear", "flipped"), PROBE_STYLE["linear"], "linear-probe edit", "tpr"),
+              (("tpr", "random"), NULL,
+               "random direction, magnitude-matched (null)", "lin")]
+    edits = summary[summary.population.eq("flipped")
+                    & summary.method.isin(["tpr", "linear"])]
+    # Both sets are fixed by the event, not by the edit, so one n covers a sweep.
+    assert edits.d_lp_cf_n.nunique() == 1 and edits.d_lp_real_n.nunique() == 1
+    for (method, pop), style, label, decoder in series:
         d = summary[(summary.method == method)
                     & (summary.population == pop)].sort_values("scale")
-        ax.errorbar(d.collateral_tpr_mean, d.d_lp_cf_mean,
+        x = d[f"collateral_{decoder}_mean"]
+        xerr = [x - d[f"collateral_{decoder}_lo"], d[f"collateral_{decoder}_hi"] - x]
+        is_null = style is NULL
+        ax.errorbar(x, d.d_lp_cf_mean,
                     yerr=[d.d_lp_cf_mean - d.d_lp_cf_lo,
-                          d.d_lp_cf_hi - d.d_lp_cf_mean],
-                    xerr=[d.collateral_tpr_mean - d.collateral_tpr_lo,
-                          d.collateral_tpr_hi - d.collateral_tpr_mean],
+                          d.d_lp_cf_hi - d.d_lp_cf_mean], xerr=xerr,
                     marker=style["marker"], ms=5, lw=1.4, ls=style.get("ls", "-"),
                     color=style["color"], elinewidth=0.8, ecolor=style["color"],
                     markeredgecolor="white", markeredgewidth=0.6,
-                    zorder=2 if style is NULL else 4, label=label)
-    ax.set_xlabel("collateral: other squares whose decoded class changed (of 63)"
+                    zorder=2 if is_null else 4, label=label)
+        if is_null:  # its real-only companion is zero for the same reason the null is
+            continue
+        ax.errorbar(x, d.d_lp_real_mean,
+                    yerr=[d.d_lp_real_mean - d.d_lp_real_lo,
+                          d.d_lp_real_hi - d.d_lp_real_mean], xerr=xerr,
+                    marker=style["marker"], ms=4.5, lw=1.2, ls=(0, (1, 1.6)),
+                    color=style["color"], elinewidth=0.8, ecolor=style["color"],
+                    markerfacecolor="white", markeredgewidth=0.9, zorder=3)
+        for rel, xi, yi in zip(d.rel_edit_norm_mean, x, d.d_lp_cf_mean):
+            ax.annotate(f"{rel:.2f}", (xi, yi), textcoords="offset points",
+                        xytext=(-5, 4), ha="right", va="bottom", fontsize=6,
+                        color=MUTED, zorder=5)
+    bound = edits[["d_lp_legal_lo", "d_lp_legal_hi"]].abs().to_numpy().max()
+    ax.axhline(0, color=MUTED, lw=0.8, ls=(0, (4, 3)), zorder=0)
+    ax.annotate("third control: log-mass on the whole legal set never moves\n"
+                f"by more than {bound:.2f} nats anywhere in either sweep\n"
+                f"(95% CI, n = {int(edits.d_lp_legal_n.iloc[0]):,} events)",
+                (0.02, 0.02), xycoords="axes fraction", ha="left", va="bottom",
+                fontsize=6.5, color=MUTED, zorder=5)
+    ax.set_xscale("log")
+    ax.set_xlabel("collateral: other squares (of 63) whose decoded class changed,\n"
+                  "scored by the decoder the edit was not built from (n = 1,370)"
                   "\n" r"$\leftarrow$ cleaner intervention")
-    ax.set_ylabel(r"$\Delta$ log-mass onto the counterfactual legal set"
+    ax.set_ylabel(r"$\Delta$ next-move log-mass (nats)"
                   "\n" r"$\uparrow$ the model plays the un-flipped board")
-    ax.set_title("and editing along it changes what the model plays")
-    ax.legend(loc="upper left", fontsize=7,
-              title="one point per edit scale (1-16); bars = 95% CI over events",
-              title_fontsize=7, labelspacing=0.3)
+    ax.set_title("and editing along it changes what the model plays,\n"
+                 "not how legal its moves are")
+    ax.legend(loc="upper left", fontsize=6.5, labelspacing=0.3, title_fontsize=6.5,
+              title="filled, solid = counterfactual-legal set "
+                    f"(n = {int(edits.d_lp_cf_n.iloc[0]):,} events)\n"
+                    "open, dotted = the same edit on the real board's legal-only\n"
+                    f"squares (n = {int(edits.d_lp_real_n.iloc[0]):,}), the control "
+                    "a merely damaging edit fails\n"
+                    r"bars = 95% bootstrap CI; labels = $\|\delta\|/\|h\|$, the "
+                    "knobs differ")
 
 
 def figure_two(camera_ready: bool) -> None:

@@ -45,7 +45,9 @@ in it.
    next-move probability mass onto the counterfactual board's legal set by
    +1.496 log-units at matched step length, against +0.121 for a
    magnitude-matched random direction, with less collateral than the random
-   control at the operating scale.
+   control at the operating scale. It is a move of the *counterfactual* mass and
+   not damage: at the operating scale the real board's legal-only squares move
+   −0.0005 [−0.0015, +0.0003] and the whole legal set does not move at all.
 
 Read the contrasts, never the bare proportions. `cos_flip_median` must be
 computed on `act(P+m) − act(P+m')`; the before→after reading is degenerate,
@@ -71,9 +73,29 @@ numbers are below and their CSVs are still in `results/`.
 - **Fig 2 — the direction and its causal use** (`make_figures.py`). (a) the
   flip-attributable displacement `act(P+m) − act(P+m′)` aligns with the
   predicted flip direction at median +0.175 (TPR) / +0.163 (linear) against an
-  unflipped-disc null at −0.002. (b) effect against collateral over the edit
-  scale sweep: up and to the left is a clean intervention, and the TPR edit sits
-  above and left of both the linear edit and the random null at every scale.
+  unflipped-disc null at −0.002. (b) effect against collateral, one point per
+  edit magnitude: up and to the left is a clean intervention, and the TPR edit
+  sits above and left of both the linear edit and the magnitude-matched random
+  null everywhere. Three things that panel is careful about, none of them
+  cosmetic:
+  - **Collateral is read by the decoder the edit was *not* built from** — the
+    TPR edit by the linear probe, the linear edit by the TPR probe. Grading an
+    edit with its own instrument flatters it, and the old panel did exactly that
+    to the TPR arm. The two readings of one edit stay within ~35% of each other,
+    so putting them on one axis does not distort it.
+  - **The two knobs are not the same quantity.** The TPR edit adds
+    `scale · d_TPR` (8 scales, 1–16); the probe edit projects the activation to
+    the target class's mean at `β` (2 betas). So nothing is placed by knob value:
+    x is measured collateral, and every point is labelled with `‖δ‖/‖h‖`, the
+    fraction of the residual norm the edit moves. The probe's two betas land at
+    0.11 and 0.23, inside the TPR sweep's 0.03–0.53, which is what makes the two
+    curves readable against each other.
+  - **The dotted companion is the specificity control** — the same edit read on
+    the real board's legal-only squares, which a merely damaging edit drags down.
+    It sits at zero through the low-collateral half of the sweep and only
+    collapses past `‖δ‖/‖h‖ ≈ 0.2`. n = 986 events for the counterfactual set,
+    891 for the real-only set (an event counts only where that set is non-empty),
+    1,370 for collateral and for the whole-legal-set control.
 - **Fig 3 — the SAE arm** (`sae_pca_figure.py`). 3×3 per-space PCA of
   before/after/control, per-*t* centered. **Each panel refits its own basis**,
   so read the within-panel arrangement and never positions across panels
