@@ -6,6 +6,44 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The legality-probe space roster, and what it takes to keep the prefix bitwise (2026-08-05)
+
+Branch `legality/spaces`. `src/spade/legality_probe/spaces.py` holds the study's 9-space
+roster and encodes both activation sets through each.
+
+**`representative_spaces()` returns 17 entries, not 11.** raw, the two random controls, the
+8 seed-42 SAEs, and the six seed-43 sweep points that appear as soon as
+`study_dir("multiseed")` exists. The roster filter is therefore `n == "raw" or
+entry.seed == 42`, not a name set. `bracket_flip/sae_arm.py:45`'s
+`{"raw", *BASELINE_CONFIGS}` is wrong twice over — it readmits the degenerate
+`SpaDETrainer-othello` that `spaces.EXCLUDED_SAE` drops, and it never names the default
+SpaDE, `SpaDE-lam1e-03-gam1e-04`.
+
+**Batch shape decides whether the r < 0 prefix survives the encode.** Causal attention makes
+the pre-t0 activations of a game's branches bit-identical, which is what makes r < 0 a
+*paired* in-distribution control rather than an approximate one. Two branches of one game
+have to be rows of the same GEMM, or cuBLAS reduces their shared prefix differently and the
+codes stop being identical for a reason that has nothing to do with the SAE.
+`extract_acts.spans` already encodes that rule for the extraction pass; the encode reuses it
+at `ROW_BATCH = 248`, chosen so `248 x 33 <= spaces.ENCODE_BATCH` and a span goes through
+`batched_apply` as a single matmul. All 9 spaces plus both nulls then keep the prefix
+bitwise on an H100.
+
+**Measured L0 is the standardization check.** SAEs were trained on `scale*(x - mean)`, so an
+unstandardized encode is silently wrong rather than merely inaccurate. Mean L0 on the branch
+window lands within +0-14% of the Karvonen eval L0 for the same checkpoint, in the same rank
+order, and exactly on the analytic value for the three spaces that have one (TopK 80.00,
+random_topk 80.00, random_proj 4101 ≈ half of 8192). The small positive bias is the branch
+set: five of its nine categories are illegal continuations, which fire more features than the
+natural games the eval samples. `results/acceptance/all_results.csv` is the only eval CSV in
+the tree with data — the six paths `multiseed/aggregate_seeds.SEED42_CSVS` names are empty
+directories.
+
+Cache: `study_dir("legality")/latents/`, fp16, resumable per space on `row_<space>.json`.
+A branch tensor is `[17527, 33, d]`; 9.5 GB per 8192-wide space, ~78 GB for the 9.
+
+---
+
 ## The fork figures' prose moves to their READMEs, and the axes stop naming a component (2026-08-04)
 
 Branch `fig/strip-captions`. Every fork figure — `fork_and_board` (both planes),
