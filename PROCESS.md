@@ -6,6 +6,40 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Branch suffixes get resampled from the model, in a tensor beside branches.pt (2026-08-05)
+
+Branch `rollout/generate`, new `violation_divergence/rollout_branches.py`. `branches.py`
+splices: every branch keeps the source game's `tokens[t0+1:]`, which is a legal
+continuation of the *reference's* board and of no other. It survives for the legal
+control in 76.8% of games (median 2 moves) and, after an illegal branch, is legal on no
+board at all. So the reference was the only branch with an in-distribution future and
+every displacement in the study was measured against it — the README's "What does not
+hold" named this and nothing fixed it.
+
+The new module keeps `tokens[:t0]` and the branch token at t0 and samples the rest from
+OthelloGPT at temperature 1.0, K=4 rollouts per branch, only the pass token masked. **The
+reference is resampled too.** Replaying its real continuation while the others roll out
+would leave it the one in-distribution sequence and would have fixed nothing; `verify()`
+checks that no reference rollout reproduces the real game.
+
+**The trade, which is not small: single-token causal attribution is gone.** Two branches
+now differ at t0 and at every position after it, so a displacement is the branch move plus
+everything the model then chose to do about it. K=4 separates sampling variance from the
+branch effect; it does not separate the move from its consequences. `branches.pt` stays
+the tensor for the single-token claim and this is an addition to it, not a replacement —
+hence a parallel tree under `$DIR/rollout/`, with nothing under `branches/` or `acts/`
+touched.
+
+Two decisions worth knowing. **Seeding is per (game_id, k), not per row**: all branches of
+a game share the k-th uniform stream, so the K rollouts of two branches are paired common
+random numbers, and a row's continuation does not depend on batch composition or on which
+branches the game happened to yield. Sampling is inverse-CDF against those uniforms rather
+than `multinomial`, which is what makes that possible. **No KV cache**: transformer_lens
+1.17 builds the cache's attention mask from `self.tokenizer`, and OthelloGPT has none
+(`AttributeError: 'NoneType' object has no attribute 'pad_token_id'`). Faking a tokenizer
+to satisfy a mask computation is not worth it for a model this size, so each step re-runs
+the whole prefix — ~40x a cached step's compute, still minutes on one H100.
+
 ## The fork figures' prose moves to their READMEs, and the axes stop naming a component (2026-08-04)
 
 Branch `fig/strip-captions`. Every fork figure — `fork_and_board` (both planes),
