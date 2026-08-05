@@ -1,0 +1,46 @@
+{
+  "raw": {
+    "prefix_bitwise_code": true,
+    "prefix_bitwise_pred": true
+  },
+  "BatchTopKTrainer-othello": {
+    "prefix_bitwise_code": true,
+    "prefix_bitwise_pred": true
+  },
+  "CosineSpaDETrainer-othello": {
+    "prefix_bitwise_code": true,
+    "prefix_bitwise_pred": true
+  },
+  "GatedAnnealTrainer-othello": {
+    "prefix_bitwise_code": true,
+    "prefix_bitwise_pred": true
+  },
+  "GatedSAETrainer-othello": {
+    "prefix_bitwise_code": true,
+    "prefix_bitwise_pred": true
+  },
+  "PAnnealTrainer-othello": {
+    "prefix_bitwise_code": true,
+    "prefix_bitwise_pred": true
+  },
+  "SpaDE-lam1e-03-gam1e-04": {
+    "prefix_bitwise_code": true,
+    "prefix_bitwise_pred": true
+  },
+  "StandardTrainer-othello": {
+    "prefix_bitwise_code": true,
+    "prefix_bitwise_pred": true
+  },
+  "TopKTrainer-othello": {
+    "prefix_bitwise_code": true,
+    "prefix_bitwise_pred": true
+  },
+  "random_proj": {
+    "prefix_bitwise_code": true,
+    "prefix_bitwise_pred": true
+  },
+  "random_topk": {
+    "prefix_bitwise_code": true,
+    "prefix_bitwise_pred": true
+  }
+}
