@@ -34,10 +34,8 @@ Usage: python -m spade.bracket_flip.tpr_intervene [--scales 1,2,3,4,6,8,12,16] [
 
 import argparse
 import json
-import os
 from collections import Counter
 from dataclasses import dataclass
-from pathlib import Path
 from random import Random
 
 import numpy as np
@@ -48,7 +46,7 @@ from spade.bracket_flip import tpr_probe
 from spade.common.config import D_MODEL, HOOK_POINT, LAYER, MODEL_NAME
 from spade.common.device import select_device
 from spade.common.net import force_ipv4
-from spade.common.paths import repo_root
+from spade.common.paths import linear_probe_activations, repo_root
 from spade.common.study import study_dir
 from spade.othello.boards import flip_set, regular_moves, replay, tokens_of
 from spade.rules.causal.unflip_edit import set_logmass  # identical scoring, by import
@@ -63,11 +61,7 @@ BATCH_SIZE = 128
 N_BOOT = 1000
 SEED = 7
 
-# Same resolution as tpr_probe.ACTIVATIONS and act_geometry.LINEAR_PROBE: the
-# directory is gitignored, so a worktree needs the override.
-LINEAR_PROBE_DIR = Path(os.environ.get(
-    "SPADE_LINEAR_PROBE_ACTIVATIONS",
-    repo_root() / "analysis" / "linear_probe" / "activations"))
+LINEAR_PROBE_DIR = linear_probe_activations()
 
 
 @dataclass(frozen=True)

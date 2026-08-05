@@ -98,8 +98,9 @@ numbers are below and their CSVs are still in `results/`.
 
 ## Pipeline
 
-`spade.bracket_flip.events` → `extract_acts` → `tpr_probe` → the figure scripts
-here. One SLURM job: `scripts/slurm/studies/bracket_flip/submit_bracket_flip.sh`.
+`spade.bracket_flip.events` → `extract_acts` → `tpr_probe` → `probe_space` and
+`geometry_tables`, which write the CSVs in `results/` → the figure scripts here,
+which only draw. One SLURM job: `scripts/slurm/studies/bracket_flip/submit_bracket_flip.sh`.
 Large artifacts on `$SPADE_BRACKET_DIR`; per-event CSVs in `results/`; the A1–A6
 write-ups in `reports/`.
 

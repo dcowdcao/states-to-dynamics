@@ -39,8 +39,12 @@ from spade.bracket_flip.tpr_probe import (
     _fit,
 )
 from spade.common.config import MODEL_NAME
-from spade.common.paths import repo_root
+from spade.common.paths import add_karvonen_to_path, repo_root
 from spade.common.study import study_dir
+
+add_karvonen_to_path()
+
+from circuits.othello_engine_utils import to_string
 
 EMPTY, THEIRS, MINE = 0, 1, 2  # index into tpr_probe.CLASSES
 CONDITIONS = ("before", "after", "control")
@@ -381,6 +385,19 @@ def canonical(ev: pd.DataFrame, lengths: pd.DataFrame) -> tuple[int, dict]:
                "event_displacement": round(float(lengths.loc[i, "relative_flipped"]), 4)}
 
 
+def event_meta(ev: pd.DataFrame, i: int) -> pd.DataFrame:
+    """What the figure needs about that event but the 64-square table cannot carry.
+
+    `move` and `control_move` are vocab tokens; the panel draws squares, so both are
+    converted here and nowhere else.
+    """
+    r = ev.loc[i]
+    return pd.DataFrame([{
+        "game_id": int(r.game_id), "t": int(r.t), "mover": int(r.mover),
+        "square_s": int(r.square_s), "square_m": to_string(int(r.move)),
+        "square_m_prime": to_string(int(r.control_move)), "control_kind": r.control_kind}])
+
+
 def worked_example(d: Decode, ev: pd.DataFrame, i: int) -> pd.DataFrame:
     """The 64 squares of one event: true discs, decoded class, panel coordinates.
 
@@ -437,6 +454,7 @@ def main() -> None:
     lengths = displacements(main_decode)
     i, rule = canonical(ev, lengths)
     worked_example(main_decode, ev, i).to_csv(RESULTS / "f2_event.csv", index=False)
+    event_meta(ev, i).to_csv(RESULTS / "f2_event_meta.csv", index=False)
     lengths.insert(0, "game_id", ev.game_id)
     lengths.to_csv(RESULTS / "m2_displacements.csv", index=False)
 

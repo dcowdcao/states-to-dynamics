@@ -11,14 +11,13 @@ Usage: python -m spade.bracket_flip.tpr_probe
 import argparse
 import json
 import math
-import os
 from dataclasses import dataclass
 from pathlib import Path
 
 import torch
 from torch import Tensor
 
-from spade.common.paths import add_tpr_to_path, repo_root
+from spade.common.paths import add_tpr_to_path, linear_probe_activations
 from spade.common.study import study_dir
 
 add_tpr_to_path()
@@ -45,10 +44,7 @@ WEIGHT_DECAY = 2.0
 EPOCHS = 120
 BATCH_SIZE = 1024
 
-# Gitignored, so a worktree does not carry it; override to point at another cached set.
-ACTIVATIONS = Path(os.environ.get(
-    "SPADE_LINEAR_PROBE_ACTIVATIONS",
-    repo_root() / "analysis" / "linear_probe" / "activations"))
+ACTIVATIONS = linear_probe_activations()
 
 
 @dataclass(frozen=True)
