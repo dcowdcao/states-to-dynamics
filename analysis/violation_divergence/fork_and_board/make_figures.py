@@ -61,7 +61,10 @@ FIG_DIR = Path(__file__).resolve().parent / "figures"
 NCOL = 3
 CELL_W, CELL_H = 3.7, 3.5  # one fork cell, as in ../game_trajectory's grid
 BOARD_H = 3.9              # the board row; the board is square, so this is its width too
-PLANE_NAME = {"displacement": "Displacement", "r21": "R$^{21}$ Curvature Space"}
+# R^21 is 11 step-length components and 10 turning-angle ones, so it carries
+# displacement magnitude as well as curvature; the name says both.
+PLANE_NAME = {"displacement": "Displacement",
+              "r21": "R$^{21}$ Curvature & Displacement Space"}
 METHOD_NAME = {"pca": "PCA", "isomap": "Isomap"}
 
 
