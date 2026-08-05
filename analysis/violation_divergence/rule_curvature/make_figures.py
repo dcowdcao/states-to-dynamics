@@ -50,7 +50,7 @@ from spade.figures.branch_style import (
 from spade.figures.paper_style import (
     INK, MUTED, REFERENCE, apply_style, save_figure)
 from spade.figures.straightness_panels import (
-    REL_WINDOW, class_blocks, event_axes, profile_panel)
+    class_blocks, event_axes, profile_panel)
 from spade.othello.boards import flip_set, replay
 from spade.othello.taxonomy import LEGAL
 from spade.violation_divergence import rule_curvature as rc
