@@ -47,14 +47,22 @@ storage would have cut the 76 GB by ~6x and was rejected for the same reason: a 
 change for a tensor that should not exist. `prefix_bitwise` becomes span-local for free —
 `spans` never splits a game, so a span holds every branch of every game it touches.
 
-**Every row records a fingerprint of the probe position set.** Which positions the probe is
-fitted on is still being settled: the committed `analysis/linear_probe/activations/` set is
-not known to be disjoint from the read-out branch games, and a freshly extracted set that is
-may replace it. `$SPADE_LEGALITY_PROBE_ACTS` switches the source, and `fingerprint()` does
-`tpr_probe._fingerprint`'s job over floats — shape plus a blake2b digest of the bytes, since
-a float sum collides far too easily to key a cache on. A cached row whose fingerprint no
-longer matches is an assertion, not a silent reuse. Nothing measured off the branch window —
-L0, prefix invariance, d, everything in `space_quality.csv` — depends on the probe set.
+**The probe is not fitted on `analysis/linear_probe/activations/`.** That set holds forfeit
+positions and 53 mislabeled rows, its positions cannot be recovered because the extractor
+read a tree that no longer exists, and nothing ruled out overlap with the read-out games —
+a probe fitted on the games it is later read out on inflates every number in the study.
+`PROBE_ACTS` defaults to the label pipeline's own `[10000, 512]` layer-5 extraction, whose
+200 source games exclude by exact token match all 2000 games behind the read-out branches.
+It is already at layer 5, so `probe_acts` asserts `ndim == 2` instead of slicing `[LAYER]`:
+hand it the old all-layer stack and it fails loudly rather than encoding the wrong positions.
+
+**Every row records a fingerprint of that set.** `fingerprint()` is `tpr_probe._fingerprint`'s
+job over floats — shape plus a blake2b digest of the activation bytes, since a float sum
+collides far too easily to key a cache on. Digesting the activations rather than a manifest
+means no other corpus can produce the same fingerprint, so `$SPADE_LEGALITY_PROBE_ACTS`
+repointed at a set that is *not* disjoint changes the fingerprint and every cached row
+asserts. Nothing measured off the branch window — L0, prefix invariance, d, everything in
+`space_quality.csv` — depends on the probe set at all.
 
 Cache: `study_dir("legality")/latents/`, resumable per space on `row_<space>.json`. Only
 `probe_<space>.pt` is written, 164 MB per 8192-wide space, ~1.5 GB for all 11 — refitting a
