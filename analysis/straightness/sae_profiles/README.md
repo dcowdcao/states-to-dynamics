@@ -66,80 +66,13 @@ AUROC actually tracks.
 - Practical consequence: a whole-game summary can understate a dictionary that
   preserves the event but scrambles its sign structure. Read the event-locked
   panel before concluding a latent space has lost a signal.
-
-## Result: the trajectory metrics agree across dictionaries, the point metric does not
-
-Three per-position quantities, and they are not equally robust. `d = ‖Δz‖` and
-the turning angle are properties of the *path*; `‖z‖` is a property of the
-*point* and is only here as a confound diagnostic — ReStraV never uses it (see
-`docs/ReStraV_Summary.md`). Random/legal ratios per family:
-
-| family | step ‖Δz‖ | norm ‖z‖ |
-|---|---|---|
-| Standard | 0.884 | 1.252 |
-| PAnneal | 0.843 | 1.211 |
-| SpaDE-lam1e-03-gam1e-04 | 0.818 | 1.153 |
-| CosineSpaDE | 0.814 | 1.143 |
-| TopK | 0.788 | 1.033 |
-| GatedSAE | 0.780 | 1.029 |
-| BatchTopK | 0.763 | 1.089 |
-| GatedAnneal | 0.742 | 0.993 |
-
-**Step length is unanimous**: every dictionary, without exception, gives
-random-token games shorter steps (0.74–0.88×), reproducing the raw-space result.
-**Norm is not**: it ranges 0.99–1.25 with no consistent direction, and splits
-into three mechanistically different regimes (below). So the trajectory-geometry
-metrics transfer through every dictionary, while the magnitude diagnostic is
-dictionary-dependent — a reason to lead with d and θ and treat ‖z‖ as the
-supporting check it is.
-
-One refinement to the cancellation result above: **the sign structure that
-cancels is specific to the turning angle.** Every dictionary's step-length
-violation response is a sustained negative decaying monotonically, with none of
-the offset-to-offset sign flips the angle shows. What varies across dictionaries
-is angular direction, not displacement magnitude.
-
-## Result: each dictionary re-expresses the norm elevation differently
-
-Layer-5 residual norms are 1.141× higher on random-token games than on legal ones
-(see `analysis/straightness/figures/norm_diagnostics.png`). The `norm_vs_t_*`
-figures ask what each dictionary does with that. Ratios are random/legal, averaged
-over all positions; L0 is the per-position active-code count, also stored in the
-npz:
-
-| family | norm r/l | L0 r/l | mean L0 | what it does |
-|---|---|---|---|---|
-| Standard | 1.252 | 1.220 | 1163 | passes through: more codes fire, norm rises to match |
-| PAnneal | 1.211 | 1.223 | 361 | same |
-| SpaDE-lam1e-03-gam1e-04 | 1.153 | 0.830 | 1776 | *fewer* codes, each larger |
-| CosineSpaDE | 1.143 | 0.910 | 172 | *fewer* codes, each larger |
-| BatchTopK | 1.089 | 1.730 | 88 | many more codes, each much weaker |
-| TopK | 1.033 | 1.000 | 80 | hard-constrained: L0 cannot move, norm barely does |
-| GatedSAE | 1.029 | 1.672 | 58 | many more codes, each much weaker |
-| GatedAnneal | 0.993 | 1.437 | 35 | elevation eliminated |
-| raw L5 | 1.141 | — | — | the residual-stream reference |
-
-Three regimes, and they do not line up with the usual architecture families:
-
-- **Pass-through (Standard, PAnneal).** Norm and L0 rise together by the same
-  ~22%, so the elevation is entirely "more features fire." These are the two
-  least sparsity-constrained dictionaries.
-- **Suppressed (GatedAnneal, GatedSAE, TopK, BatchTopK).** Norm elevation is
-  gone or nearly so. For TopK the reason is mechanical — L0 ratio is exactly
-  1.000 because k is fixed. For the Gated families and BatchTopK the mechanism
-  is different and more interesting: L0 goes *up* a lot (1.4–1.7×) while the
-  norm stays flat, so many more codes fire but each carries a much smaller
-  coefficient.
-- **Inverted (CosineSpaDE, SpaDE-lam1e-03).** L0 goes *down* (0.83–0.91×) while
-  the norm goes *up*. Off-distribution input makes these dictionaries commit to
-  fewer, larger codes — the opposite sparsity response to every other family,
-  and presumably the simplex geometry.
-
-So "activation norm is higher on random tokens" survives into latent space for
-some dictionaries and is erased by others, and knowing the norm ratio alone does
-not tell you which mechanism produced it — L0 is needed to separate "more codes"
-from "bigger codes." Worth remembering when a norm-based metric is used to
-compare SAEs.
+- **The sign structure that cancels is specific to the turning angle.** Every
+  dictionary's step-length violation response is a sustained negative decaying
+  monotonically, with none of the offset-to-offset sign flips the angle shows.
+  What varies across dictionaries is angular direction, not displacement
+  magnitude. `d = ‖Δz‖` and the turning angle are properties of the *path*;
+  `‖z‖` is a property of the *point* and is only here as a confound diagnostic —
+  ReStraV never uses it (see `docs/ReStraV_Summary.md`).
 
 ## Result: the two path quantities agree everywhere, the norm does not
 
@@ -163,15 +96,10 @@ The two *path* quantities behave identically everywhere: an illegal move makes
 the next step shorter and the next turn straighter, in all nine spaces, peaking
 at t0+1 (CosineSpaDE's angle peaks a ply earlier, as it does in every figure).
 
-The *point* quantity does not. The norm falls with them in raw layer 5 and the
-four hard-sparsity dictionaries, but **rises** in Standard, PAnneal and both
-sparsemax spaces — the same split the random-token table above shows, where
-those four are the "pass-through" and "inverted" regimes and the others are
-"suppressed". So the sign of a norm response is a property of the dictionary,
-not of the event, and a norm-based OOD score inherits it. Note also that a
-single illegal move *lowers* the raw layer-5 norm (−3.78%) while a fully random
-game *raises* it (+14% overall): local violation and global distribution shift
-are not the same phenomenon for ‖z‖.
+The *point* quantity does not. The norm falls with the path quantities in raw
+layer 5 and in the four hard-sparsity dictionaries, but **rises** in Standard,
+PAnneal and both sparsemax spaces. So the sign of a norm response is a property
+of the dictionary, not of the event, and a norm-based OOD score inherits it.
 
 ## Result: SAE latents expose the human-game shift that raw layer 5's angle misses
 
@@ -215,7 +143,7 @@ direction from the SAE latents. Seed 42 only.
 | `step_vs_t_<Family>.png` | per-family, two panels: (a) step-length ‖Δz‖ profile over the game, (b) violation-locked Δ step length. The displacement-magnitude counterpart of curvature, and the quantity ReStraV pairs with the turning angle |
 | `norm_vs_t_<Family>.png` | per-family, two panels: (a) latent-norm ‖z‖ profile over the game, (b) violation-locked Δ latent norm. A confound diagnostic, not a trajectory metric |
 | `violation_spike_comparison.png` | small multiples of the curvature panel (b) across all spaces on a shared y-axis, raw layer 5 ghosted in gray, each titled with its trough and net |
-| `theta_dist_comparison.png` | small multiples of the whole-game curvature distribution across all spaces on shared axes: per-class KDE with a bootstrap 95% band, class medians on the baseline, each titled with its random−legal and championship−legal median gap. The distribution behind `analysis/straightness/figures/sae_families_auroc.png` |
+| `theta_dist_comparison.png` | small multiples of the whole-game curvature distribution across all spaces on shared axes: per-class KDE with a bootstrap 95% band, class medians on the baseline, each titled with its violation−legal and championship−legal median gap. The distribution behind `analysis/straightness/figures/sae_families_auroc.png` |
 
 | `quantity_comparison.png` | all three quantities at once, small multiples across all spaces on a shared axis. Each Δ is a percentage of that space's own mean level, which is what makes the nine dictionaries commensurable |
 
