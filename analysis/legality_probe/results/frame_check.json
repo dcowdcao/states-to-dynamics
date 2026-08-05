@@ -1,0 +1,41 @@
+{
+  "label_of_the_played_move": {
+    "mover": {
+      "legal": 1.0,
+      "R1 placement": 0.0,
+      "R2 bracketing": 0.0,
+      "R3 turn": 0.0
+    },
+    "opponent": {
+      "legal": 0.3047,
+      "R1 placement": 0.0,
+      "R2 bracketing": 0.0,
+      "R3 turn": 0.6953
+    }
+  },
+  "fraction_relabelled_by_frame": {
+    "legal": 0.7029,
+    "R1 placement": 0.0,
+    "R2 bracketing": 0.0,
+    "R3 turn": 1.0,
+    "all": 0.1997
+  },
+  "linear_probe": {
+    "mover": {
+      "legal": 0.9838,
+      "R1 placement": 0.995,
+      "R2 bracketing": 0.9309,
+      "R3 turn": 0.8454,
+      "macro_f1": 0.9388,
+      "accuracy": 0.965
+    },
+    "opponent": {
+      "legal": 0.8239,
+      "R1 placement": 0.9938,
+      "R2 bracketing": 0.9211,
+      "R3 turn": 0.8684,
+      "macro_f1": 0.9018,
+      "accuracy": 0.941
+    }
+  }
+}
