@@ -29,13 +29,19 @@ RESULTS = HERE / "results"
 FIGURES = HERE / "figures"
 
 ROLES = ["flipped", "unflipped_own", "unflipped_opp", "placed", "empty"]
-BASIS_TITLE = {"relative": "native basis: mine / theirs / empty",
-               "absolute": "relabeled to absolute colour"}
+# Two probes of the same architecture and layer, one per label convention, so the
+# panels are two measurements rather than one relabeled twice.
+BASIS_TITLE = {"relative": "TPR trained on mine / theirs / empty",
+               "absolute": "a second TPR, trained on black / white"}
 AXIS = {
-    "relative": (r"$\ell_{\rm mine}-\ell_{\rm theirs}$ (logits)",
-                 r"$\frac{1}{2}(\ell_{\rm mine}+\ell_{\rm theirs})-\ell_{\rm empty}$"),
-    "absolute": (r"$\ell_{\rm mover}-\ell_{\rm opponent}$ (logits)",
-                 r"$\frac{1}{2}(\ell_{\rm mover}+\ell_{\rm opp})-\ell_{\rm empty}$"),
+    "relative": (r"$\ell_{\rm mine}-\ell_{\rm theirs}$ (logits)"
+                 "\n" r"$>0$: owned by the player to move",
+                 r"$\frac{1}{2}(\ell_{\rm mine}+\ell_{\rm theirs})-\ell_{\rm empty}$"
+                 "\n" r"$>0$: occupied"),
+    "absolute": (r"$(\ell_{\rm black}-\ell_{\rm white})\times$ mover of $m$ (logits)"
+                 "\n" r"$>0$: the colour the flanking player plays",
+                 r"$\frac{1}{2}(\ell_{\rm black}+\ell_{\rm white})-\ell_{\rm empty}$"
+                 "\n" r"$>0$: occupied"),
 }
 
 
@@ -44,11 +50,15 @@ def panel_letter(ax, i: int) -> None:
             color=INK, fontsize=9)
 
 
-def field_panel(ax, field: pd.DataFrame, basis: str, annotate: bool = False) -> None:
+def field_panel(ax, field: pd.DataFrame, basis: str, accuracy: float,
+                note_xy: tuple[float, float], annotate: bool = False) -> None:
     """One arrow per square role, tail = before, head = after the flanking move.
 
-    The flipped square carries a second, dashed arrow to where the matched
-    non-flipping move leaves it; the gap between those two heads is the claim.
+    The bars are on the displacement, not on the head: an arrow asserts a change,
+    the change is paired within event, and the two endpoints are anticorrelated
+    across events, so an endpoint interval is not one for the arrow. The flipped
+    square carries a second, dashed arrow to where the matched non-flipping move
+    leaves it, and the gap between those two heads is the panel's one contrast.
     """
     d = field[field.basis == basis].set_index("role")
     for role in ROLES:
@@ -57,36 +67,48 @@ def field_panel(ax, field: pd.DataFrame, basis: str, annotate: bool = False) -> 
                     arrowprops=dict(arrowstyle="-|>", lw=0.9, color=style["color"],
                                     shrinkA=0, shrinkB=4, alpha=0.9))
         ax.errorbar(r.after_x, r.after_y,
-                    xerr=[[r.after_x - r.after_x_lo], [r.after_x_hi - r.after_x]],
-                    yerr=[[r.after_y - r.after_y_lo], [r.after_y_hi - r.after_y]],
+                    xerr=[[r.d_after_x - r.d_after_x_lo], [r.d_after_x_hi - r.d_after_x]],
+                    yerr=[[r.d_after_y - r.d_after_y_lo], [r.d_after_y_hi - r.d_after_y]],
                     marker=style["marker"], ms=8, color=style["color"], lw=0,
                     elinewidth=0.9, ecolor=INK, markeredgecolor="white",
                     markeredgewidth=1.0, zorder=5, label=style["label"])
         ax.plot(r.before_x, r.before_y, marker=style["marker"], ms=6, lw=0,
                 markerfacecolor="white", markeredgecolor=style["color"],
                 markeredgewidth=1.2, zorder=4)
-        if role == "flipped":
-            ax.annotate("", xy=(r.control_x, r.control_y),
-                        xytext=(r.before_x, r.before_y),
-                        arrowprops=dict(arrowstyle="-|>", lw=1.1, ls=(0, (4, 2)),
-                                        color=style["color"], shrinkA=0, shrinkB=4))
-            ax.plot(r.control_x, r.control_y, marker="X", ms=9, lw=0,
-                    color=style["color"], markeredgecolor="white",
-                    markeredgewidth=1.0, zorder=6,
-                    label="flipped square, matched non-flipping move")
-            if annotate:  # the fill convention is the panel's whole grammar
-                for x, y, text, dy, va in [
-                        (r.before_x, r.before_y, "before", -9, "top"),
-                        (r.after_x, r.after_y, "after", 9, "bottom"),
-                        (r.control_x, r.control_y, "after $m'$\n(no flip)", -9, "top")]:
-                    ax.annotate(text, (x, y), textcoords="offset points",
-                                xytext=(0, dy), ha="center", va=va, fontsize=7.5,
-                                color=style["color"], zorder=7)
+        if role != "flipped":
+            continue
+        ax.annotate("", xy=(r.control_x, r.control_y), xytext=(r.before_x, r.before_y),
+                    arrowprops=dict(arrowstyle="-|>", lw=1.1, ls=(0, (4, 2)),
+                                    color=style["color"], shrinkA=0, shrinkB=4))
+        ax.errorbar(r.control_x, r.control_y,
+                    xerr=[[r.d_control_x - r.d_control_x_lo],
+                          [r.d_control_x_hi - r.d_control_x]],
+                    yerr=[[r.d_control_y - r.d_control_y_lo],
+                          [r.d_control_y_hi - r.d_control_y]],
+                    marker="X", ms=9, color=style["color"], lw=0, elinewidth=0.9,
+                    ecolor=INK, markeredgecolor="white", markeredgewidth=1.0,
+                    zorder=6, label="flipped square, after $m'$")
+        lo, hi = sorted(abs(v) for v in (r.gap_x_lo, r.gap_x_hi))
+        ax.text(*note_xy, f"$s$ after $m$ vs after $m'$:\n{abs(r.gap_x):.2f} logits "
+                          f"apart in $x$\n[95% CI {lo:.2f}, {hi:.2f}]",
+                transform=ax.transAxes, ha="right", fontsize=7.5,
+                va="top" if note_xy[1] > 0.5 else "bottom",
+                color=style["color"], zorder=7)
+        if annotate:  # the fill convention is the panel's whole grammar
+            for x, y, text, offset, ha, va in [
+                    (r.before_x, r.before_y, "before", (-4, -10), "right", "top"),
+                    (r.after_x, r.after_y, "after", (5, 8), "left", "bottom"),
+                    (r.control_x, r.control_y, "after $m'$\n(no flip)", (-7, -6),
+                     "right", "top")]:
+                ax.annotate(text, (x, y), textcoords="offset points", xytext=offset,
+                            ha=ha, va=va, fontsize=7.5, color=style["color"], zorder=7)
     ax.axhline(0, color=MUTED, lw=0.6, ls=(0, (1, 3)), zorder=0)
     ax.axvline(0, color=MUTED, lw=0.6, ls=(0, (1, 3)), zorder=0)
+    ax.margins(y=0.12)
     ax.set_xlabel(AXIS[basis][0])
     ax.set_ylabel(AXIS[basis][1])
-    ax.set_title(BASIS_TITLE[basis])
+    ax.set_title(f"{BASIS_TITLE[basis]}\nheld-out board accuracy {accuracy:.3f}",
+                 fontsize=9)
 
 
 def board_panel(ax, event: pd.DataFrame, meta: pd.Series) -> None:
@@ -124,25 +146,36 @@ def figure_one(camera_ready: bool) -> None:
     field = pd.read_csv(RESULTS / "m2_field.csv")
     event = pd.read_csv(RESULTS / "f2_event.csv")
     meta = pd.read_csv(RESULTS / "f2_event_meta.csv").iloc[0]
+    layer = int(field.layer.iloc[0])
+    accuracy = pd.read_csv(RESULTS / "m1_basis.csv").set_index("layer").loc[layer]
     # Board is square, so the left column's height sets the figure's: any extra
     # becomes dead space beside it.
     fig = plt.figure(figsize=(10.4, 5.5))
-    gs = fig.add_gridspec(2, 2, width_ratios=[0.80, 1.0], wspace=0.26, hspace=0.55)
-    axes = [fig.add_subplot(gs[:, 0]), fig.add_subplot(gs[0, 1]),
-            fig.add_subplot(gs[1, 1])]
+    gs = fig.add_gridspec(2, 2, width_ratios=[0.80, 1.0], wspace=0.26, hspace=0.62)
+    board = fig.add_subplot(gs[:, 0])
+    # The two bases share both axes, or the absolute panel's 0.2-logit spread
+    # blows up to the width of the panel and reads as separation.
+    native = fig.add_subplot(gs[0, 1])
+    absolute = fig.add_subplot(gs[1, 1], sharex=native, sharey=native)
 
-    board_panel(axes[0], event, meta)
-    for i, basis in enumerate(["relative", "absolute"]):
-        field_panel(axes[i + 1], field, basis, annotate=(basis == "relative"))
-    for i, ax in enumerate(axes):
+    board_panel(board, event, meta)
+    # The note goes in whichever corner the basis leaves empty.
+    field_panel(native, field, "relative", accuracy.acc_tpr_relative, (0.98, 0.04),
+                annotate=True)
+    field_panel(absolute, field, "absolute", accuracy.acc_tpr_absolute, (0.98, 0.96))
+    for i, ax in enumerate((board, native, absolute)):
         panel_letter(ax, i)
-    axes[1].legend(loc="lower left", fontsize=6.5, ncol=2,
-                   title="open tail = before, filled head = after; "
-                         "bars = 95% CI of the mean over 2,000 events",
-                   title_fontsize=6.5, labelspacing=0.25, columnspacing=1.0)
+    fig.legend(*native.get_legend_handles_labels(), loc="upper left",
+               bbox_to_anchor=(0.44, 0.015), ncol=2, fontsize=7, alignment="left",
+               title=f"layer-{layer} read-out; arrow = the same squares before "
+                     r"$\rightarrow$ after $m$, open tail = before, filled head = after"
+                     "\nbars = 95% CI of the paired displacement (cluster bootstrap over "
+                     f"{int(field.n_events.iloc[0]):,} strict-control events)",
+               title_fontsize=7, labelspacing=0.3, columnspacing=1.0)
     if not camera_ready:
-        fig.suptitle("Where each square's read-out moves when a flanking move is "
-                     "played, and how relabeling to absolute colour inverts it", y=0.99)
+        fig.suptitle(f"Layer {layer} codes the board mover-relatively: a TPR trained "
+                     "on absolute colour separates occupied from empty and no more",
+                     y=0.99)
     role_key(fig, ROLES)
     save_figure(fig, FIGURES / "fig1_flip_and_basis", camera_ready)
 

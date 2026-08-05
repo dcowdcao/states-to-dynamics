@@ -6,6 +6,58 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Fig 1's absolute panel becomes a second probe, and its error bars move onto the arrows (2026-08-05)
+
+Branch `bracket/fig1-field`. Four defects in `bracket_flip` Fig 1, one of them a real bug.
+
+**Wrong event set (the bug).** `probe_space.field()` applied no `control_kind` filter, so
+the dashed control arrow — the panel's only contrastive element — was averaged over all
+2,000 events including the 404 whose control move touches *s*'s rays. Fig 2(a) and
+`variance_shares.csv` were already on the 1,596 strict ones. Restricted, and **all three
+conditions restricted, not only `control`**: `before` and `after` do not depend on *m′*,
+but the claim is the distance between the control head and the after head, and reading two
+heads off two populations is not a contrast. The correction is small — the flipped square's
+control *x* moves 7.069 → 7.125 and the after-vs-control gap 14.557 → 14.592 logits — which
+is expected, since a loose control still leaves *s* unflipped. The bug was in what the
+number was computed over, not in what it says.
+
+**The error bars were on the wrong quantity, and the fix goes the opposite way from the
+guess.** Bars sat on the `after` endpoint; an arrow asserts a displacement, which is paired
+within event. `m2_field.csv` now carries the paired contrasts and nothing else — after −
+before, control − before, and after − control, each with its own interval, all three drawn.
+The paired interval is *not* uniformly tighter than the endpoint one: on the occupancy
+axis it is 1.2–2.5× narrower as expected, but on the owner axis it is **1.5–2× wider**,
+because `before` and `after` are strongly anticorrelated across events — the same event's
+discs read confidently `mine` before and confidently `theirs` after, so the shared
+event-level confidence enters the two endpoints with opposite signs and adds instead of
+cancelling. The old bars understated the arrow on the axis the figure is about. Written
+into FIGURE_GUIDELINES §4.7 so the next displacement field does not repeat it.
+
+**Panel (c) is now a second measurement.** It was `coords(..., absolute=True)`, which
+re-signed *x* by whose turn it is — an exact deterministic relabel of panel (b), drawn
+co-equal beside it and read as independent evidence. An absolute-basis TPR has existed all
+along at `$SPADE_BRACKET_DIR/probe_space/tpr_absolute_layer5.pt` (this is a different
+artifact family from `tpr_probes/`, which holds A1's committed-set relative fits), so (c)
+now decodes it, oriented by the event's mover so black and white do not cancel. It puts
+every role within 0.22 logits of *x* = 0 — **including empty squares, which have no colour
+to read**, so what little *x* there is tracks whose turn it is, not the disc — and the flip
+contrast collapses from 14.59 to 0.04 logits. The panels share axes, or (c)'s 0.2-logit
+spread blows up to panel width and reads as separation.
+
+**Framing.** Fig 1 is not demoted wholesale. Panel (b) is: its title and the README now say
+it is the frame the study works in, since 63 discs crossing and *s* not crossing is what
+any correct board tracker does and is exactly the claim that was retracted. But (c) is a
+test the model can fail and does, so Fig 1 keeps a headline and it is finding 1's — the
+board code is mover-relative — which previously had no figure. A board oracle scores 1.0 on
+(b) and would nail (c).
+
+Also: the `c{xx,xy,yy}` covariance columns were computed for a 50% dispersion ellipse no
+version of `field_panel` ever drew, and at this panel's scale five of them would each cover
+40% of the panel; deleted. `displacements()` and `worked_example()` lose their
+`absolute_*` columns for the same reason — they were the relabel, and nothing read them.
+
+---
+
 ## The fork figures' prose moves to their READMEs, and the axes stop naming a component (2026-08-04)
 
 Branch `fig/strip-captions`. Every fork figure — `fork_and_board` (both planes),
