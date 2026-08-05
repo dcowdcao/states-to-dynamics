@@ -53,8 +53,12 @@ def branch_style(category: int, is_control: int, by_rule: bool = False) -> dict:
 
 
 def legend_proxy(ax) -> None:
-    """The one legend entry the faint member lines share, drawn on nothing."""
-    ax.plot([], [], [], color=MUTED, label=MEMBER_LABEL, **MEMBER)
+    """The one legend entry the faint member lines share, drawn on nothing.
+
+    Two positional args, so it is the same call on a 2-D and a 3-D axes; a third
+    empty list would be read as `zs` on one and as a second series on the other.
+    """
+    ax.plot([], [], color=MUTED, label=MEMBER_LABEL, **MEMBER)
 
 
 # Series first (taxonomy order, then rule order), then the panel's furniture,
@@ -65,8 +69,10 @@ _SERIES = [CATEGORY_STYLE[c]["label"] for c in CATEGORIES[1:]] + list(RULE_STYLE
 def _rank(lab: str) -> int:
     if lab.startswith("shared prefix"):
         return 0
-    if lab.startswith("reference"):
+    if lab.endswith("(baseline)"):  # a population baseline outranks one game's reference
         return 1
+    if lab.startswith("reference"):
+        return 2
     if lab == MEMBER_LABEL:
         return 88
     if lab.startswith(CONTOUR_LABEL[:24]):
@@ -75,7 +81,7 @@ def _rank(lab: str) -> int:
         return 90
     if lab.startswith("control"):
         return 99 + ("2" in lab)
-    return 2 + next((i for i, s in enumerate(_SERIES) if lab.startswith(s)), len(_SERIES))
+    return 3 + next((i for i, s in enumerate(_SERIES) if lab.startswith(s)), len(_SERIES))
 
 
 def legend_order(labels: list[str]) -> list[int]:
@@ -86,14 +92,21 @@ def legend_order(labels: list[str]) -> list[int]:
 def ordered_legend(owner, ax, ncol: int, **placement):
     """One legend for a whole figure. `owner` is the figure, or the blank axes
     the legend is parked in; `placement` is that owner's loc/bbox_to_anchor.
+    `ax` is the axes the entries are read from, or several of them when a
+    figure's series are spread over more than one panel; a label drawn in two
+    panels earns one entry.
 
     No title: what a figure of this study owes the reader in prose -- how the
     game was selected, where the rule mean is taken, the spread ratio, n=1, that
     cells are not comparable -- is its caption's job and lives in the study
     README (FIGURE_GUIDELINES 2, 5)."""
-    handles, labels = ax.get_legend_handles_labels()
-    order = legend_order(labels)
-    return owner.legend([handles[i] for i in order], [labels[i] for i in order],
+    by_label = {}
+    for a in [ax] if isinstance(ax, Axes) else ax:
+        handles, labels = a.get_legend_handles_labels()
+        by_label.update(zip(labels, handles))
+    labels = list(by_label)
+    return owner.legend([by_label[labels[i]] for i in legend_order(labels)],
+                        [labels[i] for i in legend_order(labels)],
                         ncol=ncol, fontsize=8, frameon=False, **placement)
 
 

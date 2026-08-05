@@ -17,6 +17,7 @@ from spade.figures.paper_style import CLASS_STYLE, GRID, INK, MUTED
 from spade.straightness.build_games import CLASSES
 
 REL_WINDOW = (-8, 12)  # positions relative to the injected move
+TURN_OFFSET, VALUE_OFFSET = 2, 1  # column -> board position; see align_to_event
 KDE_GRID, KDE_BOOT, KDE_SEED = 512, 1000, 0
 
 DRAWN_CLASSES = [c for c in CLASSES if c in CLASS_STYLE]
@@ -83,23 +84,33 @@ def density_panel(ax, per_game: np.ndarray, blocks: dict) -> None:
     ax.set_ylabel("density")
 
 
+def align_to_event(delta: np.ndarray, t0: np.ndarray,
+                   offset: int) -> tuple[np.ndarray, np.ndarray]:
+    """[n, T] -> (rels, [n, len(rels)]) with column t0+r at relative offset r.
+
+    `offset` maps a board position to its column: TURN_OFFSET for a turning
+    angle, whose column k is the turn at position k+2, and VALUE_OFFSET for a
+    quantity attached to a position (norm, L0, step length), whose column j is
+    position j+1 because position 0 is dropped.
+    """
+    rels = np.arange(REL_WINDOW[0], REL_WINDOW[1] + 1)
+    aligned = np.full((len(delta), len(rels)), np.nan)
+    for i, r in enumerate(rels):
+        k = t0 + r - offset
+        ok = (k >= 0) & (k < delta.shape[1])
+        aligned[ok, i] = delta[np.arange(len(delta))[ok], k[ok]]
+    return rels, aligned
+
+
 def violation_delta(theta: np.ndarray, t0: np.ndarray, src: np.ndarray,
                     viol: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """(rels, mean, sem) of Δ turning angle vs. the matched source game.
 
-    theta index k is the turn at position k+2, so the turn at t0+r is k=t0+r-2.
     Δ is identically zero for r <= -2: the games share every activation before
     t0, and the turn at t0-2 is the last one whose window excludes t0.
     """
-    delta = theta[viol] - theta[src]
-    rels = np.arange(REL_WINDOW[0], REL_WINDOW[1] + 1)
-    aligned = np.full((len(delta), len(rels)), np.nan)
-    for i, r in enumerate(rels):
-        k = t0 + r - 2
-        ok = (k >= 0) & (k < theta.shape[1])
-        aligned[ok, i] = delta[np.arange(len(delta))[ok], k[ok]]
-    mu, sem = mean_sem(aligned)
-    return rels, mu, sem
+    rels, aligned = align_to_event(theta[viol] - theta[src], t0, TURN_OFFSET)
+    return (rels, *mean_sem(aligned))
 
 
 def value_delta(values: np.ndarray, t0: np.ndarray, src: np.ndarray,
@@ -107,15 +118,8 @@ def value_delta(values: np.ndarray, t0: np.ndarray, src: np.ndarray,
     """Event-locked Δ for a per-position quantity indexed by position directly
     (norm, L0), rather than by turn like theta. Δ ≡ 0 for r <= -1 here: the
     activation at t0-1 already excludes the injected token."""
-    delta = values[viol] - values[src]
-    rels = np.arange(REL_WINDOW[0], REL_WINDOW[1] + 1)
-    aligned = np.full((len(delta), len(rels)), np.nan)
-    for i, r in enumerate(rels):
-        k = t0 + r - 1  # values index j is position j+1 (position 0 dropped)
-        ok = (k >= 0) & (k < values.shape[1])
-        aligned[ok, i] = delta[np.arange(len(delta))[ok], k[ok]]
-    mu, sem = mean_sem(aligned)
-    return rels, mu, sem
+    rels, aligned = align_to_event(values[viol] - values[src], t0, VALUE_OFFSET)
+    return (rels, *mean_sem(aligned))
 
 
 def value_profile_panel(ax, values: np.ndarray, blocks: dict, ylabel: str,
