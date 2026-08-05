@@ -257,6 +257,19 @@ head = after.
 - **Carry the marginal.** Overlapping arrows hide magnitude, so pair the field
   with a distribution of displacement lengths per class (§4.4), which is also
   where the uncertainty and n go.
+- **The interval belongs on the displacement, not on the head.** An arrow asserts
+  a change, the change is paired within item, so the bar is a bootstrap of
+  (after − before) over items, drawn at the head, and the legend says which
+  contrast it is. An endpoint interval is not an interval on the arrow, and it is
+  not the conservative choice either: where the two conditions are anticorrelated
+  across items — any frame that flips with the event — the paired interval is
+  *wider*. In `bracket_flip` it is 1.5–2× wider on the owner axis and 1.2–2.5×
+  narrower on the occupancy axis, off the same 1,596 events.
+- **Two panels, two measurements.** A second panel that is a deterministic relabel
+  of the first is not independent evidence. Draw the measurement the relabel
+  stands in for — a probe actually trained in the other convention — and put it on
+  axes shared with the first, so a collapse shows as a collapse instead of being
+  rescaled into apparent structure.
 - State the space's units, and whether the axes are a learned basis. If the
   space is low-dimensional by construction (a 2-D probe filler space), say so —
   it is the difference between an honest plot and a projection.

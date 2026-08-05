@@ -259,22 +259,17 @@ F4 is otherwise the strongest figure here, which makes these worth fixing.
 gloss from `:263-265`. `:425` → clip the null line to the pooled density height
 the way `:421` does.
 
-### P2.4 F1(a): the legend covers the empty-square cluster; F1(b) has no legend at all
+### P2.4 F1: the legend covered the empty-square cluster and only one panel had one — FIXED
 
-`field_panel` places its legend `loc="lower left"`
-(`make_figures.py:128-132`), which is exactly where the empty-square
-distribution sits (before/after ≈ (0.58, −8.56), per `results/m2_field.csv`).
-The gray dispersion ellipses for the `empty` role are drawn behind the legend
-text and the class's own marker sits inside the legend block.
+The legend sat `loc="lower left"` inside the arrow panel, which is exactly where
+the empty-square cluster sits (before/after ≈ (0.53, −8.46), per
+`results/m2_field.csv`), and only the native-basis panel carried one.
 
-And `f1_field` passes `legend = (col == 0)` at `:178`, so **panel (b) carries no
-key at all** — no role legend, and no entry for the dashed control arrow, even
-though (b) is the panel where the flipped square's arrow is the long one and
-the reader most needs to know which arrow is which.
-
-**Fix.** Move the legend out of the data region (below the panel, or
-`bbox_to_anchor` outside the axes) and give it to both panels, or make it a
-single figure-level legend.
+Now one figure-level legend below both arrow panels, sharing the footer band
+with `role_key`, per §5's "panels that share a styling table share one legend".
+Its title carries the pairing (§4.7), the band semantics and n. The dispersion
+ellipses this entry mentions never existed in the shipped script — `field()`
+computed the covariances and nothing drew them; the columns are gone.
 
 ### P2.5 F3(a): the "after" 50% contour is invisible inside its own cloud (check 8)
 
@@ -461,12 +456,15 @@ axis a reader is asked to compare across seeds, probes, or label conventions;
 report the gauge-dependent geometry as a number with the gauge stated.* F1
 follows this exactly and should be cited as the example.
 
-**Minor addendum — deterministic relabel panels.** F1(b) is F1(a) with the
-`after` points reflected in x (confirmed: the `before` rows in
-`results/m2_field.csv` are bit-identical between the two bases), and F5(b) is
+**Minor addendum — deterministic relabel panels.** F1's absolute-colour panel
+was F1(b) with the `after` points reflected in x (the `before` rows in
+`results/m2_field.csv` were bit-identical between the two bases), and F5(b) is
 an exact relabel of F5(a) — its own title says so. Proposed rule: *When one
-panel is a deterministic relabel of another, say so in-panel, so it is not read
-as independent evidence.* F5(b) does this; F1(b) does not.
+panel is a deterministic relabel of another, say so in-panel, or draw the
+measurement the relabel stands in for.* F5(b) says so. F1 took the second route:
+its absolute panel is now a second TPR trained on absolute-colour labels, on
+axes shared with the native-basis panel. This is now §4.7's "two panels, two
+measurements".
 
 ---
 

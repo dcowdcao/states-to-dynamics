@@ -23,7 +23,8 @@ event-level version is also false: *s* is the *uniquely* unchanged disc in only
 0.625 of events, because decode noise leaves 0.71 other discs unchanged.
 
 What the flip framing is good for is stating the *basis*, not proving anything
-in it.
+in it. Fig 1 is drawn that way: the arrow field in the native basis is the
+frame, and what carries a claim is the second probe drawn beside it.
 
 **Three findings that survive.**
 
@@ -56,18 +57,35 @@ because in the relative basis the predicted flip term at *s* is the zero vector.
 Three, one per surviving claim. An earlier draft had eight; the cut panels'
 numbers are below and their CSVs are still in `results/`.
 
-- **Fig 1 — the phenomenon and the basis** (`make_figures.py`). Panel (a) is one
-  event's board just before the flanking move, every square shaded by the role
-  whose arrow it feeds and the two named squares outlined — *s*, the disc that
-  gets flanked, and *m*, the empty square the mover takes. Panels (b) and (c) are
-  before→after arrows per role, in **gauge-invariant logit differences**:
-  `x = ℓ_mine − ℓ_theirs` (who owns it), `y = ½(ℓ_mine + ℓ_theirs) − ℓ_empty`
-  (is it occupied). Not filler coordinates — `logit = rᵀBf` is invariant under
-  `f → Af, B → BA⁻¹`, so that plane has four arbitrary degrees of freedom and
-  its angles move 131° → 105° across seeds at constant accuracy. The flipped
-  square's dashed arrow is the same square under the matched non-flipping move;
-  the gap between the two heads is the claim. Panel (b) relabels to absolute
-  colour and the picture inverts.
+- **Fig 1 — the basis** (`make_figures.py`). Panel (a) is one event's board just
+  before the flanking move, every square shaded by the role whose arrow it feeds
+  and three squares outlined — *s*, the disc that gets flanked, *m*, the empty
+  square the mover takes, and *m′*, the matched non-flipping control. Panels (b)
+  and (c) are before→after arrows per role, in **gauge-invariant logit
+  differences**: `x = ℓ_mine − ℓ_theirs` (who owns it),
+  `y = ½(ℓ_mine + ℓ_theirs) − ℓ_empty` (is it occupied). Not filler coordinates —
+  `logit = rᵀBf` is invariant under `f → Af, B → BA⁻¹`, so that plane has four
+  arbitrary degrees of freedom and its angles move 131° → 105° across seeds at
+  constant accuracy.
+
+  **(b) is definitional, (c) is the measurement.** Everything in (b) — 63 discs
+  crossing, *s* not crossing — is what any correct board tracker does in a
+  mover-relative frame, which is the retracted claim above and not a fact about
+  the model. The one contrastive element is the dashed arrow to where the matched
+  non-flipping move *m′* leaves *s*, **14.59 logits [14.46, 14.73] in x** from
+  where *m* leaves it. Panel (c) is a **second TPR** — same architecture, layer
+  and seed, trained on absolute-colour labels — and it separates occupied from
+  empty while placing every role within 0.22 logits of *x* = 0, empty squares
+  included, which have no colour to read. The same flip contrast is 0.04 logits
+  [0.01, 0.07] there. The two panels share axes, so the collapse shows as a
+  collapse. This is finding 1 drawn, and it is the only part of Fig 1 a board
+  oracle would fail.
+
+  Arrows are means over the **1,596 strict-control events**, not all 2,000: the
+  control arrow is the panel's one contrast and a control move touching *s*'s
+  rays is not a clean one, so the whole panel is read off that population. Bars
+  are 95% cluster-bootstrap intervals on the **paired displacement**
+  (after − before within event), which is what an arrow asserts.
 - **Fig 2 — the direction and its causal use** (`make_figures.py`). (a) the
   flip-attributable displacement `act(P+m) − act(P+m′)` aligns with the
   predicted flip direction at median +0.175 (TPR) / +0.163 (linear) against an

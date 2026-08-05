@@ -8,8 +8,7 @@ Three conventions meet here and all three are load-bearing.
 1. The probe's classes are mover-relative {empty, theirs, mine} with "mine" the
    player to move next. Playing m flips that perspective, so `before` is read
    from the mover's side and `after` and `control` from the opponent's. ORIENT
-   carries that single fact into both the absolute relabeling and the panel
-   coordinates.
+   carries that single fact into the absolute relabeling of the read-out.
 2. Panel coordinates are gauge-invariant logit differences, never filler
    coordinates: the bilinear form is invariant under f -> Af, B -> BA^-1, and
    analysis/bracket_flip/reports/PROBE_REPORT.md measures the filler angle moving
@@ -47,7 +46,14 @@ add_karvonen_to_path()
 from circuits.othello_engine_utils import to_string
 
 EMPTY, THEIRS, MINE = 0, 1, 2  # index into tpr_probe.CLASSES
+BLACK, WHITE = 1, 2  # index into the absolute probe's classes (probe/manifest.json)
 CONDITIONS = ("before", "after", "control")
+
+# The pair of classes whose logit difference says who owns a square, per probe.
+# The relative probe answers in the frame of whoever is to move; the absolute one
+# answers in colours, and has to be oriented by the event's mover (+1 black) or
+# black and white cancel across events.
+OWNER = {"relative": (MINE, THEIRS), "absolute": (BLACK, WHITE)}
 
 # +1 where "mine" is the mover, -1 where the move has handed the turn over.
 # events.py drops forfeits at t and t+1, so `after` and `control` share the sign.
@@ -209,7 +215,7 @@ def accuracies(layer: int) -> dict:
 
 @dataclass(frozen=True)
 class Decode:
-    """One layer's read-out of every event, in the probe's native basis."""
+    """One probe's read-out of every event at one layer."""
     layer: int
     logits: dict[str, np.ndarray]  # condition -> [n_events, 64, 3]
     codes: np.ndarray  # [n_events, 64] over ROLE_CODE
@@ -224,8 +230,8 @@ class Decode:
 
 
 def decode(layer: int, ev: pd.DataFrame, acts: dict[str, Tensor],
-           input_acts: dict[str, Tensor]) -> Decode:
-    probe = tpr(layer, "relative")
+           input_acts: dict[str, Tensor], basis: str = "relative") -> Decode:
+    probe = tpr(layer, basis)
     source = input_acts if layer == INPUT_LAYER else {c: a[:, layer] for c, a in acts.items()}
     return Decode(layer, {c: probe.decode(h).numpy() for c, h in source.items()},
                   role_codes(ev), ev.square_s.to_numpy())
@@ -242,17 +248,18 @@ def owner(pred: np.ndarray, condition: str) -> np.ndarray:
     return np.where(pred == EMPTY, 0, np.where(pred == MINE, sign, -sign))
 
 
-def coords(logits: np.ndarray, condition: str, absolute: bool) -> np.ndarray:
-    """[..., 2] gauge-invariant panel coordinates.
+def coords(logits: np.ndarray, basis: str, orient: np.ndarray | int = 1) -> np.ndarray:
+    """[..., 2] gauge-invariant panel coordinates for the probe that produced `logits`.
 
-    x = l_mine - l_theirs is who owns the square, y = mean(l_mine, l_theirs) -
-    l_empty is whether it is occupied at all. `absolute` re-signs x by whose turn
-    it is, giving l_mover's-colour - l_opponent's-colour: an exact relabel of the
-    same logits, not a second measurement.
+    x is who owns the square, y = mean of the two owner logits - l_empty is
+    whether it is occupied at all. `orient` re-signs x per event and is the
+    mover's colour for the absolute basis, where it is what stops black and white
+    from cancelling; the relative basis is already written from a mover's side.
     """
-    x = logits[..., MINE] - logits[..., THEIRS]
-    y = (logits[..., MINE] + logits[..., THEIRS]) / 2 - logits[..., EMPTY]
-    return np.stack([x * (ORIENT[condition] if absolute else 1), y], -1)
+    hi, lo = OWNER[basis]
+    x = (logits[..., hi] - logits[..., lo]) * orient
+    y = (logits[..., hi] + logits[..., lo]) / 2 - logits[..., EMPTY]
+    return np.stack([x, y], -1)
 
 
 # ---------------------------------------------------------------- statistics
@@ -327,29 +334,47 @@ def per_event(d: Decode, ev: pd.DataFrame) -> pd.DataFrame:
 
 # ---------------------------------------------------------------- M2 field
 
-def field(d: Decode, rng: np.random.Generator) -> pd.DataFrame:
-    """Mean position per square role and condition, with dispersion and CIs.
+def paired(name: str, diff: np.ndarray, denom: np.ndarray,
+           rng: np.random.Generator) -> dict:
+    """A within-event contrast between two conditions, and its interval, as columns."""
+    lo, hi = boot_ci(diff, denom, rng)
+    return {name: diff.sum() / denom.sum(), f"{name}_lo": lo, f"{name}_hi": hi}
 
-    128,000 arrows would be a smear, so the panel gets five aggregated ones
-    (FIGURE_GUIDELINES 4.7). `c{xx,xy,yy}` is the point cloud's covariance, which
-    the figure draws as a 50% dispersion ellipse; the interval is on the mean and
-    clusters on events.
+
+def field(rel: Decode, abso: Decode, ev: pd.DataFrame,
+          rng: np.random.Generator) -> pd.DataFrame:
+    """Mean position per square role and condition, with paired-displacement CIs.
+
+    128,000 arrows would be a smear, so the panel gets five aggregated ones per
+    basis (FIGURE_GUIDELINES 4.7). Two choices the panel rests on:
+
+    - **Strict-control events only.** The dashed control arrow is the panel's one
+      contrast, and a control move touching s's rays is not a clean one. Before
+      and after do not depend on m', but they are restricted too: the gap between
+      the control head and the after head has to be read off one population.
+    - **Intervals on the displacements, not the endpoints.** An arrow asserts a
+      change, and the change is paired within event. Endpoints are not the claim,
+      and their intervals do not combine into one for the arrow: on x the two
+      conditions are strongly anticorrelated (the same event's discs read
+      confidently `mine` before and confidently `theirs` after), so an endpoint
+      interval understates the arrow by ~2x there and overstates it on y.
     """
+    strict = (ev.control_kind == "strict").to_numpy()
+    mover = ev.mover.to_numpy()[strict, None]
     rows = []
-    for absolute in (False, True):
-        xy = {c: coords(l, c, absolute) for c, l in d.logits.items()}
+    for basis, d, orient in (("relative", rel, 1), ("absolute", abso, mover)):
+        xy = {c: coords(l[strict], basis, orient) for c, l in d.logits.items()}
         for role, code in ROLE_CODE.items():
-            mask = d.codes == code
-            row = {"basis": BASES[absolute], "role": role,
-                   "n_events": int((mask.sum(1) > 0).sum()), "n_squares": int(mask.sum())}
-            for c in CONDITIONS:
-                cov = np.cov(xy[c][mask].T)
-                row |= {f"{c}_cxx": cov[0, 0], f"{c}_cxy": cov[0, 1], f"{c}_cyy": cov[1, 1]}
-                for axis, name in ((0, "x"), (1, "y")):
-                    per_event_sum = (xy[c][..., axis] * mask).sum(1)
-                    lo, hi = boot_ci(per_event_sum, mask.sum(1).astype(float), rng)
-                    row |= {f"{c}_{name}": per_event_sum.sum() / mask.sum(),
-                            f"{c}_{name}_lo": lo, f"{c}_{name}_hi": hi}
+            mask = (d.codes[strict] == code).astype(float)
+            n = mask.sum(1)
+            row = {"layer": d.layer, "basis": basis, "role": role,
+                   "n_events": int((n > 0).sum()), "n_squares": int(n.sum())}
+            for axis, name in ((0, "x"), (1, "y")):
+                total = {c: (v[..., axis] * mask).sum(1) for c, v in xy.items()}
+                row |= {f"{c}_{name}": total[c].sum() / n.sum() for c in CONDITIONS}
+                for c in ("after", "control"):
+                    row |= paired(f"d_{c}_{name}", total[c] - total["before"], n, rng)
+                row |= paired(f"gap_{name}", total["after"] - total["control"], n, rng)
             rows.append(row)
     return pd.DataFrame(rows)
 
@@ -361,14 +386,10 @@ def displacements(d: Decode) -> pd.DataFrame:
     so the marginal and its bootstrap band share one n. Roles holding a single
     square (flipped, placed) are that square's value.
     """
-    out = {}
-    for absolute in (False, True):
-        step = np.linalg.norm(coords(d.logits["after"], "after", absolute)
-                              - coords(d.logits["before"], "before", absolute), axis=-1)
-        for role, code in ROLE_CODE.items():
-            masked = np.where(d.codes == code, step, np.nan)
-            out[f"{BASES[absolute]}_{role}"] = np.nanmedian(masked, axis=1)
-    return pd.DataFrame(out)
+    step = np.linalg.norm(coords(d.logits["after"], "relative")
+                          - coords(d.logits["before"], "relative"), axis=-1)
+    return pd.DataFrame({role: np.nanmedian(np.where(d.codes == code, step, np.nan), axis=1)
+                         for role, code in ROLE_CODE.items()})
 
 
 # ---------------------------------------------------------------- F2 worked example
@@ -377,12 +398,12 @@ def canonical(ev: pd.DataFrame, lengths: pd.DataFrame) -> tuple[int, dict]:
     """A typical event, picked mechanically: among events at the median t holding a
     strict control, the one whose flipped-square displacement is closest to the
     median over all events. Typical in the measurement, not in the picture."""
-    target = lengths["relative_flipped"].median()
+    target = lengths["flipped"].median()
     pool = ev.index[(ev.t == int(ev.t.median())) & (ev.control_kind == "strict")]
-    i = int(pool[np.argmin(np.abs(lengths.loc[pool, "relative_flipped"] - target).to_numpy())])
+    i = int(pool[np.argmin(np.abs(lengths.loc[pool, "flipped"] - target).to_numpy())])
     return i, {"n_pool": len(pool), "t": int(ev.t[i]), "median_t": int(ev.t.median()),
                "median_displacement": round(float(target), 4),
-               "event_displacement": round(float(lengths.loc[i, "relative_flipped"]), 4)}
+               "event_displacement": round(float(lengths.loc[i, "flipped"]), 4)}
 
 
 def event_meta(ev: pd.DataFrame, i: int) -> pd.DataFrame:
@@ -415,9 +436,8 @@ def worked_example(d: Decode, ev: pd.DataFrame, i: int) -> pd.DataFrame:
            **{f"disc_{c}": [disc[c][r] for r in role] for c in ("before", "after")}}
     for c in CONDITIONS:
         row[f"pred_{c}"] = [CLASSES[k] for k in d.pred[c][i]]
-        for absolute in (False, True):
-            xy = coords(d.logits[c][i], c, absolute)
-            row |= {f"{BASES[absolute]}_{c}_x": xy[:, 0], f"{BASES[absolute]}_{c}_y": xy[:, 1]}
+        xy = coords(d.logits[c][i], "relative")
+        row |= {f"{c}_x": xy[:, 0], f"{c}_y": xy[:, 1]}
     return pd.DataFrame(row)
 
 
@@ -450,7 +470,8 @@ def main() -> None:
     depth.to_csv(RESULTS / "m1_decode.csv", index=False)
 
     per_event(main_decode, ev).to_csv(RESULTS / "m1_per_event.csv", index=False)
-    field(main_decode, rng).to_csv(RESULTS / "m2_field.csv", index=False)
+    absolute_decode = decode(MAIN_LAYER, ev, acts, input_acts, "absolute")
+    field(main_decode, absolute_decode, ev, rng).to_csv(RESULTS / "m2_field.csv", index=False)
     lengths = displacements(main_decode)
     i, rule = canonical(ev, lengths)
     worked_example(main_decode, ev, i).to_csv(RESULTS / "f2_event.csv", index=False)
