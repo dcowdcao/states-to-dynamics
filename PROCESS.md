@@ -6,6 +6,52 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The 4-way legality probe, and the filler dimension it needs (2026-08-05)
+
+Branch `legality/probe`. `src/spade/legality_probe/probe.py` is `bracket_flip/tpr_probe.py`'s
+bilinear TPR with the filler alphabet widened from the 3 board classes to
+{legal, R1, R2, R3}, fit at whatever input dimension the activations carry (raw 512, SAE
+8192) and saved keyed by space name.
+
+**Upstream's class count is a module global imported by value.** `train_tpr_probe` does
+`from train_probe import BOARD_LABEL_OPTIONS` (3), and that one name sizes
+`filler_embeddings`, sizes `bias`, and multiplies the loss (`train_tpr_probe.py:227`).
+Building a 4-class probe without rebinding it gives 3 fillers and *no error*, and leaves the
+loss scaled by 3 — a 25% effective-LR shift on top. `filler_classes(n)` rebinds it for the
+duration of a fit and restores it, so 3-class board fits and 4-class legality fits coexist in
+one process. `test_probe.py` pins both effects, including that the same logits under n=3 and
+n=4 differ by exactly 3/4.
+
+**The loop is the committed one, verified.** Refitting the 3-class board task through
+`legality_probe.fit` at layer 5 reproduces `tpr_probe._fit` *parameter for parameter*
+(`torch.allclose` on all three tensors), accuracy 0.9827 — the number in
+`analysis/bracket_flip/reports/PROBE_REPORT.md`.
+
+**d_f = 3.** Sweep on raw layer 5, 8000 train / 2000 held out, 4-class labels derived from
+the reconstructed mover-relative board (`taxonomy.classify` collapsed by `RULE_OF`):
+
+| d_f | macro-F1 | accuracy | F1 legal / R1 / R2 / R3 |
+|-----|----------|----------|-------------------------|
+| 2   | 0.8891   | 0.9342   | 0.944 / 0.984 / 0.887 / 0.742 |
+| 3   | 0.9374   | 0.9631   | 0.974 / 0.993 / 0.932 / 0.851 |
+| 4   | 0.9378   | 0.9635   | 0.974 / 0.993 / 0.933 / 0.851 |
+
+d_f=2 costs 4.8 points, nearly all of it on R3 and R2; d_f=4 buys 0.0004 over d_f=3 and
+makes the filler geometry uninformative (4 classes in 4 dimensions can be exactly
+orthogonal, so the angles the bracket-flip study reads off the fillers stop meaning
+anything). Default is 3.
+
+**Two things about the metric.** Fit on shuffled labels the probe still scores **0.56
+accuracy** at 0.29 macro-F1, because R1 is 54% of squares mid-game — so the floor to beat is
+0.56, not chance, and accuracy alone says almost nothing. And legality computed for the
+*wrong* player (the one who just moved) is still decodable at **0.9101** macro-F1 against
+0.9374 for the right one, the whole difference sitting on the `legal` class (0.832 vs 0.974).
+Legality is a deterministic function of a board that decodes at 0.98, so a high legality
+macro-F1 is not by itself evidence that the model represents legality; the study's claims
+have to rest on differences between spaces and on the r<0 / r=0 contrast, not on the level.
+
+---
+
 ## The fork figures' prose moves to their READMEs, and the axes stop naming a component (2026-08-04)
 
 Branch `fig/strip-captions`. Every fork figure — `fork_and_board` (both planes),
