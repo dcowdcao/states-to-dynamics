@@ -28,6 +28,7 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 
+from spade.common.config import LAYER
 from spade.common.study import variant_dir
 from spade.figures.straightness_panels import TURN_OFFSET, align_to_event
 from spade.straightness.geometry import temporal_geometry
@@ -39,7 +40,6 @@ from spade.violation_divergence.rule_groups import rule_rows, spread_ratio
 TREE_VARIANT = {"branches": "", "rollout": "rollout"}
 SINK = 0        # position 0 is the attention sink and is dropped, as in straightness
 FIRST_TURN = 2  # theta index k is the turn at board position k + FIRST_TURN
-LAYER = 5
 
 
 @dataclass(frozen=True)
