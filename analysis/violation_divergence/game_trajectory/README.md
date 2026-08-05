@@ -8,12 +8,21 @@ numbers live in the parent `README.md`.
 
 ```
 python analysis/violation_divergence/game_trajectory/make_figures.py \
-    [--game 1235] [--n_games 1] [--embedding pca|isomap] [--camera-ready]
+    [--game 1235] [--n_games 1] [--embedding pca|isomap] \
+    [--variant spliced|rollout] [--camera-ready]
 ```
 
 The default is **game 1235** (*t0* = 20), picked by a sweep over the 1550
 branch-complete games (`../game_selection`); the script asserts the requested
-game carries all nine branch types rather than silently drawing eight.
+game carries all nine branch types rather than silently drawing eight. Both
+branch sets carry it, and both give 1550 branch-complete games.
+
+**`--variant spliced`** (the default) is the study's own branch set: every branch
+replays the source game's `tokens[t0+1:]`. **`--variant rollout`** reads
+`$SPADE_DIVERGENCE_DIR/rollout/`, where every branch — the reference included —
+samples its own continuation from OthelloGPT (K = 4 per branch, temperature 1.0,
+seed 42; 17,527 branches, 70,108 rows over the same 2000 games). Read *[The
+rollout variant](#the-rollout-variant)* below before reading that figure.
 
 ## What is plotted
 
@@ -59,6 +68,7 @@ scale or a per-category path, this is the figure that has them.
 | file | what |
 |---|---|
 | `game_<id>_fork_pca` | one game: the 3-D fork, beside δ̂ vs r — the magnitude a projection cannot show |
+| `game_<id>_fork_pca_rollout` | the same two panels on the rollout branch set, each curve a mean over that branch's K = 4 sampled continuations, window cut to *r* ∈ [−8, +8] |
 | `space_fork_grid_pca` | one game across **all nine representation spaces** — raw layer 5 and the eight seed-42 dictionaries. Planes are refit per space, so only the *shape* of the fork is comparable across cells, never position. **Superseded by `../fork_and_board`**, which draws this grid as panel (a) over the board the branches play on |
 
 ## Caption
@@ -105,6 +115,71 @@ against it exactly as the illegal branches are. That is the point of this figure
 second control, so this is where the legal-vs-legal scale and the per-category
 paths live.
 
+### `game_1235_fork_pca_rollout`
+
+**The same nine branches of the same game, drawn out of the rollout branch set:
+every branch, the reference included, samples its own continuation from
+OthelloGPT rather than replaying the source game's.** Panels, styling, camera and
+selection read exactly as above. What is different:
+
+**The two panels reduce over K = 4 differently, on purpose.** Panel (a) averages
+the displacement `Δ` over the branch's four rollouts and then projects — the
+plane is an uncentred linear map, so mean-then-project and project-then-mean
+agree. Panel (b) averages **δ̂ itself**, after the norm: `‖mean_k Δ_k‖` cancels
+the sampling noise the four rollouts differ by and is a smaller, different
+quantity from the typical displacement. The panel says so in place.
+
+**The rollouts are paired.** A rollout's reference is the one drawn from the same
+uniform stream (`rollout_branches.py` keys the sampler on `(game_id, k)`), so
+`Δ` is a within-sample difference under common random numbers, not two
+independent draws differenced.
+
+**The band in (b) is ±1 SD over the K = 4 rollouts of that branch (n = 4)** — the
+sampling spread of the continuation, for one game, and not an interval over
+games. It is the only uncertainty a single game supports here, and four is a
+small n; read it as "these curves are not sharp", not as a test.
+
+**The window is *r* ∈ [−8, +8], not [−8, 24].** See below.
+
+**δ̂ is on a different scale from the spliced panel.** It climbs instead of
+decaying, and this game reaches ≈ 1.3 by *r* = +8 where the spliced figure is
+near 0.5. The two (b) panels are not on shared axes and must not be read as one.
+
+## The rollout variant
+
+The spliced set gives every branch the *reference's* future: `tokens[t0+1:]` is a
+legal continuation of the reference's board alone, it survives a median of 2
+moves on a legal control, and after an illegal move no board exists for it at
+all. The rollout set removes that asymmetry by regenerating every suffix, the
+reference's included, and pays for it with single-token attribution — two rollout
+branches differ at *t0* **and** everywhere after it.
+
+The price shows as saturation. Layer 5, full set, per-branch mean over K then
+mean over branches (11,527 illegal and 2,000 control branches over 2000 games,
+from `$SPADE_DIVERGENCE_DIR/[rollout/]divergence/resid_post_5.npz`):
+
+| *r* | spliced δ̂ illegal | spliced illegal ÷ control | rollout δ̂ illegal | rollout illegal ÷ control |
+|---|---|---|---|---|
+| 0 | 0.792 | 1.0316 | 0.792 | **identical by construction** |
+| 4 | 0.590 | 0.9305 [0.9229, 0.9382] | 0.985 | 0.9855 [0.9809, 0.9904] |
+| 8 | 0.554 | 0.9314 [0.9231, 0.9396] | 1.118 | 0.9957 [0.9926, 0.9990] |
+| 24 | 0.461 | 0.9797 [0.9715, 0.9873] | 1.222 | 1.0034 [1.0017, 1.0053] |
+
+95% percentile bootstrap over the 2000 games, 2000 resamples. *r* = 0 is the same
+number in both sets to four decimals, because the activation at *t0* depends only
+on `tokens[:t0+1]` and the two sets share those bits — so the rollout changes
+nothing at *r* = 0 and everything after it. Rollout δ̂ climbs to **1.236** by
+*r* = 20, 96% of the **1.293** two-unrelated-games level `../RED_TEAM.md`
+measures in this space, against the spliced plateau's ~36%; and the
+illegal/control separation is inside 0.5% of 1 by *r* = 8 and crosses **above**
+1 by *r* = 13. Hence `ROLLOUT_RMAX = 8`: past there the figure would be drawing a
+fork whose separation is not in the data. It is stated on the figure and it is
+the number to revisit if the branch set changes.
+
+The two variants are not two measurements of one thing, and neither is the
+other's replication: `branches.pt` stays the tensor the single-token claims rest
+on.
+
 ## Reading them honestly
 
 - A single game is n = 1. The per-position wobble in the δ̂ panel is real
@@ -114,3 +189,8 @@ paths live.
   grid. The caption says so.
 - These panels show *shape*. Every quantitative claim — the 0.978 ratio, the
   0.4985 legal-vs-legal null, the plateau — belongs to the parent README.
+- The spliced and rollout figures do not share axes and are not a comparison.
+  One holds the future fixed and moves one token; the other lets the model write
+  the future. Read each through its own caption.
+- The rollout band is n = 4 within one game. It is sampling spread, not an
+  interval over games, and nothing in the parent README is scored against it.
