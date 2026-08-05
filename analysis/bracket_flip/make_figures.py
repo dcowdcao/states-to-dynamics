@@ -324,11 +324,10 @@ def causal_panel(ax, summary: pd.DataFrame, per_event: pd.DataFrame) -> None:
                             rf"$|\Delta| \leq {bound:.2f}$")
     handles.insert(-1, band)  # the null keeps the last slot
     gap, floor = base_mass_gap(per_event)
-    ax.annotate(f"the two sets start {gap:.1f} nats apart, so equal "
-                r"$\Delta$ log-mass is not" "\n"
-                "equal probability: at the smallest edit even a complete\n"
-                f"transfer would move the dotted curve by {floor:+.4f} nats,\n"
-                "well inside its own CI",
+    ax.annotate(f"the two sets start {gap:.1f} nats apart, so equal\n"
+                r"$\Delta$ log-mass is not equal probability: at the" "\n"
+                "smallest edit even a complete transfer moves\n"
+                f"the dotted curve {floor:+.4f} nats, inside its own CI",
                 (0.02, 0.02), xycoords="axes fraction", ha="left", va="bottom",
                 fontsize=6.5, color=MUTED, zorder=5)
     ax.set_xscale("log")
@@ -340,7 +339,7 @@ def causal_panel(ax, summary: pd.DataFrame, per_event: pd.DataFrame) -> None:
                   "\n" r"$\downarrow$ off the real board's")
     ax.set_title("and editing along it moves mass toward the un-flipped board,\n"
                  "not off the legal set")
-    ax.set_ylim(top=1.45 * edits.d_lp_cf_hi.max())  # a clear band for the legend
+    ax.set_ylim(top=1.85 * edits.d_lp_cf_hi.max())  # the legend is wide; keep it off the top label
     ax.legend(handles=handles, loc="upper left", fontsize=6.5, labelspacing=0.3,
               title_fontsize=6.5,
               title="solid, filled = counterfactual-only legal squares "
