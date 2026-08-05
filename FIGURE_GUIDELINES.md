@@ -82,6 +82,11 @@ The rule that matters most in this repo, since nearly every study is
 - **The reference class must look like a reference**, not like another
   condition: black or dark gray, listed first in the legend, labeled
   `... (baseline)`.
+- **The null carries the signal's estimator.** One value per item in the signal
+  means one value per item in the null: a per-item mean or median over k
+  candidates has ~1/√k the spread and manufactures a separation the data does
+  not have. Pick one candidate per item at a stated seed, and if an aggregate
+  null is unavoidable, say so and compare the two spreads on the figure.
 - **A null gets gray + dashed + low zorder + last in the legend**, and is *never*
   given a slot in the categorical cycle. Prefer an **empirical null** (shuffle
   labels, or score the reference against itself) over an analytic chance line;
@@ -170,6 +175,11 @@ For anything aligned to an intervention at position `t0`:
   resample under a **fixed full-sample bandwidth**, so the band shows sampling
   noise rather than the bandwidth chasing each resample's spread. Markers go on
   the body of the curve, never the flat tails.
+- **An alignment density shows direction, never magnitude.** cos(Δ, v) positive
+  on every item is compatible with v explaining a percent of ‖Δ‖². When the
+  claim is "this is *the* direction", the panel carries the share of ‖Δ‖² along
+  v — with its CI, its n, and the same null — as an inset bar beside the
+  density, and names what the rest of the displacement is.
 - Items × conditions matrix → diverging colormap centered at zero with **both
   poles named in the caption** ("blue = straightening, red = entangling"), plus
   the two marginals as error-bar plots.

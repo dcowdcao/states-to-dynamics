@@ -6,6 +6,45 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Fig 2(a)'s null gets the signal's estimator, and the panel states the share (2026-08-05)
+
+Branch `bracket/fig2-specificity`. The specificity density compared **one cosine per
+event** against a **per-event median over the ~29 unflipped discs**. A median of 29 draws
+carries ~1/√29 of a single draw's spread, so the tight spike at 0 beside the broad hump at
++0.175 was partly an estimator artifact. The null is now one randomly chosen unflipped
+disc per event (`cos_null1_after_control_tpr`): median −0.003 against the old −0.002, but
+**sd 0.053 where the median-null had 0.009** — six times wider, and now marginally wider
+than the signal's own 0.045.
+
+The claim survives at close to full strength: all 1,596 strict events are positive, no
+null event reaches the signal's median, and the two densities separate at AUROC 0.999. The
+honest null also has a left shoulder near −0.19 that the median averaged away — on some
+events a random unflipped disc's retain direction is genuinely anti-aligned with Δ′.
+
+**The panel now shows magnitude, not only direction.** A cosine density alone reads as
+"this is *the* direction the representation moves". An inset carries the after-control
+decomposition already in `variance_shares.csv`: the flip direction holds **2.05%
+[2.00, 2.11] of ‖Δ′‖² against the null direction's 0.42% [0.38, 0.47]** (n = 1,596,
+percentile bootstrap over events), with swap 8.5% and residual 89.5% named in the inset
+title. Reliably present at ~5× the null, and ~2% of the displacement — both halves of that
+sentence are now on the figure.
+
+Only the TPR-direction null is drawn. The linear-direction single-disc null is the same
+distribution (median −0.001, sd 0.047), and a second gray dashed curve on top of the first
+could only be told from it by dash pattern.
+
+Also fixed: n comes from the frame instead of the literal "1,596" in the y-label, and the
+legend title states the band in full (95% percentile bootstrap over events, 1,000
+resamples, Gaussian KDE at the fixed full-sample Scott bandwidth).
+
+**Status:** `make_figures.py` reads `cos_null1_after_control_tpr` and KeyErrors until that
+column lands in `results/flip_cos_per_event.csv`. The panel was verified against a scratch
+copy computed with `act_geometry.null_direction` (rng seed 0), whose recomputation
+reproduces the committed `cos_flip_*` and `cos_null_*` columns to 1e-16; the tracked
+PNG/PDF are one render stale until the column is committed.
+
+---
+
 ## The fork figures' prose moves to their READMEs, and the axes stop naming a component (2026-08-04)
 
 Branch `fig/strip-captions`. Every fork figure — `fork_and_board` (both planes),

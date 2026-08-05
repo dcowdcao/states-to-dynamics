@@ -17,6 +17,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.ticker import MaxNLocator, PercentFormatter
 
 from spade.figures.othello_board import draw_board, square_xy
 from spade.figures.paper_style import (
@@ -147,35 +148,80 @@ def figure_one(camera_ready: bool) -> None:
     save_figure(fig, FIGURES / "fig1_flip_and_basis", camera_ready)
 
 
-def specificity_panel(ax, cos: pd.DataFrame) -> None:
+def share_inset(ax, shares: pd.DataFrame, n_events: int) -> None:
+    """The magnitude the cosine density cannot show: how much of the squared
+    displacement lies along the flip direction, against the same null."""
+    d = shares[(shares.contrast == "after-control")
+               & (shares.direction_source == "tpr")].set_index("component")
+    assert (d.n_events == n_events).all(), "shares and cosines cover different events"
+    pct = 100 * d[["share", "ci_lo", "ci_hi"]]
+    ins = ax.inset_axes([0.64, 0.62, 0.34, 0.26])
+    drawn = [("flip_null", NULL), ("flip", PROBE_STYLE["tpr"])]
+    for y, (component, style) in enumerate(drawn):
+        r = pct.loc[component]
+        ins.barh(y, r.share, height=0.6, color=style["color"], edgecolor=INK,
+                 lw=0.5, hatch="///" if style is NULL else None,
+                 xerr=[[r.share - r.ci_lo], [r.ci_hi - r.share]],
+                 error_kw=dict(elinewidth=0.9, ecolor=INK, capsize=2))
+        ins.text(r.ci_hi + 0.1, y, f"{r.share:.2f}%", va="center", fontsize=6.5,
+                 color=INK)
+    ins.set_yticks([1, 0], ["flip at $s$", "null"], fontsize=6.5)
+    ins.set_xlim(0, 1.75 * pct.loc[[c for c, _ in drawn], "ci_hi"].max())
+    ins.xaxis.set_major_locator(MaxNLocator(3))
+    ins.xaxis.set_major_formatter(PercentFormatter(decimals=0))
+    ins.tick_params(labelsize=6.5, length=2, pad=1.5)
+    ins.grid(axis="y", visible=False)
+    ins.set_title(r"share of $\|\Delta'\|^2$ along it"
+                  f"\nswap {d.loc['swap'].share:.1%}, residual "
+                  f"{d.loc['resid'].share:.1%}; 95% CI",
+                  fontsize=6.5, pad=3)
+
+
+def specificity_panel(ax, cos: pd.DataFrame, shares: pd.DataFrame) -> None:
     """Alignment of the flip-attributable displacement with the predicted flip
-    direction at s, against the unflipped-disc null. Strict controls only."""
+    direction at s, against one unflipped disc per event. Strict controls only.
+
+    The null is a single disc, not a per-event median over the ~29 unflipped
+    discs: a median is the tighter estimator, and against it the separation is
+    partly arithmetic rather than evidence.
+    """
     d = cos[cos.control_kind == "strict"]
     series = [("cos_flip_after_control_tpr", PROBE_STYLE["tpr"],
-               "flipped square, TPR direction"),
+               "flipped sq., TPR direction"),
               ("cos_flip_after_control_linear", PROBE_STYLE["linear"],
-               "flipped square, linear-probe direction"),
-              ("cos_null_after_control_tpr", NULL, "unflipped discs (null)")]
-    grid = np.linspace(-0.25, 0.45, 512)
-    for col, style, label in series:
-        vals = d[col].to_numpy()
-        dens, lo, hi = kde_ci(vals, grid)
+               "flipped sq., linear-probe direction"),
+              ("cos_null1_after_control_tpr", NULL,
+               "one unflipped disc per event (null)")]
+    vals = {col: d[col].to_numpy() for col, _, _ in series}
+    pooled = np.concatenate(list(vals.values()))
+    pad = 0.03 * np.ptp(pooled)
+    grid = np.linspace(pooled.min() - pad, pooled.max() + pad, 512)
+    peak = 0.0
+    for i, (col, style, label) in enumerate(series):
+        dens, lo, hi = kde_ci(vals[col], grid)
         is_null = style is NULL
+        body = np.flatnonzero(dens > 0.02 * dens.max())  # no markers on flat tails
+        peak = max(peak, hi.max())
         ax.fill_between(grid, lo, hi, color=style["color"], alpha=0.22, lw=0,
                         zorder=1 if is_null else 3)
         ax.plot(grid, dens, color=style["color"], lw=1.6, ls=style.get("ls", "-"),
-                marker=style["marker"], ms=4, markevery=64,
+                marker=style["marker"], ms=4, markevery=body[16 * i::96].tolist(),
                 markeredgecolor="white", markeredgewidth=0.5,
                 zorder=2 if is_null else 4,
-                label=f"{label}: median {np.median(vals):+.3f}")
+                label=f"{label}: {np.median(vals[col]):+.3f}")
     ax.axvline(0, color=MUTED, lw=0.8, ls=(0, (4, 3)), zorder=0)
+    ax.set_ylim(0, 1.8 * peak)  # headroom for the legend and the share inset
     ax.set_xlabel(r"cos($\Delta'$, predicted flip direction at $s$)"
                   "\n" r"$\Delta'$ = act(P+$m$) $-$ act(P+$m'$), flip-attributable")
-    ax.set_ylabel("density over events (n = 1,596)")
+    ax.set_ylabel(f"density over events (n = {len(d):,})")
     ax.set_title("the displacement has a flip-specific direction")
-    ax.legend(loc="upper left", fontsize=7,
-              title="band: 95% bootstrap over events", title_fontsize=7,
-              labelspacing=0.3)
+    ax.legend(loc="upper left", fontsize=6.5,
+              title="median per series; band: 95% percentile\n"
+                    f"bootstrap over the same {len(d):,} events (1,000\n"
+                    "resamples; Gaussian KDE, Scott's rule,\n"
+                    "bandwidth fixed at the full-sample value)",
+              title_fontsize=6.5, labelspacing=0.3)
+    share_inset(ax, shares, len(d))
 
 
 def causal_panel(ax, summary: pd.DataFrame) -> None:
@@ -208,7 +254,8 @@ def causal_panel(ax, summary: pd.DataFrame) -> None:
 
 def figure_two(camera_ready: bool) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(9.6, 4.4))
-    specificity_panel(axes[0], pd.read_csv(RESULTS / "flip_cos_per_event.csv"))
+    specificity_panel(axes[0], pd.read_csv(RESULTS / "flip_cos_per_event.csv"),
+                      pd.read_csv(RESULTS / "variance_shares.csv"))
     causal_panel(axes[1], pd.read_csv(RESULTS / "intervention_summary.csv"))
     for i, ax in enumerate(axes):
         panel_letter(ax, i)
