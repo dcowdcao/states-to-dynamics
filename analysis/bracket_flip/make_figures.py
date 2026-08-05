@@ -257,39 +257,106 @@ def specificity_panel(ax, cos: pd.DataFrame, shares: pd.DataFrame) -> None:
     share_inset(ax, shares, len(d))
 
 
-def causal_panel(ax, summary: pd.DataFrame) -> None:
-    """Effect against collateral over the edit-scale sweep. Up and to the left is
-    a clean intervention; to the right the effect is bought with board damage."""
-    series = [(("tpr", "flipped"), PROBE_STYLE["tpr"], "TPR edit"),
-              (("linear", "flipped"), PROBE_STYLE["linear"], "linear-probe edit"),
-              (("tpr", "random"), NULL, "random direction (null)")]
-    for (method, pop), style, label in series:
+def base_mass_gap(per_event: pd.DataFrame) -> tuple[float, float]:
+    """How far apart the two diagnostic sets start, and what that costs in
+    resolution: the median real-minus-counterfactual base log-mass, and the
+    Delta log-mass the real-only set would show at the smallest TPR edit if it
+    had donated the whole counterfactual gain."""
+    d = per_event[per_event.method.eq("tpr") & per_event.scale.eq(1.0)
+                  & per_event.population.eq("flipped")].dropna(
+                      subset=["base_lp_cf", "base_lp_real"])
+    gain = np.exp(d.base_lp_cf + d.d_lp_cf) - np.exp(d.base_lp_cf)
+    return (float((d.base_lp_real - d.base_lp_cf).median()),
+            float(np.log1p(-gain / np.exp(d.base_lp_real)).mean()))
+
+
+def causal_panel(ax, summary: pd.DataFrame, per_event: pd.DataFrame) -> None:
+    """Effect against collateral over both edit sweeps, with the damage control
+    the effect has to survive drawn behind it.
+
+    Up and to the left is a clean intervention. The solid and dotted curves are
+    the two sides of one switch — mass onto squares only the counterfactual
+    board allows, mass off squares only the real board allows — so the dotted
+    fall at high magnitude is the effect deepening, not damage. Damage is the
+    band: log-mass on the whole legal set, which a broken edit moves and this one
+    does not. `collateral_{lin,tpr}` are swapped in so neither family is graded
+    by the decoder it was built from, and x is a measured quantity, which is what
+    puts the additive TPR knob and the probe's project-to-mean knob on one axis.
+    """
+    series = [(("tpr", "flipped"), PROBE_STYLE["tpr"], "TPR edit", "lin"),
+              (("linear", "flipped"), PROBE_STYLE["linear"], "linear-probe edit", "tpr"),
+              (("tpr", "random"), NULL,
+               "random direction, magnitude-matched (null)", "lin")]
+    edits = summary[summary.population.eq("flipped")
+                    & summary.method.isin(["tpr", "linear"])]
+    # Both sets are fixed by the event, not by the edit, so one n covers a sweep.
+    assert edits.d_lp_cf_n.nunique() == 1 and edits.d_lp_real_n.nunique() == 1
+    handles = []
+    for (method, pop), style, label, decoder in series:
         d = summary[(summary.method == method)
                     & (summary.population == pop)].sort_values("scale")
-        ax.errorbar(d.collateral_tpr_mean, d.d_lp_cf_mean,
-                    yerr=[d.d_lp_cf_mean - d.d_lp_cf_lo,
-                          d.d_lp_cf_hi - d.d_lp_cf_mean],
-                    xerr=[d.collateral_tpr_mean - d.collateral_tpr_lo,
-                          d.collateral_tpr_hi - d.collateral_tpr_mean],
-                    marker=style["marker"], ms=5, lw=1.4, ls=style.get("ls", "-"),
+        x = d[f"collateral_{decoder}_mean"]
+        xerr = [x - d[f"collateral_{decoder}_lo"], d[f"collateral_{decoder}_hi"] - x]
+        is_null = style is NULL
+        handles.append(ax.errorbar(
+            x, d.d_lp_cf_mean,
+            yerr=[d.d_lp_cf_mean - d.d_lp_cf_lo, d.d_lp_cf_hi - d.d_lp_cf_mean],
+            xerr=xerr, marker=style["marker"], ms=5, lw=1.4,
+            ls=style.get("ls", "-"), color=style["color"], elinewidth=0.8,
+            ecolor=style["color"], markeredgecolor="white", markeredgewidth=0.6,
+            zorder=2 if is_null else 4, label=label))
+        if is_null:  # the null has no switch to read the other side of
+            continue
+        ax.errorbar(x, d.d_lp_real_mean,
+                    yerr=[d.d_lp_real_mean - d.d_lp_real_lo,
+                          d.d_lp_real_hi - d.d_lp_real_mean], xerr=xerr,
+                    marker=style["marker"], ms=4.5, lw=1.2, ls=(0, (1, 1.6)),
                     color=style["color"], elinewidth=0.8, ecolor=style["color"],
-                    markeredgecolor="white", markeredgewidth=0.6,
-                    zorder=2 if style is NULL else 4, label=label)
-    ax.set_xlabel("collateral: other squares whose decoded class changed (of 63)"
+                    markerfacecolor="white", markeredgewidth=0.9, zorder=3)
+        for rel, xi, yi in zip(d.rel_edit_norm_mean, x, d.d_lp_cf_mean):
+            ax.annotate(f"{rel:.2f}", (xi, yi), textcoords="offset points",
+                        xytext=(-5, 4), ha="right", va="bottom", fontsize=6,
+                        color=MUTED, zorder=5)
+    bound = edits[["d_lp_legal_lo", "d_lp_legal_hi"]].abs().to_numpy().max()
+    band = ax.axhspan(-bound, bound, color=MUTED, alpha=0.35, lw=0, zorder=0,
+                      label="damage control: legal set "
+                            f"(n = {int(edits.d_lp_legal_n.iloc[0]):,}), "
+                            rf"$|\Delta| \leq {bound:.2f}$")
+    handles.insert(-1, band)  # the null keeps the last slot
+    gap, floor = base_mass_gap(per_event)
+    ax.annotate(f"the two sets start {gap:.1f} nats apart, so equal "
+                r"$\Delta$ log-mass is not" "\n"
+                "equal probability: at the smallest edit even a complete\n"
+                f"transfer would move the dotted curve by {floor:+.4f} nats,\n"
+                "well inside its own CI",
+                (0.02, 0.02), xycoords="axes fraction", ha="left", va="bottom",
+                fontsize=6.5, color=MUTED, zorder=5)
+    ax.set_xscale("log")
+    ax.set_xlabel("collateral: other squares (of 63) whose decoded class changed,\n"
+                  "scored by the decoder the edit was not built from (n = 1,370)"
                   "\n" r"$\leftarrow$ cleaner intervention")
-    ax.set_ylabel(r"$\Delta$ log-mass onto the counterfactual legal set"
-                  "\n" r"$\uparrow$ the model plays the un-flipped board")
-    ax.set_title("and editing along it changes what the model plays")
-    ax.legend(loc="upper left", fontsize=7,
-              title="one point per edit scale (1-16); bars = 95% CI over events",
-              title_fontsize=7, labelspacing=0.3)
+    ax.set_ylabel(r"$\Delta$ next-move log-mass (nats)"
+                  "\n" r"$\uparrow$ onto the un-flipped board's squares,"
+                  "\n" r"$\downarrow$ off the real board's")
+    ax.set_title("and editing along it moves mass toward the un-flipped board,\n"
+                 "not off the legal set")
+    ax.set_ylim(top=1.45 * edits.d_lp_cf_hi.max())  # a clear band for the legend
+    ax.legend(handles=handles, loc="upper left", fontsize=6.5, labelspacing=0.3,
+              title_fontsize=6.5,
+              title="solid, filled = counterfactual-only legal squares "
+                    f"(n = {int(edits.d_lp_cf_n.iloc[0]):,})\n"
+                    "dotted, open = real-only legal squares "
+                    f"(n = {int(edits.d_lp_real_n.iloc[0]):,}); one switch, two sides\n"
+                    r"bars = 95% bootstrap CI; labels = $\|\delta\|/\|h\|$ "
+                    "(the knobs differ)")
 
 
 def figure_two(camera_ready: bool) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(9.6, 4.4))
     specificity_panel(axes[0], pd.read_csv(RESULTS / "flip_cos_per_event.csv"),
                       pd.read_csv(RESULTS / "variance_shares.csv"))
-    causal_panel(axes[1], pd.read_csv(RESULTS / "intervention_summary.csv"))
+    causal_panel(axes[1], pd.read_csv(RESULTS / "intervention_summary.csv"),
+                 pd.read_csv(RESULTS / "intervention_per_event.csv"))
     for i, ax in enumerate(axes):
         panel_letter(ax, i)
     if not camera_ready:
