@@ -99,12 +99,11 @@ def component_curves(ax, df: pd.DataFrame, value: str, variants: list[tuple]) ->
             d = df[mask & df.patch.str.startswith(comp)]
             g = d.assign(layer=d.patch.str[len(comp):].astype(int)).groupby("layer")[value]
             mean, err = g.mean(), g.apply(ci95)
-            ax.fill_between(mean.index, mean - err, mean + err, lw=0, zorder=2,
-                            color=style["color"], alpha=0.18)
-            ax.plot(mean.index, mean, ls=ls, marker=style["marker"], ms=4.5,
-                    color=style["color"], markeredgecolor="white",
-                    markeredgewidth=0.6, zorder=3,
-                    label=style["label"] + suffix)
+            ax.errorbar(mean.index, mean, yerr=err, ls=ls, marker=style["marker"],
+                        ms=4.5, color=style["color"], elinewidth=0.8, capsize=2,
+                        ecolor=style["color"], markeredgecolor="white",
+                        markeredgewidth=0.6, zorder=3,
+                        label=style["label"] + suffix)
     ax.set_xticks(range(int(df.patch.str[-1].astype(int).max()) + 1))
     ax.set_xlabel(LAYERS)
 
@@ -120,7 +119,7 @@ def pair_patch_figure(camera_ready: bool) -> None:
                                           (df.variant == "strict", "--", " (strict)")])
     ax.set_ylabel("score recovery (0 = corrupted, 1 = clean)")
     ax.set_ylim(-0.08, 1.55)  # headroom so the legend clears the ceiling line
-    ax.legend(title=f"band: 95% CI over pairs (n={df.pair.nunique()})",
+    ax.legend(title=f"bars: 95% CI over pairs (n={df.pair.nunique()})",
               title_fontsize=8, fontsize=8, loc="upper left", frameon=True,
               framealpha=0.9, edgecolor="none")
     if not camera_ready:
@@ -166,7 +165,7 @@ def forfeit_figure(camera_ready: bool) -> None:
     component_curves(ax, df, "s_patch", [(df.patch.notna(), "-", "")])
     ax.set_ylabel("color score: log mass(e-only) $-$ log mass(d-only)")
     ax.set_ylim(top=per_event.s_clean.mean() + 1.8)  # room for the legend
-    ax.legend(title="band: 95% CI over events\n"
+    ax.legend(title="bars: 95% CI over events\n"
                     "$\\uparrow$ model treats e as the mover (correct at a forfeit)",
               title_fontsize=7.5, fontsize=8, loc="upper left", frameon=True,
               framealpha=0.9, edgecolor="none")

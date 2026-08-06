@@ -62,7 +62,7 @@ DELTA_METRIC = "macro_f1_minus_raw"
 # played -- the frame alternates each ply, so even offsets read the opponent's board and
 # R3 collapses there by construction (FIGURE_GUIDELINES 4.8).
 PREFIX_R = -1
-BAND = "band: 95% bootstrap CI over source games"
+BARS = "bars: 95% bootstrap CI over source games"
 # SpaDE's paired difference is ~5x the widest of the other three families, so one shared y
 # axis would flatten three panels of four. The three ordinary families share an axis; the
 # SpaDE panel gets its own and draws the shared range as a band, so the change of scale is
@@ -223,12 +223,15 @@ def f1_probes_per_space(fit: pd.DataFrame, camera_ready: bool) -> None:
 # --- F2: the headline ------------------------------------------------------
 
 def curve(ax, d: pd.DataFrame, space: str, label: str | None, offset: int) -> None:
+    """The CI rides on the markers, not on a ribbon: eleven series share these axes and
+    eleven fills covered the curves they annotated. `offset` staggers both."""
     style, d = styled(space), d.sort_values("r")
-    ax.fill_between(d.r, d.lo, d.hi, color=style["color"], alpha=0.18, lw=0,
-                    zorder=style["zorder"] - 1)
-    ax.plot(d.r, d["mean"], color=style["color"], marker=style["marker"], ms=5,
-            lw=style["lw"], ls=style["ls"], markevery=(offset, 5), markeredgecolor="white",
-            markeredgewidth=0.5, zorder=style["zorder"], label=label)
+    ax.errorbar(d.r, d["mean"], yerr=[d["mean"] - d.lo, d.hi - d["mean"]],
+                color=style["color"], marker=style["marker"], ms=5, lw=style["lw"],
+                ls=style["ls"], markevery=(offset, 5), errorevery=(offset, 5),
+                elinewidth=0.8, capsize=1.8, ecolor=style["color"],
+                markeredgecolor="white", markeredgewidth=0.5, zorder=style["zorder"],
+                label=label)
 
 
 def event_axes(ax, window: np.ndarray) -> None:
@@ -341,10 +344,10 @@ def f2_readout_window(readout: pd.DataFrame, camera_ready: bool) -> None:
              "a per-game paired difference from raw at the same $r$, which cancels the "
              "class-balance drift exactly because both spaces are scored on the same "
              "positions against the same labels.\n"
-             f"{BAND}; {n_text(absolute)} source games, constant across the window by "
-             "construction ($t_0$ round-robin over [10, 34]). CI half-widths are "
-             f"$\\leq$ {((delta.hi - delta.lo) / 2).max():.3f} and are drawn but mostly "
-             "narrower than the lines. Gray span: $r < 0$, bitwise identical across "
+             f"{BARS}, at every fifth offset; {n_text(absolute)} source games, constant "
+             "across the window by construction ($t_0$ round-robin over [10, 34]). "
+             f"Half-widths are $\\leq$ {((delta.hi - delta.lo) / 2).max():.3f}, mostly "
+             "shorter than the marker. Gray span: $r < 0$, bitwise identical across "
              "branches. (e) has its own y scale.",
              fontsize=8, color=MUTED, style="italic", ha="center", va="top", linespacing=1.5)
     if not camera_ready:
@@ -465,7 +468,7 @@ def f3_per_rule(readout: pd.DataFrame, fit: pd.DataFrame, camera_ready: bool) ->
              "representation space, not an effect of the violation. The mover-relative frame "
              "alternates each ply, so R3 (turn) is near zero at even offsets by construction "
              f"and {PREFIX_R} is the phase in which the branch's move is about to be played.\n"
-             f"{BAND} ({n_text(d[d.category == ''])}). Rows and markers are F1's and F2's; a "
+             f"{BARS} ({n_text(d[d.category == ''])}). Rows and markers are F1's and F2's; a "
              "one-member rule is labelled as such so it is not read as an average.",
              fontsize=8, color=MUTED, style="italic", ha="center", va="top", linespacing=1.5)
     if not camera_ready:
@@ -559,7 +562,8 @@ def f4_metric_vs_rules(fit: pd.DataFrame, readout: pd.DataFrame, quality: pd.Dat
              "VE = 1 by construction, and the two untrained controls have no reconstruction "
              "objective, so on (b) and (e) each carries a horizontal level instead of an x "
              "position. The sparsity-matched null sits at exactly TopK's $L_0$ in (a) and (d).\n"
-             f"{BAND} ({n_text(level)}). $\\rho$ is Spearman over the eight trained "
+             f"{BARS} ({n_text(level)}), and the same interval shades each control level. "
+             "$\\rho$ is Spearman over the eight trained "
              "dictionaries only and is descriptive at that n. The top row is a level, which "
              "this study cannot claim as a result; the panels are about which x tracks it.",
              fontsize=8, color=MUTED, style="italic", ha="center", va="top", linespacing=1.5)
