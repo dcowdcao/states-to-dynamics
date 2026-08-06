@@ -39,7 +39,9 @@ VARIANTS = ("spliced", "rollout")
 EMPTY_SQUARE_CATEGORIES = ["empty_detached", "empty_own_only", "empty_no_bracket", "opponent_only"]
 OCCUPIED_CATEGORIES = ["occupied_own", "occupied_opp"]
 PARITY_BRANCHES = [c for c in CATEGORY_STYLE if c != "legal"]  # taxonomy order
-BAND = "band: 95% bootstrap CI over source games"
+# Six to eight curves per panel, so the CI is reported rather than shaded: eight
+# overlapping ribbons hid the anchors the panels are read against.
+ESTIMATOR = "mean over source games; 95% bootstrap CIs in the CSV"
 
 
 def curve(ax, df: pd.DataFrame, style: dict, label: str, offset: int = 0, **kw) -> None:
@@ -48,8 +50,6 @@ def curve(ax, df: pd.DataFrame, style: dict, label: str, offset: int = 0, **kw) 
           "markevery": (offset, 6), "markeredgecolor": "white", "markeredgewidth": 0.5,
           "label": label, **kw}
     ax.plot(d.r, d["mean"], **kw)
-    ax.fill_between(d.r, d.lo, d.hi, color=kw["color"], alpha=0.15, lw=0,
-                    zorder=kw.get("zorder", 2) - 1)
 
 
 def event_axes(ax, ylabel: str, letter: str, title: str, ylim=(-0.03, 1.05)) -> None:
@@ -70,8 +70,8 @@ def label_with_n(df: pd.DataFrame, key: str, category: str) -> str:
     return f"{CATEGORY_STYLE[category]['label']} (n={n})"
 
 
-def band_legend(ax, note: str = "", **kw) -> None:
-    ax.legend(title=BAND + note, fontsize=7.4, title_fontsize=7, alignment="left", **kw)
+def curve_legend(ax, note: str = "", **kw) -> None:
+    ax.legend(title=ESTIMATOR + note, fontsize=7.4, title_fontsize=7, alignment="left", **kw)
 
 
 def occupancy_panel(ax, square: pd.DataFrame, notes: bool) -> None:
@@ -98,7 +98,7 @@ def occupancy_panel(ax, square: pd.DataFrame, notes: bool) -> None:
     ax.annotate("nothing was played here; both anchors rise\nonly as the shared suffix fills the square",
                 xy=(20, 0.55), xytext=(0.5, 0.33), fontsize=7, color=MUTED, va="bottom",
                 arrowprops={"arrowstyle": "-", "color": MUTED, "lw": 0.6})
-    band_legend(ax, loc="center left", bbox_to_anchor=(0.28, 0.62))
+    curve_legend(ax, loc="center left", bbox_to_anchor=(0.28, 0.62))
 
 
 def recolor_panel(ax, square: pd.DataFrame, notes: bool) -> None:
@@ -121,7 +121,7 @@ def recolor_panel(ax, square: pd.DataFrame, notes: bool) -> None:
                 ha="right", va="top", arrowprops={"arrowstyle": "-", "color": MUTED, "lw": 0.6})
     ax.text(24, 0.99, "no-op: occupied (own) tracks\nits own reference anchor", fontsize=7,
             color=MUTED, ha="right", va="top")
-    band_legend(ax, loc="lower left", bbox_to_anchor=(0.02, 0.30))
+    curve_legend(ax, loc="lower left", bbox_to_anchor=(0.02, 0.30))
 
 
 def parity_panel(ax, parity: pd.DataFrame) -> None:
@@ -133,7 +133,7 @@ def parity_panel(ax, parity: pd.DataFrame) -> None:
           offset=0, lw=REFERENCE["lw"], zorder=4)
     curve(ax, p[p.branch == "control_legal"], NULL, "control_legal branch", offset=3,
           ls=NULL["ls"], lw=NULL["lw"], zorder=NULL["zorder"])
-    band_legend(ax, note="\na parity-confused branch swaps theirs and mine on\nevery untouched disc at once, and would sit near 0",
+    curve_legend(ax, note="\na parity-confused branch swaps theirs and mine on\nevery untouched disc at once, and would sit near 0",
                 loc="lower left", bbox_to_anchor=(0.20, 0.02))
 
 
@@ -168,7 +168,7 @@ def main():
         for i, ax in enumerate(axes):
             handles, labels = ax.get_legend_handles_labels()
             fig.legend(handles, labels, loc="upper left", fontsize=7,
-                       bbox_to_anchor=(0.04 + 0.5 * i, -0.02), title=BAND,
+                       bbox_to_anchor=(0.04 + 0.5 * i, -0.02), title=ESTIMATOR,
                        title_fontsize=7, alignment="left")
         fig.text(0.5, -0.45, "rollout branch set: every branch samples its own "
                  "continuation, K=4 averaged per branch, so a branch is one item.\n"

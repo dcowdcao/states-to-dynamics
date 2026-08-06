@@ -190,10 +190,14 @@ Two things fall out of the control class:
 ## F7
 
 `figures/f7_probe_readout.png` (`--camera-ready` → vector PDF, titles dropped for
-the caption). Three event-locked panels on the *r* ∈ [−8, +24] window, mean with a
-95% bootstrap CI over source games (1000 resamples, band semantics and per-curve n
-printed in the panel), pre-*t0* region shaded and annotated as fixed by
-construction, dashed grey line at *r* = 0, rule key under the panels.
+the caption). Three event-locked panels on the *r* ∈ [−8, +24] window, mean over
+source games with per-curve n in the legend, pre-*t0* region shaded and annotated
+as fixed by construction, dashed grey line at *r* = 0, rule key under the panels.
+**No interval is drawn.** Eight overlapping shaded CIs hid the anchor curves the
+panels are read against, so they were dropped; the 95% bootstrap CI (1000
+resamples over source games) stays in `probe_illegal_square.csv` as `lo`/`hi`,
+and the legend title says so. That leaves the panels with no on-figure
+uncertainty, against FIGURE_GUIDELINES 1.2.
 
 - **(a)** decoded occupancy of the illegally played square, four empty-square
   categories, with **both anchors labelled**: the reference branch at the same

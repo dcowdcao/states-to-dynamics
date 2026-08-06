@@ -65,15 +65,15 @@ def paired_mean(X: np.ndarray, ref: int, K: int) -> np.ndarray:
     return (Y - Y[ref]).mean(axis=1)
 
 
-def delta_hat(Z: np.ndarray, ref: int, K: int) -> tuple[np.ndarray, np.ndarray]:
-    """(mean, SD) over each branch's K rollouts of δ̂ = ‖Δ‖ / ‖z_ref‖.
+def delta_hat(Z: np.ndarray, ref: int, K: int) -> np.ndarray:
+    """Mean over each branch's K rollouts of δ̂ = ‖Δ‖ / ‖z_ref‖.
 
     Averaged after the norm, not before: ‖mean_k Δ_k‖ cancels the sampling noise
     the K rollouts differ by and measures a smaller, different quantity. K = 1 is
-    the spliced set, where the SD is zero and nothing is drawn from it."""
+    the spliced set, where this is the branch's own δ̂."""
     Y = Z.reshape(-1, K, *Z.shape[1:])
     d = np.linalg.norm(Y - Y[ref], axis=-1) / np.linalg.norm(Y[ref], axis=-1)
-    return d.mean(axis=1), d.std(axis=1)
+    return d.mean(axis=1)
 
 
 def variant_note(K: int) -> str:
@@ -82,23 +82,21 @@ def variant_note(K: int) -> str:
     return (f"rollout branches: every\nbranch, the reference too,\nsamples its own\n"
             f"continuation, K = {K} times.\nEach path is a mean over\nthose K. "
             f"(a) averages Δ;\n(b) averages δ̂ itself —\nthe norm is not linear.\n"
-            f"Band = ±1 SD (n = {K}).\nDrawn to r = +{ROLLOUT_RMAX}: past it\nillegal "
+            f"No spread is drawn over\nthose K.\n"
+            f"Drawn to r = +{ROLLOUT_RMAX}: past it\nillegal "
             f"and control δ̂\nagree within 0.5%.")
 
 
 def marginal_panel(ax, Z: np.ndarray, rows: list[dict], pos: np.ndarray,
                    t0: int, ref: int, K: int, variant: str) -> None:
     """The magnitude a projection cannot show: relative displacement vs offset."""
-    dh, sd = delta_hat(Z, ref, K)
+    dh = delta_hat(Z, ref, K)
     r = pos - t0
     ax.axvspan(r[0] - 0.5, -0.5, color=GRID, alpha=0.7, lw=0, zorder=0)
     ax.axhline(0, color=MUTED, lw=0.9, ls=(0, (4, 3)), zorder=1)
     ax.axvline(0, color=MUTED, lw=1.2, ls=(0, (4, 3)), zorder=1)
     for i, row in enumerate(rows):
         st = branch_style(row["category"], row["is_control"])
-        if K > 1:
-            ax.fill_between(r, dh[i] - sd[i], dh[i] + sd[i], color=st["color"],
-                            alpha=0.14, lw=0, zorder=st["zorder"] - 1)
         ax.plot(r, dh[i], ls=st["ls"], color=st["color"], lw=st["lw"],
                 marker=st["marker"], ms=3.5, markevery=3, markerfacecolor=st["mfc"],
                 markeredgecolor=st["mec"], markeredgewidth=0.5, zorder=st["zorder"])

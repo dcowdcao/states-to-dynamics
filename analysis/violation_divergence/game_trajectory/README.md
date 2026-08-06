@@ -134,10 +134,10 @@ uniform stream (`rollout_branches.py` keys the sampler on `(game_id, k)`), so
 `Δ` is a within-sample difference under common random numbers, not two
 independent draws differenced.
 
-**The band in (b) is ±1 SD over the K = 4 rollouts of that branch (n = 4)** — the
-sampling spread of the continuation, for one game, and not an interval over
-games. It is the only uncertainty a single game supports here, and four is a
-small n; read it as "these curves are not sharp", not as a test.
+**(b) draws no spread over the K = 4 rollouts.** It carried a ±1 SD band per
+branch; nine of those were dropped along with every other shaded ribbon in the
+study, and nothing replaced them, so the rollout panel is means only. That is a
+departure from FIGURE_GUIDELINES 1.2 — read the curves as shape.
 
 **The window is *r* ∈ [−8, +8], not [−8, 24].** See below.
 
@@ -192,5 +192,6 @@ on.
 - The spliced and rollout figures do not share axes and are not a comparison.
   One holds the future fixed and moves one token; the other lets the model write
   the future. Read each through its own caption.
-- The rollout band is n = 4 within one game. It is sampling spread, not an
-  interval over games, and nothing in the parent README is scored against it.
+- Neither (b) panel carries an interval. The rollout one used to, over its K = 4
+  samples within one game; that is sampling spread rather than an interval over
+  games, and nothing in the parent README was ever scored against it.

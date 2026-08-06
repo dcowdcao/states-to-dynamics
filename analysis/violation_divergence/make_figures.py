@@ -275,11 +275,12 @@ def style_of(role: str) -> dict:
     return {"color": NULL["color"], "marker": NULL["marker"], "label": "legal control (null)"}
 
 
-def series(ax, x, mu, lo, hi, role: str, n: int, offset: int, every: int = 4) -> None:
+def series(ax, x, mu, role: str, n: int, offset: int, every: int = 4) -> None:
+    """The mean curve alone. Seven of these per axes, and seven shaded CIs on top
+    of them hid the curves they annotated; F3 draws its interval as error bars,
+    which seven series can carry, and F1's are in divergence_curves.csv."""
     style = style_of(role)
     null = role == CONTROL
-    ax.fill_between(x, lo, hi, color=style["color"], alpha=0.22, lw=0,
-                    zorder=NULL["zorder"] if null else 3)
     ax.plot(x, mu, color=style["color"], marker=style["marker"], ms=4,
             lw=NULL["lw"] if null else 1.7, ls=NULL["ls"] if null else "-",
             markevery=(offset % every, every), markeredgecolor="white",
@@ -318,14 +319,16 @@ F1_TITLE = {
                "layer 5 alike",
 }
 F1_NOTE = {
-    "spliced": "layer 5 resid_post, event-locked to the branch position $t_0$; bands "
-               "are 95% CI of the mean over source games\n"
+    "spliced": "layer 5 resid_post, event-locked to the branch position $t_0$; each curve "
+               "is a mean over source games, n in the legend, 95% CIs in "
+               "divergence_curves.csv\n"
                "$t_0$ round-robin over [10, 34], so every game contributes to every "
                "offset and n is constant across $r$",
     "rollout": f"layer 5 resid_post, rollout branch set: every branch including the "
                f"reference samples its own continuation, K={K_ROLLOUTS} per branch, "
                "averaged so one branch is one item\n"
-               "bands are 95% CI of the mean over source branches; $r=0$ depends only "
+               "each curve is a mean over source branches, 95% CIs in "
+               "divergence_curves_rollout.csv; $r=0$ depends only "
                "on the shared prefix and is the spliced study's own number",
 }
 
@@ -343,9 +346,9 @@ def f1_divergence_layer5(variant: str, camera_ready: bool) -> None:
     for i, role in enumerate(ROLES):
         m = z["role"] == role
         n = int(m.sum())
-        series(axes[0][0], w, *mean_ci(z["delta"][m]), role, n, i)
+        series(axes[0][0], w, mean_ci(z["delta"][m])[0], role, n, i)
         if role != CONTROL:
-            series(axes[0][1], w, *mean_ci(against_control(z, role, "delta")), role, n, i)
+            series(axes[0][1], w, mean_ci(against_control(z, role, "delta"))[0], role, n, i)
 
     for ax in axes[0]:
         event_axes(ax, w)
@@ -445,7 +448,9 @@ def f3_depth_sweep(depth: pd.DataFrame, variant: str, camera_ready: bool) -> Non
                 half = 1.96 * np.sqrt(y * (1 - y) / n)
             else:
                 half = np.array([at.loc[(s, role), err] for s in SPACES])
-            series(ax, DEPTH_X, y, y - half, y + half, role, int(n), i, every=1)
+            series(ax, DEPTH_X, y, role, int(n), i, every=1)
+            ax.errorbar(DEPTH_X, y, yerr=half, fmt="none", elinewidth=0.9, capsize=2,
+                        ecolor=style_of(role)["color"], zorder=2)
         ax.set_ylabel(ylabel)
         ax.set_title(title, loc="left")
         ax.set_xticks(DEPTH_X, DEPTH_LABELS)

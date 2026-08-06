@@ -45,9 +45,7 @@ def level_panel(ax, g: dict, gid: int) -> None:
     legal = CLASSES.index("legal")
     for rule in RULES:
         st, t = STYLE[rule], g[f"vertex {rule}"]
-        mu, sem = g[f"profile {rule}"][legal], g[f"profile sem {rule}"][legal]
-        ax.fill_between(t, mu - 1.96 * sem, mu + 1.96 * sem, color=st["color"],
-                        alpha=0.25, lw=0, zorder=2)
+        mu = g[f"profile {rule}"][legal]
         ax.plot(t, mu, color=st["color"], lw=st["lw"], marker=st["marker"], ms=4,
                 markevery=(0, 6), markeredgecolor="white", markeredgewidth=0.5,
                 zorder=4, label=f"{rule}, legal games (n=2000)")
@@ -117,7 +115,9 @@ def main():
                      "“mean turning angle” are different quantities", fontsize=11, y=1.02)
     fig.text(0.5, 0.945, "layer 5, raw activations, same estimator "
              "(spade.straightness.geometry.temporal_geometry), different sampled sequence.  "
-             "(a) mean ± 95% CI over games;\n(b) 95% percentile bootstrap over games, 1000 "
+             "(a) mean over games; its 95% CI half-width is ≤ 0.34° at every $t$, "
+             "well inside the gap the panel annotates, and is not drawn.\n"
+             "(b) 95% percentile bootstrap over games, 1000 "
              "resamples, n = 2000 per class.  Sign flips in (b) on every class: no rescale "
              "or reindex reconciles them.",
              fontsize=7.5, color=MUTED, style="italic", ha="center", va="top",

@@ -157,14 +157,21 @@ and is last in every legend; `rule_key` prints R1–R3 under both.
 - **F3 `depth_sweep`** — `token_embed` as its own leftmost tick separated by a
   rule, then L0…L7, four panels: (a) peak δ̂, (b) plateau δ̂ with the W_E anchor
   at exactly 0 called out, (c) per-branch peak offset, (d) censored fraction of
-  the half-life. Bands are 95% CI over source games; panel (d) is a normal
-  approximation on a proportion.
+  the half-life. Error bars are 95% CI over source games; the censored-fraction
+  panel is a normal approximation on a proportion.
 
-Checked against FIGURE_GUIDELINES: no colour literals, every curve carries
-uncertainty with its semantics and n stated in-figure (n is in each legend
-entry), the null is gray/dashed/last, the layer indexing base is in the axis
-label, the event-locked panels have the dashed gray line at 0 and the shaded
-pre-event window, and both figures were read in grayscale before shipping.
+Checked against FIGURE_GUIDELINES: no colour literals, n stated in-figure for
+every series (in its legend entry), the null is gray/dashed/last, the layer
+indexing base is in the axis label, the event-locked panels have the dashed gray
+line at 0 and the shaded pre-event window, and both figures were read in
+grayscale before shipping.
+
+**F1 carries no uncertainty on the figure.** Seven shaded 95% CIs per axes hid
+the curves they annotated, worst in the paired-excess panel where six of them
+overlap around zero, and they were removed. F3 kept the same interval as error
+bars, which nine categorical ticks can carry; F1's event-locked curves cannot, so
+its intervals live in `divergence_curves.csv` (`*_lo` / `*_hi`) and the in-figure
+note says so. That is an open §1.2 violation, not a settled one.
 
 Two knowing deviations. §4.1's "≤5 series per panel" is exceeded: seven series
 is the study's independent variable, and `CATEGORY_STYLE` is built for exactly
@@ -203,9 +210,9 @@ rule. §4.2's "annotate the extremum" is done on one curve only (the largest,
 1. **No `paper_style` change needed.** `CATEGORY_STYLE` covered all six
    categories and `NULL` covered the control; I added no colour and needed no
    new entry. The one thing I built locally that a second agent may want is
-   `series()` / `legend_order()` in `make_figures.py` (a category-styled curve
-   with a CI band, and taxonomy-order-then-null legend sorting). If A4's SAE
-   figures grew the same helpers, they are a candidate for
+   `series()` / `legend_order()` in `make_figures.py` (a category-styled mean
+   curve, and taxonomy-order-then-null legend sorting). If A4's SAE figures
+   grew the same helpers, they are a candidate for
    `src/spade/figures/violation_panels.py` at integration — I deliberately did not
    create that file.
 2. **`make_figures.py` writes the result CSVs as well as the figures.** My file
