@@ -1,0 +1,16 @@
+group,trainer,dict_size,trainer_class,published_l0,published_best_f1,published_best_idx,published_frac_variance_explained,published_loss_reconstructed,published_frac_recovered,published_num_alive_features,rationale
+top_k,trainer_0,4096,TrainerTopK,10.000000,0.733742,1,0.795444,2.486223,0.848848,2734,exact-L0 anchor at the sparse end; the checkpoint the earlier probe failed on
+top_k,trainer_49,8192,TrainerTopK,100.000000,0.891102,2,0.969664,2.054513,0.999844,3155,near the F1 peak at ef 16
+top_k,trainer_38,4096,TrainerTopK,390.000000,0.439786,2,0.997621,2.054025,1.000015,2180,dense end ef 8; pairs with trainer_78 to isolate dict-size handling
+top_k,trainer_78,8192,TrainerTopK,390.000000,0.459755,3,0.998077,2.054064,1.000001,3115,same L0 as trainer_38 at ef 16
+standard,trainer2,4096,StandardTrainer,19.199999,0.518029,1,0.542099,2.806134,0.736955,342,low frac_recovered and low FVE; the only regime where loss_reconstructed is far from loss_original
+standard,trainer20,8192,StandardTrainer,459.959991,0.949612,3,0.976173,2.054190,0.999957,5393,highest-F1 standard checkpoint at the dense end
+standard,trainer19-v2,4096,StandardTrainer,71.159996,0.837532,2,0.882596,2.062473,0.997060,1577,-v2 sweep at mid sparsity
+standard,trainer27-v2,8192,StandardTrainer,182.440002,0.932792,3,0.949019,2.054522,0.999841,3965,-v2 sweep at ef 16
+gated,trainer19,4096,GatedSAETrainer,138.559998,0.830279,2,0.962888,2.054309,0.999916,2562,gated original sweep at its sparse end
+gated,trainer20,8192,GatedSAETrainer,570.799988,0.447179,4,0.998689,2.053909,1.000055,4735,largest L0 in the table and a collapsed F1; catches a harness that regresses everything toward good
+gated,trainer19-v2,4096,GatedSAETrainer,60.680000,0.869987,3,0.928453,2.055135,0.999627,2019,gated -v2 sweep covers L0 60-139 which the original sweep never reaches
+gated_anneal,trainer19,4096,GatedAnnealTrainer,45.919998,0.841932,3,0.930166,2.054887,0.999714,2311,sparse end
+gated_anneal,trainer0,4096,GatedAnnealTrainer,455.759979,0.350688,0,0.998243,2.054217,0.999948,1666,lowest best_f1 of the set and best_idx 0 which is an edge of the argmax range
+p_anneal,trainer19,4096,PAnnealTrainer,37.639999,0.925921,1,0.932184,2.058102,0.998589,2779,highest F1 per unit L0 in the table
+p_anneal,trainer0,4096,PAnnealTrainer,360.440002,0.686556,3,0.997038,2.054041,1.000009,2333,dense end
