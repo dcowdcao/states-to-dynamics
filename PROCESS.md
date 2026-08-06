@@ -6,6 +6,199 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Karvonen reproduced exactly; the failure was our eval, not our SAEs (2026-08-06)
+
+Branches `karvonen/*`, worktrees `../spade_sae_worktrees/karvonen-*`. **Nothing is
+integrated** — no analysis, figure or result in this tree was touched. This entry is the
+record so the work is not lost between review and integration.
+
+**The verdict.** Running Karvonen's own `full_pipeline.analyze_sae_groups` on his released
+checkpoints reproduces his published table: across 15 checkpoints spanning all five trainer
+types, both expansion factors, both the original and `-v2` sweeps, L0 10–571, board
+reconstruction F1 and coverage match to **max |diff| 2.98e-07 and 8.64e-07** on mine/yours,
+5.96e-07 and 2.68e-07 on blank-mask (median 0; bit-exact on 10–12 of 15), Spearman
+ρ = 1.0000 on board F1, median signed L0 deviation +0.0000. `valid_moves` is looser at
+1.61e-06 — quote the three board functions separately, not as one bound.
+
+**Why it failed before.** Not the SAEs, not the configs, not the model or data — all of
+those were right. `run_eval.py` is a *reimplementation* of his board-state protocol and
+diverges four ways: it omits his ≥0.95-precision / ≥10-firings feature gate
+(`analysis.py:145,155`), assigns exactly one label per feature where he assigns many,
+picks a per-feature threshold where he sweeps a single global one, and macro-averages over
+180 cells where he micro-pools over 3.78M square-labels. The gate is the dominant term:
+his released precision is 0.948–0.998 on all 240 rows, ours 0.42–0.75. At the one matched
+point (TopK k=80, L0 80.0 vs 79.9) his F1 is 0.902 and our old pipeline gave 0.684.
+**Decision: stop reimplementing. Run his code.** His `Dictionary` interface is implemented
+by his SAEs and ours alike, so both go through one pipeline and exactness is structural.
+
+**A second, independent breakage: the vendored trainer is not the one that trained his
+SAEs.** His released SAEs are dated 2024-05-23 at `dictionary_learning@31b2828`/`fbd9ee4`;
+his repo pins `43421f5` (2025-01-16), which is what we vendored and ran. Commit `8b95ec9`
+(2024-12-26, "Use the correct standard SAE reconstruction loss") changed `standard.py` and
+`p_anneal.py` from `‖e‖₂` to `‖e‖₂²` — and left `gdm.py`/`gated_anneal.py` alone, which
+were already squared. The blast radius is exactly {Standard, PAnneal}, and that is exactly
+which of our baselines missed:
+
+| trainer | recon loss rewritten | his L0 | ours |
+|---|---|---|---|
+| Standard | yes | 131.7 | 1094.9 |
+| PAnneal | yes | 48.0 | 339.5 |
+| Gated | no | 94.4 | 49.7 |
+| GatedAnneal | no | 47.4 | 32.3 |
+| TopK | n/a (k architectural) | 80.0 | 79.9 |
+
+The un-squared form is scale-invariant, so λ *is* the trade-off; the squared form behaves
+like λ_eff = λ/(2‖r‖), ≈11× weaker at his operating point once standardization claws back
+2×. The Gated pair moved only by the standardization factor 1/scale = 1.98 (observed
+1.90×). Also new since his release and silently active: `sparsity_warmup_steps=2000` and a
+changed `AutoEncoder` init. At the pin, **his own sweep script cannot run** its `standard`
+or `gated` branches (`TypeError`, missing `steps`) — proof the pin is not the release code.
+
+**The config selection was right all along.** Verified against his real config files:
+`p_anneal/trainer33` = 0.042105, `standard/trainer30-v2` = 0.058684,
+`gated/trainer27-v2` = 1.368421, `gated_anneal/trainer38` = 0.955263, `top_k/trainer_47`
+= k 80 — all dict_size 8192. `docs/karvonen_reference.md:556-557` (trainer33 as 8× at
+≈0.032) is wrong; `docs/pipeline.md:258` is right.
+
+**His metrics are n=25.** `get_eval_results.get_evals` calls `evaluate` without
+`n_batches`, so every published SAE-quality column (`l0`, `frac_variance_explained`,
+`cossim`, `l2_ratio`, `frac_alive`) is ONE batch of 25 activations. Every published `l0` is
+an exact multiple of 1/25. Consequence: his L0 carries ~6–9% relative noise (except TopK
+where L0 = k), and FVE is biased low below L0 ~100. His own two evaluation runs disagree
+with each other by median 6.5% on L0 and up to 0.76 on FVE. **Board-state columns are
+unaffected** — those use 1000 games × 59 positions. The harness therefore has two modes:
+`repro` (n=25, the only mode comparable to his table) and `measurement`.
+
+**We now hold his entire sweep.** 320 trained Othello SAEs downloaded to
+`/n/netscratch/ba_lab/Lab/$USER/karvonen_released` (39 GB). Each ships his own
+per-checkpoint `results.csv`: 280 match the published aggregate, **40 are TopK configs he
+never published**. Coverage is absent from those files and was regenerated for all 320 from
+his intermediate pickles via his `analysis.get_all_f1s` + `f1_analysis.best_f1_average`,
+matching his published coverage to median 6e-08. A new TopK winner falls out of the
+unpublished 40: `trainer_53`, k=140, coverage 0.7704 vs 0.7676 for the best published.
+
+**His published aggregate is a mix of two runs.** On the 40 TopK rows it *is* the
+per-checkpoint output (max disagreement 2.8e-14); on the other 240, 53 of 69 columns
+differ. Coverage came from the 05-27 pickles, SAE-quality and reconstruction from the 06-10
+re-eval.
+
+**His figure is reproduced byte-for-byte** (`karvonen/pareto-figure`): max per-channel diff
+0 against his rendered PNGs. Three things had to be invented, all documented — markers and
+colours for our 3 extra classes (continuing his `plt.cm.Set1` order, skipping index 5's
+unreadable yellow); class matching by equality, because his `str.contains` would plot every
+CosineSpaDE point twice given `"SpaDETrainer"` is a substring of `"CosineSpaDETrainer"`;
+and skipping empty classes, since his loop raises on an empty scatter. Note **his committed
+notebook cannot produce his published figures** — `zip` truncates to a 4-marker list and
+`label_lookup` has no `TrainerTopK` entry, so TopK is silently dropped; the published
+figures came from an edited working copy not in the repo.
+
+**Canonical SpaDE/CosineSpaDE through his pipeline.** Defaults confirmed against the code
+(`spade.py:23-24`, `spade_cosine.py:20`) and `ARCHITECTURE.md:265-278`: SpaDE λ=1e-3/γ=1e-4,
+CosineSpaDE γ=1.0. Measured: CosineSpaDE γ=1.0 sits at L0 172–184 across 5 seeds with
+coverage 0.523 / recon F1 0.646 (seed 42 has two independently trained checkpoints, which
+agree to 0.004 on F1 — average within seed before taking spread); SpaDE λ=1e-3/γ=1e-4 at L0
+1841 with coverage 0.541 / recon F1 0.590. In his matched L0 band [140, 220] across 36 of
+his SAEs, coverage runs 0.379–0.768 (median 0.736) and recon F1 0.594–0.936 (median 0.839)
+— **CosineSpaDE is below his minimum on both in that band**, and drops from the 18.9th
+percentile unmatched to the 2.1st under L0 matching, so quoting it unmatched flatters it.
+Both clear the random-weight floor and fall short of raw MLP neurons, which beat every SAE
+in his sweep on coverage: **layer 5 is 0.8037**, layer 4 is 0.8335 (the higher number is
+layer 4 — do not attribute it to layer 5). **The floor differs by metric family and it is
+easy to quote the wrong one**: on the unmasked `mine_yours` columns the random-weight model
+reaches coverage 0.4316 / recon F1 0.4267; on the **blank-masked** family the figures
+actually plot, the floor is coverage **0.2723** / recon F1 **0.0816**.
+
+**β approved for CosineSpaDE — and γ turns out never to have been the sparsity knob.**
+The cosine score is bounded in [−1,1], so the score spread is bounded and L0 has an
+architectural ceiling: fitted `L0(γ) = 19.38 + 159.04/(1 + (γ/19.44)^1.136)`, RMSE 0.79,
+saturating at 178.4. `s_i(x) = β·cos(x, Ae_i)` restores the inverse temperature that
+`spade_cosine.py`'s docstring deliberately removed — so β≠1 is arguably a different
+architecture, not a wider sweep of the same one, and its checkpoints are named
+`CosineSpaDE-beta<b>-gam<g>`, outside the `CosineSpaDE-gam` namespace the γ-sweep
+aggregator parses, so nothing can silently merge them. β is **fixed, not trainable** (a
+trainable β drifts to its own optimum and stops being a sweepable knob) and defaults to
+1.0, proven bit-identical: `beta` is a plain float attribute, `state_dict()` is still
+exactly `['Ad','Ae']`, and encode/decode digests on 4096 real activations are byte-identical
+before and after on two checkpoints (L0 173.230225, MSE 10.766513824).
+
+An eval-time β probe on the frozen seed-42 γ=1.0 checkpoint (β only rescales scores, so it
+can be measured without training) gives β 0.01/0.1/0.25/0.63/**1**/2.5/10/100 →
+L0 1758/667/493/271/**170**/53/10.6/2.7. **Karvonen's whole 10–571 axis is covered by
+β ∈ [0.17, 10] at a single γ.** The mechanism is exact rather than fitted: sparsemax keeps
+atom k iff `Σ_{j≤k}(c_(j) − c_(k)) < 1/β`, so β is a threshold on the trained score gaps.
+
+**The consequence for the existing γ sweep is the finding.** Across all nine trained
+γ ∈ [0.05, 5], L0 at β=1 moves only 175.7 → 146.2, while β moves it 60×. γ only bites past
+~10 and does so *destructively* — at γ≥500 the model sits at L0 ≈ 21 with MSE 66 against
+10.9 at γ=1. **γ sparsifies by wrecking reconstruction; β sparsifies by sharpening
+assignment.** Most of the 19-point γ sweep's apparent L0 range was bought with damage, and
+any prose describing γ as CosineSpaDE's sparsity dial needs rewriting.
+
+The probe is an indicator, not a prediction: at β<1 the code is smeared over atoms never
+fit for it (VE 0.979 → 0.899 at β=0.2), and training re-fits them while the same gradient
+widens the cosine gaps, pushing L0 back down. Bounded at ~5× by the high-γ checkpoints, so
+**expect realized L0 ∈ [predicted/5, predicted]**; the launched ladder carries headroom past
+571 for exactly that.
+
+**λ below ~1e-6 is meaningless, exactly.** `softplus_inverse` in fp32 maps every
+`lambda_init` in [5.96e-8, 1.19e-7] to the identical `lambda_pre = −15.94238472`; below
+5.96e-8 (= fp32 eps/2) λ = 0 → uniform sparsemax → L0 8192. λ=1e-6 already carries 4.6%
+quantization error. Confirmed concretely: `seed_*/autoencoders/trainer_8` and `trainer_9`
+are **md5-identical `ae.pt` in all four seeds** despite configs claiming λ=8e-8 vs 1e-7.
+Anyone treating them as two λ points double-counts one checkpoint.
+
+**Gotchas found along the way, all still true of this tree:**
+- `checkpoints/main/standardization_params.json` is *itself* smoke-test output — its mean
+  is a 20–50× outlier against the four real GPU runs (‖Δμ‖ 0.335 vs 0.007–0.020). Every
+  checkpoint under `checkpoints/main/` is evaluated with a mis-calibrated standardization.
+- `checkpoints/spade_sweep/trainer_{4,6}` sit beside a params file from a later run
+  (scale 0.50577 vs their configs' 0.50532); the new loader refuses them.
+- The blank-mask coverage column is mechanically capped at 128/192 = 0.6667 because
+  `one_hot_mask_idx` is unset for Othello — rankings are safe, absolute values are not
+  comparable to unmasked coverage without a ×1.5 rescale.
+- `l1_loss` is **identically 1.0** for any simplex code, at every hyperparameter. It lands
+  in his CSV and reads as a suspiciously good sparsity number. Drop it from SpaDE tables.
+- `frac_recovered` is saturated near 1.000 across his whole sweep and cannot rank anything;
+  `frac_alive` is a degenerate accumulator (use `num_alive_features`).
+- `seed_42/autoencoders/` does not exist, so distance-SpaDE families are inherently 4-seed
+  while CosineSpaDE families are 5-seed. Not a missing path; not fixable without retraining.
+- The same-config/different-standardization pair is **`checkpoints/cosine_spade/trainer_0`
+  (L0 175.96, buffer scale 0.506043) vs `seed_42/autoencoders_cosine_spade_sweep/trainer_4`
+  (L0 175.24, scale 0.505616)** — different weights, same nominal γ=1.0 config. Resolved in
+  favour of the seed-sweep run so γ=1 is one internally consistent 5-seed config.
+  (`seed_*/autoencoders/trainer_7` vs the sweep's `trainer_4` are byte-identical weights and
+  their params files now agree, so they measure the *same* L0 — not a hazard.)
+- Karvonen's eval calls `ae.encode()` **inside an nnsight trace**; the `sparsemax` package
+  is a `torch.autograd.Function` branching on `input.dim()` and raises on a proxy tensor.
+  SpaDE-only — his Linear+ReLU SAEs trace fine. Fixed with plain tensor ops, L0 unchanged.
+
+**Live compute at time of writing:** eval of the 123 existing SpaDE/CosineSpaDE sweep
+checkpoints; a 5-seed × 12-config L0-coverage training array (SpaDE λ=1e-3, γ 7e-4…5e-1;
+CosineSpaDE γ 35, 75); and a γ×β CosineSpaDE grid being designed off an eval-time β probe
+(β only rescales scores, so its L0 response can be measured on trained checkpoints before
+spending GPU-hours — an indicator, not a substitute, since training at β changes what the
+atoms learn).
+
+**Any new checkpoint destined for the Pareto figure must be evaluated through
+`karvonen_repro.evaluate`, never `spade.evaluation.run_eval`.** The L0-coverage sweep was
+launched with its eval arrays chained to `run_eval` — our reimplementation, the one that
+drifts ~0.2 absolute F1 — and emits `coverage`/`reconstruction_f1` rather than his column
+names. Those eval arrays were cancelled; the training array was left running because the
+checkpoints are fine. This is the easiest mistake to repeat: the two pipelines look
+interchangeable and are not.
+
+**BatchTopK is the one empty class of the eight.** It has a marker and a label but no
+points — absent from his CSV (he never swept it) and from ours (`seed_*/autoencoders/
+trainer_6` was never mirrored into a `karvonen_repro` run). Either evaluate it or say in
+the caption why the legend carries a class with no data.
+
+**What this costs the paper.** The baselines were trained under a loss Karvonen changed
+after publishing and evaluated with a protocol missing his precision gate. The
+SpaDE-vs-baseline numbers in the current draft must be **regenerated wholesale, not
+adjusted**, and the baselines will move more than SpaDE does.
+
+---
+
 ## Fig 2 moves onto the Karvonen-fit probes; ARENA becomes the control (2026-08-05)
 
 Branch `bracket/karvonen-probes`. Fig 1 and Fig 2 were reading different instruments.
