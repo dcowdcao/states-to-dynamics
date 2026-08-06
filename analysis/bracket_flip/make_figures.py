@@ -237,11 +237,14 @@ def specificity_panel(ax, cos: pd.DataFrame, shares: pd.DataFrame) -> None:
         dens, lo, hi = kde_ci(vals[col], grid)
         is_null = style is NULL
         body = np.flatnonzero(dens > 0.02 * dens.max())  # no markers on flat tails
+        at = body[16 * i::96]
         peak = max(peak, hi.max())
-        ax.fill_between(grid, lo, hi, color=style["color"], alpha=0.22, lw=0,
-                        zorder=1 if is_null else 3)
+        # The bootstrap rides on the markers; three fills over one peak hid it.
+        ax.errorbar(grid[at], dens[at], yerr=[dens[at] - lo[at], hi[at] - dens[at]],
+                    lw=0, elinewidth=0.9, capsize=1.8, ecolor=style["color"],
+                    zorder=1 if is_null else 3)
         ax.plot(grid, dens, color=style["color"], lw=1.6, ls=style.get("ls", "-"),
-                marker=style["marker"], ms=4, markevery=body[16 * i::96].tolist(),
+                marker=style["marker"], ms=4, markevery=at.tolist(),
                 markeredgecolor="white", markeredgewidth=0.5,
                 zorder=2 if is_null else 4,
                 label=f"{label}: {np.median(vals[col]):+.3f}")
@@ -252,10 +255,10 @@ def specificity_panel(ax, cos: pd.DataFrame, shares: pd.DataFrame) -> None:
     ax.set_ylabel(f"density over events (n = {len(d):,})")
     ax.set_title("the displacement has a flip-specific direction")
     ax.legend(loc="upper left", fontsize=6.5,
-              title="median per series; band: 95% percentile\n"
-                    f"bootstrap over the same {len(d):,} events (1,000\n"
-                    "resamples; Gaussian KDE, Scott's rule,\n"
-                    "bandwidth fixed at the full-sample value)",
+              title="median per series; bars at the markers:\n"
+                    "95% percentile bootstrap over the same\n"
+                    f"{len(d):,} events (1,000 resamples; Gaussian KDE,\n"
+                    "Scott's rule, bandwidth at the full sample)",
               title_fontsize=6.5, labelspacing=0.3)
     share_inset(ax, shares, len(d))
 

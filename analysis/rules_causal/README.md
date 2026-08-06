@@ -34,7 +34,7 @@ Pipeline (one SLURM job — `scripts/slurm/studies/rules/submit_rules_causal.sh`
 `make_figures.py` (`--camera-ready` for vector PDFs). Per-item CSVs in
 `results/`, mined pairs on `$SPADE_RULES_DIR/causal/`.
 
-Error bars and bands are 95% CIs of the mean over items (edits), pairs
+Error bars are 95% CIs of the mean over items (edits), pairs
 (patching) or events (forfeit), with n on every panel. Layers are transformer
 blocks 0-7, 0 = first block. The `random` edit direction and the unpatched
 corrupted run are nulls and are drawn as such — gray, dashed, last in the
