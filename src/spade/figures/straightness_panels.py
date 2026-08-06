@@ -40,6 +40,15 @@ def mean_sem(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return np.nanmean(x, 0), np.nanstd(x, 0) / np.sqrt(np.maximum(n, 1))
 
 
+def ci_bars(ax, x, y, yerr, color, zorder: int = 6) -> None:
+    """95% CI bars at the drawn markers, the uncertainty display these panels use.
+
+    Thin and marker-anchored, so four classes on one axis stay separable.
+    """
+    ax.errorbar(x, y, yerr=yerr, fmt="none", ecolor=color, elinewidth=0.9,
+                capsize=1.8, zorder=zorder)
+
+
 def kde_ci(vals: np.ndarray, grid: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Gaussian KDE (Scott's rule) with a percentile bootstrap band over games.
 
@@ -55,13 +64,17 @@ def kde_ci(vals: np.ndarray, grid: np.ndarray) -> tuple[np.ndarray, np.ndarray, 
 
 
 def density_panel(ax, per_game: np.ndarray, blocks: dict) -> None:
-    """Per-game mean turning angle, one KDE curve per class with a bootstrap band.
+    """Per-game mean turning angle, one KDE curve per class.
 
     Medians are marked on the baseline: the gap between two triangles is the
     class separation the AUROC figures score. The grid spans the drawn classes
     only, so an undrawn block cannot stretch the axis. Set the y-floor once after
     every panel is drawn — set_ylim freezes autoscale, which on shared axes would
     clip whichever panel peaks highest.
+
+    The curves carry no interval: four densities whose medians sit ~0.3° apart
+    overlap too much for a per-curve interval to stay readable. The separation
+    they show is scored with a bootstrap CI in the AUROC figures instead.
     """
     drawn = np.concatenate([per_game[b] for b in blocks.values()])
     pad = 0.03 * np.ptp(drawn)
@@ -69,9 +82,7 @@ def density_panel(ax, per_game: np.ndarray, blocks: dict) -> None:
     for i, c in enumerate(blocks):
         style, is_ref = CLASS_STYLE[c], c == "legal"
         vals = per_game[blocks[c]]
-        dens, lo, hi = kde_ci(vals, grid)
-        ax.fill_between(grid, lo, hi, color=style["color"], alpha=0.25, lw=0,
-                        zorder=4 if is_ref else 2)
+        dens, _, _ = kde_ci(vals, grid)
         body = np.flatnonzero(dens > 0.02 * dens.max())  # no markers on flat tails
         ax.plot(grid, dens, lw=2.4 if is_ref else 1.6, color=style["color"],
                 marker=style["marker"], ms=4, markevery=body[12 * i::72].tolist(),
@@ -134,8 +145,8 @@ def value_profile_panel(ax, values: np.ndarray, blocks: dict, ylabel: str,
     for i, c in enumerate(blocks):
         style, is_ref = CLASS_STYLE[c], c == "legal"
         mu, sem = mean_sem(values[blocks[c]])
-        ax.fill_between(positions, mu - 1.96 * sem, mu + 1.96 * sem,
-                        color=style["color"], alpha=0.25, lw=0)
+        at = np.arange(2 * i, len(positions), 9)  # the markevery positions below
+        ci_bars(ax, positions[at], mu[at], 1.96 * sem[at], style["color"])
         ax.plot(positions, mu, lw=2.4 if is_ref else 1.6, color=style["color"],
                 marker=style["marker"], ms=4, markevery=(2 * i, 9),
                 markeredgecolor="white", markeredgewidth=0.5,
@@ -150,8 +161,8 @@ def profile_panel(ax, theta: np.ndarray, blocks: dict) -> None:
     for i, c in enumerate(blocks):
         style, is_ref = CLASS_STYLE[c], c == "legal"
         mu, sem = mean_sem(theta[blocks[c]])
-        ax.fill_between(positions, mu - 1.96 * sem, mu + 1.96 * sem,
-                        color=style["color"], alpha=0.25, lw=0)
+        at = np.arange(2 * i, len(positions), 9)  # the markevery positions below
+        ci_bars(ax, positions[at], mu[at], 1.96 * sem[at], style["color"])
         ax.plot(positions, mu, lw=2.4 if is_ref else 1.6, color=style["color"],
                 marker=style["marker"], ms=4, markevery=(2 * i, 9),
                 markeredgecolor="white", markeredgewidth=0.5,
@@ -183,8 +194,7 @@ def violation_panel(ax, rels: np.ndarray, mu: np.ndarray, sem: np.ndarray,
     if ghost is not None:
         ax.plot(rels, ghost, "-", lw=1.4, color="#b0b0b0", zorder=2,
                 label="raw L5 (reference)")
-    ax.fill_between(rels, mu - 1.96 * sem, mu + 1.96 * sem, color=color,
-                    alpha=0.3, lw=0, zorder=3)
+    ci_bars(ax, rels, mu, 1.96 * sem, color, zorder=3)
     ax.plot(rels, mu, "-", marker=CLASS_STYLE["violation"]["marker"], lw=2.0, ms=5,
             color=color, markeredgecolor="white", markeredgewidth=0.6, zorder=4)
     if annotate:

@@ -30,7 +30,7 @@ import torch
 
 from spade.common.study import study_dir
 from spade.figures.straightness_panels import (
-    REL_WINDOW, class_blocks, density_panel, event_axes, profile_panel,
+    REL_WINDOW, ci_bars, class_blocks, density_panel, event_axes, profile_panel,
     value_delta, value_profile_panel, violation_delta, violation_panel)
 from spade.figures.paper_style import MUTED, QUANTITY_STYLE, apply_style, sae_label
 
@@ -39,8 +39,9 @@ apply_style()
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 GEOM = study_dir("straightness") / "geometry"
 RAW_SPACE = "resid_post_5"
-CI_NOTE = ("shaded bands are mean ± 95% CI, n = 2000 games per class; gray span = "
-           "prefix identical to the source game, Δ ≡ 0 by construction")
+CI_NOTE = ("error bars are mean ± 95% CI at the drawn markers, n = 2000 games per "
+           "class; gray span = prefix identical to the source game, Δ ≡ 0 by "
+           "construction")
 
 
 def families() -> list[tuple[str, str]]:
@@ -162,8 +163,8 @@ def combined_comparison(blocks: dict, t0: np.ndarray, src: np.ndarray,
             level = np.nanmean(values[blocks["legal"]])
             mu, sem = 100 * mu / level, 100 * sem / level
             style = QUANTITY_STYLE[key]
-            ax.fill_between(rels, mu - 1.96 * sem, mu + 1.96 * sem,
-                            color=style["color"], alpha=0.25, lw=0, zorder=2)
+            at = np.arange(i, len(rels), 4)  # the markevery positions below
+            ci_bars(ax, rels[at], mu[at], 1.96 * sem[at], style["color"], zorder=2)
             ax.plot(rels, mu, "-", marker=style["marker"], lw=1.8, ms=4,
                     markevery=(i, 4), color=style["color"], label=style["label"],
                     markeredgecolor="white", markeredgewidth=0.5, zorder=3 + i)
@@ -188,8 +189,9 @@ def combined_comparison(blocks: dict, t0: np.ndarray, src: np.ndarray,
                  fontsize=11, y=1.00)
     fig.text(0.5, 0.962, "violation-locked Δ against each violation game's matched "
              "source legal game, as a percentage of that space's own mean level — the "
-             "normalization\nthat lets dictionaries share an axis; bands are mean ± "
-             "95% CI; gray span is Δ ≡ 0 by construction (θ is sensitive at $t_0-1$, "
+             "normalization\nthat lets dictionaries share an axis; error bars are mean "
+             "± 95% CI at the drawn markers; gray span is Δ ≡ 0 by construction (θ is "
+             "sensitive at $t_0-1$, "
              "‖Δz‖ and ‖z‖ at $t_0$)\nn = 2000 violation games. θ alone, in degrees "
              "and with troughs annotated: violation_spike_comparison.png",
              fontsize=8, color=MUTED, style="italic", ha="center", va="top",
@@ -236,9 +238,10 @@ def theta_dist_comparison(blocks: dict) -> None:
                bbox_to_anchor=(0.5, -0.015))
     fig.suptitle("Every dictionary keeps the violation shift — and most surface a "
                  "human-game shift that raw layer 5 hides", fontsize=11, y=1.00)
-    fig.text(0.5, 0.962, "per-class Gaussian KDE (Scott bandwidth); bands are 95% "
-             "percentile bootstrap over games (1000 resamples); triangles mark class "
-             "medians\nΔmedian = class median − legal median; shared axes; raw variant; "
+    fig.text(0.5, 0.962, "per-class Gaussian KDE (Scott bandwidth); triangles mark "
+             "class medians; the curves carry no interval — the separation is scored "
+             "with a bootstrap CI in sae_families_auroc.png\n"
+             "Δmedian = class median − legal median; shared axes; raw variant; "
              "n = 2000 games per class. Rollout overlaps legal in every space; "
              "championship separates in 7 of 8 SAE latents but not raw L5",
              fontsize=8, color=MUTED, style="italic", ha="center", va="top",
