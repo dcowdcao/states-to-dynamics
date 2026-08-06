@@ -143,7 +143,7 @@ direction from the SAE latents. Seed 42 only.
 | `step_vs_t_<Family>.png` | per-family, two panels: (a) step-length ‖Δz‖ profile over the game, (b) violation-locked Δ step length. The displacement-magnitude counterpart of curvature, and the quantity ReStraV pairs with the turning angle |
 | `norm_vs_t_<Family>.png` | per-family, two panels: (a) latent-norm ‖z‖ profile over the game, (b) violation-locked Δ latent norm. A confound diagnostic, not a trajectory metric |
 | `violation_spike_comparison.png` | small multiples of the curvature panel (b) across all spaces on a shared y-axis, raw layer 5 ghosted in gray, each titled with its trough and net |
-| `theta_dist_comparison.png` | small multiples of the whole-game curvature distribution across all spaces on shared axes: per-class KDE with a bootstrap 95% band, class medians on the baseline, each titled with its violation−legal and championship−legal median gap. The distribution behind `analysis/straightness/figures/sae_families_auroc.png` |
+| `theta_dist_comparison.png` | small multiples of the whole-game curvature distribution across all spaces on shared axes: per-class KDE, class medians on the baseline, each titled with its violation−legal and championship−legal median gap. The distribution behind `analysis/straightness/figures/sae_families_auroc.png`, which is where the separation gets its bootstrap CI — the KDE curves themselves carry no interval |
 
 | `quantity_comparison.png` | all three quantities at once, small multiples across all spaces on a shared axis. Each Δ is a percentage of that space's own mean level, which is what makes the nine dictionaries commensurable |
 

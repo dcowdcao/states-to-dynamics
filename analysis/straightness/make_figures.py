@@ -22,7 +22,7 @@ from spade.common.paths import repo_root, results_dir
 from spade.common.study import study_dir
 
 from spade.figures.straightness_panels import (
-    DRAWN_CLASSES, REL_WINDOW, class_blocks, density_panel,
+    DRAWN_CLASSES, REL_WINDOW, ci_bars, class_blocks, density_panel,
     mean_sem as _mean_sem, profile_panel, value_profile_panel, violation_delta,
     violation_panel)
 from spade.figures.paper_style import (
@@ -59,8 +59,9 @@ def f1_theta_dist(blocks):
     fig.suptitle("Only games carrying an illegal move shift the curvature "
                  "distribution (layer 5), and by 0.3°", fontsize=11, y=1.00)
     fig.text(0.5, 0.93, "Gaussian KDE, per-class Scott bandwidth (h = 0.21-0.25°); "
-             "bands are 95% percentile bootstrap over games (1000 resamples)\n"
-             "triangles mark class medians; n = 2000 games per class",
+             "triangles mark class medians; n = 2000 games per class\n"
+             "the separation these curves show is scored with a bootstrap CI in "
+             "auroc_vs_depth.png and sae_families_auroc.png",
              fontsize=8, color=MUTED, style="italic", ha="center", va="top",
              linespacing=1.5)
     fig.tight_layout(rect=(0, 0, 1, 0.87))
@@ -88,11 +89,10 @@ def f2_auroc_vs_depth(auroc: pd.DataFrame):
         for pair in DEPTH_SERIES:
             cls = pair.removeprefix("legal_vs_")
             style = CLASS_STYLE[cls]
-            y = [sub.loc[(s, pair), "auc_mean_theta"] for s in DEPTH_SPACES]
-            lo = [sub.loc[(s, pair), "auc_mean_theta_lo"] for s in DEPTH_SPACES]
-            hi = [sub.loc[(s, pair), "auc_mean_theta_hi"] for s in DEPTH_SPACES]
-            ax.fill_between(DEPTH_LABELS, lo, hi, color=style["color"], alpha=0.25,
-                            lw=0, zorder=2)
+            y = np.array([sub.loc[(s, pair), "auc_mean_theta"] for s in DEPTH_SPACES])
+            lo = np.array([sub.loc[(s, pair), "auc_mean_theta_lo"] for s in DEPTH_SPACES])
+            hi = np.array([sub.loc[(s, pair), "auc_mean_theta_hi"] for s in DEPTH_SPACES])
+            ci_bars(ax, DEPTH_LABELS, y, [y - lo, hi - y], style["color"], zorder=2)
             ax.plot(DEPTH_LABELS, y, "-", marker=style["marker"], lw=2.0, ms=5,
                     color=style["color"], label=style["label"], zorder=3,
                     markeredgecolor="white", markeredgewidth=0.6)
@@ -143,7 +143,8 @@ def f3_curvature_vs_t(blocks, data):
 
     fig.suptitle("Curvature over the game and around an injected rule violation "
                  "(layer 5, raw)", fontsize=11, y=1.00)
-    fig.text(0.5, 0.935, "shaded bands are mean ± 95% CI, n = 2000 games per class",
+    fig.text(0.5, 0.935, "error bars are mean ± 95% CI at the drawn markers, "
+             "n = 2000 games per class",
              fontsize=8, color=MUTED, style="italic", ha="center")
     fig.tight_layout(rect=(0, 0, 1, 0.92))
     fig.savefig(FIG_DIR / "curvature_vs_t.png", dpi=300, bbox_inches="tight")
@@ -171,7 +172,8 @@ def f3b_step_vs_t(blocks, data):
 
     fig.suptitle("Step length over the game and around an injected rule violation "
                  "(layer 5, raw)", fontsize=11, y=1.00)
-    fig.text(0.5, 0.935, "shaded bands are mean ± 95% CI, n = 2000 games per class; "
+    fig.text(0.5, 0.935, "error bars are mean ± 95% CI at the drawn markers, "
+             "n = 2000 games per class; "
              "gray span = prefix identical to the source game, Δ ≡ 0 by construction",
              fontsize=8, color=MUTED, style="italic", ha="center")
     fig.tight_layout(rect=(0, 0, 1, 0.92))
@@ -271,8 +273,8 @@ def f6_norm_diagnostics(blocks, auroc: pd.DataFrame):
     for i, c in enumerate(blocks):
         style, is_ref = CLASS_STYLE[c], c == "legal"
         mu, sem = _mean_sem(norm[blocks[c]])
-        axes[0].fill_between(positions, mu - 1.96 * sem, mu + 1.96 * sem,
-                             color=style["color"], alpha=0.25, lw=0)
+        at = np.arange(2 * i, len(positions), 9)  # the markevery positions below
+        ci_bars(axes[0], positions[at], mu[at], 1.96 * sem[at], style["color"])
         axes[0].plot(positions, mu, lw=2.4 if is_ref else 1.6, color=style["color"],
                      marker=style["marker"], ms=4, markevery=(2 * i, 9),
                      markeredgecolor="white", markeredgewidth=0.5,
@@ -293,11 +295,10 @@ def f6_norm_diagnostics(blocks, auroc: pd.DataFrame):
     for pair in DEPTH_SERIES:
         c = pair.removeprefix("legal_vs_")
         style = CLASS_STYLE[c]
-        y = [sub.loc[(s, pair), "auc_mean_d"] for s in DEPTH_SPACES]
-        lo = [sub.loc[(s, pair), "auc_mean_d_lo"] for s in DEPTH_SPACES]
-        hi = [sub.loc[(s, pair), "auc_mean_d_hi"] for s in DEPTH_SPACES]
-        ax.fill_between(DEPTH_LABELS, lo, hi, color=style["color"], alpha=0.25,
-                        lw=0, zorder=2)
+        y = np.array([sub.loc[(s, pair), "auc_mean_d"] for s in DEPTH_SPACES])
+        lo = np.array([sub.loc[(s, pair), "auc_mean_d_lo"] for s in DEPTH_SPACES])
+        hi = np.array([sub.loc[(s, pair), "auc_mean_d_hi"] for s in DEPTH_SPACES])
+        ci_bars(ax, DEPTH_LABELS, y, [y - lo, hi - y], style["color"], zorder=2)
         ax.plot(DEPTH_LABELS, y, "-", marker=style["marker"], lw=2.0, ms=5,
                 color=style["color"], label=style["label"], zorder=3,
                 markeredgecolor="white", markeredgewidth=0.6)
@@ -313,8 +314,8 @@ def f6_norm_diagnostics(blocks, auroc: pd.DataFrame):
 
     fig.suptitle("Norm-confound check: the classes share one norm profile, and "
                  "step lengths carry the angle result's signs", fontsize=11, y=1.00)
-    fig.text(0.5, 0.925, "shaded bands are 95% CI (panel a: mean ± 95% CI over "
-             "games; panel b: stratified bootstrap); n = 2000 per class",
+    fig.text(0.5, 0.925, "error bars are 95% CI (panel a: mean ± CI over games, at "
+             "the drawn markers; panel b: stratified bootstrap); n = 2000 per class",
              fontsize=8, color=MUTED, style="italic", ha="center")
     fig.tight_layout(rect=(0, 0, 1, 0.91))
     fig.savefig(FIG_DIR / "norm_diagnostics.png", dpi=300, bbox_inches="tight")
