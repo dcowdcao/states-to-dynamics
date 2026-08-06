@@ -33,7 +33,7 @@ import circuits.evaluation as evaluation
 import circuits.full_pipeline as full_pipeline
 import circuits.get_eval_results as get_eval_results
 
-LoadSAE = Callable[[str], tuple]
+LoadSAE = Callable[[str, str], tuple]
 
 
 def bind(load_sae: LoadSAE, checkpoint_dirs: list[str], device: str, eval_n_batches: int) -> None:
@@ -41,8 +41,8 @@ def bind(load_sae: LoadSAE, checkpoint_dirs: list[str], device: str, eval_n_batc
     (`f"{autoencoder_path}config.json"`) supplies no separator of its own."""
     assert all(d.endswith("/") for d in checkpoint_dirs), checkpoint_dirs
 
-    def load_dictionary(base_path: str, _device: str) -> tuple:
-        ae, meta = load_sae(base_path)
+    def load_dictionary(base_path: str, load_device: str) -> tuple:
+        ae, meta = load_sae(base_path, load_device)
         with open(f"{base_path}config.json") as f:
             d_submodule = json.load(f)["buffer"]["d_submodule"]
         assert ae.activation_dim == d_submodule, (

@@ -80,7 +80,7 @@ index columns pandas wrote into it.
 - `evaluate.py` — the CLI. Chooses checkpoints, output paths and what is already done.
 - `patches.py` — the four module-level rebinds that let his pipeline see our
   checkpoints. Read this file; it is the entire divergence surface.
-- `provisional_loader.py` — throwaway `load_sae`, delete when the real one lands.
+- loader: `spade.sae_loader.load_sae`, shared with the rest of the reproduction work.
 - `validation_checkpoints.py` — validation_set.csv to paths in a released download.
 - `submit_eval.sbatch` — SLURM.
 - `PROTOCOL.md`, `validation_set.csv`, `compare_to_published.py`, `probe_eval_batch.py`

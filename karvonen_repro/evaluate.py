@@ -41,7 +41,7 @@ import circuits.pipeline_config as pipeline_config  # noqa: E402
 import circuits.utils as utils  # noqa: E402
 
 from karvonen_repro import patches  # noqa: E402
-from karvonen_repro.provisional_loader import load_sae  # noqa: E402
+from spade.sae_loader.load_sae import load_sae  # noqa: E402
 
 # His pipeline writes results.pkl / reconstruction.pkl / evals.pkl next to ae.pt, and
 # the released checkpoints already ship his. Mirroring by symlink would write through
