@@ -16,7 +16,7 @@
 # SAE-quality columns may be compared to it (PROTOCOL.md section 2: those columns
 # are one batch of 25 activations). Use measurement for numbers we report.
 #
-# Resumable: a checkpoint whose per_checkpoint/<group>/<trainer>/f1_results.csv
+# Resumable: a checkpoint whose per_checkpoint/<...>/<group>/<trainer>/f1_results.csv
 # exists is skipped, so requeueing the same command with the same KARVONEN_OUT
 # picks up where a timeout stopped. One job per KARVONEN_OUT at a time.
 #
@@ -28,6 +28,10 @@
 #
 # For the reproduction run, take the checkpoint list from validation_set.csv:
 #   KARVONEN_RELEASED_ROOT=/n/netscratch/ba_lab/Lab/$USER/karvonen_released \
+#   KARVONEN_OUT=... SPADE_REPO=$PWD sbatch --export=ALL karvonen_repro/submit_eval.sbatch
+#
+# For the SpaDE/CosineSpaDE run, from spade_set.csv (44 checkpoints):
+#   KARVONEN_MULTISEED_ROOT=/n/netscratch/ba_lab/Lab/$USER/spade_multiseed \
 #   KARVONEN_OUT=... SPADE_REPO=$PWD sbatch --export=ALL karvonen_repro/submit_eval.sbatch
 #
 # ~1000 SAEs at his n_inputs=1000 will not fit in one 24h job; submit in slices of
@@ -57,6 +61,9 @@ nvidia-smi --query-gpu=name --format=csv,noheader
 if [ -n "${KARVONEN_RELEASED_ROOT:-}" ]; then
     mapfile -t CHECKPOINTS < <(python -m karvonen_repro.validation_checkpoints \
         --released-root "${KARVONEN_RELEASED_ROOT}")
+elif [ -n "${KARVONEN_MULTISEED_ROOT:-}" ]; then
+    mapfile -t CHECKPOINTS < <(python -m karvonen_repro.spade_checkpoints \
+        --multiseed-root "${KARVONEN_MULTISEED_ROOT}")
 else
     # Unquoted on purpose: the glob is expanded here, into one argument per checkpoint.
     CHECKPOINTS=(${KARVONEN_CKPT_GLOB:?set this or KARVONEN_RELEASED_ROOT})

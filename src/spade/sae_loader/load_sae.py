@@ -16,6 +16,9 @@ Shapes come from the weights, not the config: his 80-checkpoint standard sweep r
 neither activation_dim nor dict_size nor dict_class. Loading is a strict `load_state_dict`,
 never `from_pretrained`, whose `normalize_decoder=True` default rescales encoder weights.
 
+The SpaDE families are instantiated as the `trace_safe_spade` subclasses, whose encode()
+survives the nnsight trace his classifier stage runs it in; nothing else differs.
+
 Usage:
     ae, meta = load_sae(checkpoint_dir, device="cuda")
 """
@@ -38,8 +41,7 @@ from circuits.dictionary_learning.trainers.batch_top_k import BatchTopKSAE
 from circuits.dictionary_learning.trainers.matryoshka_batch_top_k import MatryoshkaBatchTopKSAE
 from circuits.dictionary_learning.trainers.top_k import AutoEncoderTopK
 
-from spade.saes.spade import SpaDEAutoEncoder
-from spade.saes.spade_cosine import CosineSpaDEAutoEncoder
+from spade.sae_loader.trace_safe_spade import TraceSafeCosineSpaDE, TraceSafeSpaDE
 
 # Decoder columns drift by ~1e-6 from unit norm under ConstrainedAdam.
 NORM_ATOL = 1e-4
@@ -86,8 +88,8 @@ _FAMILIES = {
                                       unit_norm=("W_dec", 1), topk=True,
                                       extra=lambda config, state: (config["k"],
                                                                    state["group_sizes"].tolist())),
-    "SpaDEAutoEncoder": _Family(SpaDEAutoEncoder, "Ae"),
-    "CosineSpaDEAutoEncoder": _Family(CosineSpaDEAutoEncoder, "Ae"),
+    "SpaDEAutoEncoder": _Family(TraceSafeSpaDE, "Ae"),
+    "CosineSpaDEAutoEncoder": _Family(TraceSafeCosineSpaDE, "Ae"),
 }
 
 # Only for the configs with no dict_class (his 2024-05-23 standard sweep). Most specific

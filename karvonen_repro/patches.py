@@ -4,8 +4,14 @@
 environment that are not true for us, and each rebind below fixes exactly one:
 
   load_dictionary     he instantiates the SAE himself from ae.pt keyed on
-                      config.json's dict_class. Ours can be any Dictionary subclass,
-                      so the loader owns instantiation.
+                      config.json's dict_class, a chain that raises on ours. Ours can
+                      be any Dictionary subclass, so the loader owns instantiation.
+                      One rebind covers all three stages: get_eval_results.get_evals,
+                      eval_sae_as_classifier.aggregate_statistics and
+                      eval_board_reconstruction.test_board_reconstructions each reload
+                      through prep_data_ae_buffer_and_model -> utils.get_ae_bundle,
+                      the only caller of load_dictionary in circuits/. The coverage
+                      stage reads pkl artifacts and loads no SAE.
   get_nested_folders  he globs a group directory for every checkpoint under it. We
                       evaluate an explicit list, one checkpoint at a time, so a crash
                       costs one checkpoint instead of the group.

@@ -41,7 +41,7 @@ import circuits.pipeline_config as pipeline_config  # noqa: E402
 import circuits.utils as utils  # noqa: E402
 
 from karvonen_repro import patches  # noqa: E402
-from spade.sae_loader.load_sae import load_sae  # noqa: E402
+from spade.sae_loader.load_sae import PARAMS_FILE, load_sae  # noqa: E402
 
 # His pipeline writes results.pkl / reconstruction.pkl / evals.pkl next to ae.pt, and
 # the released checkpoints already ship his. Mirroring by symlink would write through
@@ -51,18 +51,29 @@ ARTIFACT_SUFFIXES = (".pkl", ".csv")
 MODE_BATCHES = {"repro": 1, "measurement": 100}
 
 
+def link(dst: Path, src: Path) -> None:
+    if not dst.exists():
+        dst.symlink_to(src.resolve())
+
+
 def mirror(checkpoint_dir: Path, work_root: Path) -> Path:
-    """Keeps the parent directory level. `autoencoder_path` is what identifies a row
-    downstream, and compare_to_published.py reads the group off its second-to-last
-    component, so `<group>/<trainer>/` has to survive into the work tree."""
-    work_dir = work_root / checkpoint_dir.parent.name / checkpoint_dir.name
+    """`<sweep parent>/<sweep>/<trainer>/`, with the sweep's standardization params.
+
+    `autoencoder_path` is what identifies a row downstream and compare_to_published.py
+    reads the group off its second-to-last component, so `<sweep>/<trainer>/` has to
+    survive. The level above it is what makes the mirror injective: every seed of the
+    multi-seed study calls its sweep dir `autoencoders`, so on two levels seed 43 and
+    seed 44 mirror onto the same path and the second is reported as already done.
+    """
+    sweep = checkpoint_dir.parent
+    work_dir = work_root / sweep.parent.name / sweep.name / checkpoint_dir.name
     work_dir.mkdir(parents=True, exist_ok=True)
     for src in checkpoint_dir.iterdir():
-        if not src.is_file() or src.suffix in ARTIFACT_SUFFIXES:
-            continue
-        link = work_dir / src.name
-        if not link.exists():
-            link.symlink_to(src.resolve())
+        if src.is_file() and src.suffix not in ARTIFACT_SUFFIXES:
+            link(work_dir / src.name, src)
+    # trainSAE writes these once per sweep, and load_sae reads them from there.
+    if (sweep / PARAMS_FILE).is_file():
+        link(work_dir.parent / PARAMS_FILE, sweep / PARAMS_FILE)
     return work_dir
 
 
@@ -127,7 +138,7 @@ def main():
         full_pipeline.analyze_sae_groups([f"{work_root}/"], str(results_csv), config)
         stamp_protocol(done, args.mode, eval_n_batches, args.batch_size)
 
-    finished = sorted(per_checkpoint.glob("*/*/f1_results.csv"))
+    finished = sorted(per_checkpoint.glob("*/*/*/f1_results.csv"))
     assert finished, "no checkpoint produced results"
     utils.concatenate_csv_files([str(p) for p in finished], str(out / "f1_results.csv"))
 

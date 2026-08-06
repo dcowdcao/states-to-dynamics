@@ -82,15 +82,21 @@ index columns pandas wrote into it.
   checkpoints. Read this file; it is the entire divergence surface.
 - loader: `spade.sae_loader.load_sae`, shared with the rest of the reproduction work.
 - `validation_checkpoints.py` — validation_set.csv to paths in a released download.
+- `spade_set.csv` + `spade_checkpoints.py` — the same for the study's 44 SpaDE and
+  CosineSpaDE checkpoints, resolved against `$SPADE_MULTISEED_DIR`. Each row is
+  cross-checked against its own config.json, so a re-indexed sweep fails loudly.
 - `submit_eval.sbatch` — SLURM.
 - `PROTOCOL.md`, `validation_set.csv`, `compare_to_published.py`, `probe_eval_batch.py`
   — the pass/fail spec and its evidence, from the validation agent.
 
-`OUT/` holds `checkpoints/<group>/<trainer>/` (symlinks to `ae.pt` and `config.json`,
-plus every pkl his pipeline writes), `per_checkpoint/<group>/<trainer>/f1_results.csv`,
-the shared `othello_{train,test}_dataset.pkl`, and the concatenated `f1_results.csv`.
-The `<group>/<trainer>` nesting is load-bearing: `compare_to_published.py` identifies
-a row by the last two components of `autoencoder_path`.
+`OUT/` holds `checkpoints/<sweep parent>/<group>/<trainer>/` (symlinks to `ae.pt`,
+`config.json` and the sweep's `standardization_params.json`, plus every pkl his
+pipeline writes), the same nesting again under `per_checkpoint/`, the shared
+`othello_{train,test}_dataset.pkl`, and the concatenated `f1_results.csv`.
+The `<group>/<trainer>` tail is load-bearing: `compare_to_published.py` identifies a
+row by the last two components of `autoencoder_path`. The level above it is what makes
+the mirror injective — every seed of the multi-seed study names its sweep directory
+`autoencoders`.
 
 Checkpoints are mirrored rather than used in place because his pipeline writes its
 pkl artifacts next to `ae.pt`, and the released SAEs already carry his — symlinking
@@ -102,6 +108,11 @@ those would write through and destroy them.
 activations. His SAEs were trained on raw residual stream, ours on standardized;
 folding that transform into the returned module is the loader's job. The harness
 never applies one, and nothing downstream would notice a loader that forgot.
+
+**`l1_loss` means nothing for SpaDE.** `evaluation.py:183` is
+`f.norm(p=1, dim=-1).mean()`, and a SpaDE code is a point on the simplex, so the column
+is 1.000000 for every SpaDE checkpoint at every sparsity — measured, not argued. Drop it
+from any SpaDE table rather than reporting a 60x "improvement" over his SAEs.
 
 **One output dir per (n_inputs, mode, checkpoint set), and one process at a time.**
 n_inputs is baked into the artifact filenames his code writes, and a second n_inputs

@@ -16,7 +16,7 @@ import os
 
 import torch as t
 
-from spade.karvonen_native_eval.spade_raw_dictionary import load_spade
+from spade.sae_loader.load_sae import load_sae
 
 THRESHOLD_FRACS = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 DEFAULT_ACTS = "/n/netscratch/ba_lab/Lab/dcao/spade_multiseed/data/activations"
@@ -38,7 +38,7 @@ def main():
     p.add_argument("--device", default="cuda" if t.cuda.is_available() else "cpu")
     args = p.parse_args()
 
-    ae, meta = load_spade(args.checkpoint_dir, device=args.device)
+    ae, meta = load_sae(args.checkpoint_dir, device=args.device)
     acts = t.load(os.path.join(args.activations, "test_activations.pt"),
                   map_location="cpu", weights_only=True, mmap=True)[:args.n_samples]
     f = encode_all(ae, acts, args.device)
@@ -49,7 +49,7 @@ def main():
     max_act = f.max(0).values
     alive = max_act > 0
 
-    print(f"{meta['arch']}  {args.checkpoint_dir}")
+    print(f"{meta.dict_class}  {args.checkpoint_dir}")
     print(f"N={N}  F={F}  L0={l0.mean():.1f} +- {l0.std():.1f}  (min {int(l0.min())}, max {int(l0.max())})")
     print(f"code mass sum: {f.sum(-1).mean():.6f}  (simplex => 1)")
     print(f"alive features: {int(alive.sum())}/{F} ({alive.float().mean():.1%}); "
