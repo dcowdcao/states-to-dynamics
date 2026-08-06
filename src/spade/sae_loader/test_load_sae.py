@@ -40,9 +40,12 @@ class Skip(Exception):
 
 
 # A checkpoint on disk may only ever be refused for one of these; anything else is a bug.
-# Both are deliberate: an overwritten standardization_params.json, and Karvonen's identity
-# passthrough baselines (0-byte ae.pt over MLP activations).
-EXPECTED_REFUSALS = ("belongs to a different run", "!= config", "out of scope")
+# All three are deliberate: an overwritten standardization_params.json, Karvonen's identity
+# passthrough baselines (0-byte ae.pt over MLP activations), and the 100-step smoke
+# BatchTopK runs, which stop before threshold_start_step=1000 and so save the untrained
+# threshold their encode() would then apply to everything.
+EXPECTED_REFUSALS = ("belongs to a different run", "!= config", "out of scope",
+                     "untrained sentinel")
 
 
 def roots() -> list[Path]:
