@@ -43,6 +43,10 @@ export PYTHONUNBUFFERED=1
 
 cd "${SPADE_REPO:?}"
 
+# The editable spade install points at the main checkout, so a worktree's own src
+# has to come first or load_sae resolves to the wrong tree.
+export PYTHONPATH="${SPADE_REPO}/src:${PYTHONPATH:-}"
+
 : "${KARVONEN_OUT:?set to the output directory}"
 KARVONEN_MODE="${KARVONEN_MODE:-repro}"
 KARVONEN_N_INPUTS="${KARVONEN_N_INPUTS:-1000}"
