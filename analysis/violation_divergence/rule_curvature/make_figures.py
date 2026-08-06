@@ -96,17 +96,15 @@ def draw_rule(ax, x: np.ndarray, rule: rc.Rule, st: dict, label: str | None,
               lo: int = 0) -> None:
     """One rule's mean over the sequences it averages, drawn faint behind it.
 
-    A band only where there is spread to show: R3 has one member category, so on
-    the spliced tree its mean is a single sequence and a zero-width ribbon would
-    read as a measured uncertainty. The faint lines carry the same information
-    and are what the reader should be looking at (FIGURE_GUIDELINES 1.7).
+    No ribbon. Five series per axes -- three rules and two controls -- each with a
+    +/-1.96 SEM fill made the overlaps unreadable, which is the failure
+    FIGURE_GUIDELINES 1.7 warns about: the uncertainty display swallowed the
+    curves it was annotating. The member traces show the same spread, sequence by
+    sequence rather than summarised, and are what a reader should be looking at.
+    R3 has one member and so never had a band to lose.
     """
     for member in rule.members:
         ax.plot(x[lo:], member[lo:], color=st["color"], **MEMBER)
-    if rule.sem is not None:
-        ax.fill_between(x[lo:], (rule.mean - 1.96 * rule.sem)[lo:],
-                        (rule.mean + 1.96 * rule.sem)[lo:], color=st["color"],
-                        alpha=0.22, lw=0, zorder=st["zorder"] - 1)
     ax.plot(x[lo:], rule.mean[lo:], ls=st["ls"], color=st["color"], lw=st["lw"],
             marker=st["marker"], ms=4, markevery=(2, 5), markerfacecolor=st["mfc"],
             markeredgecolor=st["mec"], markeredgewidth=0.5, zorder=st["zorder"],
@@ -239,9 +237,8 @@ def per_space(fork: rc.Fork, entry, label: str, tree: str, blocks: dict,
 
     ax_c = fig.add_subplot(top[:, 1])
     locked(ax_c, fork, legend=True)
-    ax_c.set_title("(c) violation-locked response\nband = $\\pm$1.96 SEM over the "
-                   "sequences a rule averages; none where there is one",
-                   loc="left", fontsize=9.5)
+    ax_c.set_title("(c) violation-locked response\nevery sequence a rule averages "
+                   "is drawn faint; $n$ = 1 game", loc="left", fontsize=9.5)
 
     apparatus(fig, gs[1], fork, [ax_a, ax_b, ax_c], NCOL, "d")
     if not camera_ready:
