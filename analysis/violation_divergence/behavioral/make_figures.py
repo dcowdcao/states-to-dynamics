@@ -335,15 +335,13 @@ def pre_event(ax, note: str, y: float) -> None:
 
 
 def curve(ax, c: pd.DataFrame, style: dict, label: str) -> None:
-    ax.fill_between(c.r, c.lo, c.hi, color=style["color"], alpha=0.18, lw=0, zorder=2)
     ax.plot(c.r, c.estimate, ms=4.0, markeredgecolor="white", markeredgewidth=0.5,
             label=label, **{"lw": 1.6, "zorder": 3,
                             **{k: v for k, v in style.items() if k != "label"}})
 
 
 def named(curve_data: pd.DataFrame, metric: str) -> pd.DataFrame:
-    return curve_data.rename(columns={f"{metric}_mean": "estimate", f"{metric}_lo": "lo",
-                                      f"{metric}_hi": "hi"})
+    return curve_data.rename(columns={f"{metric}_mean": "estimate"})
 
 
 KL_TITLE = {"spliced": "the break is immediate and never heals",
@@ -446,13 +444,14 @@ def f6(curve_data: pd.DataFrame, control_own_board: float, odd_r_parity: float,
     handles, labels = axes[1].get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 0.04), ncol=4,
                fontsize=8, title_fontsize=8,
-               title="bands: 95% CI, 1000-resample percentile bootstrap over source games; "
-                     "n = branch sequences, one per source game.\n"
+               title="curves are means over source games; n = branch sequences, one per "
+                     "source game. Their 95% CIs are in behavioral_curves.csv.\n"
                      "The reference branch scored against itself is 0 nats at every $r$ "
                      "and is drawn only in (b), where it is the ceiling."
                if variant == "spliced" else
-               f"bands: 95% CI, 1000-resample percentile bootstrap over source games, which "
-               f"holds a branch's K={k} rollouts together; n = source branches.\n"
+               f"curves are means over source branches, a branch's K={k} rollouts held "
+               f"together; n = source branches. Their 95% CIs are in "
+               f"behavioral_curves_rollout.csv.\n"
                "Each branch is scored against the reference of its own rollout. In (b) the "
                "reference's board is itself sampled and ends at its first illegal move, "
                f"which {left_legal:.1%} of reference rollouts reach inside the window; "

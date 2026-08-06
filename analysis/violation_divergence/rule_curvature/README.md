@@ -94,9 +94,10 @@ which is one branch and not an average. Panel **(c)**: the violation-locked Δ
 turning angle against the game's own reference branch — the move as played, which
 is this figure's "matched source game" — with both legal controls in the null
 styling. Δ ≡ 0 for *t* − *t0* ≤ −2 by construction (shaded): every branch shares
-the prefix, and the turn at *t0* − 2 is the last whose window excludes *t0*. The
-band is ±1.96 SEM over the sequences a rule averages — **2, 3 and 1** here — and
-R3 therefore has no band at all rather than a zero-width one. Panel **(d)**: the
+the prefix, and the turn at *t0* − 2 is the last whose window excludes *t0*. No
+interval is drawn: five ±1.96 SEM ribbons per axes swallowed the curves they
+annotated. Every sequence a rule averages — **2, 3 and 1** here — is drawn faint
+instead, which shows the same spread sequence by sequence. Panel **(d)**: the
 position at the end of the shared prefix, discs in absolute colour, Black to
 move; an outlined cell is a branch square with its rule marker in the corner so a
 disc underneath stays visible, the small dashed translucent disc in the opposite
@@ -153,12 +154,12 @@ straightness study and know nothing about either tree.
 
 Three differences from the spliced captions. A rule now averages over **member
 categories × 4 rollouts**, and the legend says so; a branch's curve is the mean
-over its rollouts, and each rollout is drawn faint. **R3 has a band here** — 4
-sequences — where on the spliced tree it has none; the band is sampling variance
-of the continuation, not spread across categories. And Δ is paired **per
-rollout**: the k-th sample of a branch and the k-th of the reference are drawn
-from one uniform stream, so they are common random numbers and the branch effect
-is read against a shared noise draw.
+over its rollouts, and each rollout is drawn faint. **R3 averages 4 sequences
+here** where on the spliced tree it averages 1, so its faint traces carry
+sampling variance of the continuation rather than spread across categories. And
+Δ is paired **per rollout**: the k-th sample of a branch and the k-th of the
+reference are drawn from one uniform stream, so they are common random numbers
+and the branch effect is read against a shared noise draw.
 
 **What this tree buys and what it costs.** It removes the OOD-suffix confound
 above. It also removes single-token causal attribution: two branches now differ
@@ -178,7 +179,7 @@ Raw layer 5, game 1235, from the scripts' own output:
 | R3 at *t0*−1 | **−19.11** | **−19.11** |
 | R1 tail (mean Δ, *t* ≥ *t0*+2) | −0.42 ± 0.47 | −1.09 ± 0.95 |
 | R2 tail | −2.82 ± 0.90 | −3.41 ± 0.98 |
-| R3 tail | −3.39 (no band) | −3.89 ± 1.01 |
+| R3 tail | −3.39 (one sequence, no SEM) | −3.89 ± 1.01 |
 | corr of the two mean curves over *t* ≥ *t0* | — | R1 +0.20, R2 +0.38, R3 +0.60 |
 | within ÷ between rule spread | 0.906 | 0.944 |
 
@@ -187,9 +188,9 @@ Three readings, and the second is the one that changes what may be claimed.
 - **The response at *t0*−1 is bit-identical**, and it is the largest excursion in
   the figure. Its window is positions *t0*−2 .. *t0*, which both trees share, so
   it cannot be a suffix artifact. Asserted in the comparison, not eyeballed.
-- **The spliced tree's bands understate the uncertainty by roughly 2×.** It has no
+- **The spliced tree's SEMs understate the uncertainty by roughly 2×.** It has no
   continuation variance at all — every branch replays one fixed suffix — so its
-  band is only between-category spread. Adding the model's own sampling variance
+  spread is only between-category. Adding the model's own sampling variance
   takes R1's mean SEM from 0.47 to 0.95. The tails that look resolved in the
   spliced panel are not resolved.
 - **The sustained straightening survives; its fine structure does not.** The tail

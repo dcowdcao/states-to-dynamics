@@ -181,13 +181,17 @@ def fork_panel(ax, coords: np.ndarray, rows: dict, t0: int, legend: bool) -> Non
         pane.pane.set_alpha(0.03)
 
 
-def band_panel(ax, curves: dict[str, np.ndarray], ylabel: str, title: str,
-               ylim: tuple[float, float], legend: bool,
-               null: tuple[float, float] | None = None,
-               random95: np.ndarray | None = None, null_legend: bool = False) -> None:
-    """Raw layer 5 as the reference line; the eight dictionaries as median + IQR."""
-    q = np.percentile(np.stack([v for k, v in curves.items() if k != "resid_post_5"]),
-                      [25, 50, 75], axis=0)
+def auroc_panel(ax, curves: dict[str, np.ndarray], ylabel: str, title: str,
+                ylim: tuple[float, float], legend: bool,
+                null: tuple[float, float] | None = None,
+                random95: np.ndarray | None = None, null_legend: bool = False) -> None:
+    """Raw layer 5 as the reference line; the eight dictionaries as their median.
+
+    The IQR over the eight was drawn as a shaded ribbon and, in a panel this size
+    beside the permutation null's own span, it read as a second null. Each
+    dictionary's own curve is a row of evaluation.csv; what the panel is for is
+    where the median sits against the two gray references."""
+    median = np.median([v for k, v in curves.items() if k != "resid_post_5"], axis=0)
     ax.set_ylim(*ylim)
     ax.axvspan(0.5, OFFSETS[-1], color=GRID, alpha=0.7, lw=0, zorder=0)
     ax.text(1.2, ylim[0] + 0.02, "axis not calibrated here", fontsize=7,
@@ -202,11 +206,9 @@ def band_panel(ax, curves: dict[str, np.ndarray], ylabel: str, title: str,
         ax.text(OFFSETS[-1], null[1] + 0.005, "permutation null", fontsize=7,
                 color=MUTED, ha="right", va="bottom")
     ax.axvline(0, color=MUTED, lw=1.2, ls=(0, (4, 3)), zorder=1)
-    ax.fill_between(OFFSETS, q[0], q[2], color=RULE_STYLE["R1 placement"]["color"],
-                    alpha=0.18, lw=0, zorder=2)
-    ax.plot(OFFSETS, q[1], color=RULE_STYLE["R1 placement"]["color"], lw=1.6,
+    ax.plot(OFFSETS, median, color=RULE_STYLE["R1 placement"]["color"], lw=1.6,
             marker="s", ms=3.5, markevery=3, zorder=3,
-            label="8 SAE dictionaries (median, IQR)")
+            label="8 SAE dictionaries (median)")
     ax.plot(OFFSETS, curves["resid_post_5"], color=REFERENCE["color"],
             lw=REFERENCE["lw"], marker=REFERENCE["marker"], ms=3.5, markevery=3,
             zorder=4, label="raw layer 5 (reference space)")
@@ -344,20 +346,20 @@ def figure(res: dict, m: dict, game: int, camera_ready: bool, n_roll: int = 1,
 
     gsb = bottom.add_gridspec(1, 3, width_ratios=[1, 1, 1.35], wspace=0.58,
                               left=0.055, right=0.995, top=0.84, bottom=0.20)
-    band_panel(bottom.add_subplot(gsb[0]),
-               {s: np.array([res[s]["transport"].get(r, np.nan) for r in OFFSETS])
-                for s in names},
-               "AUROC, legal vs violation",
-               "(j) does the axis survive the move index?", (0.30, 1.02), legend=True)
+    auroc_panel(bottom.add_subplot(gsb[0]),
+                {s: np.array([res[s]["transport"].get(r, np.nan) for r in OFFSETS])
+                 for s in names},
+                "AUROC, legal vs violation",
+                "(j) does the axis survive the move index?", (0.30, 1.02), legend=True)
 
     ax = bottom.add_subplot(gsb[1])
     nulls = np.array([res[s]["control_null"][1:] for s in names])
-    band_panel(ax, {s: res[s]["control"] for s in names},
-               "AUROC, illegal vs legal control",
-               "(k) legality, or just a different move?", (0.30, 1.02), legend=True,
-               null=(nulls[:, 0].min(), nulls[:, 1].max()),
-               random95=np.median([res[s]["random95"] for s in names], axis=0),
-               null_legend=True)
+    auroc_panel(ax, {s: res[s]["control"] for s in names},
+                "AUROC, illegal vs legal control",
+                "(k) legality, or just a different move?", (0.30, 1.02), legend=True,
+                null=(nulls[:, 0].min(), nulls[:, 1].max()),
+                random95=np.median([res[s]["random95"] for s in names], axis=0),
+                null_legend=True)
     lo, hi = res["resid_post_5"]["control_ci"]
     mid = res["resid_post_5"]["control"][R0]
     ax.errorbar([0], [mid], yerr=[[mid - lo], [hi - mid]], fmt="none",
@@ -386,8 +388,9 @@ def figure(res: dict, m: dict, game: int, camera_ready: bool, n_roll: int = 1,
         f"neither axis is fit here, and why the permutation null (28 assignments, floor "
         f"p=0.036) can be exact with nothing refit. (j)-(l) aggregate {n_games} held-out "
         f"divergence games ({len(m['t0'])} branches) and held-out straightness pairs; "
-        f"band = IQR over the 8 dictionaries, error bars = percentile bootstrap 95% CI "
-        f"over games, 1000 resamples.")
+        f"the SAE line is the median over the 8 dictionaries, each of which is a row of "
+        f"evaluation.csv; error bars = percentile bootstrap 95% CI over games, 1000 "
+        f"resamples.")
     extra = [] if n_roll == 1 else [
         f"ROLLOUT VARIANT: every branch, the reference included, samples its own future "
         f"K={n_roll} times instead of replaying the source game's, and a branch's "

@@ -147,9 +147,12 @@ a peak at "0" would be reporting two different events.
 
 `figures/theta_sampling_mismatch.png` — the overlay, drawn so it does not have to
 be drawn again. (a) the legal baseline's θ profile over the game under each rule,
-mean ± 95% CI over 2000 games, with the fork study's own R²¹ windowed curve for
+the mean over 2000 games, with the fork study's own R²¹ windowed curve for
 game 1235's nine branches landing on the stride-2 line and nowhere near the
-per-ply one. (b) Δ vs legal per drawn class under each rule, 95% percentile
+per-ply one. (a) draws no interval: the ±1.96 SEM band it had is ≤ 0.34° wide at
+every *t* against the 34.4° gap the panel is about, so it was two invisible
+ribbons, and `profile sem` is still in `measure.py`'s output for anyone who wants
+the number. (b) Δ vs legal per drawn class under each rule, 95% percentile
 bootstrap over games, on an axis symmetric about zero with both directions named.
 `random_tokens` is in the tables but not the figure: it has no `CLASS_STYLE` entry
 and is neither drawn nor scored anywhere in the repo.
