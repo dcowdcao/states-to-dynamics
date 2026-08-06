@@ -6,6 +6,12 @@ decides whether the vector is R^21 at all -- `restrav_features` slices d[:, :7]
 and theta[:, :6], so a window of fewer than 8 sampled positions returns a
 *shorter* vector with no error. `r21` asserts the width; everything here is
 built so a short window is a crash, not a silently different feature space.
+
+A branch is a list of rows, not a row: the rollout branch set stores K sampled
+continuations per branch. r21 is nonlinear, so a branch's descriptor is
+`branch_mean` of its rows' descriptors and never the descriptor of their mean
+trajectory, which would be the curvature of a path no rollout took. The spliced
+set makes every group a singleton and the reduction the identity.
 """
 
 import numpy as np
@@ -62,7 +68,23 @@ def sliding(F: np.ndarray, w: int, placement: str) -> tuple[np.ndarray, np.ndarr
     return np.stack([r21(F[:, s:s + w]) for s in starts], axis=1), starts + offset
 
 
-def travel(F: np.ndarray, k0: int, ref: int, n_shuffle: int = 20):
+def branch_groups(category: np.ndarray, is_control: np.ndarray) -> list[list[int]]:
+    """Row indices per branch type, in (category, is_control) order.
+
+    One row each on the spliced set, K on the rollout set. Ordering matches the
+    row order both sets are built in, so a caller's `rows` and `groups` agree.
+    """
+    key = list(zip(category.tolist(), is_control.tolist()))
+    return [[i for i, k in enumerate(key) if k == kind] for kind in sorted(set(key))]
+
+
+def branch_mean(D: np.ndarray, groups: list[list[int]]) -> np.ndarray:
+    """[n_rows, ...] -> [n_branches, ...], averaged AFTER the descriptor."""
+    return np.stack([D[ix].mean(0) for ix in groups])
+
+
+def travel(F: np.ndarray, groups: list[list[int]], k0: int, ref: int,
+           n_shuffle: int = 20):
     """Curve path length after its first point / its norm there: observed, null.
 
     The null recomputes the same expanding window over a random permutation of
@@ -70,10 +92,11 @@ def travel(F: np.ndarray, k0: int, ref: int, n_shuffle: int = 20):
     growing the window is the only thing left that can move the descriptor.
     Both are [n_branches - 1] over the non-reference branches.
     """
-    keep = np.arange(len(F)) != ref
+    keep = np.arange(len(groups)) != ref
 
     def ratio(G):
         D, _ = expanding(G, k0)
+        D = branch_mean(D, groups)
         D = rescale(D - D[ref])[keep]  # the reference is 0 everywhere: no ratio to take
         return (np.linalg.norm(np.diff(D, axis=1), axis=-1).sum(1)
                 / np.linalg.norm(D[:, 0], axis=-1))

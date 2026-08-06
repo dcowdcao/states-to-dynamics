@@ -20,11 +20,20 @@ activation-norm units and theta in degrees, so an unscaled PCA of R^21 reports
 whichever block is larger. Rescaling is diagonal, so zero displacement is still
 the origin and the reference is still the vertical line there.
 
+`--variant rollout` draws the same game from the branch set whose suffixes are
+sampled from the model, into `*_rollout` files. A branch is then K=4 sampled
+continuations, averaged AFTER r21 -- the descriptor is nonlinear, so the mean of
+the trajectories has a curvature no rollout has. It costs this figure its
+subject: the curve cannot start until 14 plies after t0, and by then two
+rollouts of one branch differ by more than the branch differs from the
+reference, so every point drawn is past the horizon the branch survives.
+
 Usage: python analysis/violation_divergence/fork_expanding_curvature/make_figures.py
-       [--camera-ready]
+       [--variant spliced|rollout] [--camera-ready]
 """
 
 import argparse
+from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -35,14 +44,34 @@ from spade.figures.paper_style import (
     save_figure)
 from spade.othello.taxonomy import CATEGORIES
 
-from cache_features import load
-from window import MIN_WINDOW, R21_DIM, STRIDE, expanding, rescale, travel
+from cache_features import VARIANT_DIRS, load
+from window import (
+    MIN_WINDOW, R21_DIM, STRIDE, branch_groups, branch_mean, expanding, rescale,
+    travel)
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 ELEV, AZIM = 18, -58  # the fork figure's camera, so the two are comparable
 CONTROL_LABEL = {1: "control: another legal move (null)",
                  2: "control 2: a third legal move (null)"}
 UNDEFINED = "$R^{21}$ undefined\n(< 8 sampled positions since $t_0$)"
+ROLLOUT_NOTE = (
+    " Rollout branch set: a branch is the mean over its K=4 sampled continuations, taken "
+    "AFTER $r_{21}$, which is nonlinear.\nEvery drawn point is $t-t_0 \\geq 14$, past the "
+    "offset where two rollouts of one branch already differ by more than the branch differs "
+    "from the reference:\nnothing here separates the branches, and the descriptor's 8-position "
+    "minimum is why the figure cannot be drawn where they do.")
+
+
+@dataclass(frozen=True)
+class Branches:
+    """The branches drawn, each as the rows a caller must reduce over after r21."""
+    rows: list[dict]
+    groups: list[list[int]]
+    ref: int
+
+
+def suffix(rollout: bool) -> str:
+    return "_rollout" if rollout else ""
 
 
 def branch_style(category: int, is_control: int) -> dict:
@@ -96,9 +125,10 @@ def pca2(X: np.ndarray):
     return X @ Vt[:2].T, (S ** 2 / (S ** 2).sum())[:2]
 
 
-def plane(F: np.ndarray, k0: int, ref: int):
+def plane(F: np.ndarray, groups: list[list[int]], k0: int, ref: int):
     """([n, n_points, 2], variance ratio, the sampled-position indices drawn)."""
     D, ks = expanding(F, k0)
+    D = branch_mean(D, groups)
     D = rescale(D - D[ref])
     coords, var = pca2(D.reshape(-1, R21_DIM))
     return coords.reshape(D.shape[0], D.shape[1], 2), var, ks
@@ -136,14 +166,14 @@ def fork_panel(ax, coords: np.ndarray, rows: list[dict], pos: np.ndarray,
         pane.pane.set_alpha(0.03)
 
 
-def space_grid(g: dict, rows: list[dict], ref: int, k0: int, camera_ready: bool) -> Path:
+def space_grid(g: dict, b: Branches, k0: int, rollout: bool, camera_ready: bool) -> Path:
     ncol = 3
     nrow = int(np.ceil(len(g["names"]) / ncol))
     fig = plt.figure(figsize=(3.7 * ncol, 3.5 * nrow))
     for j, (name, F) in enumerate(zip(g["names"], g["F"])):
-        coords, var, ks = plane(F, k0, ref)
+        coords, var, ks = plane(F, b.groups, k0, b.ref)
         ax = fig.add_subplot(nrow, ncol, j + 1, projection="3d")
-        fork_panel(ax, coords, rows, g["pos"], ks, g["t0"],
+        fork_panel(ax, coords, b.rows, g["pos"], ks, g["t0"],
                    legend=(j == 0), zlabel=(j % ncol == 0))
         ax.set_title(f"{name}  ({var[0]:.0%}/{var[1]:.0%} var)", loc="left", fontsize=8.5)
         ax.set_xlabel("PC1 of $\\Delta_{21}$", labelpad=-8)
@@ -155,24 +185,26 @@ def space_grid(g: dict, rows: list[dict], ref: int, k0: int, camera_ready: bool)
         f"across cells); view elev={ELEV}, azim={AZIM}. The descriptor needs "
         f"{MIN_WINDOW} sampled positions, so the curve\nstarts {(MIN_WINDOW - 1) * STRIDE} "
         f"plies after $t_0$ and only the 8 moment coordinates move along it. One game "
-        f"(n=1): shape only, not a claim.")
+        f"(n=1): shape only, not a claim." + (ROLLOUT_NOTE if rollout else ""))
     if not camera_ready:
         fig.suptitle("The fork in the curvature space $R^{21}$, expanding window anchored "
                      f"at $t_0$ (game {g['game']})", fontsize=11)
     fig.subplots_adjust(left=0.02, right=0.97, top=0.92, bottom=0.06, wspace=0.06, hspace=0.16)
     rule_key(fig, ["R1", "R2", "R3"], y=-0.085)
-    return save_figure(fig, FIG_DIR / "space_fork_grid_r21_expanding", camera_ready)
+    return save_figure(fig, FIG_DIR / f"space_fork_grid_r21_expanding{suffix(rollout)}",
+                       camera_ready)
 
 
-def magnitude_panel(ax, F: np.ndarray, rows: list[dict], pos: np.ndarray,
-                    k0: int, t0: int, ref: int) -> None:
+def magnitude_panel(ax, F: np.ndarray, b: Branches, pos: np.ndarray,
+                    k0: int, t0: int) -> None:
     D, ks = expanding(F, k0)
-    ref21 = np.linalg.norm(D[ref], axis=-1)
-    dh = np.linalg.norm(D - D[ref], axis=-1) / ref21
+    D = branch_mean(D, b.groups)
+    ref21 = np.linalg.norm(D[b.ref], axis=-1)
+    dh = np.linalg.norm(D - D[b.ref], axis=-1) / ref21
     r = pos[ks] - t0
     ax.axvspan(0, r[0], color=GRID, alpha=0.7, lw=0, zorder=0)
     ax.axvline(0, color=MUTED, lw=1.2, ls=(0, (4, 3)), zorder=1)
-    for i, row in enumerate(rows):
+    for i, row in enumerate(b.rows):
         st = branch_style(row["category"], row["is_control"])
         ax.plot(r, dh[i], ls=st["ls"], color=st["color"], lw=st["lw"],
                 marker=st["marker"], ms=3.5, markeredgecolor="white",
@@ -182,12 +214,12 @@ def magnitude_panel(ax, F: np.ndarray, rows: list[dict], pos: np.ndarray,
     ax.set_ylabel(r"$\|\Delta_{21}\|\,/\,\|r_{21}(\mathrm{ref})\|$")
 
 
-def motion_panel(ax, g: dict, rows: list[dict], k0: int, ref: int) -> None:
+def motion_panel(ax, g: dict, b: Branches, k0: int) -> None:
     """How far the curve travels, against a null with the temporal order destroyed."""
-    keep = [i for i in range(len(rows)) if i != ref]
+    keep = [i for i in range(len(b.rows)) if i != b.ref]
     jitter = np.linspace(-0.2, 0.2, len(keep))
     for j, F in enumerate(g["F"]):
-        obs, null = travel(F, k0, ref)
+        obs, null = travel(F, b.groups, k0, b.ref)
         ax.fill_between([j - 0.36, j + 0.36], null.min(), null.max(), color=GRID,
                         alpha=0.9, lw=0, zorder=0,
                         label="time-shuffled null, range over branches" if j == 0 else None)
@@ -197,7 +229,7 @@ def motion_panel(ax, g: dict, rows: list[dict], k0: int, ref: int) -> None:
         ax.plot([j - 0.36, j + 0.36], [np.median(obs)] * 2, color=REFERENCE["color"], lw=1.8,
                 zorder=6, label="observed median over branches" if j == 0 else None)
         for m, i in enumerate(keep):
-            st = branch_style(rows[i]["category"], rows[i]["is_control"])
+            st = branch_style(b.rows[i]["category"], b.rows[i]["is_control"])
             ax.plot(j + jitter[m], obs[m], marker=st["marker"], ms=5, color=st["color"],
                     ls="none", markeredgecolor="white", markeredgewidth=0.4,
                     zorder=st["zorder"])
@@ -208,40 +240,50 @@ def motion_panel(ax, g: dict, rows: list[dict], k0: int, ref: int) -> None:
     ax.set_ylim(bottom=0)
 
 
-def companion(g: dict, rows: list[dict], ref: int, k0: int, camera_ready: bool) -> Path:
+def companion(g: dict, b: Branches, k0: int, rollout: bool, camera_ready: bool) -> Path:
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9.0, 3.6),
                                    gridspec_kw={"width_ratios": [1, 1.3]})
-    magnitude_panel(ax1, g["F"][0], rows, g["pos"], k0, g["t0"], ref)
+    magnitude_panel(ax1, g["F"][0], b, g["pos"], k0, g["t0"])
     ax1.set_title(f"(a) magnitude in {g['names'][0]}", loc="left", fontsize=10)
-    motion_panel(ax2, g, rows, k0, ref)
+    motion_panel(ax2, g, b, k0)
     ax2.set_title("(b) how far the curve travels, against a time-shuffled null",
                   loc="left", fontsize=10)
     fig.tight_layout()
-    ordered_legend(fig, [ax1, ax2], 4, -0.26,
+    # The legend's title grows upward from its anchor, so extra caption lines have to
+    # push the whole block down or they land on panel (b)'s rotated tick labels.
+    drop = 0.04 * ROLLOUT_NOTE.count("\n") if rollout else 0
+    ordered_legend(fig, [ax1, ax2], 4, -0.26 - drop,
         "One game (n=1), 8 non-reference branches; each marker in (b) is one branch, the "
         "black bar its median. The null recomputes the same\nexpanding window over a random "
         "permutation of the post-$t_0$ positions, so growing the window is the only thing "
         "left that can move the\ndescriptor. Both panels use the expanding window anchored "
-        "at $t_0$; coordinates rescaled to unit RMS.")
+        "at $t_0$; coordinates rescaled to unit RMS."
+        + (ROLLOUT_NOTE if rollout else ""))
     if not camera_ready:
         fig.suptitle("What the $R^{21}$ curve can and cannot show", fontsize=11, y=1.04)
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.50)
-    return save_figure(fig, FIG_DIR / "r21_expanding_magnitude", camera_ready)
+    rule_key(fig, ["R1", "R2", "R3"], y=-0.50 - drop)
+    return save_figure(fig, FIG_DIR / f"r21_expanding_magnitude{suffix(rollout)}",
+                       camera_ready)
 
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--variant", default="spliced", choices=list(VARIANT_DIRS))
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    g = load()
-    rows = [{"category": int(c), "is_control": int(s)}
-        for c, s in zip(g["category"], g["is_control"])]
-    ref = int(np.flatnonzero((g["category"] == 0) & (g["is_control"] == 0))[0])
+    g = load(VARIANT_DIRS[args.variant])
+    rollout = args.variant == "rollout"
+    groups = branch_groups(g["category"], g["is_control"])
+    rows = [{"category": int(g["category"][ix[0]]), "is_control": int(g["is_control"][ix[0]])}
+        for ix in groups]
+    ref = next(i for i, r in enumerate(rows)
+               if r["category"] == 0 and not r["is_control"])
+    b = Branches(rows, groups, ref)
     k0 = int(np.flatnonzero(g["pos"] == g["t0"])[0])
-    print(f"wrote {space_grid(g, rows, ref, k0, args.camera_ready)}")
-    print(f"wrote {companion(g, rows, ref, k0, args.camera_ready)}")
+    print(f"wrote {space_grid(g, b, k0, rollout, args.camera_ready)}")
+    print(f"wrote {companion(g, b, k0, rollout, args.camera_ready)}")
 
 
 if __name__ == "__main__":

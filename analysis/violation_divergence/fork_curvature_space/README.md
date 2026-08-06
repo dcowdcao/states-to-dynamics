@@ -12,9 +12,13 @@ illegal category — and the six illegal categories are grouped into the three
 constraint rules they violate, so each grid carries five series.
 
 ```
-python analysis/violation_divergence/fork_curvature_space/make_figures.py [--game 1235] [--w 8] [--camera-ready]
+python analysis/violation_divergence/fork_curvature_space/make_figures.py [--game 1235] [--w 8] [--variant spliced|rollout] [--camera-ready]
 python analysis/violation_divergence/fork_curvature_space/measure.py [--n_games 40] [--w 8] [--game 1235]
 ```
+
+`--variant rollout` redraws all four grids on the branch set whose suffixes are
+sampled from the model, into `*_rollout` files; see "The rollout variant" below.
+`measure.py` is spliced-only.
 
 The plane itself lives in `src/spade/violation_divergence/curvature_plane.py`,
 beside `fork_plane.py`, which owns the displacement plane and the sampling window
@@ -92,6 +96,11 @@ collapses onto the origin) and `max|Δφ_ref| = 0.00e+00` everywhere (the refere
 | `fork_r21_windowed_fixed` | same | `Δ mean d` × `Δ mean θ`, the same named R^21 axes in every cell |
 | `fork_r21_whole_pca` | one R^21 point per branch over `r = 0..24` | top-2 PCs of the z-scored φ, refit per space |
 | `fork_r21_whole_fixed` | same | `mean d` × `mean θ` |
+
+Each has a `_rollout` twin drawn from the rollout branch set on the same game,
+same planes, same styling. The windowed twins stop at `t − t0 = 8`; the whole
+twins keep `r = 0…24` because R^21 has no shorter form. "The rollout variant"
+below is their caption.
 
 ## Captions
 
@@ -210,6 +219,107 @@ replicates of the rule mean — drawn as a 50% Gaussian contour. It is a dispers
 over which move enters the descriptor, not a confidence interval, and the legend
 entry says exactly that. The windowed grids are n = 1 with no error bars; the
 separation numbers with CIs over 40 games are below.
+
+## The rollout variant
+
+Every branch in the spliced set replays `tokens[t0+1:]` from the source game.
+That suffix is a legal continuation of the **reference's** board and of no other
+— a legal control's survives a median of 2 moves and an illegal branch has no
+board for it at all — so every displacement above was measured against the one
+branch guaranteed an in-distribution future.
+`spade.violation_divergence.rollout_branches` resamples every branch's suffix
+from OthelloGPT (temperature 1.0, K = 4, seed 42), the reference included.
+`--variant rollout` draws the same four grids from it.
+
+**Where the mean over K is taken, and why it is not negotiable.** φ is nonlinear:
+`mean_k φ(z_k) ≠ φ(mean_k z_k)`, and the right-hand side is the curvature of a
+path no rollout took. Every rollout row gets its own `windowed` / `descriptor` /
+jackknife and the K descriptors are averaged afterwards (`phi_mean`). The plane
+projection and the difference from the reference are linear, so they commute with
+that average; nothing else in the pipeline does. The figures say so in the block
+under the legend.
+
+**The prefix survives the construction — checked, not assumed.** `tokens[:t0+1]`
+is copied from the source branch, so the activations before *t0* should still be
+bit-identical across branches *and* across rollouts, and the R^21 window at
+offset `r < 0` (which covers `r−14 … r`, ending at or before `t0 − 2`) should
+still collapse. It does: **`max|Δφ| = 0.00e+00` at every `r < 0` in all nine
+spaces**, and `max|Δφ_ref| = 0.00e+00` everywhere, exactly as on the spliced set.
+Two of the four pre-branch offsets are defined (`r = −4, −2`); `r = −8, −6` run
+off the board, as before.
+
+### Where the rollout curve stops being about the branch
+
+K = 4 buys the one diagnostic the spliced set cannot have: how far two rollouts
+of the *same* branch drift apart, against how far the branch drifts from the
+reference. On column-scaled R^21, game 1235:
+
+`‖mean_k φ_b − mean_k φ_ref‖` (over the six illegal branches) ÷ mean pairwise
+`‖φ_k − φ_k'‖` within a branch, per offset:
+
+| `t − t0` | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | 16 | 18 | 20 | 22 | 24 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| raw layer 5 | — | 1.43 | 1.04 | 1.01 | 1.02 | 0.91 | 0.87 | 0.67 | 0.66 | 0.66 | 0.61 | 0.56 | 0.56 |
+| median over 9 spaces | — | 1.43 | 1.04 | 0.97 | **0.93** | 0.84 | 0.77 | 0.62 | 0.62 | 0.60 | 0.58 | 0.54 | 0.53 |
+| spaces with ratio ≥ 1 | 0/9 | 8/9 | 5/9 | 2/9 | 3/9 | 1/9 | 0/9 | 0/9 | 0/9 | 0/9 | 0/9 | 0/9 | 0/9 |
+
+At `r = 0` the within-branch spread is **exactly zero** — the trailing window
+`−14 … 0` ends at *t0*, and the rollouts only differ after it — so `r = 0` is
+pure branch effect with no sampling noise at all. From `r = 12` no space has a
+ratio at 1. The windowed grids are therefore **drawn to `t − t0 = 8`**, the last
+offset whose median is within a rounding of 1; past it the curve is the sampler,
+not the branch. This is the R^21 reading of the divergence-level caveat below,
+and the two agree on the same cut.
+
+**The saturation caveat, from the divergence read-out.** On the smoke rollout set
+`delta-hat` climbs monotonically and both illegal and control saturate near 1.23
+against a ~1.41 unrelated-activations ceiling; the illegal/control ratio pins to
+1.00 by `r ≥ 8` and only `r = 0` still separates (**1.032**, sign opposite the
+spliced **0.979**). **Long-horizon rollout geometry is not informative.** The
+whole grids cannot obey that: R^21 needs 8 sampled positions and the jackknife
+needs 9, i.e. `r` out to 16 at the very least, so one point per branch over the
+post-branch trajectory is *by construction* a summary of the saturated region.
+They are drawn over the same `r = 0…24` as the spliced twins so the two are
+comparable, and their ellipses are changed to say it (below).
+
+### What changes on the rollout figures
+
+- **The ellipses on the whole grids are the K = 4 rollout descriptors, not the
+  jackknife.** On the spliced set there is one row per branch and the only
+  uncertainty a single game supports is leave-one-position-out; on the rollout
+  set the sampling spread exists and is the thing a reader must see. The legend
+  says `50% Gaussian contour of 4 rollout descriptors (sampling spread, not a
+  CI)`. It is a 4-point Gaussian fit and thin evidence on its own — but in
+  `fork_r21_whole_fixed_rollout` the **reference's own ellipse swallows most of
+  the panel and every branch mean inside it**, in all nine spaces, which is the
+  honest picture of what resampling costs.
+- The windowed grids stop at `r = 8`. Everything else — rule grouping with faint
+  members, one control, three symmetric ticks on the windowed planes, `PC1 (NN%
+  var)` and nothing else, named units on the fixed planes — is unchanged.
+
+### The rule-spread ratio under rollout, recomputed
+
+Not carried over: the same within-rule ÷ between-rule statistic, on the
+column-scaled full R^21 field in raw layer 5, game 1235, recomputed on the
+rollout set.
+
+| field | spliced | rollout, `r ≤ 24` | rollout, `r ≤ 8` (the drawn window) |
+|---|---|---|---|
+| `Δφ(t)`, windowed grids | 0.902 | **0.762** | **0.688** |
+| `φ`, one point per branch (whole grids) | 1.034 | **0.818** | 0.818 |
+| full 512-d displacement, same game and window | 0.885 | 0.930 | 0.887 |
+
+**The rule grouping is stronger under rollout, and in the whole variant it comes
+back from nothing.** 1.034 → 0.818 moves the one-point-per-branch statistic from
+*above* 1 — a rule's members further from each other than from another rule's —
+to clearly below it. Read it with the mechanism in hand rather than as a win for
+the rules: the K = 4 average shrinks each branch's descriptor toward its group's,
+and the paired common random numbers mean two branches of the same game share a
+noise draw, so some of the tightening is the estimator and not the taxonomy. It
+is n = 1 on a selected game with no CI, exactly as the spliced ratios are, and
+`rule_groups.py` has no rollout population to put it against. Note also that the
+displacement ratio moves the *other* way over the full window (0.885 → 0.930),
+so the two fields disagree about the direction — one game cannot settle that.
 
 ## One trajectory per rule, and where the mean is taken
 
@@ -363,3 +473,10 @@ across cells; only its sign and the within-cell ordering are.
   showing one.
 - `moment4` returns ±inf, not NaN, for an all-NaN window; `descriptor()` maps
   non-finite to NaN locally so a degenerate window cannot poison a PCA.
+- **The rollout figures are not a substitute for the spliced ones.** Two rollout
+  branches differ at *t0* and at every position after it, so single-token causal
+  attribution — the reason this branch set exists — does not hold there. The
+  `_rollout` grids answer "what does the fork look like when nobody is handed the
+  reference's future", not "what did the move at *t0* do".
+- `measure.py`'s separation table and its 40-game bootstrap are **spliced-only**.
+  Nothing in the rollout section above carries a CI.

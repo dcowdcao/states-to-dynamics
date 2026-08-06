@@ -6,9 +6,9 @@ R^21 — 7 raw step lengths, 6 raw turning angles, 4 moments of *d*, 4 moments o
 *θ* — instead of through a PCA of the raw activation displacement.
 
 ```
-python analysis/violation_divergence/fork_expanding_curvature/cache_features.py   # once
-python analysis/violation_divergence/fork_expanding_curvature/feasibility.py      # the numbers
-python analysis/violation_divergence/fork_expanding_curvature/make_figures.py [--camera-ready]
+python analysis/violation_divergence/fork_expanding_curvature/cache_features.py [--variant spliced|rollout]   # once each
+python analysis/violation_divergence/fork_expanding_curvature/feasibility.py      # the numbers (spliced only)
+python analysis/violation_divergence/fork_expanding_curvature/make_figures.py [--variant spliced|rollout] [--camera-ready]
 ```
 
 ## Verdict
@@ -26,6 +26,11 @@ post-*t0* stretch. That is a §4.6 embedding scatter, not a fork.
 The expanding window anchored at *t0* is the least-wrong way to get a curve and is
 rendered here, but it starts 14 plies late and 13 of its 21 coordinates are frozen
 along it. Treat it as a diagnostic.
+
+On the **rollout** branch set it is worse than a diagnostic: by `t − t0 = 14` two
+sampled continuations of the *same* branch are already about twice as far apart in
+R^21 as the branch is from the reference, so every point the figure can draw is
+past the horizon the branch survives. See "The rollout variant" below.
 
 ## 1. The truncation trap
 
@@ -190,9 +195,60 @@ Two side findings:
 |---|---|
 | `space_fork_grid_r21_expanding` | the fork across all nine spaces, expanding-window R^21 plane. Planes are refit per space, so only the *shape* is comparable across cells. The dotted riser from *t0* is the 14 plies where the descriptor does not exist |
 | `r21_expanding_magnitude` | (a) ‖Δ21‖ relative to the reference's descriptor norm, raw layer 5, with the undefined region shaded; (b) how far the curve travels after its first point, per space, against the time-shuffled null |
+| `space_fork_grid_r21_expanding_rollout` | the same grid on the rollout branch set, a branch being the mean over its K=4 sampled continuations taken after `r21` |
+| `r21_expanding_magnitude_rollout` | the same companion on the rollout branch set |
 
 Both are n=1, shape only, as in the parent fork study. Uncertainty in (b) is the
 per-branch scatter (n=8 branches, one game) and the null's range over branches.
+
+Both have a `_rollout` twin, same game and same window, from the branch set whose
+suffixes are sampled from the model; see below.
+
+## The rollout variant, and why it makes the verdict worse
+
+The spliced set gives every branch the *source game's* continuation, which is a
+legal game on the reference's board and nowhere else.
+`spade.violation_divergence.rollout_branches` resamples every branch's suffix
+from OthelloGPT (temperature 1.0, K = 4, seed 42), the reference included, and
+`--variant rollout` draws the same two figures from it: game 0, *t0* = 10, the
+same 17 sampled positions, 36 rows (9 branches × 4).
+
+**Where the mean over K is taken.** `r21` is nonlinear, so a branch's descriptor
+is `branch_mean` of its four rows' descriptors and never the descriptor of their
+mean trajectory, which would be the curvature of a path no rollout took. The
+difference from the reference and the unit-RMS rescale are both linear and
+commute with that average; nothing else does. Stated on both figures.
+
+**The verdict of §1–§3 is unchanged and the window arithmetic is the same** — the
+descriptor still needs 8 sampled positions, so the curve still cannot start until
+`t − t0 = 14` and 13 of its 21 coordinates are still frozen along it. What the
+rollout set adds is a measurement of what those late points are worth:
+
+| statistic, game 0, expanding curve `r = 14…24` | value |
+|---|---|
+| `‖mean_k Δ21‖` (over the 8 non-reference branches) ÷ mean within-branch `‖r21_k − r21_k'‖` | **0.40–0.86**, median over the nine spaces **0.54–0.58**, at every drawn point |
+
+**Every point this figure can draw is past the horizon the branch survives.** Two
+rollouts of one branch are roughly twice as far apart as the branch is from the
+reference, in all nine spaces, at all six curve points. That is not a weak effect
+— it is the figure drawing the sampler. `../fork_curvature_space`'s trailing
+window puts the crossing at `t − t0 ≈ 8`; the expanding window's first point is
+at 14, so there is no overlap at all between where R^21 is defined and where the
+branch is still legible. The companion's `R^21 undefined` shading and the
+figures' caption say this in place of a number a reader could over-read.
+
+Two spliced findings reverse, and both go the way the horizon predicts:
+
+| | spliced | rollout |
+|---|---|---|
+| §3 travel: observed median ÷ time-shuffled null, over the nine spaces | 1.21–1.86 obs vs 0.85–1.22 null; **observed beats the null everywhere** | 0.69–0.90 obs vs 0.96–1.15 null; **observed is below the null in all nine** |
+| §4 side finding: which branches carry the largest `‖Δ21‖`, raw layer 5 | the two legal controls rank 2nd and 3rd of 9 (controls 0.055–0.082, illegal 0.034–0.047) | the controls rank 6th and 7th of 9 (controls 0.043–0.055, illegal 0.058–0.070) |
+
+Neither reversal is evidence about legality. When the suffix is resampled the
+"time-shuffled" null loses its meaning — shuffling positions of a trajectory that
+is already an independent sample destroys less than it did — and the ordering of
+branches by `‖Δ21‖` at `r ≥ 14` is a comparison between two unrelated games. Both
+rows are recorded so nobody re-derives them and reads them as a result.
 
 ## Recommendations
 
@@ -209,3 +265,11 @@ per-branch scatter (n=8 branches, one game) and the null's range over branches.
 5. If this variant is adopted, `branch_style` / `legend_order` / `fork_panel` are
    now duplicated between this study and `game_trajectory` and should be lifted
    into `spade.figures`.
+6. **"K rows make one branch" is now written twice** — `window.branch_groups` /
+   `branch_mean` here, `make_figures.one_control` / `phi_mean` in
+   `../fork_curvature_space`. It is one rule about the branch tensor's layout and
+   belongs beside `branches.complete_games` in `src/`, not in two figure scripts.
+   Flagged only; `src/` was out of scope for the run that added it.
+7. Do not draw the expanding R^21 curve on the rollout set as though it said
+   something about the branch. It is rendered so the claim above can be checked,
+   and it is a negative result.

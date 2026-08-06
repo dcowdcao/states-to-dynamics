@@ -38,11 +38,20 @@ and live in README.md (FIGURE_GUIDELINES 2, 5).
             degrees and comparable across cells, d is on each space's own
             activation scale and is not.
 
+`--variant rollout` draws the same four grids on the branch set whose suffixes
+are sampled from the model (rollout_branches.py) instead of spliced from the
+source game, into `*_rollout` files. It stores K=4 rows per branch, so a branch
+is drawn as the mean over its K descriptors -- taken AFTER φ, since φ of an
+averaged trajectory is the curvature of a path no rollout took -- and the
+windowed grids stop at ROLLOUT_MAX_R, past which two rollouts of one branch
+differ by more than the branch differs from the reference.
+
 Usage: python analysis/violation_divergence/fork_curvature_space/make_figures.py
-       [--game 1235] [--w 8] [--camera-ready]
+       [--game 1235] [--w 8] [--variant spliced|rollout] [--camera-ready]
 """
 
 import argparse
+from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -74,22 +83,80 @@ THETA_AXIS_3D = "Δ mean θ (deg, ↑ curvier)"
 Z_AXIS = "$t-t_0$ (plies)"
 PREFIX_LABEL = "shared prefix, window runs off the board (no descriptor)"
 
+VARIANT_DIRS = {"spliced": "", "rollout": "rollout"}
+FULL_R = 24              # the study window's last offset; the spliced grids run to it
+# Past this offset a branch's K rollouts differ from each other by more than the
+# branch differs from the reference -- median over the nine spaces of
+# ||Δφ_branch|| / ||φ_k − φ_k'|| is 0.93 at r=8 and falls monotonically after
+# (README, "Where the rollout curve stops being about the branch").
+ROLLOUT_MAX_R = 8
+ROLLOUT_NOTE = (
+    "rollout branch set: each branch is the mean over its K = 4 sampled continuations, "
+    "taken AFTER φ — φ is nonlinear, and the mean of the trajectories has a curvature no "
+    f"rollout has.\nDrawn to $t-t_0$ = {ROLLOUT_MAX_R}: past it two rollouts of one branch "
+    "differ by more than the branch differs from the reference, so the curve is sampling "
+    "noise (README).")
+ROLLOUT_WHOLE_NOTE = (
+    "rollout branch set: each point is the mean over its K = 4 sampled continuations, taken "
+    "AFTER φ — φ is nonlinear, and the mean of the trajectories has a curvature no rollout "
+    f"has.\nThe descriptor needs 8 sampled positions, so it cannot be confined to the "
+    f"$t-t_0 \\leq {ROLLOUT_MAX_R}$ region where the branch still outweighs the rollout "
+    "sampling spread; the ellipses are that spread (README).")
+ROLLOUT_CONTOUR = "50% Gaussian contour of {n} rollout descriptors (sampling spread, not a CI)"
 
-def branches(g: dict) -> tuple[int, list[dict]]:
-    rows = [{"category": int(c), "is_control": int(k)}
-            for c, k in zip(g["category"], g["is_control"])]
+
+@dataclass(frozen=True)
+class Draw:
+    """The branches drawn, each as the rows a caller must reduce over."""
+    rows: list[dict]
+    groups: list[list[int]]   # the rows averaged into each drawn branch
+    ref: int
+    contour: str              # what the whole grid's ellipses are, for the legend
+
+    @property
+    def rollout(self) -> bool:
+        """A drawn branch is K sampled continuations rather than one spliced row."""
+        return len(self.groups[0]) > 1
+
+
+@dataclass(frozen=True)
+class View:
+    """How far the curve runs, the in-figure note, and the filename suffix that
+    keeps the two variants' outputs apart."""
+    r_max: int
+    note: str
+    suffix: str
+
+
+def one_control(g: dict) -> Draw:
+    """The branch types drawn, each as the rows that make it up.
+
+    The spliced set stores one row per branch type; the rollout set stores K, so
+    a caller must reduce over them explicitly. Control 2 is dropped: it is the
+    null *for* control 1 and belongs where control 1 is measured, not in an
+    illustration of the construction. Dropping it also drops it from the plane
+    fit, which is fit on what is drawn.
+    """
+    key = list(zip(g["category"].tolist(), g["is_control"].tolist()))
+    kinds = [k for k in sorted(set(key)) if k[1] != 2]
+    rows = [{"category": c, "is_control": k} for c, k in kinds]
+    groups = [[i for i, k in enumerate(key) if k == kind] for kind in kinds]
     ref = next(i for i, r in enumerate(rows)
                if r["category"] == LEGAL and not r["is_control"])
-    return ref, rows
+    n_pos = len(g["pos"]) - int(np.flatnonzero(g["pos"] == g["t0"])[0])
+    contour = (ROLLOUT_CONTOUR.format(n=len(groups[0])) if len(groups[0]) > 1
+               else CONTOUR_LABEL.format(n=n_pos))
+    return Draw(rows, groups, ref, contour)
 
 
-def one_control(g: dict) -> dict:
-    """Drop control 2. It is the null *for* control 1 and belongs where control 1
-    is measured, not in an illustration of the construction; dropping the row also
-    drops it from the plane fit, which is fit on what is drawn."""
-    keep = np.flatnonzero(g["is_control"] != 2)
-    per_branch = ["category", "is_control", *(name for name, _ in dsc.spaces())]
-    return {k: v[keep] if k in per_branch else v for k, v in g.items()}
+def phi_mean(F: np.ndarray, groups: list[list[int]], axis: int = 0) -> np.ndarray:
+    """Average each branch's rows along `axis`, after the descriptor has been taken.
+
+    φ is nonlinear, so this never touches a trajectory: callers apply `windowed`,
+    `descriptor` or `jackknife` to every row and reduce here. One row per branch --
+    the spliced set -- makes it the identity.
+    """
+    return np.stack([F.take(ix, axis).mean(axis) for ix in groups], axis)
 
 
 def scaled(phi: np.ndarray) -> np.ndarray:
@@ -165,12 +232,14 @@ def fork_panel(ax, coords: np.ndarray, rows: list[dict], r: np.ndarray,
 
 
 def point_panel(ax, P: np.ndarray, jack: np.ndarray, rows: list[dict],
-                n_pos: int) -> None:
-    """One R^21 point per branch, with its leave-one-position-out jackknife spread.
+                contour: str) -> None:
+    """One R^21 point per branch, with the spread `contour` names around it.
 
-    A rule is one point, the mean of its members', with the jackknife of that mean;
-    the members are drawn faint. φ is applied per member and never to a mean
-    trajectory, and the projection is affine, so mean-then-project agrees.
+    `jack` is [n_replicates, n_branches, 2]: leave-one-position-out replicates on
+    the spliced set, the K rollout descriptors on the rollout one. A rule is one
+    point, the mean of its members', with the replicates of that mean; the members
+    are drawn faint. φ is applied per member and never to a mean trajectory, and
+    the projection is affine, so mean-then-project agrees.
     """
     for i, row in enumerate(rows):
         if row["category"] != LEGAL:
@@ -196,33 +265,37 @@ def point_panel(ax, P: np.ndarray, jack: np.ndarray, rows: list[dict],
             label=MEMBER_LABEL)
     # The ellipse's semantics ride in the legend, not in a prose block: it is the
     # only uncertainty one game supports and a reader must not read it as a CI.
-    ax.plot([], [], color=MUTED, lw=1.3, label=CONTOUR_LABEL.format(n=n_pos))
+    ax.plot([], [], color=MUTED, lw=1.3, label=contour)
 
 
-def spreads(g: dict, w: int) -> dict[str, float]:
+def spreads(g: dict, w: int, d: Draw, r_max: int) -> dict[str, float]:
     """Within-rule ÷ between-rule mean pairwise distance, one per variant, in the
     reference space and in full R^21 -- never on the 2-D plane the figure draws.
     `displacement` is the same statistic on the raw activations, the number
     ../fork_and_board reports, so the two figures can be compared."""
-    ref, rows = branches(g)
-    c = int(g["n_context"])
-    post = g["pos"][c:] - g["t0"] >= 0
-    Z = g[RAW_SPACE]
-    phi = dsc.windowed(Z, w)[:, c:]
-    whole = dsc.descriptor(torch.from_numpy(Z[:, c + int(np.flatnonzero(post)[0]):]))
-    return {"windowed": spread_ratio(scaled(phi - phi[ref])[:, post], rows),
-            "whole": spread_ratio(scaled(whole), rows),
-            "displacement": spread_ratio((Z - Z[ref])[:, c:][:, post], rows)}
-
-
-def windowed_grid(g: dict, w: int, plane: str, camera_ready: bool) -> Path:
-    ref, rows = branches(g)
     c = int(g["n_context"])
     r = g["pos"][c:] - g["t0"]
+    post = (r >= 0) & (r <= r_max)
+    Z = g[RAW_SPACE]
+    phi = phi_mean(dsc.windowed(Z, w)[:, c:], d.groups)
+    k0 = c + int(np.flatnonzero(r >= 0)[0])
+    whole = phi_mean(dsc.descriptor(torch.from_numpy(Z[:, k0:])), d.groups)
+    D = phi_mean(Z, d.groups)[:, c:]
+    return {"windowed": spread_ratio(scaled(phi - phi[d.ref])[:, post], d.rows),
+            "whole": spread_ratio(scaled(whole), d.rows),
+            "displacement": spread_ratio((D - D[d.ref])[:, post], d.rows)}
+
+
+def windowed_grid(g: dict, w: int, plane: str, d: Draw, v: View,
+                  camera_ready: bool) -> Path:
+    c = int(g["n_context"])
+    r = g["pos"][c:] - g["t0"]
+    drawn = r <= v.r_max
+    r = r[drawn]
     fig = plt.figure(figsize=(3.9 * NCOL, 3.0 * NCOL))
     for j, (name, _) in enumerate(dsc.spaces()):
-        phi = dsc.windowed(g[name], w)[:, c:]
-        dphi = phi - phi[ref]
+        phi = phi_mean(dsc.windowed(g[name], w)[:, c:], d.groups)[:, drawn]
+        dphi = phi - phi[d.ref]
         flat = dphi.reshape(-1, dphi.shape[2])
         if plane == "pca":
             p = dsc.fit_plane(flat, centred=False)
@@ -234,7 +307,7 @@ def windowed_grid(g: dict, w: int, plane: str, camera_ready: bool) -> Path:
             labels = [D_AXIS_3D, THETA_AXIS_3D]
         ax = fig.add_subplot(NCOL, NCOL, j + 1, projection="3d")
         ax.set_box_aspect((1, 1, 0.85))
-        fork_panel(ax, coords, rows, r, legend=(j == 0), named=(plane == "fixed"),
+        fork_panel(ax, coords, d.rows, r, legend=(j == 0), named=(plane == "fixed"),
                    zlabel=(j % NCOL == 0))
         ax.set_xlabel(labels[0], labelpad=-2, fontsize=6.5)
         ax.set_ylabel(labels[1], labelpad=-2, fontsize=6.5)
@@ -246,20 +319,24 @@ def windowed_grid(g: dict, w: int, plane: str, camera_ready: bool) -> Path:
                      f"game {g['game']} ({plane} plane)", fontsize=11)
     fig.subplots_adjust(left=0.02, right=0.97, top=0.92, bottom=0.07,
                         wspace=0.04, hspace=0.18)
-    rule_member_key(fig, y=below(fig, leg))
-    return save_figure(fig, FIG_DIR / f"fork_r21_windowed_{plane}", camera_ready)
+    rule_member_key(fig, y=note_and_key(fig, leg, v.note))
+    return save_figure(fig, FIG_DIR / f"fork_r21_windowed_{plane}{v.suffix}",
+                       camera_ready)
 
 
-def whole_grid(g: dict, plane: str, camera_ready: bool) -> Path:
-    ref, rows = branches(g)
+def whole_grid(g: dict, plane: str, d: Draw, v: View, camera_ready: bool) -> Path:
     c = int(g["n_context"])
     k = c + int(np.flatnonzero(g["pos"][c:] - g["t0"] == 0)[0])
-    n_pos = len(g["pos"]) - k
     fig, axes = plt.subplots(NCOL, NCOL, figsize=(3.4 * NCOL, 3.2 * NCOL))
     for ax, (name, _) in zip(axes.flat, dsc.spaces()):
         Z = g[name][:, k:]
-        phi = dsc.descriptor(torch.from_numpy(Z))
-        jack = dsc.jackknife(Z)
+        rowphi = dsc.descriptor(torch.from_numpy(Z))
+        phi = phi_mean(rowphi, d.groups)
+        # The spliced set has one row per branch and no sampling spread, so its
+        # replicates are the leave-one-position-out jackknife; the rollout set's
+        # are its K descriptors, which is the spread a reader has to see.
+        jack = (np.stack([rowphi[ix] for ix in d.groups], 1) if d.rollout
+                else phi_mean(dsc.jackknife(Z), d.groups, axis=1))
         if plane == "pca":
             p = dsc.fit_plane(phi, centred=True)
             P, J = p.project(phi), p.project(jack)
@@ -273,7 +350,7 @@ def whole_grid(g: dict, plane: str, camera_ready: bool) -> Path:
             ax.set_title(name, loc="left", fontsize=8)
         ax.set_xlabel(xlab, fontsize=7.5)
         ax.set_ylabel(ylab, fontsize=7.5)
-        point_panel(ax, P, J, rows, n_pos)
+        point_panel(ax, P, J, d.rows, d.contour)
         ax.tick_params(labelsize=6.5)
     leg = ordered_legend(fig, axes.flat[0], 3, loc="lower center",
                          bbox_to_anchor=(0.5, -0.045))
@@ -281,25 +358,47 @@ def whole_grid(g: dict, plane: str, camera_ready: bool) -> Path:
         fig.suptitle(f"One R$^{{21}}$ point per branch, game {g['game']} "
                      f"({plane} plane)", fontsize=11)
     fig.tight_layout(rect=(0, 0.015, 1, 0.955))
-    rule_member_key(fig, y=below(fig, leg))
-    return save_figure(fig, FIG_DIR / f"fork_r21_whole_{plane}", camera_ready)
+    rule_member_key(fig, y=note_and_key(fig, leg, v.note))
+    return save_figure(fig, FIG_DIR / f"fork_r21_whole_{plane}{v.suffix}", camera_ready)
+
+
+def note_and_key(fig, leg, note: str) -> float:
+    """y for the rule key, with `note` written above it when the variant has one.
+
+    Where a mean is taken is apparatus a reader needs while looking at the panels,
+    so it sits with the rule key rather than in the README caption (§5)."""
+    y = below(fig, leg)
+    if not note:
+        return y
+    return below(fig, fig.text(0.005, y, note, ha="left", va="top", fontsize=7.5,
+                               color=MUTED, linespacing=1.5))
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--w", type=int, default=dsc.W)
     parser.add_argument("--game", type=int, default=FIGURE_GAME)
+    parser.add_argument("--variant", default="spliced", choices=list(VARIANT_DIRS))
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    g = one_control(dsc.figure_game(args.game, args.w))
+    g = dsc.figure_game(args.game, args.w, variant=VARIANT_DIRS[args.variant])
+    rollout = args.variant == "rollout"
+    d = one_control(g)
+    suffix = "_rollout" if rollout else ""
+    windowed = View(ROLLOUT_MAX_R if rollout else FULL_R,
+                    ROLLOUT_NOTE if rollout else "", suffix)
+    whole = View(FULL_R, ROLLOUT_WHOLE_NOTE if rollout else "", suffix)
     # The ratios are the figures' caption, not the figures': README.md quotes them.
-    print(f"within/between rule spread ratio, game {args.game}: "
-          + ", ".join(f"{k} {v:.3f}" for k, v in spreads(g, args.w).items()))
+    for r_max in ([ROLLOUT_MAX_R, FULL_R] if rollout else [FULL_R]):
+        print(f"within/between rule spread ratio, game {args.game}, {args.variant}, "
+              f"t-t0 in [0, {r_max}]: "
+              + ", ".join(f"{k} {x:.3f}"
+                          for k, x in spreads(g, args.w, d, r_max).items()))
     for plane in ("pca", "fixed"):
-        print(f"wrote {windowed_grid(g, args.w, plane, args.camera_ready)}")
-        print(f"wrote {whole_grid(g, plane, args.camera_ready)}")
+        print(f"wrote {windowed_grid(g, args.w, plane, d, windowed, args.camera_ready)}")
+        print(f"wrote {whole_grid(g, plane, d, whole, args.camera_ready)}")
 
 
 if __name__ == "__main__":
