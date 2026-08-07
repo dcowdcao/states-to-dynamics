@@ -40,13 +40,14 @@ python analysis/violation_divergence/probe_readout/decode.py       --variant rol
 python analysis/violation_divergence/probe_readout/make_figures.py --variant rollout
 ```
 
-## The rule-complete 2000
+## The rule-complete 2000 at *t0* = 20
 
-`opponent_only` is R3's only member and three of the original 2000 games offer no
-`opponent_only` candidate at their *t0*, so a curve drawn per constraint rule read
-n = 2000, 2000, **1997**. Three further source games that admit every rule were
-drawn from the same stream at the same seed and **appended**: the tree now holds
-2003 games, 2000 of them rule-complete.
+The per-rule population averages games that all fork at the same position, so that
+*t0* is not confounded with the violation. `branches.py` assigns *t0* round-robin
+over [10, 34], which left **80** games at any one of them. Further source games,
+all forked at ***t0* = 20**, were drawn from the same stream at the same seed and
+**appended** until that one position held **n = 2000**: the tree now holds 3923
+games / 34546 branch rows, 3920 rule-complete, 2000 of them at *t0* = 20.
 
 ```
 sbatch scripts/slurm/studies/violation_divergence/submit_extend_branches.sbatch         # + re-extract acts
@@ -57,27 +58,37 @@ sbatch scripts/slurm/studies/violation_divergence/submit_extend_rollout_branches
 under a rule-complete acceptance test renumbers every game — moving `FIGURE_GAME`,
 the branches.pt ↔ `acts/*.pt` row alignment, the rollout tree's
 `row = source_row * K + k`, and every score in `game_selection/`.
-`extend_branches` replays all 2000 existing games from the stream, asserts every
+`extend_branches` replays every game already on disk from the stream — each at its
+own saved *t0* and under the acceptance test it was drawn under — asserts every
 saved column equal to the tensor on disk, and only then appends from where the
 stream stopped; it re-asserts the original rows byte-identical after the write.
 Games are taken in stream order and never searched, so the appended set is
 conditioned on rule membership and on no measured outcome.
 
-**The ids are a file, not a rule to re-derive.**
-`$DIR/branches/rule_complete_games.json` carries the 2000 ids next to the criterion
-that produced them; a per-rule figure should read it rather than rebuild the
-membership test. The three games it drops are **582, 1268 and 1869**. `game_id` is
-shared by both trees, so the rollout tree reads the same file.
+**Rule completeness is decided at *t0*, not by the game.** A game that admits all
+three rules at its round-robin *t0* need not admit them at 20, so the test is
+applied at the position the game is actually forked on. At 20 almost every game
+passes: **1 rejection in 1921 draws**, against the three failures the round-robin
+produced at *t0* 17, 28 and 29 (games **582, 1268, 1869**). R3's only member
+`opponent_only` is a square that flips for the opponent and not for the mover, and
+mid-board there is nearly always one.
 
-The appended games take the round-robin's next *t0*s, so the rule-complete
-population is not quite flat in *t0*: 81 games at 10, 11 and 12 against 79 at 17, 28
-and 29 (the dropped games' offsets) and 80 everywhere else.
+**The ids are a file, not a rule to re-derive.**
+`$DIR/branches/rule_complete_games.json` carries the ids next to the criterion that
+produced them; a per-rule figure should read it rather than rebuild the membership
+test. `game_id` is shared by both trees, so the rollout tree reads the same file.
+
+The tree is now a round-robin block (games 0–2002, ~80 per *t0*) plus a block fixed
+at *t0* = 20 (games 2003–3922). `manifest.json` records both under `appended` and no
+longer carries a `t0_range`: the `t0_histogram` is the description of a mixed tree.
 
 `compute_divergence` skips a space whose npz exists, and the npz is a whole-tree
 artifact with no per-row path, so extending the tree means **deleting
-`$DIR[/rollout]/divergence/*.npz` and recomputing all 17 spaces**. Anything else
-cached off the branch tensors — `rule_population/`, `curvature_discriminant/`,
-`fork_*/` — is stale at 2000 games until it is deleted too.
+`$DIR[/rollout]/divergence/*.npz` and recomputing all 17 spaces**. `rule_population/`
+is skip-if-exists the same way and was deleted and rebuilt with it. Anything else
+cached off the branch tensors — `rule_descriptors/`, `divergence_by_space/curves.npz`,
+`curvature_discriminant/`, `fork_*/`, `theta_comparability/` — still holds the
+2003-game content and does not know the tree grew.
 
 ## The result in one paragraph
 
