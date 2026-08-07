@@ -26,8 +26,8 @@ verdicts *after* this file was written. Where the two disagree, the red team win
 One defect the red team found in the shipped CSV: `p_pred_correct_rule` is exact at
 r = −1 (11527/11527), but at r ≥ 0 its target is right for only 77% of illegal branches
 and **0.45%** of `opponent_only` — once the move is played the square is occupied, so
-R3's truth becomes R1. **The r ≥ 0 columns of that metric are not recall.** F3 is drawn
-at r = −1 for this reason.
+R3's truth becomes R1. **The r ≥ 0 columns of that metric are not recall.** Any read of
+that metric must be taken at r = −1.
 
 `RED_TEAM.md` also carries a "Not tested" section listing nine gaps, including fit-set
 disjointness (taken on faith from the manifest) and whether the SpaDE colour collapse is
@@ -43,14 +43,15 @@ python -m spade.legality_probe.frame_check  # -> results/frame_check.json
 python -m spade.legality_probe.spaces       # encode both activation sets through 11 spaces
 python -m spade.legality_probe.readout      # 4 probe arms + branch window
                                             #   -> results/{probe_fit,readout,space_quality}.csv
-python analysis/legality_probe/make_figures.py            # F1-F4
+python analysis/legality_probe/make_figures.py            # the one figure
 python analysis/legality_probe/make_figures.py --camera-ready
 ```
 
 The two GPU stages are `scripts/slurm/studies/legality_probe/submit_legality_spaces.sbatch`
 and `submit_legality_readout.sbatch`.
 
-Output schemas, tidy long, both consumed by `make_figures.py` and by nothing else:
+Output schemas, tidy long. `make_figures.py` reads `probe_fit.csv` only; `readout.csv` and
+`space_quality.csv` are quoted throughout RED_TEAM.md but no figure reads them:
 
 ```
 probe_fit.csv  space, d_space, target, n_classes, filler_dim, metric, class, value, lo, hi, n
@@ -75,7 +76,7 @@ the aggregate rows; parsed as NaN, every aggregate silently disappears.
 `macro_f1_minus_raw` is the per-game **paired** difference from raw at the same offset;
 its CI is not derivable from the two marginal CIs, which is why it is a column of the
 CSV rather than arithmetic in the figure. Rule aggregates carry `category = ""` with
-`rule` set, and F3 asserts they exist rather than averaging the members itself.
+`rule` set, so a rule mean is never averaged from its members' marginal CIs.
 
 Probe fit set: `analysis/linear_probe/activations/` (gitignored; a worktree points at the
 main checkout's copy through `SPADE_LINEAR_PROBE_ACTIVATIONS`). Read-out set: the
@@ -99,7 +100,7 @@ k=80 dictionaries are argued against. `random_proj` is a ReLU of a dense 512 →
 projection at L0 4101, matched to nothing; it preserves nearly all of the input, so it
 bounds what a probe read-out in an 8192-d space can demonstrate. Drawing them as one gray
 dashed pair tells the reader something false, so `paper_style` gives them `NULL` and
-`CEILING` styling respectively and F1 makes the distinction the panel's subject.
+`CEILING` styling respectively, and the figure labels each with what it is matched to.
 
 ## What this study cannot claim, stated before the results
 
@@ -125,7 +126,8 @@ Everything below therefore rests on **differences**: between spaces at a fixed o
 and between r < 0 and r = 0 within a space. Every figure is built so that a level cannot
 be read off it as a finding.
 
-**The class balance drifts with absolute ply**, which is why F2 is a paired difference.
+**The class balance drifts with absolute ply**, which is why any read across r must be a
+paired difference from raw at the same offset.
 R1 is exactly (ply + 5)/64 by construction and R2 collapses late:
 
 | ply | legal | R1 | R2 | R3 |
@@ -218,7 +220,8 @@ TopK − random TopK = **+0.149** at identical L0 = 80, and that is the only com
 the table with a matched control. `random_proj` is matched to nothing: it is a nearly
 information-preserving expansion, so a probe reads it, and the fact that it beats
 GatedAnneal, SpaDE and CosineSpaDE is a statement about those dictionaries' information
-content and not about rules. F1 draws the two controls in different styles for this reason.
+content and not about rules. The figure draws the two controls in different styles for this
+reason.
 
 **2. The trained dictionaries, and only the trained dictionaries, lose extra macro-F1 at
 the violation itself.** `excess_macro_f1` on pooled empty-square violations — a space's own
@@ -231,7 +234,7 @@ r < 0 → r = 0 drop minus raw's drop on the same bootstrap draws, n = 2000 sour
 | GatedSAE | +0.0271 [+0.0251, +0.0291] | **random TopK** | **+0.0137** [+0.0109, +0.0164] |
 | TopK | +0.0378 [+0.0358, +0.0397] | **random proj.** | **−0.0051** [−0.0068, −0.0035] |
 
-The paired curves in F2 show the same thing as a step: the delta from raw is flat through
+The paired curves in `readout.csv` show the same thing as a step: the delta from raw is flat through
 r = 0 for both untrained controls and dips by 0.023–0.057 for every trained dictionary,
 recovering by r = 1. `random_proj`'s r < 0 baseline (0.898) sits inside the trained
 dictionaries' range (0.887–0.943), so the floor objection below does not apply to *this*
@@ -338,35 +341,25 @@ TopK's L0.
 
 ## Figures
 
-`figures/f1_probes_per_space` (F1) · `figures/f2_readout_window` (F2, headline) ·
-`figures/f3_per_rule` (F3) · `figures/f4_metric_vs_rules` (F4). PNG for reading here, PDF
-for the paper; `--camera-ready` writes the PDF and moves the titles into the captions.
+`figures/f0_which_space` — the only figure. PNG for reading here, PDF for the paper;
+`--camera-ready` writes the PDF and moves the title into the caption.
 
-**F1** is a dumbbell per space: the open marker is the 3-way board probe
-{empty, theirs, mine}, the filled one the 4-way legality probe, both fitted in the same
-space with the same machinery. Two adjacent bars would put the eye on the two levels; the
-dumbbell puts it on the segment. The two vertical rules are the untrained controls, drawn
-in different styles and labelled with what each one is matched to, and the annotated arrow
-is the +0.149 that training buys at L0 = 80. Panel (b) is the legality probe's per-class F1,
-which is where SpaDE's failure localizes onto legal ↔ R3.
+One bar per space, ordered best to worst, spanning raw, the eight dictionaries and the two
+untrained controls. It answers the question anyone actually asks of this study, and it
+carries the two reasons that answer is not what it looks like. The black tick on each bar
+is the same space's 3-class board probe and is always higher: legality is a deterministic
+function of the board, board macro-F1 tracks legality at pearson 0.998, and board argmax
+plus the rules engine beats the legality probe in all 11 spaces. The two bottom rows are
+untrained: a dense random projection at L0 4101 reaches 0.904 and outranks a trained
+dictionary, so a high bar mostly means the map preserved information. The comparison that
+survives is sparsity-matched, TopK 0.923 against random TopK 0.774 at L0 80.
 
-**F2** is the headline. Panel (a) is raw and the two untrained controls in absolute
-macro-F1, carried so the ply-driven drift is visible rather than hidden; panels (b)–(e) are
-the eight dictionaries as per-game paired differences from raw at the same r, one panel per
-family, with both untrained controls redrawn in every panel so the step at r = 0 can be
-compared against them. raw's own paired difference is drawn and asserted to be identically
-zero — a free check on the pairing. Panel (e) carries its own y scale, with the other
-panels' range shaded inside it.
-
-**F3** is the per-rule read-out on the shared pre-move board, r = −1. Panel (a) puts all
-three rules on one row per space, with the member categories as small dots behind each rule
-mean and the within ÷ between spread printed; panel (b) is R3 against the same space's
-overall legality macro-F1, so a uniform-degradation account can be checked rather than
-assumed.
-
-**F4** is a 2 × 3 grid: L0 on a log axis, variance explained, and the board probe, against
-the level a space supports (top) and the disruption at the violation (bottom). The two rows
-answer to different x, which is the figure.
+Four earlier figures (per-space dumbbells, the paired r-window, per-rule at r = −1, and
+metric-vs-rules) were cut. Their numbers are in `results/readout.csv` and are quoted
+throughout RED_TEAM.md; `make_figures.py` no longer reads that file. The r-window figure
+carried the study's one surviving positive claim — the six ordinary dictionaries each lose
+an extra 0.02–0.06 macro-F1 at the injected move while neither untrained control loses
+anything there — so that claim now lives only in prose and in the CSV.
 
 ## Known gaps
 
