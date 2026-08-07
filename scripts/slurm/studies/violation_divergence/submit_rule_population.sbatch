@@ -25,9 +25,12 @@ mkdir -p logs/violation_divergence
 # The rule population in all nine spaces, per tree: the per-rule turning-angle
 # curves panel (a) of the rule_curvature figure draws, and the per-game 21-D
 # ReStraV descriptors the straightness feature_pca figure draws the rules from.
-# 2000 games x ~9 branches x K rollouts encoded per space -- a login node with one
+# The population is the ~80 games forking at one t0 (--t0, default 20); the
+# descriptors are all 2000 rule-complete games, so a run that has to rebuild them
+# encodes 2000 games x ~9 branches x K rollouts per space -- a login node with one
 # core takes ~3 h and is capped at 8 GB; an H100 does the spliced tree in ~7 min.
-# Resumable per product: a space is re-encoded only for the npz it is missing.
+# Resumable per product and per t0, both of which are in the npz name: a space is
+# re-encoded only for the npz it is missing.
 # One array task per tree: they read different tensors and share nothing, so
 # running them in sequence only doubled the wall clock.
 TREE=(branches rollout)

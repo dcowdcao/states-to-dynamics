@@ -2,7 +2,8 @@
 
 Four panels. (a) is the population clock: the straightness study's many-game
 class profiles -- legal, OthelloGPT rollout, championship, 2000 games each -- and
-the three rules measured over every game that carries them (2000, 2000 and 1997).
+the three rules measured over every game that forks at one position (--t0,
+default 20, which is FIGURE_GAME's own fork: ~80 games of the 2000).
 (b) is one game's fork on (a)'s scale: game 1235 branching at t0 = 20 into R1
 placement, R2 bracketing and R3 turn, over its own reference and two legal
 controls. (c) is the violation-locked response, Δ against the matched source
@@ -20,8 +21,14 @@ split keeps apart. They share x and y, so the comparison is still exact.
 two style tables built for two figures -- so the rule curves take a long dash and
 their rule marker, and no series on that axes is named by colour alone
 (FIGURE_GUIDELINES 1). The dash also separates the two constructions: a class is
-a whole game, a rule is one branched move inside one, forking anywhere in the
-shaded t0 band rather than at a single position.
+a whole game, a rule is one branched move inside one, at the dashed t0.
+
+**(a)'s population is one fork position, not all of them.** t0 is round-robin
+over [10, 34] across the 2000 rule-complete games, and where a violation happens
+moves curvature on its own, so pooling them would put the fork position inside
+the rule curves. Restricting to t0 = 20 costs a factor of 25 in n -- the CI is
+5x wider and the legend and the caption say the real number -- and buys a panel
+whose dashed line means the same thing it means in (b).
 
 **The sampling convention is load-bearing.** Both sides are measured per ply over
 positions 1..58, one angle at its own vertex, no stride and no trailing window --
@@ -38,8 +45,8 @@ the suffix and to nothing else. What the spliced tree's suffix costs the reader 
 in README.md under Captions, and it is not optional.
 
 Usage: python analysis/violation_divergence/rule_curvature/make_figures.py
-       [--tree branches|rollout] [--game 1235] [--space raw|<family>|all]
-       [--camera-ready]
+       [--tree branches|rollout] [--game 1235] [--t0 20|all]
+       [--space raw|<family>|all] [--camera-ready]
 """
 
 import argparse
@@ -111,35 +118,45 @@ def draw_rule(ax, x: np.ndarray, y: np.ndarray, st: dict, label: str | None,
             label=label)
 
 
-def t0_line(ax, fork: rc.Fork) -> None:
-    ax.axvline(fork.t0, color=MUTED, lw=1.2, ls=(0, (4, 3)), zorder=1)
+def t0_line(ax, t0: int) -> None:
+    ax.axvline(t0, color=MUTED, lw=1.2, ls=(0, (4, 3)), zorder=1)
 
 
 def population_label(st: dict, pop: rc.Population, j: int) -> str:
-    """The legend entry, carrying this rule's own n (FIGURE_GUIDELINES 1.7).
+    """The legend entry, carrying this rule's own n and its fork position.
 
-    n is per rule and the three do not match: R3 is short by the three games whose
-    t0 offers no opponent_only square, so no R3 branch exists there to measure.
+    n is per rule and need not match across the three (FIGURE_GUIDELINES 1.7): a
+    rule takes every selected game with one of its member categories available.
+    "forked at" is what keeps the entry from being read like a class entry -- the
+    classes are whole games and have no t0 at all.
     """
+    lo, hi = pop.t0_range
+    where = f"$t_0$ = {lo}" if lo == hi else f"$t_0 \\in$ [{lo}, {hi}]"
     n = (f"{pop.n_games[j]} games" if pop.n_rollouts == 1
          else f"{pop.n_games[j]} games $\\times$ {pop.n_rollouts} rollouts")
-    return f"{st['label']} (mean over {n})"
+    return f"{st['label']} (mean over {n} forked at {where})"
 
 
-def class_profile(ax, fork: rc.Fork, entry, tree: str, blocks: dict) -> None:
+def class_profile(ax, fork: rc.Fork, entry, tree: str, blocks: dict,
+                  t0: int | None) -> None:
     """(a) the population clock: three game classes and the three rules.
 
     The classes are the straightness study's committed npz; the rules are measured
-    here on the same tree the fork panels read, per ply and over every game that
-    carries them. A rule's branch is not at one position -- each game forks at its
-    own t0 -- so the shaded band is the range of those t0 and the dashed line is
-    only `fork`'s own. The classes carry no such band: they are whole games.
+    here on the same tree the fork panels read, per ply and over the games forking
+    at `t0` -- one position, so the dashed line is where every rule curve forks and
+    means what it means in (b). Under `--t0 all` the games fork all over [10, 34]
+    and that range is shaded instead. The classes get neither: they are whole
+    games and do not fork.
     """
-    pop = rc.population(tree, entry)
-    ax.axvspan(*pop.t0_range, color=GRID, alpha=0.5, lw=0, zorder=0)
-    ax.annotate(f"the rules fork anywhere in $t_0 \\in$ "
-                f"[{pop.t0_range[0]}, {pop.t0_range[1]}]",
-                xy=(pop.t0_range[0] + 0.6, 0.97), xycoords=("data", "axes fraction"),
+    pop = rc.population(tree, entry, t0)
+    lo, hi = pop.t0_range
+    if lo == hi:
+        note = f"every rule forks here, at $t_0$ = {lo}"
+        t0_line(ax, lo)
+    else:
+        note = f"the rules fork anywhere in $t_0 \\in$ [{lo}, {hi}]"
+        ax.axvspan(lo, hi, color=GRID, alpha=0.5, lw=0, zorder=0)
+    ax.annotate(note, xy=(lo + 0.6, 0.97), xycoords=("data", "axes fraction"),
                 fontsize=7.5, color=MUTED, ha="left", va="top")
     profile_panel(ax, np.load(GEOM / f"{rc.space_key(entry)}_raw.npz")["theta"], blocks)
     for j, rule in enumerate(rc.RULES):
@@ -150,13 +167,14 @@ def class_profile(ax, fork: rc.Fork, entry, tree: str, blocks: dict) -> None:
                 marker=st["marker"], ms=4, markevery=(6 + j, 9),
                 markerfacecolor=st["color"], markeredgecolor="white",
                 markeredgewidth=0.5, zorder=4, label=population_label(st, pop, j))
-    t0_line(ax, fork)
+    if lo != fork.t0:  # the drawn game's own fork, when the population is elsewhere
+        t0_line(ax, fork.t0)
     ax.set_xlabel("")
 
 
 def fork_profile(ax, fork: rc.Fork) -> None:
     """(b) the same quantity for one game's nine branches, on (a)'s scale."""
-    t0_line(ax, fork)
+    t0_line(ax, fork.t0)
     pos, curves, profiles = fork.positions, rc.branch_curves(fork), rc.rule_profiles(fork)
     ax.plot(pos, curves[fork.ref], color=REFERENCE["color"], ls=(0, (3, 1.5)), lw=1.3,
             marker=REFERENCE["marker"], ms=4, markevery=(4, 9), markerfacecolor="white",
@@ -241,20 +259,21 @@ def title(entry, label: str, tree: str, fork: rc.Fork) -> str:
 
 
 def per_space(fork: rc.Fork, entry, label: str, tree: str, blocks: dict,
-              camera_ready: bool) -> Path:
+              t0: int | None, camera_ready: bool) -> Path:
     fig = plt.figure(figsize=(9.6, 2 * PANEL_H + BOARD_H + 0.9))
     gs = fig.add_gridspec(2, 1, height_ratios=[2 * PANEL_H, BOARD_H],
-                          left=0.07, right=0.98, top=0.92, bottom=0.05, hspace=0.30)
+                          left=0.07, right=0.98, top=0.90, bottom=0.05, hspace=0.30)
     # (a) and (b) stack on one shared position axis; (c) has its own, so it takes
     # the full height beside them rather than leaving a band of white.
     top = gs[0].subgridspec(2, 2, wspace=0.34, hspace=0.24, width_ratios=[1.3, 1])
 
     ax_a = fig.add_subplot(top[0, 0])
-    class_profile(ax_a, fork, entry, tree, blocks)
+    class_profile(ax_a, fork, entry, tree, blocks, t0)
     ax_a.tick_params(labelbottom=False)
-    ax_a.set_title("(a) the population's curvature clock\nclasses solid, $n$ = 2000 "
-                   "games · rules dashed, $n$ in the legend\nmean $\\pm$ 95% CI over "
-                   "games, at the markers", loc="left", fontsize=9.5)
+    ax_a.set_title("(a) the population's curvature clock\nclasses solid: whole games, "
+                   "no fork, $n$ = 2000 each\nrules dashed: forked branches, $n$ and "
+                   "$t_0$ in the legend\nmean $\\pm$ 95% CI over games, at the markers",
+                   loc="left", fontsize=9.5)
 
     ax_b = fig.add_subplot(top[1, 0], sharex=ax_a, sharey=ax_a)
     fork_profile(ax_b, fork)
@@ -322,10 +341,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--tree", default="branches", choices=list(rc.TREE_VARIANT))
     parser.add_argument("--game", type=int, default=rc.FIGURE_GAME)
+    parser.add_argument("--t0", default=str(rc.FIGURE_T0),
+                        help="(a)'s fork position, or 'all' to pool every position")
     parser.add_argument("--space", default="all",
                         help="'all', 'raw', or an SAE family (e.g. TopK)")
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()
+    t0 = None if args.t0 == "all" else int(args.t0)
 
     apply_style(args.camera_ready)
     device = select_device()
@@ -343,7 +365,7 @@ def main():
         fork = rc.load_fork(args.tree, args.game, entry, device)
         rc.check_prefix(fork)
         forks.append((label, entry, fork))
-        written.append(per_space(fork, entry, label, args.tree, blocks,
+        written.append(per_space(fork, entry, label, args.tree, blocks, t0,
                                  args.camera_ready))
         # Printed, not drawn: the README quotes these, and they have to be
         # re-derivable without measuring a figure by eye (as ../fork_and_board does).
@@ -354,18 +376,20 @@ def main():
             f"+-{np.nan if v.sem is None else np.nanmean(v.sem):.2f}"
             for r, v in rules.items())
         print(f"{label:34} spread {rc.spread(fork):.3f}  {cols}")
-        # (a)'s gap is under a degree on an axis spanning thirty, so it is not
-        # measurable off that panel; here are its extremum and its own CI. The
-        # pre-fork residual is the check: left of the first t0 no branch exists yet,
-        # so the rules and the legal class are the same games measured twice.
-        pop = rc.population(args.tree, entry)
+        # (a)'s gap is small on an axis spanning thirty, so it is not measurable off
+        # that panel; here are its extremum and its own CI. The pre-fork residual is
+        # the check: no branch exists there yet, so the rules and the legal class are
+        # the same games measured twice, and whatever they differ by is sampling. The
+        # turn at t0-1 already sees the branch token, so pre-fork ends at t0-2.
+        pop = rc.population(args.tree, entry, t0)
         legal = np.nanmean(np.load(GEOM / f"{rc.space_key(entry)}_raw.npz"
                                    )["theta"][blocks["legal"]], axis=0)
         gap = pop.mean - legal
         k = np.nanargmin(gap, axis=1)
         print(f"{'':34} vs legal  pre-fork |Δ| <= "
-              f"{np.nanmax(np.abs(gap[:, pop.positions < pop.t0_range[0]])):.2f}  "
-              + "  ".join(f"{r.split()[0]} {gap[j, k[j]]:+5.2f}@{pop.positions[k[j]]}"
+              f"{np.nanmax(np.abs(gap[:, pop.positions <= pop.t0_range[0] - 2])):.2f}  "
+              + "  ".join(f"{r.split()[0]} n={pop.n_games[j]} "
+                          f"{gap[j, k[j]]:+5.2f}@{pop.positions[k[j]]}"
                           f"+-{1.96 * pop.sem[j, k[j]]:.2f}"
                           for j, r in enumerate(rc.RULES)))
     if len(cells) > 1:

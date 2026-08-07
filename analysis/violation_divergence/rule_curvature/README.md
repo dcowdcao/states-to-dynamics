@@ -6,9 +6,17 @@ reports it per *class*. This study measures the same quantity on a single game's
 controls, and one move per illegal category — and groups the six illegal
 categories into the three constraint rules they violate.
 
-The fork is n = 1, so panel (a) carries the same three rules over **every source
-game**, beside the class baselines and on the same axis. That is the panel a
-claim can rest on; (b)–(d) show what one instance of the construction looks like.
+The fork is n = 1, so panel (a) carries the same three rules over a population of
+games, beside the class baselines and on the same axis. That is the panel a claim
+can rest on; (b)–(d) show what one instance of the construction looks like.
+
+**That population is one fork position.** *t0* is round-robin over [10, 34]
+across the 2000 rule-complete games, so pooling them puts *where* the violation
+happened inside the rule curves. Panel (a) takes the **80 games that fork at
+*t0* = 20** — game 1235's own position, so the dashed line means the same thing
+in (a) as in (b). It costs a factor of 25 in n and the interval is ~5× wider;
+what survives that is in the captions below, and `--t0 all` restores the pooled
+panel.
 
 The figure is rendered from **two tensor trees, one code path**. The *spliced*
 tree (`$DIR/branches/`, `$DIR/acts/`) gives every branch the source game's
@@ -19,26 +27,31 @@ and to nothing else. Two scripts would be two implementations of one rule and
 would drift.
 
 ```
-python -m spade.violation_divergence.rule_curvature --tree branches   # panel (a)'s rules
+python -m spade.violation_divergence.rule_curvature --tree branches [--t0 20|all]
 python analysis/violation_divergence/rule_curvature/make_figures.py \
-    [--tree branches|rollout] [--game 1235] [--space raw|<family>|all] [--camera-ready]
+    [--tree branches|rollout] [--game 1235] [--t0 20|all] \
+    [--space raw|<family>|all] [--camera-ready]
 ```
 
 Measurement: `spade.violation_divergence.rule_curvature`. The script only draws,
 and prints the numbers quoted below so they can be re-derived without measuring a
-figure by eye. Panel (a)'s rule curves are 2000 games × ~9 branches × 9 spaces
-per tree, cached to `$DIR/[rollout/]rule_population/`; that is ~3 h on a
-one-core login node under its 8 GB cap, so
-`scripts/slurm/studies/violation_divergence/submit_rule_population.sbatch` runs
-it on a GPU instead (~7 min on an H100 for the spliced tree). Skip-if-exists,
-like every other step of this study.
+figure by eye. Panel (a)'s rule curves are the 80 games forking at *t0* = 20,
+× ~9 branches × 9 spaces per tree, cached to
+`$DIR/[rollout/]rule_population/<space>_t0-<t0>.npz` — *t0* is in the name
+because a population at another fork position is another population and
+skip-if-exists must not hand one back for the other. That pass is ~1 min on an
+H100 (`scripts/slurm/studies/violation_divergence/submit_rule_population.sbatch`).
 
 Encoding those activations is what the pass costs, not the geometry, so it
 answers a second question on the way past: each game's 21-D ReStraV descriptor
 per rule, to `$DIR/[rollout/]rule_descriptors/`. That is the one population in
 the repo with an R1 in it, and `analysis/straightness/feature_pca/` draws the
-rules as classes from it. Skip-if-exists is per product — a space is re-encoded
-only for the npz it is missing.
+rules as classes from it. It is **not** restricted to one *t0* — it is all 2000
+rule-complete games — so a run that has to rebuild it is the expensive one (~7
+min on an H100 for the spliced tree, 26 min for the resampled tree's 4 rollouts
+per branch, and ~3 h on a one-core login node under its 8 GB cap) and the
+population is selected inside that pass rather than costing a second one.
+Skip-if-exists is per product.
 
 | file | what it is |
 |---|---|
@@ -96,25 +109,27 @@ key naming each rule's member categories.
 
 ### `curvature_rules_branches_*` — the spliced tree
 
-**Illegal moves straighten the layer-5 trajectory: by about a degree across the
-whole population, and by ten to twenty degrees at the branch in the one game
-drawn here — where everything after the branch is confounded with an
-out-of-distribution continuation.** Panel **(a)**: mean turning angle against
-board position, for two populations on one axis. *Solid*, the straightness
+**Illegal moves straighten the layer-5 trajectory: by two to four degrees across
+a population that all forks at the same position, and by ten to twenty degrees at
+the branch in the one game drawn here — where everything after the branch is
+confounded with an out-of-distribution continuation. At n = 80 that population
+effect is resolved for R2 and R3 and is not resolved for R1.** Panel **(a)**:
+mean turning angle against board position, for two populations on one axis. *Solid*, the straightness
 study's three legal-by-construction classes — legal games (the baseline),
 OthelloGPT temperature-1 rollouts, and human championship games — each a mean ±
 95% CI over **n = 2000 games**, read from that study's committed
 `resid_post_5_raw.npz`. Its own `violation` class is deliberately absent: that is
 a different construction (a no-flip placement with the turn passed) and would put
-two unrelated violations under one word. *Dashed*, the three constraint rules,
-measured here on the same tree the fork panels read, over every source game that
-carries them: **n = 2000 (R1), 2000 (R2) and 1997 (R3) games**, mean ± 95% CI
-over games at the markers.
+two unrelated violations under one word. Those classes are whole games and have
+no fork, so *t0* does not apply to them at all. *Dashed*, the three constraint
+rules, measured here on the same tree the fork panels read, over the source games
+that **fork at *t0* = 20**: **n = 80 games for each of R1, R2 and R3**, mean ±
+95% CI over games at the markers.
 `CLASS_STYLE["rollout"]` and `RULE_STYLE["R1 placement"]` are the same blue, so
 the dash and the rule marker are what keep six series apart; the dash also says
-these are branched moves inside games rather than whole games. Their *t0* is not
-one position — it is round-robin over **[10, 34]**, shaded — so the dashed
-vertical line is game 1235's alone and the rule curves have no single fork.
+these are branched moves inside games rather than whole games. Every rule curve
+forks at the dashed vertical line, which is also game 1235's own *t0*, so the
+line means one thing in (a) and in (b).
 Panel **(b)**: the same quantity for game 1235's nine branches, on (a)'s x and y
 axes, with **n = 1 game and no uncertainty display**. One path per rule is the
 mean over its member categories of each member's own θ curve; every legend entry
@@ -136,43 +151,71 @@ supply them.** That study's violation class is built from `EMPTY_CATEGORIES =
 [3, 4, 5, 6]`, empty-square violations only, so it contains **no R1 at all** and
 no R1/R2/R3 split at n = 2000 exists there to read. The rules come off
 `branches.pt` instead, one branch per illegal category per game, under the same
-per-ply θ as everything else in this figure. Three consequences a reader should
+per-ply θ as everything else in this figure. Four consequences a reader should
 carry:
 
-- **n is per rule and the three do not match: 2000, 2000, 1997.** A rule takes
-  every game with at least one of its member categories available at that game's
-  *t0*. Every game affords an R1 and an R2 branch; three afford no
-  `opponent_only` square, so an R3 violation cannot be constructed there at all —
-  a property of those positions, not a filter. Cross-rule comparisons therefore
-  rest on sets differing by 3 games in 2000, which is not worth correcting for.
+- **n = 80 per rule, and it is 80 and not 2000 on purpose.** *t0* is round-robin
+  over [10, 34] across the 2000 rule-complete games, ~80 each; pooling them means
+  averaging violations committed at 25 different points in the game, and fork
+  position moves curvature on its own. Holding *t0* = 20 removes that confound
+  and costs a factor of 25 in n, so the CI half-widths go from ~0.19° to ~0.95°.
+  **n is 80 for all three rules**, and equal because every game in the
+  rule-complete set carries a member of every rule by construction — that is what
+  `rule_complete_games.json` is — so the three curves are the same 80 games.
 - **A rule's member composition varies by game**, unlike the 2, 3 and 1 that the
   branch-complete numbers elsewhere in this study are built on: R1 averages
-  exactly 2 categories in every game, R2 averages **2.77** and R3 always 1. The
-  order is fixed regardless — rollouts, then member categories inside a game,
-  then games — because φ does not commute with the mean
+  exactly 2 categories in every game, R2 averages **2.80** at *t0* = 20 and R3
+  always 1. The order is fixed regardless — rollouts, then member categories
+  inside a game, then games — because φ does not commute with the mean
   (`test_curvature_plane.py`).
 - **The rule curves belong to their tree and the class curves do not.** The
   classes are the straightness study's and know nothing about either tree; the
   rules are rebuilt per tree, so the spliced and resampled figures differ in (a)
   as well as in (b)–(c), by the suffix and nothing else.
+- **The classes stay at n = 2000 and are not restricted to anything.** They are
+  whole legal-by-construction games with no injected move, so there is no fork
+  position to hold fixed; the legend says `forked at t0 = 20` on the rule entries
+  only, and nothing in the panel should be read as putting a *t0* on a class.
 
-**What (a) now shows, in numbers, because it is not a gap you can see.** One
-illegal move straightens the whole population's layer-5 trajectory, by a fraction
-of a degree on an axis that (b) forces to span thirty. Raw layer 5, spliced tree,
-from the script's own output: the largest deviation from the legal class is **R1
-−0.74° at *t* = 36, R2 −1.31° at *t* = 22, R3 −1.05° at *t* = 21**, each against a
-95% CI half-width near 0.19°, so 4–7 CI widths. The ordering **R2 > R3 > R1**
-holds in all nine spaces; CosineSpaDE is the extreme (R2 −3.74° at *t* = 21) and
-GatedSAE the mildest (R2 −0.57°). For scale, the championship class sits +1.06°
-above legal over positions 10–20 and −0.98° below it over 46–57 (that study's
-committed npz), so a single illegal move shifts the population's curvature by
-about what swapping the whole corpus for human games does.
+**What (a) now shows, in numbers, because it is not a gap you can see.** Raw
+layer 5, spliced tree, from the script's own output: the largest deviation from
+the legal class is **R1 −2.07° at *t* = 32, R2 −4.18° at *t* = 21, R3 −3.39° at
+*t* = 21**, each against a 95% CI half-width of **0.95–0.99°**. Moving from all
+2000 games to the 80 at *t0* = 20 changed two things at once, and they point
+opposite ways:
 
-**Left of the first *t0*, (a) is its own sanity check.** No branch exists there,
-so the rule curves and the legal class are near-identical game sets measured by
-two pipelines; they agree to **≤ 0.25°** in every space. That residual also
-bounds how much of the gap above could be pipeline rather than violation, and it
-is a fifth of the effect.
+- **The effect is about three times larger.** Pooled it read R1 −0.74°, R2
+  −1.31°, R3 −1.05°. Pooling averages violations committed at 25 different
+  positions, so at any given *t* most games had not forked yet or had forked long
+  before; the pooled curve is a smeared version of this one, not a
+  better-estimated one.
+- **The interval is five times wider**, 0.19° → 0.96° — exactly the √25 the
+  sample size predicts, and the reason a single *t0* is not free.
+
+The ordering **R2 > R3 > R1** holds in 8 of the 9 spaces (GatedSAE puts R1 above
+R3, by less than a CI half-width). CosineSpaDE is the extreme (R2 −13.21° at
+*t* = 19) and GatedSAE the mildest (R2 −1.94°). For scale, the championship class
+sits +1.06° above legal over positions 10–20 and −0.98° below it over 46–57 (that
+study's committed npz).
+
+**Left of *t0* − 2, (a) is its own empirical null, and that is the yardstick this
+panel should be read against.** No branch exists there — the turn at *t0* − 1 is
+the first whose window touches the branch token — so the rule curves and the
+legal class are near-identical game sets measured by two pipelines, and whatever
+they differ by is sampling plus pipeline. At n = 2000 that residual was ≤ 0.25°,
+a fifth of the effect. At n = 80 it is **1.61° in raw layer 5 and 1.09–1.66°
+across the nine spaces**, and it is the same kind of statistic as the peak — a
+maximum of |Δ| over positions — which the peak's own CI is not. Against it:
+
+- **R2 clears the residual in all nine spaces**: raw 4.18 vs 1.61 (2.6×), from
+  1.4× (GatedSAE) to 8.6× (CosineSpaDE).
+- **R3 clears it in eight**: raw 2.1×; GatedSAE's 1.05× is not a separation.
+- **R1 clears it nowhere**: 1.0–1.5× in every space, raw layer 5 included
+  (2.07 against 1.61). At n = 2000 R1's −0.74° was 3× its 0.25° residual. **The
+  R1 population effect does not survive at one fork position**, and this figure
+  does not support a claim about R1 that the pooled panel appeared to support.
+  The resampled tree removes the remaining doubt: there R1's largest deviation is
+  *itself pre-fork*, in all nine spaces.
 
 **The post-*t0* half of this figure conflates the violation with an
 out-of-distribution continuation, and that is not a caveat but a property of the
@@ -222,7 +265,8 @@ have left it the one in-distribution sequence and fixed nothing
 (`rollout_branches`). Panel (a)'s three class curves are unchanged — they belong
 to the straightness study and know nothing about either tree — but its three rule
 curves are not: they are rebuilt on this tree, so they carry the resampled
-suffix, and their legend entries read **games × 4 rollouts**.
+suffix, and their legend entries read **80 games × 4 rollouts, forked at
+*t0* = 20**.
 
 Three differences from the spliced captions. A rule now averages over **member
 categories × 4 rollouts**, and the legend says so; a branch's curve is the mean
@@ -232,6 +276,14 @@ spread across categories. And
 Δ is paired **per rollout**: the k-th sample of a branch and the k-th of the
 reference are drawn from one uniform stream, so they are common random numbers
 and the branch effect is read against a shared noise draw.
+
+**What panel (a) says on this tree.** Same yardstick as the spliced caption — the
+peak against the pre-fork residual, which is bit-identical between the trees.
+**R2 clears it in all nine spaces** (raw 4.24 vs 1.61, 2.6×; 1.4–8.6× across the
+nine). **R3 clears it in five** (raw 1.8×; in GatedSAE, TopK and BatchTopK its
+extremum is itself pre-fork). **R1 clears it in none, and its extremum is pre-fork
+in every space** — the resampled tree says plainly what the spliced tree only
+implied, that there is no R1 population response at *t0* = 20.
 
 **What this tree buys and what it costs.** It removes the OOD-suffix confound
 above. It also removes single-token causal attribution: two branches now differ
@@ -254,11 +306,12 @@ Raw layer 5, game 1235, from the scripts' own output:
 | R3 tail | −3.39 (one sequence, no SEM) | −3.89 ± 1.01 |
 | corr of the two mean curves over *t* ≥ *t0* | — | R1 +0.20, R2 +0.38, R3 +0.60 |
 | within ÷ between rule spread | 0.906 | 0.944 |
-| panel (a), R1 peak vs. legal | **−0.74 ± 0.18** at *t* = 36 | **−0.27 ± 0.07** at 37 |
-| panel (a), R2 peak | **−1.31 ± 0.20** at 22 | **−0.97 ± 0.15** at 22 |
-| panel (a), R3 peak | **−1.05 ± 0.20** at 21 | **−0.64 ± 0.15** at 24 |
+| panel (a), R1 peak vs. legal | **−2.07 ± 0.95** at *t* = 32 | **−1.61 ± 1.00** at 5 — *pre-fork* |
+| panel (a), R2 peak | **−4.18 ± 0.99** at 21 | **−4.24 ± 0.50** at 21 |
+| panel (a), R3 peak | **−3.39 ± 0.96** at 21 | **−2.95 ± 1.11** at 19 |
+| panel (a), pre-fork residual | **1.61** | **1.61** |
 
-Four readings, and the second is the one that changes what may be claimed.
+Five readings, and the second is the one that changes what may be claimed.
 
 - **The response at *t0*−1 is bit-identical**, and it is the largest excursion in
   the figure. Its window is positions *t0*−2 .. *t0*, which both trees share, so
@@ -276,14 +329,22 @@ Four readings, and the second is the one that changes what may be claimed.
   the one fixed suffix. R1 is where this shows: a localized trough of −7.51 at
   *t0*+1 in the spliced figure becomes −4.53 at *t0*+12, i.e. no localized trough.
 
-- **The population straightening survives resampling, at 36% (R1), 74% (R2) and
-  61% (R3) of its spliced size.** Some of what panel (a) shows on the spliced tree
-  really is the shared out-of-distribution suffix — most of it for R1, which is
-  the rule whose single-game structure the third reading already called mostly
-  suffix. R2's peak stays at the same position (*t* = 22) in both trees, and the
-  ordering R2 > R3 > R1 holds in all nine spaces on both. The resampled tree's CI
-  is also 2× tighter, because K = 4 rollouts average down each game's own noise
-  before the mean over games is taken.
+- **At one fork position, the population straightening barely notices the
+  resampling — for R2 and R3.** R2 reads −4.18° spliced and −4.24° resampled, at
+  the same position (*t* = 21) both times; R3 −3.39° → −2.95° (87%). That is a
+  much stronger statement than the pooled panel supported, where R2 kept 74% and
+  R3 61% of its spliced size: with *t0* held fixed, what panel (a) shows is not
+  the shared out-of-distribution suffix.
+- **R1 has no post-fork response on the resampled tree at all.** Its largest
+  deviation from the legal class is at *t* = 5 — pre-fork, where no branch
+  exists — in **all nine spaces**. So R1's spliced −2.07° at *t* = 32 is the
+  suffix and the noise, and there is no R1 effect left to order: R2 > R3 > R1
+  holds in 8 of 9 spaces spliced but in 6 of 9 resampled, and in the three that
+  break it R3's own extremum is pre-fork too.
+- **The pre-fork residual is identical between the trees** (1.61° in raw layer 5
+  in both, and equal in all nine spaces), which is the check that this comparison
+  is well-posed: the two trees share `tokens[:t0]`, so their activations left of
+  the fork are the same numbers and their sampling residual must be too.
 
 One hypothesis this does **not** support: that the shared suffix is what makes
 the six illegal branches' post-*t0* responses co-vary. Mean pairwise correlation
@@ -298,6 +359,14 @@ co-variation is the game, not the splice.
   there is nothing over which an interval could be taken that a reader should
   believe; (a) is where the interval lives, over games. Every other population
   number belongs to `../README.md`, where it carries a CI over 13,531 branches.
+- **(a) is n = 80, and the confound it removes cost it the resolution to say
+  everything it used to.** One fork position is the only way the panel's dashed
+  line and its rule curves mean the same thing, but 80 games put the CI at ~0.96°
+  and the pre-fork sampling residual at ~1.6°. R2 and R3 stand clear of that; R1
+  does not. Anything read off R1 in this panel is a claim the data does not
+  support at this n — `--t0 all` pools all 2000 games and gets the resolution back
+  by putting fork position back into the curves, which is a different figure with
+  a different weakness, not a stronger version of this one.
 - **Two registers, two axes.** (a) is a population and (b) is one game. They share
   x and y so the comparison is exact, but a single game's swing is not a
   population difference and the overlay would invite reading it as one. Inside

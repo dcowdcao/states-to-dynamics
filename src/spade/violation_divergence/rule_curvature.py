@@ -33,14 +33,25 @@ appended three more rather than let R3 run short, so all three rules share n =
 2000. A rule's member composition still varies by game (R2 averages under its
 three categories), which the figure caption states.
 
-One pass over that population answers two questions, so it writes both: the
-per-rule mean turning-angle curves to `$DIR/[rollout/]rule_population/<space>.npz`,
-and each game's 21-D ReStraV descriptor per rule to
-`$DIR/[rollout/]rule_descriptors/<space>.npz`, which is what the straightness
-study's `feature_pca` figure draws a rule as a class in. Written by this module's
-main; the figure scripts only read them.
+Those 2000 games do not fork at one position: `extend_branches` assigns t0
+round-robin over [10, 34], ~80 games each. Fork position moves curvature on its
+own, so a mean over all of them confounds the violation with where it happened.
+The population is therefore taken at one t0 (`--t0`, default FIGURE_T0 = 20,
+n = 80), and t0 is in the cache file's name so two positions cannot be mistaken
+for each other. `--t0 all` pools all 2000 as before.
 
-Usage: python -m spade.violation_divergence.rule_curvature [--tree branches|rollout]
+The population is one product of this module; the other is each game's 21-D
+ReStraV descriptor per rule, which the straightness study's `feature_pca` figure
+draws a rule as a class in. They come off one pass when both are missing, because
+encoding the activations and not the geometry is what a pass costs -- but they
+are not the same set of games (the descriptors are the whole rule-complete set),
+so `main` selects the population inside the pass. They are written to
+`$DIR/[rollout/]rule_population/<space>_t0-<t0>.npz` and
+`$DIR/[rollout/]rule_descriptors/<space>.npz` by this module's main; the figure
+scripts only read them.
+
+Usage: python -m spade.violation_divergence.rule_curvature
+       [--tree branches|rollout] [--t0 20|all]
 """
 
 import argparse
@@ -65,6 +76,7 @@ from spade.violation_divergence.rule_groups import rule_rows, spread_ratio
 TREE_VARIANT = {"branches": "", "rollout": "rollout"}
 SINK = 0        # position 0 is the attention sink and is dropped, as in straightness
 FIRST_TURN = 2  # theta index k is the turn at board position k + FIRST_TURN
+FIGURE_T0 = 20  # the population's fork position: FIGURE_GAME's own, so one dashed line
 ROW_BATCH = 128  # 128 seqs x 58 positions x 8192 codes x 4 B = 245 MB of codes
 
 
@@ -244,23 +256,47 @@ RULES = list(RULE_MEMBERS)
 
 @dataclass(frozen=True)
 class Population:
-    """The three rules' turning-angle curves over every game that carries them.
+    """The three rules' turning-angle curves over one selection of games.
 
     `n_games` and `members` are per rule and not one number: a rule takes every
     game with at least one of its member categories available at that game's t0,
-    so R3 is short by the three games where no opponent_only square exists, and a
-    rule's member composition varies from game to game. `sem` is over games.
+    and a rule's member composition varies from game to game. `sem` is over games.
     """
     mean: np.ndarray      # [n_rule, n_turn]
     sem: np.ndarray       # [n_rule, n_turn]
     n_games: np.ndarray   # [n_rule]
     members: np.ndarray   # [n_rule], mean member categories per game
     n_rollouts: int
-    t0_range: np.ndarray  # [2], the board positions the branches fork on
+    t0_range: np.ndarray  # [2], the board positions the selected games fork on
 
     @property
     def positions(self) -> np.ndarray:
         return np.arange(self.mean.shape[-1]) + FIRST_TURN
+
+
+@dataclass(frozen=True)
+class RuleCurves:
+    """The per-game curves a pass produces, before they are reduced to a Population.
+
+    Kept apart from `Population` because a pass and a population are not the same
+    set of games: the descriptor product needs every rule-complete game, while the
+    population is one fork position inside that pass.
+    """
+    curves: np.ndarray    # [n_game, n_rule, n_turn], NaN where the rule is absent
+    counts: np.ndarray    # [n_game, n_rule] member categories, NaN where absent
+    t0: np.ndarray        # [n_game], the position each game's branches fork on
+    n_rollouts: int
+
+    def at(self, t0: int | None) -> Population:
+        """The population forking at `t0`, or over every fork position when None."""
+        keep = np.ones(len(self.t0), bool) if t0 is None else self.t0 == t0
+        assert keep.any(), f"no game in this pass forks at t0 = {t0}"
+        curves, counts, forks = self.curves[keep], self.counts[keep], self.t0[keep]
+        n = np.isfinite(curves).sum(0)
+        return Population(np.nanmean(curves, 0),
+                          np.nanstd(curves, 0) / np.sqrt(np.maximum(n, 1)),
+                          np.isfinite(counts).sum(0), np.nanmean(counts, 0),
+                          self.n_rollouts, np.array([forks.min(), forks.max()]))
 
 
 def _game_rule_means(theta: np.ndarray,
@@ -305,7 +341,7 @@ def _game_rule_descriptors(d: np.ndarray, theta: np.ndarray,
 @dataclass(frozen=True)
 class RuleTables:
     """One space's two products from a single pass over the rule population."""
-    population: Population
+    curves: RuleCurves
     descriptors: np.ndarray  # [n_game, n_rule, 21], NaN where the rule is absent
     games: np.ndarray        # [n_game] game ids, the rows of `descriptors`
 
@@ -323,8 +359,19 @@ def rule_complete() -> list[int]:
     return listing["game_ids"]
 
 
-def build(tree: str, entry, device: str = "cpu", layer: int = LAYER) -> RuleTables:
-    """Every game's per-rule curve and descriptor, streamed a chunk of games at a time.
+def forks_at(t0: int | None) -> list[int]:
+    """The rule-complete games forking at `t0` (~80 of the 2000); all of them if None."""
+    if t0 is None:
+        return rule_complete()
+    meta = torch.load(variant_dir("divergence", False, "") / "branches" / "branches.pt",
+                      weights_only=True)
+    at = dict(zip(meta["game_id"].tolist(), meta["t0"].tolist()))
+    return [g for g in rule_complete() if at[g] == t0]
+
+
+def build(tree: str, entry, games: list[int], device: str = "cpu",
+          layer: int = LAYER) -> RuleTables:
+    """Each game's per-rule curve and descriptor, streamed a chunk of games at a time.
 
     Only the [n_game, n_rule, ...] tables of per-game means survive a chunk: the
     rollout tree's layer-5 activations are 4 GB and its codes are 16x wider. The
@@ -335,31 +382,28 @@ def build(tree: str, entry, device: str = "cpu", layer: int = LAYER) -> RuleTabl
     meta = torch.load(base / "branches" / "branches.pt", weights_only=True)
     acts = torch.load(base / "acts" / f"resid_post_{layer}.pt",
                       weights_only=True, mmap=True)
-    games = rule_complete()
     k = 1 if "rollout" not in meta else int(meta["rollout"].max()) + 1
     step = max(1, ROW_BATCH // (len(ROLE_NAMES) * k))
 
-    per_game, counts, f21 = [], [], []
+    per_game, counts, t0, f21 = [], [], [], []
     for start in range(0, len(games), step):
         chunk = [_branch_index(meta, g) for g in games[start:start + step]]
         d, theta = _geometry(acts, torch.cat([i for _, _, i in chunk]), entry, device)
         at = 0
-        for _, rows, i in chunk:
+        for g, rows, i in chunk:
             mean, n = _game_rule_means(theta[at:at + len(i)], rows)
             per_game.append(mean)
             counts.append(n)
+            t0.append(g.t0)
             f21.append(_game_rule_descriptors(d[at:at + len(i)],
                                               theta[at:at + len(i)], rows))
             at += len(i)
         if start % (100 * step) == 0:
             print(f"  {start + len(chunk)}/{len(games)} games", flush=True)
 
-    G, C = np.array(per_game), np.array(counts)
-    n = np.isfinite(G).sum(0)
-    pop = Population(np.nanmean(G, 0), np.nanstd(G, 0) / np.sqrt(np.maximum(n, 1)),
-                     np.isfinite(C).sum(0), np.nanmean(C, 0), k,
-                     np.array([int(meta["t0"].min()), int(meta["t0"].max())]))
-    return RuleTables(pop, np.array(f21), np.array(games))
+    curves = RuleCurves(np.array(per_game, dtype=np.float32),
+                        np.array(counts, dtype=np.float32), np.array(t0), k)
+    return RuleTables(curves, np.array(f21), np.array(games))
 
 
 def space_key(entry) -> str:
@@ -368,58 +412,76 @@ def space_key(entry) -> str:
     return f"resid_post_{LAYER}" if entry is None else f"sae_{entry.config}"
 
 
-def _cache(kind: str, tree: str, entry) -> Path:
+def t0_key(t0: int | None) -> str:
+    return "all" if t0 is None else str(t0)
+
+
+def population_path(tree: str, entry, t0: int | None) -> Path:
+    """The fork position is in the file name: a population at another t0 is another
+    population, and skip-if-exists must not hand one back for the other."""
     return (variant_dir("divergence", False, TREE_VARIANT[tree])
-            / kind / f"{space_key(entry)}.npz")
+            / "rule_population" / f"{space_key(entry)}_t0-{t0_key(t0)}.npz")
 
 
-def _load(kind: str, tree: str, entry):
-    path = _cache(kind, tree, entry)
+def descriptor_path(tree: str, entry) -> Path:
+    return (variant_dir("divergence", False, TREE_VARIANT[tree])
+            / "rule_descriptors" / f"{space_key(entry)}.npz")
+
+
+def _read(path: Path, tree: str, t0: int | None):
     assert path.exists(), (
         f"{path} is missing -- run `python -m spade.violation_divergence."
-        f"rule_curvature --tree {tree}` (SLURM: submit_rule_population.sbatch)")
+        f"rule_curvature --tree {tree} --t0 {t0_key(t0)}` "
+        f"(SLURM: submit_rule_population.sbatch)")
     return np.load(path)
 
 
-def population(tree: str, entry) -> Population:
-    z = _load("rule_population", tree, entry)
+def population(tree: str, entry, t0: int | None) -> Population:
+    """The rule curves over the games forking at `t0` (None = every fork position)."""
+    z = _read(population_path(tree, entry, t0), tree, t0)
     return Population(z["mean"], z["sem"], z["n_games"], z["members"],
                       int(z["n_rollouts"]), z["t0_range"])
 
 
 def descriptors(tree: str, entry) -> tuple[np.ndarray, np.ndarray]:
     """([n_game, n_rule, 21] ReStraV descriptors, [n_game] game ids)."""
-    z = _load("rule_descriptors", tree, entry)
+    z = _read(descriptor_path(tree, entry), tree, None)
     return z["f21"], z["games"]
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--tree", default="branches", choices=list(TREE_VARIANT))
+    parser.add_argument("--t0", default=str(FIGURE_T0),
+                        help="fork position of the population, or 'all' to pool")
     args = parser.parse_args()
+    t0 = None if args.t0 == "all" else int(args.t0)
 
     device = select_device()
     for label, entry in spaces():
-        missing = [k for k in ("rule_population", "rule_descriptors")
-                   if not _cache(k, args.tree, entry).exists()]
+        paths = {"rule_population": population_path(args.tree, entry, t0),
+                 "rule_descriptors": descriptor_path(args.tree, entry)}
+        missing = [k for k, p in paths.items() if not p.exists()]
         if not missing:
             print(f"{label:34} cached")
             continue
         print(f"{label:34} building {' '.join(missing)}", flush=True)
-        t = build(args.tree, entry, device)
-        pop = t.population
+        # The descriptors are the whole rule-complete set (the straightness study's
+        # feature_pca reads them); the population is one fork position inside it.
+        games = rule_complete() if "rule_descriptors" in missing else forks_at(t0)
+        t = build(args.tree, entry, games, device)
+        pop = t.curves.at(t0)
         write = {"rule_population": dict(mean=pop.mean, sem=pop.sem,
                                          n_games=pop.n_games, members=pop.members,
                                          n_rollouts=pop.n_rollouts,
                                          t0_range=pop.t0_range),
                  "rule_descriptors": dict(f21=t.descriptors, games=t.games)}
         for k in missing:
-            path = _cache(k, args.tree, entry)
-            path.parent.mkdir(parents=True, exist_ok=True)
-            np.savez(path, **write[k])
+            paths[k].parent.mkdir(parents=True, exist_ok=True)
+            np.savez(paths[k], **write[k])
         print(f"{label:34} " + "  ".join(
-            f"{r.split()[0]} {np.nanmean(m):.2f}deg n={g} members={c:.2f}"
-            for r, m, g, c in zip(RULES, pop.mean, pop.n_games, pop.members)), flush=True)
+            f"{r.split()[0]} {np.nanmean(m):.2f}deg n={g} members={x:.2f}"
+            for r, m, g, x in zip(RULES, pop.mean, pop.n_games, pop.members)), flush=True)
 
 
 if __name__ == "__main__":
