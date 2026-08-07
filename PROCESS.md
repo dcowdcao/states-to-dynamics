@@ -1802,3 +1802,68 @@ categories; the two `ratio_illegal_control_L5` values differ by 0.4% and should 
 pinned to one scope. And the rollout tree is temperature 1.0, seed 42, K = 4 only —
 nothing here separates "the branch move does not matter" from "temperature-1 sampling
 swamps it".
+
+## A number under the fork panels: how far each branch runs, in the plane and in the space
+
+`fork_and_board` and `game_trajectory` both draw a fork and both asked the reader to
+eyeball how far each branch travels from the reference. Neither answered it. Both now
+carry a panel (c) that does: per branch, the mean distance from the reference over the
+drawn offsets r >= 0 (`branch_panels.plane_displacement`, already in `src`), measured
+in the plane the fork panel draws.
+
+**The number is a ratio, and it had to be.** A refit plane's units are its space's
+own: the same control branch sits 2.80 from the reference in raw layer 5 and 0.0036 in
+SpaDE's code, a factor of ~800 for the same game and the same move. Nine such numbers
+side by side in one bar chart would be nine unit systems, and a bar chart invites
+exactly the comparison that makes no sense. So (c) divides every branch's distance by
+the same cell's `control_legal`, which is dimensionless, is a within-cell contrast by
+construction, and is the form the rest of the study already argues in. The reference is
+then 0 and the control 1 in every cell, both by construction, and the divisor is in the
+axis label rather than the caption because a reader who misses it misreads the panel.
+
+**Measuring the plane is not measuring the space, and the gap is large.** The plane is
+the top two PCs of the branches it draws, so it is fit where the largest of them travel
+and holds a different share of each: in raw layer 5 it carries 30% of the control's
+displacement and 81% of `opponent_only`'s. The ratio read off the plane is inflated by
+exactly the ratio of those shares — 1.53 x (0.810/0.303) = 4.08, an identity, not an
+approximation. So every bar in (c) carries an open marker: the same ratio measured in
+that cell's *full* space (the SAE's 8192-d code, or the column-scaled Δφ in R^21). The
+gap between the two is the part of the plane's answer that is about the plane.
+
+That pair is also what makes the across-cell reading defensible. Displacement, spliced,
+R3: the bars run 3.81-6.18 over the nine cells and the markers 1.34-1.61. Nine times
+the spread, and it is the plane fit moving rather than the spaces differing. The
+READMEs say to read differences between cells off the markers.
+
+Numbers worth keeping (game 1235, layer 5, mean over r = 0, 2, ..., 24, x the cell's
+control, plane | full space): raw layer 5 R1 1.22|1.05, R2 2.43|1.20, R3 4.08|1.53.
+`game_trajectory`'s (c) draws all nine branches including `control_legal_2`, and that
+row is the one to read: a second legal move sits 1.31x the control's distance from the
+reference in the full 512-d space — further than four of the six illegal branches.
+Under `--variant rollout` everything collapses toward 1 and R1 falls *below* it in
+every cell, which is the saturation `../fork_and_board/README.md` documents, as one
+number per rule.
+
+**One cell sets the y scale of the R^21 rollout panel and it is not an artifact.**
+CosineSpaDE's control has the smallest Δφ of the nine cells (1.72 against 2.4-4.6)
+while its illegal branches are among the largest, so its ratios reach 12.3 in the plane
+and 5.1 in the space and the other eight compress against them. The axis is not capped
+and no bar is broken — one linear axis from zero is what a bar chart owes the reader,
+and a cap would have needed a threshold constant to hide one real cell. It is the
+sharpest available illustration of the panel's own rule: these are within-cell numbers.
+
+Layout: (c) is a third full-width row under the board in `fork_and_board` (the canvas
+grows by its height plus one row gap, so the fork grid and the board stay within 0.4%
+of their previous size) and a third column in `game_trajectory` (the canvas grows by
+its width, so (a) and (b) are untouched). Nine cells x five series is 45 numbers; none
+of it goes inside the fork panels.
+
+Verification: all ten checked-in outputs were re-rendered before the change and
+compared. The six PNGs came back byte-identical; the four PDFs differed in 6 bytes
+each, the `/CreationDate` string, and were identical in size and content. So the fork
+geometry the addition sits under is unchanged.
+
+Left open: the metric carries no interval over games — n = 1, like the figures it sits
+in — and the only spread on it is over a rule's member categories (n = 2, 3, 1). A
+population version of "how far does a rule run, relative to a legal control" would
+belong in `../README.md` with a bootstrap over games, and does not exist yet.
