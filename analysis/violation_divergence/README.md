@@ -40,6 +40,45 @@ python analysis/violation_divergence/probe_readout/decode.py       --variant rol
 python analysis/violation_divergence/probe_readout/make_figures.py --variant rollout
 ```
 
+## The rule-complete 2000
+
+`opponent_only` is R3's only member and three of the original 2000 games offer no
+`opponent_only` candidate at their *t0*, so a curve drawn per constraint rule read
+n = 2000, 2000, **1997**. Three further source games that admit every rule were
+drawn from the same stream at the same seed and **appended**: the tree now holds
+2003 games, 2000 of them rule-complete.
+
+```
+sbatch scripts/slurm/studies/violation_divergence/submit_extend_branches.sbatch         # + re-extract acts
+sbatch scripts/slurm/studies/violation_divergence/submit_extend_rollout_branches.sbatch # + re-extract rollout acts
+```
+
+**Appended, never redrawn.** `game_id` is the accepted-game index, so redrawing
+under a rule-complete acceptance test renumbers every game — moving `FIGURE_GAME`,
+the branches.pt ↔ `acts/*.pt` row alignment, the rollout tree's
+`row = source_row * K + k`, and every score in `game_selection/`.
+`extend_branches` replays all 2000 existing games from the stream, asserts every
+saved column equal to the tensor on disk, and only then appends from where the
+stream stopped; it re-asserts the original rows byte-identical after the write.
+Games are taken in stream order and never searched, so the appended set is
+conditioned on rule membership and on no measured outcome.
+
+**The ids are a file, not a rule to re-derive.**
+`$DIR/branches/rule_complete_games.json` carries the 2000 ids next to the criterion
+that produced them; a per-rule figure should read it rather than rebuild the
+membership test. The three games it drops are **582, 1268 and 1869**. `game_id` is
+shared by both trees, so the rollout tree reads the same file.
+
+The appended games take the round-robin's next *t0*s, so the rule-complete
+population is not quite flat in *t0*: 81 games at 10, 11 and 12 against 79 at 17, 28
+and 29 (the dropped games' offsets) and 80 everywhere else.
+
+`compute_divergence` skips a space whose npz exists, and the npz is a whole-tree
+artifact with no per-row path, so extending the tree means **deleting
+`$DIR[/rollout]/divergence/*.npz` and recomputing all 17 spaces**. Anything else
+cached off the branch tensors — `rule_population/`, `curvature_discriminant/`,
+`fork_*/` — is stale at 2000 games until it is deleted too.
+
 ## The result in one paragraph
 
 OthelloGPT does not treat an illegal move as illegal. It writes the disc onto its
