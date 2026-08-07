@@ -1,0 +1,172 @@
+# Divergence by space: how far the fork panels' branches actually run
+
+The fork grids in `../fork_and_board` and `../game_trajectory` draw the branches
+separating in nine representation spaces, and a 3-D projection can only ever show the
+*shape* of that separation. The question it poses and cannot answer is how much: at
+r = +6, is the illegal branch twice as far from the reference as a second legal move, or
+a tenth as far? This is that number, on the study's event-locked axis, over the whole
+population.
+
+It is the companion to those figures, not a standalone result. Same nine cells in the
+same order with raw layer 5 first, same rule grouping, same `branch_style` colours and
+markers, same control-as-null. `../make_figures.py`'s F1 is the thing it replaces: F1
+draws δ̂ = ‖Δ‖ / ‖z_ref‖ at layer 5 and nowhere else, on a raw activation axis that no
+fork panel is drawn in.
+
+```
+python analysis/violation_divergence/divergence_by_space/measure.py       [--variant rollout]
+python analysis/violation_divergence/divergence_by_space/make_figures.py  [--variant rollout] [--camera-ready]
+```
+
+`measure.py` writes `$SPADE_DIVERGENCE_DIR[/rollout]/divergence_by_space/curves.npz`
+(~35 min for the spliced tree on one core, I/O-bound); `make_figures.py` reads it and
+writes the figure plus `results/violation_divergence/divergence_by_space[_rollout].csv`,
+one row per (space, series, measured_in, r) with the mean and its 95% CI.
+
+## The figures
+
+`figures/divergence_by_space.{png,pdf}` — the rollout twin lands in a follow-up commit.
+
+**In the plane the fork panels draw, R2 and R3 run 6–24% further from the reference than
+a legal alternative does — and roughly half of that is the plane, not the branch.** One
+panel per representation space, raw layer 5 first so the eye calibrates on the reference
+space (§4.6). x is r = s − t₀, event-locked to the branch move: the dashed vertical rule
+is the branch position, the shaded band left of it is the shared prefix, where every
+branch is bitwise identical to the reference and the distance is 0 by construction. y is
+each branch's distance from the reference branch, **in the same 2-D PCA plane its fork
+panel is drawn in** (solid, filled markers), with the same distance in that cell's full
+space underneath (dotted, open markers); both divided by the same cell's own legal
+control, so the null sits at 1 on average over r ≥ 0. One curve per constraint rule, the
+mean over its member categories (n = 2, 3, 1) with the members drawn faint behind it;
+`control_legal` is the null, in gray. Bands are 95% CIs of the mean over **n = 1553
+branch-complete source games** — one game is one item, so no clustering correction — and
+are about ±0.015 wide, hairline at this n. t₀ round-robins over [10, 34] and the window
+is r ∈ [−8, +24] sampled every 2 plies at t₀'s parity, so every game contributes to every
+offset and n is constant across the x-axis. Panels whose plane curve leaves the y-cap
+carry the value they reach.
+
+`../fork_and_board`'s panel (c) is **this same quantity collapsed over r ≥ 0** — the bar
+is the in-plane curve's mean, the open marker is the full-space curve's mean, and the
+divisor is identical. Read the two together: (c) gives one number per rule per space for
+one illustrative game, this gives the whole trajectory of that number over 1553.
+
+## Why the plane, and what the plane costs
+
+The y quantity is `branch_panels.plane_displacement`'s rule, resolved in r instead of
+averaged over it: the in-plane distance from the reference branch, where the plane is the
+uncentred top-2 PCA of the displacement D(t) = z_b(t) − z_ref(t), refit per game and per
+space exactly as `fork_plane.pca2` fits it. The reference's D is exactly zero, so it
+projects to the origin and distance-from-the-reference and distance-from-the-origin are
+the same number.
+
+A plane holds only part of a displacement, and a different part of each branch, so a
+branch that leaves the plane reads as a branch that stayed near the reference. That is
+why the full-space distance ‖D‖ rides underneath every in-plane curve. Mean over r ≥ 0,
+spliced tree, as a multiple of the cell's legal control:
+
+| space | R1 plane \| full | R2 plane \| full | R3 plane \| full |
+|---|---|---|---|
+| raw layer 5 | 0.993 \| 0.905 | 1.142 \| 1.009 | 1.122 \| 1.009 |
+| PAnneal | 0.992 \| 0.905 | 1.140 \| 1.009 | 1.123 \| 1.010 |
+| Standard | 1.007 \| 0.909 | 1.197 \| 1.026 | 1.163 \| 1.018 |
+| GatedSAE | 0.983 \| 0.900 | 1.064 \| 0.972 | 1.070 \| 0.987 |
+| TopK | 0.973 \| 0.895 | 1.064 \| 0.978 | 1.069 \| 0.993 |
+| GatedAnneal | 0.984 \| 0.897 | 1.071 \| 0.971 | 1.072 \| 0.983 |
+| BatchTopK | 0.988 \| 0.899 | 1.086 \| 0.979 | 1.085 \| 0.993 |
+| CosineSpaDE | 1.017 \| 0.918 | 1.236 \| 1.016 | 1.206 \| 1.013 |
+| SpaDE | 1.019 \| 0.920 | 1.213 \| 1.019 | 1.176 \| 1.013 |
+
+**The plane inflates the rule/control ratio in 27 of 27 cells, median 1.108×, range
+1.077–1.217.** The two SpaDE codes inflate most (1.16–1.22 on R2/R3), TopK least (1.08).
+The single-game figures report a much larger inflation — `../fork_and_board`'s game 1235
+reaches 4.08 in the plane against 1.53 in the full space, 2.7× — because that game is an
+argmax over branch separation, not a draw. Over the population the inflation is about
+11%, and the honest reading of a fork panel is "the spread you see is roughly a tenth
+larger than the branch actually is", not "several times".
+
+The sharpest place to see the mechanism is r = 0 in raw layer 5. In the full space the
+legal control is displaced 1.384× the window mean and R2 1.528×, a 10% gap. In the plane
+the control is 1.133× and R2 1.711×, a 51% gap. The plane is fit where the *illegal*
+branches travel, so it keeps 51% more of R2's displacement than of the control's, and
+the ratio read off it is that difference in shares, not a difference in distance.
+
+## What the full space says
+
+**No rule ends up further from the reference than a legal alternative does.** Over r ≥ 0
+the full-space ratios are 0.895–0.920 for R1, 0.971–1.026 for R2 and 0.983–1.013 for R3;
+nothing exceeds the control by more than 2.6% and R1 sits 8–10% below it in every space.
+This reproduces the parent study's `ratio_illegal_control_L5` = 0.979 in a different
+estimator (in-plane-fit spaces, per-game control normalisation, stride-2 window) and
+extends it from layer 5 to all eight dictionaries. **Eight SAE dictionaries do not make
+an illegal move look further away than a legal one.** The one thing that changes across
+the grid is how much the *plane* exaggerates.
+
+## Cross-panel comparability
+
+The plane is refit per game and per space, and its units are the space's own. Measured
+here, the legal control's mean full-space displacement runs from **13.19 in raw layer 5 to
+0.0225 in SpaDE — 585×** for the same branches in the same games. Nine raw curves side by
+side would be nine unit systems, and nine panels side by side get compared whatever a
+disclaimer says. Every curve is therefore divided by **that cell's own `control_legal`,
+averaged over r ≥ 0**: dimensionless, a within-cell contrast by construction, the null at
+1 by construction, and the same form `../fork_and_board`'s panel (c) and the parent
+study's `ratio_illegal_control_L5` already use. The divisor is in the y-axis label rather
+than only here, because a reader who misses it misreads every panel.
+
+A scalar divisor, not the control's curve: dividing pointwise would pin the control to a
+flat 1 and throw away its shape, and 0/0 in the shared prefix. With a scalar the control
+keeps its own trajectory and averages to 1.
+
+## The rollout variant
+
+`--variant rollout` reads the tree where every branch, the reference included, samples
+its own continuation from OthelloGPT instead of replaying the source game's. A branch is
+K = 4 rows there, and the reduction is `../fork_and_board`'s, not F1's: each rollout is
+differenced against **the reference drawn from its own uniform stream** (rows are
+K-contiguous and the sampler is keyed on (game, k)) and the K displacement *vectors* are
+averaged before the plane is fit, so the plane here is the plane those fork panels draw.
+F1's `reduce_k` averages the scalar δ̂ instead. The two differ: averaging vectors cancels
+whatever is incoherent across a branch's four samples, so magnitudes here are
+systematically smaller than a scalar mean over K would give. Dividing by the control
+removes most of that and not all of it, and **the size of the residual is not measured** —
+it would take a second pass with the other reduction.
+
+That tree saturates. Past r = +8 the illegal and control δ̂ agree to within 0.5% and cross
+by r = +13, so both classes are climbing toward the divergence of unrelated activations
+whatever legality does (`../README.md`). The figure draws the whole window and **shades
+r ≥ 8 as not-evidence** rather than stopping there, because the event-locked shape before
+that point is the content and a truncated axis hides where the saturation starts.
+
+The rollout figure and its numbers are not in this commit; the sweep is still running.
+
+## Choices and limits
+
+- **Stride 2, not every ply.** `fork_plane.positions` samples at t₀'s parity because the
+  board code is mover-relative and alternates each ply; the plane is the fork panels'
+  plane only if it is fit on the positions they draw. F1's every-ply axis is the raw-δ̂
+  figure's; this one inherits the fork rule. Cost: 17 offsets instead of 33.
+- **`control_legal_2` is dropped**, from the plane fit and from the panels, exactly as
+  `../fork_and_board` drops it — a second legal move is the null *for* the control and
+  belongs where the control is measured. Its rows are in the npz for anyone who wants the
+  legal-vs-legal null in this metric; nothing here draws it.
+- **n = 1553 is `complete_games`**, the games carrying the reference, both controls and
+  all six illegal categories. That fixes each rule mean's composition at 2/3/1 members in
+  every game, so a rule's curve is not partly a change in which categories it averages.
+  The weaker `rule_complete_games` population (2000) would let that vary.
+- **The rule means hide a weak grouping.** `rule_groups` measures within- ÷ between-rule
+  spread of the displacements at 0.945 [IQR 0.872–1.020] on this same population and
+  field, i.e. a rule's members travel barely closer to each other than to another rule's.
+  The figure carries that number and draws the members faint; three confident lines
+  should not be read as three coherent classes.
+- **Seed 42 only**, like the rest of the study.
+- **The y-cap is 2.0** and the two SpaDE panels' r = 0 spike runs past it; the value it
+  reaches is printed in-panel. One shared y-axis is the point of the normalisation, and
+  the alternative — a top set by one cell's spike — leaves the plateau, where the claim
+  is, in the bottom eighth of every panel.
+- **Not measured here**: whether the inflation is the plane's *variance share* per branch
+  (the `../fork_and_board` identity ratio_plane = ratio_full × share_illegal/share_control
+  predicts it exactly, and the shares are not written out by `measure.py`). Adding the
+  per-branch share would settle it in one more column.
+- `fork_plane.space_features` rebuilds the SAE encoder on every call, so it costs a
+  checkpoint load per game. `measure.py` builds the nine encoders once instead; the fix
+  belongs in `src` and is not made here.

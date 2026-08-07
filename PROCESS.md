@@ -6,6 +6,41 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The fork panels get their magnitude, over the population and along r (2026-08-07)
+
+Branch `nfig/divergence-by-space`, worktree `../spade_sae_worktrees/divergence-by-space`.
+New directory `analysis/violation_divergence/divergence_by_space/`; nothing existing
+changed. It is the companion the fork grids were missing (FIGURE_GUIDELINES §4.8): a 3-D
+projection shows the shape of a fork and never its size, so the reader could not tell how
+far a branch went. `../fork_and_board`'s panel (c) answers that for one game as one number
+per rule; this adds the **r axis and the population**, 3x3 over the nine spaces, mean over
+1553 branch-complete games with 95% CIs.
+
+**The plane inflates, but by a tenth, not by several times.** In-plane ÷ full-space ratio
+to the cell's control is above 1 in **27 of 27** illegal cells, median **1.108**, range
+1.077-1.217. The single-game figures report 2.7x on the same contrast (game 1235, raw
+layer 5, R3: 4.08 in the plane against 1.53 in the space) — that game is an argmax over
+branch separation, not a draw, and the population number is the one to quote when reading
+a fork panel. The mechanism is visible at r = 0 in raw layer 5: the plane keeps 51% more
+of R2's displacement than of the control's (1.711 vs 1.133) where the full space keeps
+10% more (1.528 vs 1.384), so the in-plane ratio is a difference in retained *shares*.
+
+**In the full space nothing outruns the legal control, in any of the eight dictionaries.**
+0.895-0.920 (R1), 0.971-1.026 (R2), 0.983-1.013 (R3). That re-derives the study's
+`ratio_illegal_control_L5` = 0.979 through a different estimator and extends it off layer
+5. What varies across the grid is how much the plane exaggerates, not what the branches do.
+
+**Two kernels worth keeping.** One Gram matrix G = D Dᵀ gives both distances — full space
+is sqrt(diag G), in-plane is the top-2 eigenvector rows scaled by their eigenvalues — so
+the 8192-wide basis is never formed and 1553 games x 9 spaces is ~35 min on one core.
+And `measure.py` writes **raw** distances, normalising at figure time: the raw scales are
+themselves a result (the control's displacement runs 13.19 in raw layer 5 to 0.0225 in
+SpaDE, **585x**), and they are what makes the ÷control form mandatory rather than tidy.
+
+Gotcha for anyone else sweeping spaces: `fork_plane.space_features` calls `sae_encoder`
+on every invocation, so it reloads a checkpoint per game — 57 s each here. Build the nine
+encoders once. The fix belongs in `src` and was not made from this worktree.
+
 ## The fork panels' excursion is mostly the plane (2026-08-07)
 
 Branch `nfig/fig-plane-metric-r21`, worktree `../spade_sae_worktrees/fig-plane-metric-r21`.
