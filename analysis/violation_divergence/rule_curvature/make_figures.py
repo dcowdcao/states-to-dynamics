@@ -297,12 +297,6 @@ def combined_population(forks: list[tuple[str, object, rc.Fork]], tree: str,
                           left=0.07, right=0.98, top=0.90, bottom=0.03, hspace=0.30)
     grid = gs[0].subgridspec(nrow, NCOL, wspace=0.12, hspace=0.42)
 
-    head = fig.add_subplot(gs[0])
-    head.axis("off")
-    head.patch.set_visible(False)
-    head.set_title("(a) the population's curvature clock in every representation "
-                   "space", loc="left", fontsize=11, pad=16)
-
     axes = []
     for j, (_, entry, fork) in enumerate(forks):
         ax = fig.add_subplot(grid[j // NCOL, j % NCOL],
