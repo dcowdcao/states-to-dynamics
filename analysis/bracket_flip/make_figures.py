@@ -21,8 +21,7 @@ from matplotlib.ticker import MaxNLocator, PercentFormatter
 
 from spade.figures.othello_board import draw_board, square_xy
 from spade.figures.paper_style import (
-    INK, MUTED, NULL, PROBE_STYLE, SQUARE_ROLE_STYLE, apply_style, role_key,
-    save_figure)
+    INK, MUTED, NULL, PROBE_STYLE, SQUARE_ROLE_STYLE, apply_style, save_figure)
 from spade.figures.straightness_panels import kde_ci
 
 HERE = Path(__file__).resolve().parent
@@ -52,7 +51,7 @@ def panel_letter(ax, i: int) -> None:
 
 
 def field_panel(ax, field: pd.DataFrame, basis: str, accuracy: float, ceiling: float,
-                note_xy: tuple[float, float], annotate: bool = False) -> None:
+                annotate: bool = False) -> None:
     """One arrow per square role, tail = before, head = after the flanking move.
 
     The bars are on the displacement, not on the head: an arrow asserts a change,
@@ -93,12 +92,6 @@ def field_panel(ax, field: pd.DataFrame, basis: str, accuracy: float, ceiling: f
                     marker="X", ms=9, color=style["color"], lw=0, elinewidth=0.9,
                     ecolor=INK, markeredgecolor="white", markeredgewidth=1.0,
                     zorder=6, label="flipped square, after $m'$")
-        lo, hi = sorted(abs(v) for v in (r.gap_x_lo, r.gap_x_hi))
-        ax.text(*note_xy, f"$s$ after $m$ vs after $m'$:\n{abs(r.gap_x):.2f} logits "
-                          f"apart in $x$\n[95% CI {lo:.2f}, {hi:.2f}]",
-                transform=ax.transAxes, ha="right", fontsize=7.5,
-                va="top" if note_xy[1] > 0.5 else "bottom",
-                color=style["color"], zorder=7)
         if annotate:  # the fill convention is the panel's whole grammar
             for x, y, text, offset, ha, va in [
                     (r.before_x, r.before_y, "before", (-4, -10), "right", "top"),
@@ -144,9 +137,6 @@ def board_panel(ax, event: pd.DataFrame, meta: pd.Series) -> None:
                     color=SQUARE_ROLE_STYLE[role]["color"], zorder=5,
                     fontweight="bold")
     ax.set_title(f"one event ($t$={int(meta.t)}): the board before $m$")
-    ax.set_xlabel("discs in absolute colour; shading = role\n"
-                  "$m$ flanks $s$, so $s$ turns the mover's colour;\n"
-                  "$m'$ (dashed) is the matched non-flipping move", fontsize=7.5)
 
 
 def figure_one(camera_ready: bool) -> None:
@@ -166,11 +156,10 @@ def figure_one(camera_ready: bool) -> None:
     absolute = fig.add_subplot(gs[1, 1], sharex=native, sharey=native)
 
     board_panel(board, event, meta)
-    # The note goes in whichever corner the basis leaves empty.
     field_panel(native, field, "relative", accuracy.acc_tpr_relative,
-                accuracy.ceiling_relative, (0.98, 0.04), annotate=True)
+                accuracy.ceiling_relative, annotate=True)
     field_panel(absolute, field, "absolute", accuracy.acc_tpr_absolute,
-                accuracy.ceiling_absolute, (0.98, 0.96))
+                accuracy.ceiling_absolute)
     for i, ax in enumerate((board, native, absolute)):
         panel_letter(ax, i)
     fig.legend(*native.get_legend_handles_labels(), loc="upper left",
@@ -180,7 +169,6 @@ def figure_one(camera_ready: bool) -> None:
         fig.suptitle(f"Layer {layer} codes the board mover-relatively: a TPR trained "
                      "on absolute colour separates occupied from empty and no more",
                      y=0.99)
-    role_key(fig, ROLES)
     save_figure(fig, FIGURES / "fig1_flip_and_basis", camera_ready)
 
 
@@ -207,10 +195,7 @@ def share_inset(ax, shares: pd.DataFrame, n_events: int) -> None:
     ins.xaxis.set_major_formatter(PercentFormatter(decimals=0))
     ins.tick_params(labelsize=6.5, length=2, pad=1.5)
     ins.grid(axis="y", visible=False)
-    ins.set_title(r"share of $\|\Delta'\|^2$ along it"
-                  f"\nswap {d.loc['swap'].share:.1%}, residual "
-                  f"{d.loc['resid'].share:.1%}; 95% CI",
-                  fontsize=6.5, pad=3)
+    ins.set_title(r"share of $\|\Delta'\|^2$ along it", fontsize=6.5, pad=3)
 
 
 def specificity_panel(ax, cos: pd.DataFrame, shares: pd.DataFrame) -> None:
@@ -254,29 +239,11 @@ def specificity_panel(ax, cos: pd.DataFrame, shares: pd.DataFrame) -> None:
                   "\n" r"$\Delta'$ = act(P+$m$) $-$ act(P+$m'$), flip-attributable")
     ax.set_ylabel(f"density over events (n = {len(d):,})")
     ax.set_title("the displacement has a flip-specific direction")
-    ax.legend(loc="upper left", fontsize=6.5,
-              title="median per series; bars at the markers:\n"
-                    "95% percentile bootstrap over the same\n"
-                    f"{len(d):,} events (1,000 resamples; Gaussian KDE,\n"
-                    "Scott's rule, bandwidth at the full sample)",
-              title_fontsize=6.5, labelspacing=0.3)
+    ax.legend(loc="upper left", fontsize=6.5, labelspacing=0.3)
     share_inset(ax, shares, len(d))
 
 
-def base_mass_gap(per_event: pd.DataFrame) -> tuple[float, float]:
-    """How far apart the two diagnostic sets start, and what that costs in
-    resolution: the median real-minus-counterfactual base log-mass, and the
-    Delta log-mass the real-only set would show at the smallest TPR edit if it
-    had donated the whole counterfactual gain."""
-    d = per_event[per_event.method.eq("tpr") & per_event.scale.eq(1.0)
-                  & per_event.population.eq("flipped")].dropna(
-                      subset=["base_lp_cf", "base_lp_real"])
-    gain = np.exp(d.base_lp_cf + d.d_lp_cf) - np.exp(d.base_lp_cf)
-    return (float((d.base_lp_real - d.base_lp_cf).median()),
-            float(np.log1p(-gain / np.exp(d.base_lp_real)).mean()))
-
-
-def causal_panel(ax, summary: pd.DataFrame, per_event: pd.DataFrame) -> None:
+def causal_panel(ax, summary: pd.DataFrame) -> None:
     """Effect against collateral over both edit sweeps, with the damage control
     the effect has to survive drawn behind it.
 
@@ -329,39 +296,25 @@ def causal_panel(ax, summary: pd.DataFrame, per_event: pd.DataFrame) -> None:
                             f"(n = {int(edits.d_lp_legal_n.iloc[0]):,}), "
                             rf"$|\Delta| \leq {bound:.2f}$")
     handles.insert(-1, band)  # the null keeps the last slot
-    gap, floor = base_mass_gap(per_event)
-    ax.annotate(f"the two sets start {gap:.1f} nats apart, so equal\n"
-                r"$\Delta$ log-mass is not equal probability: at the" "\n"
-                "smallest edit even a complete transfer moves\n"
-                f"the dotted curve {floor:+.4f} nats, inside its own CI",
-                (0.02, 0.02), xycoords="axes fraction", ha="left", va="bottom",
-                fontsize=6.5, color=MUTED, zorder=5)
     ax.set_xscale("log")
-    ax.set_xlabel("collateral: other squares (of 63) whose decoded class changed,\n"
-                  "scored by the decoder the edit was not built from (n = 1,370)"
+    ax.set_xlabel("collateral: other squares (of 63) whose decoded class changed"
                   "\n" r"$\leftarrow$ cleaner intervention")
     ax.set_ylabel(r"$\Delta$ next-move log-mass (nats)"
                   "\n" r"$\uparrow$ onto the un-flipped board's squares,"
                   "\n" r"$\downarrow$ off the real board's")
     ax.set_title("and editing along it moves mass toward the un-flipped board,\n"
                  "not off the legal set")
-    ax.set_ylim(top=1.85 * edits.d_lp_cf_hi.max())  # the legend is wide; keep it off the top label
+    ax.set_ylim(top=1.5 * edits.d_lp_cf_hi.max())  # room for the legend above the curves
     ax.legend(handles=handles, loc="upper left", fontsize=6.5, labelspacing=0.3,
               title_fontsize=6.5,
-              title="solid, filled = counterfactual-only legal squares "
-                    f"(n = {int(edits.d_lp_cf_n.iloc[0]):,})\n"
-                    "dotted, open = real-only legal squares "
-                    f"(n = {int(edits.d_lp_real_n.iloc[0]):,}); one switch, two sides\n"
-                    r"bars = 95% bootstrap CI; labels = $\|\delta\|/\|h\|$ "
-                    "(the knobs differ)")
+              title="solid = counterfactual-only squares, dotted = real-only")
 
 
 def figure_two(camera_ready: bool) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(9.6, 4.4))
     specificity_panel(axes[0], pd.read_csv(RESULTS / "flip_cos_per_event.csv"),
                       pd.read_csv(RESULTS / "variance_shares.csv"))
-    causal_panel(axes[1], pd.read_csv(RESULTS / "intervention_summary.csv"),
-                 pd.read_csv(RESULTS / "intervention_per_event.csv"))
+    causal_panel(axes[1], pd.read_csv(RESULTS / "intervention_summary.csv"))
     for i, ax in enumerate(axes):
         panel_letter(ax, i)
     if not camera_ready:
