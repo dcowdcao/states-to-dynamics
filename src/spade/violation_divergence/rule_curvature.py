@@ -22,14 +22,16 @@ times. A branch is therefore K sequences either way, and `Fork.theta` is
 [n_branch, K, n_turn] with K = 1 on the spliced tree, so nothing downstream has to
 know which tree it is reading.
 
-One game is not a population, so the same three rules are also measured over
-every source game (`build_population`). The straightness study cannot supply
+One game is not a population, so the same three rules are also measured over a
+population of games (`build_population`). The straightness study cannot supply
 them: its violation class is built from empty-square categories only and carries
-no R1 at all. Each rule takes every game that has at least one of its member
-categories at that game's t0 -- R1 and R2 in all 2000, R3 in 1997, the three
-missing ones being positions where no opponent_only square exists, so the
-violation cannot be constructed there at all. n is therefore per rule, and a
-rule's member composition varies by game. Written to
+no R1 at all. The population is the **rule-complete** set -- the 2000 games
+carrying at least one member of every rule, listed in `rule_complete_games.json`
+so the membership rule has one definition. Of the original 2000 source games only
+1997 qualified, three t0 offering no opponent_only square at all; `extend_branches`
+appended three more rather than let R3 run short, so all three rules share n =
+2000. A rule's member composition still varies by game (R2 averages under its
+three categories), which the figure caption states. Written to
 `$DIR/[rollout/]rule_population/<space>.npz` by this module's main; the figure
 script only reads them.
 
@@ -37,6 +39,7 @@ Usage: python -m spade.violation_divergence.rule_curvature [--tree branches|roll
 """
 
 import argparse
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -271,6 +274,19 @@ def _game_rule_means(theta: np.ndarray,
     return mean, n
 
 
+def rule_complete() -> list[int]:
+    """The games carrying at least one member of every rule, written by
+    `extend_branches`. Reading the list rather than re-deriving it keeps one
+    definition of the population and every rule on the same n.
+
+    Always the spliced tree's list: which rules a game admits is decided at t0 by
+    the board, so it is the same games whichever suffix follows.
+    """
+    base = variant_dir("divergence", False, "")
+    listing = json.loads((base / "branches" / "rule_complete_games.json").read_text())
+    return listing["game_ids"]
+
+
 def build_population(tree: str, entry, device: str = "cpu",
                      layer: int = LAYER) -> Population:
     """Every game's per-rule curve, streamed a chunk of games at a time.
@@ -282,7 +298,7 @@ def build_population(tree: str, entry, device: str = "cpu",
     meta = torch.load(base / "branches" / "branches.pt", weights_only=True)
     acts = torch.load(base / "acts" / f"resid_post_{layer}.pt",
                       weights_only=True, mmap=True)
-    games = meta["game_id"].unique().tolist()
+    games = rule_complete()
     k = 1 if "rollout" not in meta else int(meta["rollout"].max()) + 1
     step = max(1, ROW_BATCH // (len(ROLE_NAMES) * k))
 

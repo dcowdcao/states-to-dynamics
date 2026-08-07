@@ -6,8 +6,9 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=0-02:00:00
-#SBATCH --output=logs/violation_divergence/%x_%j.out
-#SBATCH --error=logs/violation_divergence/%x_%j.err
+#SBATCH --array=0-1
+#SBATCH --output=logs/violation_divergence/%x_%A_%a.out
+#SBATCH --error=logs/violation_divergence/%x_%A_%a.err
 
 set -e
 module load python
@@ -25,5 +26,7 @@ mkdir -p logs/violation_divergence
 # over every source game, in all nine spaces, per tree. 2000 games x ~9 branches
 # x K rollouts encoded per space -- a login node with one core takes ~3 h and is
 # capped at 8 GB. Resumable: a space whose npz exists is skipped.
-python -m spade.violation_divergence.rule_curvature --tree branches
-python -m spade.violation_divergence.rule_curvature --tree rollout
+# One array task per tree: they read different tensors and share nothing, so
+# running them in sequence only doubled the wall clock.
+TREE=(branches rollout)
+python -m spade.violation_divergence.rule_curvature --tree "${TREE[$SLURM_ARRAY_TASK_ID]}"
