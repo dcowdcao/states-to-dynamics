@@ -125,8 +125,12 @@ which it does not.
 The figure carries no prose. What a reader needs in order not to over-read it is
 here (FIGURE_GUIDELINES §2, §5); what stays inside the figure is the apparatus
 that cannot be looked up while looking at it — panel titles and letters, axis
-labels, the legend, the in-panel "0 by construction" annotation, and the R1/R2/R3
-key naming each rule's member categories.
+labels, the legend, the in-panel "0 by construction" annotation (§4.2), the
+R1/R2/R3 key naming each rule's member categories (§5), (c)'s estimator and drawn
+window on (c)'s own x axis, and **one line saying game 1235 was selected**, which
+is the one fact whose absence changes how the panels read. The rollout variant's
+thirteen-line caveat used to sit inside the δ̂ panel's pre-branch band; it is in
+*[The rollout variant](#the-rollout-variant)* below and nowhere else.
 
 ### `game_1235_fork_pca`
 
@@ -158,7 +162,8 @@ branch-complete games, of the mutual separation of its six illegal displacement
 trajectories, scored in raw layer 5 in the full 512-dimensional space and never in
 an SAE space or a 2-D projection (`../game_selection`). Population median 0.705;
 this game 1.080. A reader who does not know the game was chosen will over-read the
-panels.
+panels, so the figure carries this as one line under the legend, drawn only for
+the default game.
 
 **n = 1: an illustration of the design, not a claim.** The per-position wobble in
 (b) is real variation in this game, not noise the aggregate figures smoothed away.
@@ -184,10 +189,10 @@ the displacement `Δ` over the branch's four rollouts and then projects — the
 plane is an uncentred linear map, so mean-then-project and project-then-mean
 agree. Panel (b) averages **δ̂ itself**, after the norm: `‖mean_k Δ_k‖` cancels
 the sampling noise the four rollouts differ by and is a smaller, different
-quantity from the typical displacement. The panel says so in place. **(c)
-inherits both**: its bar is a distance in (a)'s K-averaged plane and its marker
-is the mean of (b)'s K-averaged δ̂, so the two marks on one row are not two
-reductions of one quantity and the bar is the smaller reduction of the two.
+quantity from the typical displacement. **(c) inherits both**: its bar is a
+distance in (a)'s K-averaged plane and its marker is the mean of (b)'s K-averaged
+δ̂, so the two marks on one row are not two reductions of one quantity and the bar
+is the smaller reduction of the two.
 
 **The rollouts are paired.** A rollout's reference is the one drawn from the same
 uniform stream (`rollout_branches.py` keys the sampler on `(game_id, k)`), so
@@ -233,8 +238,9 @@ nothing at *r* = 0 and everything after it. Rollout δ̂ climbs to **1.236** by
 measures in this space, against the spliced plateau's ~36%; and the
 illegal/control separation is inside 0.5% of 1 by *r* = 8 and crosses **above**
 1 by *r* = 13. Hence `ROLLOUT_RMAX = 8`: past there the figure would be drawing a
-fork whose separation is not in the data. It is stated on the figure and it is
-the number to revisit if the branch set changes.
+fork whose separation is not in the data. The figure shows the window it leaves —
+on (b)'s x axis and on (c)'s — and this section is why it stops there. It is the
+number to revisit if the branch set changes.
 
 The two variants are not two measurements of one thing, and neither is the
 other's replication: `branches.pt` stays the tensor the single-token claims rest
