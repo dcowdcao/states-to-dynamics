@@ -180,7 +180,11 @@ def draw(games, rng: Random, t0: int, skips: Counter) -> list[dict] | None:
 
 
 def summary(items: dict[str, torch.Tensor]) -> dict:
-    """The manifest fields that are re-derivable from the saved rows."""
+    """The manifest fields that are re-derivable from the saved rows.
+
+    The t0 histogram and no range: `extend_branches` appends blocks that all fork at
+    one position, so [min, max] would read as a description of the tree and not be one.
+    """
     is_reference = (items["category"] == LEGAL) & (items["is_control"] == 0)
     counts = Counter(role(int(c), int(k))
                      for c, k in zip(items["category"], items["is_control"]))
@@ -188,7 +192,6 @@ def summary(items: dict[str, torch.Tensor]) -> dict:
     return {
         "n_games": len(items["game_id"].unique()),
         "n_branches": len(items["t0"]),
-        "t0_range": [T0_MIN, T0_MAX],
         "branch_counts": {name: counts[name] for name in ROLE_NAMES},
         "t0_histogram": {str(t0): n for t0, n in sorted(t0_hist.items())},
     }
@@ -267,6 +270,7 @@ def main():
         "datasets_version": hf_datasets.__version__,
         **summary(items),
         "skips": dict(skips),
+        "appended": [],  # one block per extend_branches run, in the order they were appended
         "categories": CATEGORIES,
         "note": "t0 assigned to accepted games; skips retry the same t0, so late-t0 "
                 "games are conditioned on pass-free non-forfeit sources",
