@@ -50,8 +50,7 @@ def panel_letter(ax, i: int) -> None:
             color=INK, fontsize=9)
 
 
-def field_panel(ax, field: pd.DataFrame, basis: str, accuracy: float, ceiling: float,
-                annotate: bool = False) -> None:
+def field_panel(ax, field: pd.DataFrame, basis: str, annotate: bool = False) -> None:
     """One arrow per square role, tail = before, head = after the flanking move.
 
     The bars are on the displacement, not on the head: an arrow asserts a change,
@@ -60,9 +59,9 @@ def field_panel(ax, field: pd.DataFrame, basis: str, accuracy: float, ceiling: f
     square carries a second, dashed arrow to where the matched non-flipping move
     leaves it, and the gap between those two heads is the panel's one contrast.
 
-    Each accuracy is titled against its own occupancy-only ceiling: 0.735 on
-    absolute colour is not "some colour ability", it is what the labels give for
-    free, and only the two panels' distance from their ceilings says so.
+    Each probe's held-out accuracy and its occupancy-only ceiling live in the
+    study README, not the panel title: they are findings, not a description of
+    what is drawn.
     """
     d = field[field.basis == basis].set_index("role")
     for role in ROLES:
@@ -105,10 +104,7 @@ def field_panel(ax, field: pd.DataFrame, basis: str, accuracy: float, ceiling: f
     ax.margins(y=0.12)
     ax.set_xlabel(AXIS[basis][0])
     ax.set_ylabel(AXIS[basis][1])
-    gap = f"{100 * (accuracy - ceiling):+.1f}".replace("-", "\N{MINUS SIGN}")
-    ax.set_title(f"{BASIS_TITLE[basis]}\nheld-out accuracy {accuracy:.4f} vs "
-                 f"occupancy-only ceiling {ceiling:.4f} ({gap} pts)",
-                 fontsize=9, pad=13)  # clears the panel letter the wider title reaches
+    ax.set_title(BASIS_TITLE[basis], fontsize=9)
 
 
 def board_panel(ax, event: pd.DataFrame, meta: pd.Series) -> None:
@@ -144,7 +140,6 @@ def figure_one(camera_ready: bool) -> None:
     event = pd.read_csv(RESULTS / "f2_event.csv")
     meta = pd.read_csv(RESULTS / "f2_event_meta.csv").iloc[0]
     layer = int(field.layer.iloc[0])
-    accuracy = pd.read_csv(RESULTS / "m1_basis.csv").set_index("layer").loc[layer]
     # Board is square, so the left column's height sets the figure's: any extra
     # becomes dead space beside it.
     fig = plt.figure(figsize=(10.4, 5.5))
@@ -156,19 +151,16 @@ def figure_one(camera_ready: bool) -> None:
     absolute = fig.add_subplot(gs[1, 1], sharex=native, sharey=native)
 
     board_panel(board, event, meta)
-    field_panel(native, field, "relative", accuracy.acc_tpr_relative,
-                accuracy.ceiling_relative, annotate=True)
-    field_panel(absolute, field, "absolute", accuracy.acc_tpr_absolute,
-                accuracy.ceiling_absolute)
+    field_panel(native, field, "relative", annotate=True)
+    field_panel(absolute, field, "absolute")
     for i, ax in enumerate((board, native, absolute)):
         panel_letter(ax, i)
     fig.legend(*native.get_legend_handles_labels(), loc="upper left",
                bbox_to_anchor=(0.44, 0.015), ncol=2, fontsize=7, alignment="left",
                labelspacing=0.3, columnspacing=1.0)
     if not camera_ready:
-        fig.suptitle(f"Layer {layer} codes the board mover-relatively: a TPR trained "
-                     "on absolute colour separates occupied from empty and no more",
-                     y=0.99)
+        fig.suptitle(f"Layer-{layer} board read-out before and after a flanking move, "
+                     "under two label bases", y=0.99)
     save_figure(fig, FIGURES / "fig1_flip_and_basis", camera_ready)
 
 
@@ -238,7 +230,7 @@ def specificity_panel(ax, cos: pd.DataFrame, shares: pd.DataFrame) -> None:
     ax.set_xlabel(r"cos($\Delta'$, predicted flip direction at $s$)"
                   "\n" r"$\Delta'$ = act(P+$m$) $-$ act(P+$m'$), flip-attributable")
     ax.set_ylabel(f"density over events (n = {len(d):,})")
-    ax.set_title("the displacement has a flip-specific direction")
+    ax.set_title("alignment with the flip direction")
     ax.legend(loc="upper left", fontsize=6.5, labelspacing=0.3)
     share_inset(ax, shares, len(d))
 
@@ -302,8 +294,7 @@ def causal_panel(ax, summary: pd.DataFrame) -> None:
     ax.set_ylabel(r"$\Delta$ next-move log-mass (nats)"
                   "\n" r"$\uparrow$ onto the un-flipped board's squares,"
                   "\n" r"$\downarrow$ off the real board's")
-    ax.set_title("and editing along it moves mass toward the un-flipped board,\n"
-                 "not off the legal set")
+    ax.set_title("edit effect against collateral")
     ax.set_ylim(top=1.5 * edits.d_lp_cf_hi.max())  # room for the legend above the curves
     ax.legend(handles=handles, loc="upper left", fontsize=6.5, labelspacing=0.3,
               title_fontsize=6.5,
@@ -318,8 +309,8 @@ def figure_two(camera_ready: bool) -> None:
     for i, ax in enumerate(axes):
         panel_letter(ax, i)
     if not camera_ready:
-        fig.suptitle("The flip is a specific direction in the residual stream, and "
-                     "the model uses it", y=1.0)
+        fig.suptitle("Where the flip-attributable displacement points, and what "
+                     "editing along it does", y=1.0)
     fig.tight_layout()
     save_figure(fig, FIGURES / "fig2_direction_and_cause", camera_ready)
 
