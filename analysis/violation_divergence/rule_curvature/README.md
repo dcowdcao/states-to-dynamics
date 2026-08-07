@@ -264,11 +264,11 @@ have left it the one in-distribution sequence and fixed nothing
 (`rollout_branches`). Panel (a)'s three class curves are unchanged — they belong
 to the straightness study and know nothing about either tree — but its three rule
 curves are not: they are rebuilt on this tree, so they carry the resampled
-suffix, and their legend entries read **80 games × 4 rollouts, forked at
-*t0* = 20**.
+suffix, and (a)'s title reads **80 games × 4 rollouts at *t0* = 20**. The legend
+carries the rule name alone; every count lives in the title it belongs to.
 
 Three differences from the spliced captions. A rule now averages over **member
-categories × 4 rollouts**, and the legend says so; a branch's curve is the mean
+categories × 4 rollouts**, which (a)'s title states; a branch's curve is the mean
 over its rollouts. **R3 averages 4 sequences here** where on the spliced tree it
 averages 1, so its spread is sampling variance of the continuation rather than
 spread across categories. And
