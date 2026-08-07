@@ -33,6 +33,19 @@ def axis_labels(method: str, var: np.ndarray) -> tuple[str, str]:
     return f"PC1 ({var[0]:.0%} var)", f"PC2 ({var[1]:.0%} var)"
 
 
+def plane_displacement(coords: np.ndarray, pos: np.ndarray, t0: int,
+                       ref: int) -> np.ndarray:
+    """[n, T, 2] -> [n]: mean in-plane distance from the reference over r >= 0.
+
+    What the eye is trying to judge off a fork panel, as a number. It measures
+    the plane the panel actually draws, so it inherits that plane's limits: the
+    plane is refit per space and holds only part of the displacement, so this
+    compares branches WITHIN a panel and never across panels.
+    """
+    post = pos >= t0
+    return np.linalg.norm(coords[:, post] - coords[ref, post], axis=-1).mean(axis=1)
+
+
 def _path(ax, seg: np.ndarray, z: np.ndarray, st: dict, label: str | None) -> None:
     """One branch or one rule mean: the line, its sparse markers, its end marker."""
     ax.plot(seg[:, 0], seg[:, 1], z, ls=st["ls"], color=st["color"], lw=st["lw"],
