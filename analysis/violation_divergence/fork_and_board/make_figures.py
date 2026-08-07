@@ -45,11 +45,11 @@ phi rather than before, because phi is nonlinear and the curvature of an average
 path is a path no rollout takes. That set saturates, so it is drawn to
 ROLLOUT_RMAX and not to the study window's r = 24; README.md carries the numbers.
 
-The figure carries no prose block. Those facts, the selection of the game above
-all, are the figure's caption and live in README.md (FIGURE_GUIDELINES 2, 5);
-the rule key, (c)'s n and window, and, on the rollout variant, what was averaged
-and where the drawn window stops stay inside the figure, because a reader must
-not need another document to know what R2 is or what a path is a mean of.
+The figure carries no prose. Its caption -- how the rollout paths were reduced,
+where the window stops, what (c) is not -- lives in README.md (FIGURE_GUIDELINES
+2, 5). What stays inside is what a reader cannot look up while looking at it: the
+board's reading key, the R1/R2/R3 key, (c)'s estimator on (c)'s own axis, and one
+line saying the game was selected, without which the panels read as a result.
 
 Usage: python analysis/violation_divergence/fork_and_board/make_figures.py
        [--game 1235] [--plane displacement|r21] [--embedding pca|isomap]
@@ -96,6 +96,12 @@ VARIANTS = {"spliced": "", "rollout": "rollout"}
 # Past r = +8 the rollout set's illegal and control δ̂ agree to within 0.5% and
 # cross over by r = +13, so the extra offsets draw separation that is not there.
 ROLLOUT_RMAX = 8
+# The default game is the argmax of a differentiation criterion over 1550 games, so
+# its panels are cleaner than a typical fork's and a reader who does not know that
+# reads a selected game as a result. One line; the rest is in README.md.
+SELECTION_NOTE = (f"game {FIGURE_GAME} is selected, not typical: the argmax over 1550 "
+                  f"branch-complete games of its illegal branches' mutual separation "
+                  f"(README)")
 
 
 def paired_mean(X: np.ndarray, ref: int, K: int) -> np.ndarray:
@@ -179,23 +185,8 @@ def spread_field(plane: str, Z: np.ndarray, ref: int, post: np.ndarray,
     return (dphi / np.where(sd > 0, sd, 1))[:, post]
 
 
-def variant_note(plane: str, K: int) -> str:
-    """The rollout set's own caveat, in the figure because it changes how every
-    panel reads: what a path is a mean of, and where the drawn window stops.
-
-    Wrapped no wider than the board note beside it, or the tight bbox grows the
-    canvas and the two variants stop being the same size."""
-    where = ("after φ, which is nonlinear" if plane == "r21"
-             else "in the plane, whose projection is linear")
-    return (f"rollout variant: every branch, the reference included, samples its own "
-            f"continuation from OthelloGPT.\nEach path is the mean over the branch's "
-            f"K = {K} rollouts, paired on the sample index and\ntaken {where}.\nDrawn to "
-            f"r = +{ROLLOUT_RMAX}: further out illegal and control δ̂ agree to within "
-            f"0.5% and the fork\ncarries no separation (README).")
-
-
 def metric_panel(ax, cells: list[tuple[str, np.ndarray, np.ndarray]],
-                 rows: list[dict], offsets: np.ndarray):
+                 rows: list[dict], offsets: np.ndarray) -> None:
     """(c): the number every cell of (a) asks the reader to eyeball.
 
     Bar = the distance in the plane that cell draws; open marker = the same
@@ -226,6 +217,11 @@ def metric_panel(ax, cells: list[tuple[str, np.ndarray, np.ndarray]],
     ax.set_xticks(range(len(cells)), [name for name, _, _ in cells], fontsize=9)
     ax.set_ylabel("distance from the reference,\n$\\div$ the cell's own legal control",
                   fontsize=9)
+    # The estimator rides on the axis, not in a note: it is what the bars are a
+    # mean of, and the drawn window changes with the variant.
+    ax.set_xlabel(f"mean over the {len(offsets)} drawn offsets r = "
+                  f"{', '.join(str(r) for r in offsets[:2])}, …, {offsets[-1]}; "
+                  f"one game (n = 1)", fontsize=9)
     ax.tick_params(labelsize=9)
     ax.grid(False, axis="x")
     marks = [(Patch(facecolor=MUTED, alpha=0.85, edgecolor=INK, lw=0.4),
@@ -238,17 +234,6 @@ def metric_panel(ax, cells: list[tuple[str, np.ndarray, np.ndarray]],
              (plt.Line2D([], [], color=NULL["color"], ls=NULL["ls"], lw=1.1),
               "the cell's legal control (null) = 1")]
     ax.legend(*zip(*marks), ncol=2, fontsize=9, loc="upper left")
-    # Returned so the rule key can hang off its bottom edge: both live in the
-    # band under the figure, and how many lines this wraps to moves the key.
-    return ax.text(
-        0.0, -0.20, f"bar and marker: the mean over a rule's member categories "
-        f"(n = 2, 3, 1), one dot per member, of that branch's mean distance over the "
-        f"{len(offsets)} drawn offsets r = "
-        f"{', '.join(str(r) for r in offsets[:2])}, …, {offsets[-1]}.\n"
-        f"One game (n = 1), so no interval over games; the within-rule spread the dots "
-        f"show is the only spread a single game supports.",
-        transform=ax.transAxes, ha="left", va="top", fontsize=9, color=MUTED,
-        linespacing=1.5)
 
 
 def figure(g: Game, Z: np.ndarray, pos: np.ndarray, plane: str, method: str,
@@ -315,25 +300,29 @@ def figure(g: Game, Z: np.ndarray, pos: np.ndarray, plane: str, method: str,
 
     band = fig.add_subplot(lower[1])
     band.axis("off")
-    # Legend and note are centred in the band, not pinned to its top: the band is
-    # as tall as the square board beside it and the block is shorter than that.
-    # The note hangs off the legend's own bottom edge, which moves with how many
-    # entries wrapped; the rule key goes under the whole figure, which is the only
-    # place with the width its three lines need.
+    # Legend and board key are centred in the band, not pinned to its top: the band
+    # is as tall as the square board beside it and the block is shorter than that.
+    # The key hangs off the legend's own bottom edge, which moves with how many
+    # entries wrapped.
     leg = ordered_legend(band, keyed, 2, loc="center left", bbox_to_anchor=(0.0, 0.62))
-    note = board_note(board, by_rule=True)
-    if variant:
-        note += "\n\n" + variant_note(plane, K)
-    band.text(0.0, below(band, leg, 0.06), note,
+    band.text(0.0, below(band, leg, 0.06), board_note(board, by_rule=True),
               ha="left", va="top", fontsize=8, color=MUTED, linespacing=1.5)
 
     metric = fig.add_subplot(gs[2])
-    metric_note = metric_panel(metric, measured, g.rows, pos[pos >= g.t0] - g.t0)
+    metric_panel(metric, measured, g.rows, pos[pos >= g.t0] - g.t0)
     metric.set_title("(c) how far they run: each rule's distance from the reference, "
                      "in the plane its cell draws (bar)\nand in that cell's full space "
                      "(open marker), as a multiple of the same cell's legal control",
                      loc="left", fontsize=11)
-    rule_member_key(fig, x=0.005, y=below(fig, metric_note, 0.004))
+
+    # The muted band under the figure, in reading order: the selection disclosure,
+    # then the key naming what R1/R2/R3 average. Each hangs off the last, since
+    # both heights depend on where the line above them wrapped.
+    y = below(fig, metric.xaxis.label, 0.010)
+    if g.game == FIGURE_GAME:
+        y = below(fig, fig.text(0.005, y, SELECTION_NOTE, ha="left", va="top",
+                                fontsize=7.5, color=MUTED), 0.004)
+    rule_member_key(fig, x=0.005, y=y)
 
     if not camera_ready:
         fig.suptitle(f"Fork Trajectory ({PLANE_NAME[plane]} {METHOD_NAME[method]}) in "

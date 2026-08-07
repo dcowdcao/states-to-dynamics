@@ -53,6 +53,55 @@ class mixture, which it never was.
 Left open: the rollout tree has no `rule_descriptors`. The figure reads the spliced tree
 only, and a resampled-suffix version would be a second figure rather than a variant.
 
+---
+
+## The grey text on the fork figures, minus the caption (2026-08-07)
+
+Branch `gray/gray-fork`, worktree `../spade_sae_worktrees/gray-fork`. Covers
+`analysis/violation_divergence/fork_and_board` and `.../game_trajectory` only;
+sibling branches sweep the other figure directories.
+
+Every muted block that a reader could look up in the README is gone: the rollout
+variant's caveat (five lines beside the board in `fork_and_board`, eleven inside
+the δ̂ panel in `game_trajectory`) and `fork_and_board`'s two-line note under (c).
+All of it was already in the two READMEs word for word, so nothing had to move.
+
+**The test used for each block was not "is it prose" but "can a reader look it up
+while looking at the figure".** That keeps four things in, each against a rule:
+the board's reading key and the R1/R2/R3 member key (§5 — the outlined cell, the
+corner marker, the dashed would-be disc and the flip ring cannot be decoded from
+anything else on the page), (b)'s "0 by construction" band in `game_trajectory`
+(§4.2), and the axis-direction/estimator text on (c).
+
+**(c)'s note became (c)'s x axis rather than disappearing.** What the two-line
+block uniquely carried was the estimator — the mean over the drawn offsets, and
+n = 1 — which §1.2 wants stated and which changes with the variant (13 offsets
+spliced, 5 rollout). It is now `set_xlabel`, which is where `game_trajectory`'s
+metric panel already put the identical sentence. The rest of that block (n per
+rule, one dot per member, the within-rule spread) was a second copy of the (a)
+legend's `(mean of n)` and of (c)'s own glyph legend.
+
+**The game-1235 selection disclosure was restored as one line, not deleted.** It
+had been dropped entirely by `c8b6136` along with the legend titles. That was a
+step too far: game 1235 is the argmax over 1550 branch-complete games of its
+illegal branches' mutual separation, its apparent structure holds in 0.07–0.17 of
+games, and a reader who does not know it reads a selected game as a result — the
+figure changes meaning without the line, which is the bar for staying inside.
+One line above the R1/R2/R3 key, drawn only when `--game` is the default, since a
+non-default game is not the selected one and must not claim to be.
+
+`SELECTION_NOTE` is duplicated in the two scripts. It belongs in
+`spade.violation_divergence.branches`, where `selection_note(game)` used to live;
+this branch is not allowed to touch `src/`.
+
+**Layout.** `fork_and_board` only: the legend beside the board went back to
+`bbox_to_anchor=(0.0, 0.62)`, the value it had before the rollout note was
+appended under it, so the block is centred in the band again in both variants.
+The selection line and the rule key each anchor off the bottom of the thing above
+them (`branch_style.below`), so the (c) x label's height propagates.
+`game_trajectory` needed no retuning: its note sat inside the pre-branch band,
+which §4.2 wants empty anyway.
+
 ## The fork panels' excursion is mostly the plane (2026-08-07)
 
 Branch `nfig/fig-plane-metric-r21`, worktree `../spade_sae_worktrees/fig-plane-metric-r21`.

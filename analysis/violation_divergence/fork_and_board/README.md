@@ -50,8 +50,13 @@ The figures carry no prose. What a reader needs in order not to over-read them i
 here, per figure, and this is the caption the figure is published with
 (FIGURE_GUIDELINES §2, §5). What stays inside the figure is the apparatus a
 reader cannot look up while looking at it: panel titles and letters, per-panel
-space names, axis labels, the legend, the board's reading key, and the R1/R2/R3
-key naming each rule's member categories.
+space names, axis labels, the legend, the board's reading key, the R1/R2/R3 key
+naming each rule's member categories, (c)'s estimator and drawn window on (c)'s
+own x axis, and **one line saying game 1235 was selected** — the one fact whose
+absence changes how the panels read rather than merely leaving them incomplete.
+Everything else that used to sit on the figure in grey — the rollout variant's
+five-line caveat beside the board, (c)'s two-line note — is in this file and
+nowhere else.
 
 ### `game_1235_fork_and_board_displacement_pca`
 
@@ -95,7 +100,8 @@ branch-complete games, of the mutual separation of its six illegal displacement
 trajectories, scored in raw layer 5 in the full 512-dimensional space and never
 in an SAE space or a 2-D projection (`../game_selection`). Population median
 0.705; this game 1.080. It is the clearest available illustration of the
-construction, not a typical one — see the section below for what that costs.
+construction, not a typical one — see the section below for what that costs. The
+figure carries this as one line under panel (c), drawn only for the default game.
 
 **n = 1, and no error bars over games.** This is an illustration of the design,
 not a claim-supporting figure. Every number — the 0.978 ratio, the 0.4985
@@ -170,7 +176,8 @@ every branch, the reference included, samples its own continuation from
 OthelloGPT rather than replaying the source game's.** Panel (a) is the same
 uncentred PCA of `Δ(t) = z_b(t) − z_ref(t)`, refit per space, and panel (b) is
 unchanged — the board does not know what continued from it. Three things are
-different and all three are on the figure.
+different, and the figure shows only the third: the drawn window is on (c)'s
+axis and on the *t* axis of every cell. The other two are here.
 
 **Each path is a mean over the branch's K = 4 rollouts, paired on the sample
 index.** A rollout's reference is the one drawn from the same uniform stream
@@ -405,8 +412,9 @@ over the 2000 games, 2000 resamples. Three things to take from it:
 
 So a rollout fork figure is informative at short horizons and misleading at long
 ones, and drawing it to *r* = 24 would have been drawing 16 offsets of nothing.
-`ROLLOUT_RMAX = 8` in `make_figures.py` is that cut, the figure states it, and it
-is the one number to revisit if the branch set changes.
+`ROLLOUT_RMAX = 8` in `make_figures.py` is that cut; the figure shows the window
+it leaves on (c)'s axis and this section is why it stops there. It is the one
+number to revisit if the branch set changes.
 
 **This does not retract the spliced study.** The two sets answer different
 questions — spliced isolates one token against a shared future, rollout lets the
@@ -443,7 +451,11 @@ The R1/R2/R3 key goes under the whole figure, which is the only place with the
 width its three lines need (FIGURE_GUIDELINES §5: shorthand in a legend earns a
 key inside the figure). It names each rule, how many categories it averages, and
 what each of them is, driven by `RULE_MEMBERS` and `CATEGORY_GLOSS` so the counts
-cannot disagree with the legend's `(mean of n)`.
+cannot disagree with the legend's `(mean of n)`. The selection line sits directly
+above it, so the muted band under the figure reads in one order: what the game is,
+then what the three series are. Each anchors off the bottom of the thing above it
+(`branch_style.below`), because how many lines that wrapped to moves everything
+under it.
 
 Panel **(c)** is a third full-width row under the board rather than an inset in
 each of the nine cells: nine cells × five series is 45 numbers, which no set of

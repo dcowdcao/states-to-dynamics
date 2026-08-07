@@ -28,10 +28,11 @@ sampling noise and is a smaller, different quantity. That set saturates, so it i
 drawn to ROLLOUT_RMAX and not to the study window's r = 24; README.md has the
 numbers.
 
-The figure carries no prose block: how the game was selected, n=1, and the fixed
-camera are its caption and live in README.md (FIGURE_GUIDELINES 2, 5). What the
-rollout variant averaged, and where its window stops, are in the figure, because
-they change what every curve on it means.
+The figure carries no prose. Its caption -- the fixed camera, how the rollout
+variant reduces over K, where its window stops -- lives in README.md
+(FIGURE_GUIDELINES 2, 5). What stays inside is what a reader cannot look up while
+looking at it: (b)'s "0 by construction" band, the R1/R2/R3 key, (c)'s estimator
+on (c)'s own axis, and one line saying the game was selected.
 
 Usage: python analysis/violation_divergence/game_trajectory/make_figures.py
        [--game 1235] [--n_games 1] [--embedding pca|isomap]
@@ -61,6 +62,12 @@ VARIANTS = {"spliced": "", "rollout": "rollout"}
 # Past r = +8 the rollout set's illegal and control δ̂ agree to within 0.5% and
 # cross over by r = +13, so the extra offsets draw separation that is not there.
 ROLLOUT_RMAX = 8
+# The default game is the argmax of a differentiation criterion over 1550 games, so
+# its panels are cleaner than a typical fork's and a reader who does not know that
+# reads a selected game as a result. One line; the rest is in README.md.
+SELECTION_NOTE = (f"game {FIGURE_GAME} is selected, not typical: the argmax over 1550 "
+                  f"branch-complete games of its illegal branches' mutual separation "
+                  f"(README)")
 
 
 def paired_mean(X: np.ndarray, ref: int, K: int) -> np.ndarray:
@@ -83,17 +90,6 @@ def delta_hat(Z: np.ndarray, ref: int, K: int) -> np.ndarray:
     Y = Z.reshape(-1, K, *Z.shape[1:])
     d = np.linalg.norm(Y - Y[ref], axis=-1) / np.linalg.norm(Y[ref], axis=-1)
     return d.mean(axis=1)
-
-
-def variant_note(K: int) -> str:
-    """The rollout set's own caveat, in the panel it qualifies. Wrapped narrow
-    enough to sit inside the pre-branch band, where δ̂ is 0 and nothing else is."""
-    return (f"rollout branches: every\nbranch, the reference too,\nsamples its own\n"
-            f"continuation, K = {K} times.\nEach path is a mean over\nthose K. "
-            f"(a) averages Δ;\n(b) averages δ̂ itself —\nthe norm is not linear.\n"
-            f"No spread is drawn over\nthose K.\n"
-            f"Drawn to r = +{ROLLOUT_RMAX}: past it\nillegal "
-            f"and control δ̂\nagree within 0.5%.")
 
 
 def metric_panel(ax, coords: np.ndarray, dh: np.ndarray, rows: list[dict],
@@ -156,7 +152,7 @@ def metric_panel(ax, coords: np.ndarray, dh: np.ndarray, rows: list[dict],
 
 
 def marginal_panel(ax, dh: np.ndarray, rows: list[dict], pos: np.ndarray,
-                   t0: int, variant: str, K: int) -> None:
+                   t0: int) -> None:
     """The magnitude a projection cannot show: relative displacement vs offset."""
     r = pos - t0
     ax.axvspan(r[0] - 0.5, -0.5, color=GRID, alpha=0.7, lw=0, zorder=0)
@@ -167,12 +163,8 @@ def marginal_panel(ax, dh: np.ndarray, rows: list[dict], pos: np.ndarray,
         ax.plot(r, dh[i], ls=st["ls"], color=st["color"], lw=st["lw"],
                 marker=st["marker"], ms=3.5, markevery=3, markerfacecolor=st["mfc"],
                 markeredgecolor=st["mec"], markeredgewidth=0.5, zorder=st["zorder"])
-    top = ax.get_ylim()[1]
-    ax.text(r[0] + 0.4, top * 0.93, "0 by construction\n(shared prefix)",
+    ax.text(r[0] + 0.4, ax.get_ylim()[1] * 0.93, "0 by construction\n(shared prefix)",
             fontsize=7, color=MUTED, va="top")
-    if variant:
-        ax.text(r[0] + 0.4, top * 0.78, variant_note(K),
-                fontsize=7, color=MUTED, va="top", linespacing=1.5)
     ax.set_xlabel("position relative to the branch, $t-t_0$")
     ax.set_ylabel(r"$\hat{\delta}=\|\Delta\|\,/\,\|z_{\mathrm{ref}}\|$")
 
@@ -199,7 +191,7 @@ def fork_figure(g: Game, Z: np.ndarray, pos: np.ndarray, method: str, variant: s
     ax3.set_title("(a) displacement from the reference, by move", loc="left", fontsize=10)
 
     ax2 = fig.add_subplot(gs[1])
-    marginal_panel(ax2, dh, g.rows, pos, g.t0, variant, K)
+    marginal_panel(ax2, dh, g.rows, pos, g.t0)
     ax2.set_title("(b) the magnitude the projection cannot show", loc="left", fontsize=10)
 
     axc = fig.add_subplot(gs[2])
@@ -213,7 +205,14 @@ def fork_figure(g: Game, Z: np.ndarray, pos: np.ndarray, method: str, variant: s
                      f"(layer 5, positions {pos[0]}–{pos[-1]})"
                      + (f", {variant} branches" if variant else ""), fontsize=11)
     fig.tight_layout()
-    rule_member_key(fig, y=below(fig, leg))
+    # The muted band under the legend, in reading order: the selection disclosure,
+    # then the key naming what R1/R2/R3 average. Each hangs off the last, since
+    # both heights depend on where the line above them wrapped.
+    y = below(fig, leg)
+    if g.game == FIGURE_GAME:
+        y = below(fig, fig.text(0.005, y, SELECTION_NOTE, ha="left", va="top",
+                                fontsize=7.5, color=MUTED), 0.004)
+    rule_member_key(fig, y=y)
     suffix = f"_{variant}" if variant else ""
     return save_figure(fig, FIG_DIR / f"game_{g.game}_fork_{method}{suffix}", camera_ready)
 
