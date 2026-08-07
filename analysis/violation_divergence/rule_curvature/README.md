@@ -30,7 +30,15 @@ figure by eye. Panel (a)'s rule curves are 2000 games × ~9 branches × 9 spaces
 per tree, cached to `$DIR/[rollout/]rule_population/`; that is ~3 h on a
 one-core login node under its 8 GB cap, so
 `scripts/slurm/studies/violation_divergence/submit_rule_population.sbatch` runs
-it on a GPU instead. Skip-if-exists, like every other step of this study.
+it on a GPU instead (~7 min on an H100 for the spliced tree). Skip-if-exists,
+like every other step of this study.
+
+Encoding those activations is what the pass costs, not the geometry, so it
+answers a second question on the way past: each game's 21-D ReStraV descriptor
+per rule, to `$DIR/[rollout/]rule_descriptors/`. That is the one population in
+the repo with an R1 in it, and `analysis/straightness/feature_pca/` draws the
+rules as classes from it. Skip-if-exists is per product — a space is re-encoded
+only for the npz it is missing.
 
 | file | what it is |
 |---|---|

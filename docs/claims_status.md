@@ -65,6 +65,14 @@ the norm-and-L0 "pass-through / suppressed / inverted" regime table in
 `feature_pca/README.md`. None of the three was refuted — the study stopped measuring the
 class. Anything reinstating them has to reinstate the class first.
 
+**Straightness: the violation class's place in the descriptor plane.** `feature_pca`
+drew this study's own violation class until 2026-08-07 and reported it as never more than
+0.27 pooled SD from legal. That figure now draws the three constraint rules instead — the
+class carries no R1, so no R1/R2/R3 split of it exists — and the rules come off the
+violation-divergence branch population, which is a different construction. Nothing was
+refuted; the two are not interchangeable, and the old number must not be restated as a
+rule's. The rules reach 0.40 (`analysis/straightness/feature_pca/README.md`).
+
 **Straightness: the championship effect at layer 5.** 0.509 [0.483, 0.535] — not
 distinguishable from chance. Adding bootstrap CIs turned a claimed gradual rise into a
 late-layer-specific effect.

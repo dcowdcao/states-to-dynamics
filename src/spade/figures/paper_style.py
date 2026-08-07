@@ -36,6 +36,18 @@ CLASS_STYLE = {
     "championship":  {"color": "#CC79A7", "marker": "P", "label": "championship (human)"},
 }
 
+# The violation class split by the constraint rule the illegal move breaks, for
+# figures that draw the rules as classes rather than as one violation class. R1-R3
+# are ordered by how much board computation the violation takes to detect, so they
+# take a light->dark ramp of the parent class's hue and keep its marker
+# (FIGURE_GUIDELINES 4.6). RULE_STYLE's own hues are unusable beside game classes:
+# its R1 blue is CLASS_STYLE's rollout.
+VIOLATION_RULE_STYLE = {
+    "R1 placement":  {"color": "#5FC4A8", "marker": "^", "label": "violation R1 placement"},
+    "R2 bracketing": {"color": "#009E73", "marker": "^", "label": "violation R2 bracketing"},
+    "R3 turn":       {"color": "#00654A", "marker": "^", "label": "violation R3 turn"},
+}
+
 
 # The three trajectory quantities, for figures that overlay them. theta keeps the
 # violation color it carries in the per-quantity panels; the other two take hues

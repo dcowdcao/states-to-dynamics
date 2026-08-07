@@ -23,17 +23,22 @@ times. A branch is therefore K sequences either way, and `Fork.theta` is
 know which tree it is reading.
 
 One game is not a population, so the same three rules are also measured over a
-population of games (`build_population`). The straightness study cannot supply
-them: its violation class is built from empty-square categories only and carries
-no R1 at all. The population is the **rule-complete** set -- the 2000 games
+population of games (`build`). The straightness study cannot supply them: its
+violation class is built from empty-square categories only and carries no R1 at
+all. The population is the **rule-complete** set -- the 2000 games
 carrying at least one member of every rule, listed in `rule_complete_games.json`
 so the membership rule has one definition. Of the original 2000 source games only
 1997 qualified, three t0 offering no opponent_only square at all; `extend_branches`
 appended three more rather than let R3 run short, so all three rules share n =
 2000. A rule's member composition still varies by game (R2 averages under its
-three categories), which the figure caption states. Written to
-`$DIR/[rollout/]rule_population/<space>.npz` by this module's main; the figure
-script only reads them.
+three categories), which the figure caption states.
+
+One pass over that population answers two questions, so it writes both: the
+per-rule mean turning-angle curves to `$DIR/[rollout/]rule_population/<space>.npz`,
+and each game's 21-D ReStraV descriptor per rule to
+`$DIR/[rollout/]rule_descriptors/<space>.npz`, which is what the straightness
+study's `feature_pca` figure draws a rule as a class in. Written by this module's
+main; the figure scripts only read them.
 
 Usage: python -m spade.violation_divergence.rule_curvature [--tree branches|rollout]
 """
@@ -51,7 +56,7 @@ from spade.common.device import select_device
 from spade.common.study import variant_dir
 from spade.figures.straightness_panels import TURN_OFFSET, align_to_event
 from spade.othello.taxonomy import RULE_MEMBERS
-from spade.straightness.geometry import temporal_geometry
+from spade.straightness.geometry import restrav_features, temporal_geometry
 from spade.violation_divergence.branches import (
     FIGURE_GAME, ROLE_NAMES, load_game, reference_row)
 from spade.violation_divergence.fork_plane import space_features, spaces
@@ -109,12 +114,14 @@ def _branch_index(meta: dict, game: int):
     return g, g.rows[::k], idx
 
 
-def _theta(acts, idx: torch.Tensor, entry, device: str) -> np.ndarray:
-    """[n_branch, K] row indices -> [n_branch, K, n_turn] turning angles, degrees."""
+def _geometry(acts, idx: torch.Tensor, entry, device: str) -> tuple[np.ndarray, np.ndarray]:
+    """[n_branch, K] row indices -> (step lengths, turning angles in degrees),
+    [n_branch, K, n_step] and [n_branch, K, n_turn]."""
     Z = acts[idx.flatten()][:, SINK + 1:, :].float().numpy()
     F = space_features(Z, entry, device)
-    _, theta = temporal_geometry(torch.from_numpy(F))
-    return theta.numpy().reshape(idx.shape + theta.shape[-1:])
+    d, theta = temporal_geometry(torch.from_numpy(F))
+    return (d.numpy().reshape(idx.shape + d.shape[-1:]),
+            theta.numpy().reshape(idx.shape + theta.shape[-1:]))
 
 
 def load_fork(tree: str, game: int = FIGURE_GAME, entry=None,
@@ -129,7 +136,7 @@ def load_fork(tree: str, game: int = FIGURE_GAME, entry=None,
     g, rows, idx = _branch_index(meta, game)
     acts = torch.load(base / "acts" / f"resid_post_{layer}.pt",
                       weights_only=True, mmap=True)
-    return Fork(game, g.t0, rows, _theta(acts, idx, entry, device), g.tokens)
+    return Fork(game, g.t0, rows, _geometry(acts, idx, entry, device)[1], g.tokens)
 
 
 def branch_curves(fork: Fork) -> np.ndarray:
@@ -274,6 +281,35 @@ def _game_rule_means(theta: np.ndarray,
     return mean, n
 
 
+def _game_rule_descriptors(d: np.ndarray, theta: np.ndarray,
+                           rows: list[dict]) -> np.ndarray:
+    """One game's [n_rule, 21] ReStraV descriptors, NaN where the rule is absent.
+
+    The descriptor is a property of one trajectory -- its moments do not commute
+    with a mean over curves -- so the average over a rule's member categories is
+    taken on the 21-D vectors, after the average over a branch's rollouts, in the
+    order `_game_rule_means` fixes for the curves.
+    """
+    groups = rule_rows(rows)
+    f21 = restrav_features(torch.from_numpy(d.reshape(-1, d.shape[-1])),
+                           torch.from_numpy(theta.reshape(-1, theta.shape[-1]))
+                           ).numpy().reshape(d.shape[:2] + (-1,))
+    per_branch = np.nanmean(f21, axis=1)
+    out = np.full((len(RULES), f21.shape[-1]), np.nan)
+    for j, rule in enumerate(RULES):
+        if rule in groups:
+            out[j] = per_branch[groups[rule]].mean(0)
+    return out
+
+
+@dataclass(frozen=True)
+class RuleTables:
+    """One space's two products from a single pass over the rule population."""
+    population: Population
+    descriptors: np.ndarray  # [n_game, n_rule, 21], NaN where the rule is absent
+    games: np.ndarray        # [n_game] game ids, the rows of `descriptors`
+
+
 def rule_complete() -> list[int]:
     """The games carrying at least one member of every rule, written by
     `extend_branches`. Reading the list rather than re-deriving it keeps one
@@ -287,12 +323,13 @@ def rule_complete() -> list[int]:
     return listing["game_ids"]
 
 
-def build_population(tree: str, entry, device: str = "cpu",
-                     layer: int = LAYER) -> Population:
-    """Every game's per-rule curve, streamed a chunk of games at a time.
+def build(tree: str, entry, device: str = "cpu", layer: int = LAYER) -> RuleTables:
+    """Every game's per-rule curve and descriptor, streamed a chunk of games at a time.
 
-    Only the [n_game, n_rule, n_turn] table of per-game means survives a chunk:
-    the rollout tree's layer-5 activations are 4 GB and its codes are 16x wider.
+    Only the [n_game, n_rule, ...] tables of per-game means survive a chunk: the
+    rollout tree's layer-5 activations are 4 GB and its codes are 16x wider. The
+    two products come off one pass because encoding those activations, not the
+    geometry, is what the pass costs.
     """
     base = variant_dir("divergence", False, TREE_VARIANT[tree])
     meta = torch.load(base / "branches" / "branches.pt", weights_only=True)
@@ -302,24 +339,27 @@ def build_population(tree: str, entry, device: str = "cpu",
     k = 1 if "rollout" not in meta else int(meta["rollout"].max()) + 1
     step = max(1, ROW_BATCH // (len(ROLE_NAMES) * k))
 
-    per_game, counts = [], []
+    per_game, counts, f21 = [], [], []
     for start in range(0, len(games), step):
         chunk = [_branch_index(meta, g) for g in games[start:start + step]]
-        theta = _theta(acts, torch.cat([i for _, _, i in chunk]), entry, device)
+        d, theta = _geometry(acts, torch.cat([i for _, _, i in chunk]), entry, device)
         at = 0
         for _, rows, i in chunk:
             mean, n = _game_rule_means(theta[at:at + len(i)], rows)
             per_game.append(mean)
             counts.append(n)
+            f21.append(_game_rule_descriptors(d[at:at + len(i)],
+                                              theta[at:at + len(i)], rows))
             at += len(i)
         if start % (100 * step) == 0:
             print(f"  {start + len(chunk)}/{len(games)} games", flush=True)
 
     G, C = np.array(per_game), np.array(counts)
     n = np.isfinite(G).sum(0)
-    return Population(np.nanmean(G, 0), np.nanstd(G, 0) / np.sqrt(np.maximum(n, 1)),
-                      np.isfinite(C).sum(0), np.nanmean(C, 0), k,
-                      np.array([int(meta["t0"].min()), int(meta["t0"].max())]))
+    pop = Population(np.nanmean(G, 0), np.nanstd(G, 0) / np.sqrt(np.maximum(n, 1)),
+                     np.isfinite(C).sum(0), np.nanmean(C, 0), k,
+                     np.array([int(meta["t0"].min()), int(meta["t0"].max())]))
+    return RuleTables(pop, np.array(f21), np.array(games))
 
 
 def space_key(entry) -> str:
@@ -328,19 +368,29 @@ def space_key(entry) -> str:
     return f"resid_post_{LAYER}" if entry is None else f"sae_{entry.config}"
 
 
-def population_path(tree: str, entry) -> Path:
+def _cache(kind: str, tree: str, entry) -> Path:
     return (variant_dir("divergence", False, TREE_VARIANT[tree])
-            / "rule_population" / f"{space_key(entry)}.npz")
+            / kind / f"{space_key(entry)}.npz")
 
 
-def population(tree: str, entry) -> Population:
-    path = population_path(tree, entry)
+def _load(kind: str, tree: str, entry):
+    path = _cache(kind, tree, entry)
     assert path.exists(), (
         f"{path} is missing -- run `python -m spade.violation_divergence."
         f"rule_curvature --tree {tree}` (SLURM: submit_rule_population.sbatch)")
-    z = np.load(path)
+    return np.load(path)
+
+
+def population(tree: str, entry) -> Population:
+    z = _load("rule_population", tree, entry)
     return Population(z["mean"], z["sem"], z["n_games"], z["members"],
                       int(z["n_rollouts"]), z["t0_range"])
+
+
+def descriptors(tree: str, entry) -> tuple[np.ndarray, np.ndarray]:
+    """([n_game, n_rule, 21] ReStraV descriptors, [n_game] game ids)."""
+    z = _load("rule_descriptors", tree, entry)
+    return z["f21"], z["games"]
 
 
 def main():
@@ -350,15 +400,23 @@ def main():
 
     device = select_device()
     for label, entry in spaces():
-        path = population_path(args.tree, entry)
-        if path.exists():
+        missing = [k for k in ("rule_population", "rule_descriptors")
+                   if not _cache(k, args.tree, entry).exists()]
+        if not missing:
             print(f"{label:34} cached")
             continue
-        print(f"{label:34} building", flush=True)
-        pop = build_population(args.tree, entry, device)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        np.savez(path, mean=pop.mean, sem=pop.sem, n_games=pop.n_games,
-                 members=pop.members, n_rollouts=pop.n_rollouts, t0_range=pop.t0_range)
+        print(f"{label:34} building {' '.join(missing)}", flush=True)
+        t = build(args.tree, entry, device)
+        pop = t.population
+        write = {"rule_population": dict(mean=pop.mean, sem=pop.sem,
+                                         n_games=pop.n_games, members=pop.members,
+                                         n_rollouts=pop.n_rollouts,
+                                         t0_range=pop.t0_range),
+                 "rule_descriptors": dict(f21=t.descriptors, games=t.games)}
+        for k in missing:
+            path = _cache(k, args.tree, entry)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            np.savez(path, **write[k])
         print(f"{label:34} " + "  ".join(
             f"{r.split()[0]} {np.nanmean(m):.2f}deg n={g} members={c:.2f}"
             for r, m, g, c in zip(RULES, pop.mean, pop.n_games, pop.members)), flush=True)

@@ -117,4 +117,8 @@ of the non-legal side (>0.5 = that side curvier), raw variant, n=2000/class
 Two sibling studies extend these figures into the SAE latent spaces:
 `sae_profiles/` (per-position profiles and violation-locked responses per family,
 plus the curvature distribution across all nine spaces) and `feature_pca/` (the
-21-D ReStraV descriptor viewed unsupervised, one PCA per space).
+21-D ReStraV descriptor viewed unsupervised, one PCA per space). `feature_pca/`
+draws the illegal move as the three constraint rules rather than as this study's
+violation class, which cannot be split that way — it carries no R1 — so those
+three points per game come from the violation-divergence branch population
+instead, under the same per-ply geometry.
