@@ -108,6 +108,17 @@ def draw_rule(ax, x: np.ndarray, y: np.ndarray, st: dict, label: str | None,
             label=label)
 
 
+def rule_n(pop: rc.Population) -> str:
+    """(a)'s rule line, now that the legend carries only the rule name. The three
+    n need not match: a rule takes every selected game with a member available."""
+    lo, hi = pop.t0_range
+    where = f"$t_0$ = {lo}" if lo == hi else f"$t_0 \\in$ [{lo}, {hi}]"
+    n = sorted(set(int(g) for g in pop.n_games))
+    each = f"$n$ = {n[0]}" if len(n) == 1 else f"$n$ = {n[0]}-{n[-1]}"
+    per = "" if pop.n_rollouts == 1 else f" $\\times$ {pop.n_rollouts} rollouts"
+    return f"forked branches, {each} games{per} at {where}"
+
+
 def t0_line(ax, t0: int) -> None:
     ax.axvline(t0, color=MUTED, lw=1.2, ls=(0, (4, 3)), zorder=1)
 
@@ -145,6 +156,7 @@ def class_profile(ax, fork: rc.Fork, entry, tree: str, blocks: dict,
     if lo != fork.t0:  # the drawn game's own fork, when the population is elsewhere
         t0_line(ax, fork.t0)
     ax.set_xlabel("")
+    return pop
 
 
 def fork_profile(ax, fork: rc.Fork) -> None:
@@ -241,11 +253,12 @@ def per_space(fork: rc.Fork, entry, label: str, tree: str, blocks: dict,
     top = gs[0].subgridspec(2, 2, wspace=0.34, hspace=0.24, width_ratios=[1.3, 1])
 
     ax_a = fig.add_subplot(top[0, 0])
-    class_profile(ax_a, fork, entry, tree, blocks, t0)
+    pop = class_profile(ax_a, fork, entry, tree, blocks, t0)
     ax_a.tick_params(labelbottom=False)
     ax_a.set_title("(a) the population's curvature clock\nclasses solid: whole games, "
-                   "no fork, $n$ = 2000 each\nrules dashed: forked branches, $n$ and "
-                   "$t_0$ in the legend\nmean $\\pm$ 95% CI over games, at the markers",
+                   "no fork, $n$ = 2000 each\n"
+                   f"rules dashed: {rule_n(pop)}\n"
+                   "mean $\\pm$ 95% CI over games, at the markers",
                    loc="left", fontsize=9.5)
 
     ax_b = fig.add_subplot(top[1, 0], sharex=ax_a, sharey=ax_a)
