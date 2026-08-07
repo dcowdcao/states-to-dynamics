@@ -6,6 +6,77 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Gray prose out of the four R^21 curvature studies (2026-08-07)
+
+Branch `gray/gray-curvature`, worktree `../spade_sae_worktrees/gray-curvature`.
+`fork_curvature_space`, `fork_expanding_curvature`, `r21_shared_basis` and
+`curvature_discriminant` had grown multi-paragraph `color=MUTED` blocks under their
+legends — the largest was `curvature_discriminant`'s, two wrapped paragraphs plus a
+rollout paragraph plus a rollout caveat, ~20 printed lines. Almost all of it was
+already in the study READMEs; the little that was not was moved there. It is gone.
+
+**The test that decided every case.** Does a reader who does not have this sentence
+*misread the panel in front of them*, or do they merely fail to know something they
+could look up? Only the first stays. Under it, kept: the `R^21 undefined` marker on
+the segment where the descriptor does not exist (§4.2 — an unannotated absent stretch
+reads as an artifact), `reference = 0 by construction` and `axis not calibrated here`
+(§4.2), the `chance` label on the bare chance line (§3), the jackknife/rollout ellipse
+semantics in the legend — *dispersion, not a CI* (§4.6), the per-grid
+"comparable/not-comparable across cells" verdict (§4.6), the R1/R2/R3 member key and
+`curvature_discriminant`'s panel-header key `ctrl · rand · 1 game ×null` (§5). Removed:
+every restatement of the descriptor definition, the window, the camera, where the mean
+over K rollouts is taken, the null's construction, and the effective-sample-size
+argument. The camera angle and the bootstrap semantics were *only* on the figures, so
+they moved into the three READMEs that lacked them rather than being deleted (§4.8,
+§1.2 both want them stated — they do not say on the figure).
+
+**The game-1235 selection line stays, as one line, and it is the only prose the
+`fork_curvature_space` grids carry.** Game 1235 is the argmax over 1550
+branch-complete games of its illegal branches' mutual separation, and the structure it
+shows holds in 0.07–0.17 of games. That is exactly the first kind of sentence: a reader
+who does not know it reads a selected game's arrangement as the population's. It was
+previously in the README only; it is now one muted line on the `fork_curvature_space`
+grids and in `curvature_discriminant`'s legend title.
+
+**The r ≥ 8 rollout saturation caveat came off three of the four studies, and the
+reason differs per figure.** `fork_curvature_space`'s windowed grids are cut at
+`r = 8`, so the region the caveat is about is not drawn — the window *is* the caveat.
+Its whole grids cannot be cut (R^21 needs 8 sampled positions), but they draw the
+sampling spread as an ellipse whose legend names it, and that ellipse swallows the
+reference and every branch mean in all nine spaces: the reader sees what the sentence
+asserted. `curvature_discriminant`'s panels already shade and label `axis not
+calibrated here` over the whole `r > 0` region on both variants. It survives as one
+line on `fork_expanding_curvature` and `r21_shared_basis`, because there the *entire*
+drawn range is past the horizon and the axes are labelled by move index, so nothing
+about the drawn window shows it.
+
+**Layout re-tuning.** Every canvas and legend anchor here had been tuned around the
+text blocks, so removing them left empty bands (§5: an empty band is a layout bug).
+`fork_curvature_space` needed none — `branch_style.below` computes the key's y from the
+legend's rendered extent. The rest were hardcoded and moved:
+`fork_expanding_curvature`'s companion legend −0.26→−0.175 and its rule key
+−0.50→−0.30, with a flat rollout drop replacing the per-newline one;
+`r21_shared_basis` grid key −0.105→−0.065 and `separation_by_plane`'s legend
+−0.34→−0.26; `curvature_discriminant` rule key −0.178→−0.082 and its figure legend
+−0.030→−0.056, since the two-line legend title now grows up where the caption block
+used to sit and would otherwise land on (j)/(k)'s x-axis labels.
+
+**Panel (l)'s known overlap is fixed.** `reference = 0 by construction` sits in the
+band above the first space row and its tail ran under the legend, which was `upper
+right` in the same band. The legend moved to `lower right` — the bottom rows' data
+stops well short of the axis — and the x headroom went 0.32→0.60 of the range so
+TopK's R2 marker, the one bottom-row point that reaches out, clears the legend box.
+The band now belongs to the annotation alone.
+
+Every figure in the four directories was re-rendered for both variants: 8 in
+`fork_curvature_space`, 4 in `fork_expanding_curvature`, 12 in `r21_shared_basis`,
+2 in `curvature_discriminant`.
+
+**Flagged, `src/` untouched.** `spade/figures/branch_style.ordered_legend`'s docstring
+states the opposite policy — that "which game was selected" and "cells are not
+comparable" belong in the README — which contradicts FIGURE_GUIDELINES §4.6 and the
+judgement above. It should be reworded to name the misreads-the-panel test.
+
 ## The fork panels' excursion is mostly the plane (2026-08-07)
 
 Branch `nfig/fig-plane-metric-r21`, worktree `../spade_sae_worktrees/fig-plane-metric-r21`.

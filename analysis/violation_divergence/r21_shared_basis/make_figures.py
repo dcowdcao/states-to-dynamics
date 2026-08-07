@@ -47,8 +47,10 @@ the source game's. A branch is then K rows, and the mean over them is taken AFTE
 phi -- phi is nonlinear, so averaging the four trajectories first would describe a
 path no rollout took. The plane projection is linear, so it does not care which
 side of it the mean is on; the descriptor does. Every anchor this figure draws is
-at r >= +6, which is deep in the regime the rollout study found uninformative
-(ROLLOUT_CAVEAT), so the rollout grids are a shape check, not a result.
+at r >= +6, which is deep in the regime the rollout study found uninformative, so
+the rollout grids are a shape check, not a result. The anchors are labelled by
+move index, so nothing in the drawn window shows that -- ROLLOUT_CAVEAT is the one
+line that does, and the rest of the caption is README.md's.
 
 Usage: python analysis/violation_divergence/r21_shared_basis/make_figures.py
            [--variant {spliced,rollout}] [--camera-ready]
@@ -79,13 +81,11 @@ from spade.violation_divergence.compute_divergence import sae_encoder
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 VARIANTS = {"spliced": "", "rollout": "rollout"}   # CLI name -> variant_dir() suffix
-ROLLOUT_CAVEAT = (
-    "ROLLOUT CAVEAT: with every branch resampling its own future, $\\hat{\\delta}$ climbs "
-    "monotonically and illegal and control both saturate near 1.23 against a\n"
-    "~1.41 unrelated-activations ceiling; the illegal/control ratio is pinned to 1.00 by "
-    "$r\\geq8$ and only $r=0$ separates (1.032, sign opposite the\nspliced 0.979). "
-    "Long-horizon rollout geometry is not informative, and every anchor drawn here is at "
-    "$r\\geq+6$: this is shape, not a separation.")
+# Nothing in the drawn window says this: the anchors are labelled by move index t,
+# so a reader cannot see that every one of them is past the r >= 8 saturation the
+# rollout read-out found. One line; the numbers are in README.
+ROLLOUT_CAVEAT = ("\nrollout: every anchor drawn is at $r\\geq+6$, where illegal and "
+                  "control have already saturated — shape, not a separation.")
 
 W = 8                    # smallest window with a full 21-D descriptor (d[:, :7])
 STRIDE = 2               # one mover per curve; see the parent sub-study
@@ -399,14 +399,14 @@ def space_grid(plane: str, coords: dict[str, np.ndarray], meta: dict, note: str,
         ax.set_title(titles[name], loc="left", fontsize=8.5)
     # The legend box grows upward from its anchor, so a longer note would climb into
     # the bottom row's axis labels; drop the anchor by the lines the note gained.
-    drop = 0.011 * (note.count("\n") - 2)
-    ordered_legend(fig, fig.axes[0], 4, -0.06 - drop, note)
+    drop = 0.011 * note.count("\n")
+    ordered_legend(fig, fig.axes[0], 4, -0.05 - drop, note)
     if not camera_ready:
         fig.suptitle(f"The fork in the 21-D curvature descriptor, game {meta['game']} "
                      f"({plane} plane)", fontsize=11)
     fig.subplots_adjust(left=0.02, right=0.97, top=0.92, bottom=0.06,
                         wspace=0.06, hspace=0.16)
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.105 - drop)
+    rule_key(fig, ["R1", "R2", "R3"], y=-0.065 - drop)
     return save_figure(fig, FIG_DIR / f"space_fork_grid_r21_{plane}{suffix}", camera_ready)
 
 
@@ -456,14 +456,12 @@ def separation_figure(scores: dict[str, list[float]], nulls: dict[str, np.ndarra
     both = [h + b for h, b in zip(ax.get_legend_handles_labels(),
                                   bx.get_legend_handles_labels())]
     fig.legend(*both, loc="lower center", ncol=2, fontsize=8, frameon=False,
-               bbox_to_anchor=(0.5, -0.34))
+               bbox_to_anchor=(0.5, -0.26))
     if not camera_ready:
         fig.suptitle(title, fontsize=10.5)
     fig.tight_layout()
-    fig.text(0.5, -0.44, "one game (n=1), anchors $t\\geq t_0$: 6 illegal x 10 windows "
-             "vs 2 control x 10 windows per space. The null is exact — all 28 ways of "
-             "relabelling the 8 non-reference branches 6/2 — so the smallest attainable "
-             "p is 1/28 = 0.04." + foot, ha="center", va="top", fontsize=7.5, color=MUTED)
+    fig.text(0.5, -0.32, "one game (n=1): 6 illegal vs 2 control branches, 10 windows "
+             "each, per space." + foot, ha="center", va="top", fontsize=7.5, color=MUTED)
     return save_figure(fig, FIG_DIR / f"separation_by_plane{suffix}", camera_ready)
 
 
@@ -533,14 +531,13 @@ def run_figure(coords: dict, X: dict, names: list[str], ill: np.ndarray,
                      "much of it survives the plane", fontsize=10.5)
     fig.tight_layout()
     r = meta["anchors"] - meta["t0"]
-    fig.text(0.5, -0.32, f"one game (n=1): the mean over 6 illegal branches of the run "
-             f"from the reference, averaged over the {int((r >= 0).sum())} drawn "
-             f"anchors $t-t_0$ = {r[r >= 0][0]}…{r[-1]}, divided by the legal control's "
-             f"run in the same field. Every field is z-scored per space, so only the "
-             f"ratio\ncarries across spaces — a mark twice as high is not twice the "
-             f"absolute change. The reference is 0 in every field by construction. "
-             f"Isomap is not shown: it is not a linear image of $R^{{21}}$." + foot,
-             ha="center", va="top", fontsize=7.5, color=MUTED)
+    # A ratio axis with no absolute unit, and a reference that is not a mark: both
+    # decide how the panel reads, so both stay in front of the reader (§4.2, §4.6).
+    fig.text(0.5, -0.30, f"one game (n=1), {int((r >= 0).sum())} anchors "
+             f"$t-t_0$ = {r[r >= 0][0]}…{r[-1]}: ratios, so only the within-space "
+             f"contrast carries across cells — a mark twice as high is not twice the "
+             f"absolute change. The reference is 0 in every field by construction."
+             + foot, ha="center", va="top", fontsize=7.5, color=MUTED)
     return save_figure(fig, FIG_DIR / f"run_from_reference{suffix}", camera_ready)
 
 
@@ -619,56 +616,37 @@ def main():
         print(f"{name:34}{sd[MEAN_D]:11.3f}{sd[MEAN_THETA]:17.2f}{one_d[0]:16.2f}"
               f"{one_d[1]:16.2f}{dtheta[ill].mean():17.2f}{dtheta[ctl].mean():17.2f}")
 
-    n_state = (f"one game (n=1): {len(branches)} non-reference branches x {nw} windows "
-               f"= {n * nw} rows per space in $R^{{{k}}}$ — a shape illustration, not a "
-               f"claim; the separation each plane keeps is in analysis/violation_divergence/r21_shared_basis."
-               f"\nHOW FAR each branch runs from the reference — in this plane, in full "
-               f"$R^{{{k}}}$, and split into the step-length and turning-angle halves, "
-               f"which disagree — is run_from_reference{suffix}, same game and anchors.")
-    rollout_note = ("" if n_roll == 1 else
-                    f"\nROLLOUT VARIANT: every branch including the reference samples its "
-                    f"own future, K={n_roll} times. A point is the MEAN OVER THE {n_roll} "
-                    f"ROLLOUTS OF THE DESCRIPTOR, taken after $\\varphi$ and before the "
-                    f"difference:\n$\\varphi$ is nonlinear, so a mean over the {n_roll} "
-                    f"trajectories would be the curvature of a path none of them took. The "
-                    f"plane projection is linear and does not care.\n{ROLLOUT_CAVEAT}")
-    common = (f"game {meta['game']}, $t_0$={meta['t0']}; a point is the ReStraV "
-              f"descriptor of the {W} sampled positions (every {STRIDE}nd ply) ending "
-              f"at $t$, minus the reference's, z-scored per space; view elev={ELEV}, "
-              f"azim={AZIM}.\n")
+    # What each grid's note has to carry is §4.6's comparability verdict, which
+    # differs per plane and cannot be looked up while looking at the cells. The
+    # descriptor, the window, the camera and where the K-mean is taken are the
+    # caption's, and live in README.md.
+    n_state = f"\none game (n=1), {len(branches)} non-reference branches: shape only."
+    rollout_note = "" if n_roll == 1 else ROLLOUT_CAVEAT
     grids = {
-        "refit": ("Top-2 plane REFIT PER SPACE: arb. units, not comparable across "
+        "refit": ("top-2 plane refit per space: arb. units, not comparable across "
                   "cells — only the shape of the fork is.", ("PC1", "PC2"), False,
                   {name: f"{name}  ({refit[name][1][0]:.0%}/{refit[name][1][1]:.0%} var)"
                    for name in names}),
-        "shared": ("ONE plane, fit on the nine spaces' pooled descriptors and applied "
-                   "unchanged, on shared axes: every cell carries the same 21 named "
-                   "coordinates, so arrangement and direction ARE comparable cell to "
-                   "cell. Units are each space's own descriptor SD, so a longer "
-                   "excursion is not a larger absolute change.",
+        "shared": ("one plane fit on the pooled descriptors and applied unchanged: "
+                   "arrangement and direction are comparable cell to cell, magnitude "
+                   "is not (the unit is each space's own descriptor SD).",
                    (f"shared PC1 ({shared_var[0]:.0%} of pooled var)",
                     f"shared PC2 ({shared_var[1]:.0%} of pooled var)"), True,
                    {name: name for name in names}),
-        "named": ("NO FIT: the axes are two named components of the descriptor, on "
-                  "shared axes. Comparable cell to cell in the same sense as the shared "
-                  "plane — same coordinates, each space's own SD as the unit.",
+        "named": ("no fit: two named descriptor components, comparable cell to cell "
+                  "in arrangement; magnitude is each space's own SD and is not.",
                   ("$\\Delta$ mean $d$ (SD)", "$\\Delta$ mean $\\theta$ (SD)"), True,
                   {name: name for name in names}),
-        "isomap": (f"ONE Isomap ({ISOMAP_NEIGHBORS} neighbours) fit on the pooled "
-                   "non-degenerate rows and applied to every cell, on shared axes. "
-                   "Isomap has no origin and no variance ratio: axes are arb. units.",
+        "isomap": (f"one Isomap ({ISOMAP_NEIGHBORS} neighbours) fit on the pooled "
+                   "non-degenerate rows: arb. units, no origin and no variance ratio.",
                    ("Isomap-1 (arb. units)", "Isomap-2 (arb. units)"), True,
                    {name: name for name in names}),
     }
     for plane, (note, labels, shared_lim, titles) in grids.items():
-        out = space_grid(plane, coords[plane], meta,
-                         f"{common}{note}\n{n_state}{rollout_note}",
+        out = space_grid(plane, coords[plane], meta, f"{note}{n_state}{rollout_note}",
                          labels, titles, shared_lim, args.camera_ready, suffix)
         print(f"wrote {out}")
-    foot = "" if n_roll == 1 else (
-        f"\nRollout variant: each of those windows is the mean over the branch's "
-        f"K={n_roll} sampled futures, taken after the descriptor and before the "
-        f"difference.\n{ROLLOUT_CAVEAT}")
+    foot = "" if n_roll == 1 else ROLLOUT_CAVEAT
     # The spliced claim inverts here: with every branch resampling its future the
     # displacement is in the activations, and routing it through R^21 costs.
     title = ("$R^{21}$ moves the branches apart faster than it moves the null"

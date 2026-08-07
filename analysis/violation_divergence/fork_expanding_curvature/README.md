@@ -204,6 +204,22 @@ per-branch scatter (n=8 branches, one game) and the null's range over branches.
 Both have a `_rollout` twin, same game and same window, from the branch set whose
 suffixes are sampled from the model; see below.
 
+**The caption, which is here and not on the figures.** Game 0, *t0* = 10;
+`Δ21(t)` is the ReStraV descriptor of positions *t0*…*t* sampled every 2nd ply,
+minus the reference's, with coordinates rescaled to unit RMS before the plane is
+fit. Both panels of the companion use the same expanding window anchored at *t0*.
+The 3-D grid is viewed at `elev = 18, azim = −58` — the parent fork figure's
+camera, so the two read together — and its plane is an uncentred PCA refit per
+space. The null in (b) recomputes the same expanding window over a random
+permutation of the post-*t0* positions (20 shuffles), so growing the window is
+the only thing left that can move the descriptor.
+
+What stays on the figures is what a reader cannot look up while looking at them:
+the `R^21 undefined` marker on the segment where the descriptor does not exist
+(FIGURE_GUIDELINES §4.2 — an unannotated flat or absent stretch reads as an
+artifact), the refit-per-space disclaimer (§4.6), `one game (n=1)`, and on the
+rollout twins one line about the horizon (below).
+
 ## The rollout variant, and why it makes the verdict worse
 
 The spliced set gives every branch the *source game's* continuation, which is a
@@ -217,7 +233,8 @@ same 17 sampled positions, 36 rows (9 branches × 4).
 is `branch_mean` of its four rows' descriptors and never the descriptor of their
 mean trajectory, which would be the curvature of a path no rollout took. The
 difference from the reference and the unit-RMS rescale are both linear and
-commute with that average; nothing else does. Stated on both figures.
+commute with that average; nothing else does. This is the figures' caption and
+lives only here — it says how the numbers were made, not how the panels read.
 
 **The verdict of §1–§3 is unchanged and the window arithmetic is the same** — the
 descriptor still needs 8 sampled positions, so the curve still cannot start until
@@ -234,8 +251,13 @@ reference, in all nine spaces, at all six curve points. That is not a weak effec
 — it is the figure drawing the sampler. `../fork_curvature_space`'s trailing
 window puts the crossing at `t − t0 ≈ 8`; the expanding window's first point is
 at 14, so there is no overlap at all between where R^21 is defined and where the
-branch is still legible. The companion's `R^21 undefined` shading and the
-figures' caption say this in place of a number a reader could over-read.
+branch is still legible.
+
+The rollout figures say this in one line, and it is the one caveat that has to be
+on the page. The undefined marker tells a reader where the descriptor *starts*;
+nothing in the drawn window tells them the branch is already gone by then, because
+the whole drawn range is past the horizon and there is no un-saturated stretch to
+compare it against. The numbers behind the line are the table above.
 
 Two spliced findings reverse, and both go the way the horizon predicts:
 

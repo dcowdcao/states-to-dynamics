@@ -46,20 +46,19 @@ from spade.othello.taxonomy import CATEGORIES
 
 from cache_features import VARIANT_DIRS, load
 from window import (
-    MIN_WINDOW, R21_DIM, STRIDE, branch_groups, branch_mean, expanding, rescale,
-    travel)
+    R21_DIM, branch_groups, branch_mean, expanding, rescale, travel)
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 ELEV, AZIM = 18, -58  # the fork figure's camera, so the two are comparable
 CONTROL_LABEL = {1: "control: another legal move (null)",
                  2: "control 2: a third legal move (null)"}
 UNDEFINED = "$R^{21}$ undefined\n(< 8 sampled positions since $t_0$)"
-ROLLOUT_NOTE = (
-    " Rollout branch set: a branch is the mean over its K=4 sampled continuations, taken "
-    "AFTER $r_{21}$, which is nonlinear.\nEvery drawn point is $t-t_0 \\geq 14$, past the "
-    "offset where two rollouts of one branch already differ by more than the branch differs "
-    "from the reference:\nnothing here separates the branches, and the descriptor's 8-position "
-    "minimum is why the figure cannot be drawn where they do.")
+# The drawn window cannot carry this one: the figure's whole range is past the
+# horizon, so nothing about where it starts or stops tells a reader the branches
+# are already gone. One line, and the rest is README ("The rollout variant").
+ROLLOUT_NOTE = ("\nRollout set: every drawn point is $t-t_0 \\geq 14$, past where two "
+                "rollouts of one branch differ more than the branch differs from the "
+                "reference — shape, not a separation.")
 
 
 @dataclass(frozen=True)
@@ -178,14 +177,12 @@ def space_grid(g: dict, b: Branches, k0: int, rollout: bool, camera_ready: bool)
         ax.set_title(f"{name}  ({var[0]:.0%}/{var[1]:.0%} var)", loc="left", fontsize=8.5)
         ax.set_xlabel("PC1 of $\\Delta_{21}$", labelpad=-8)
         ax.set_ylabel("PC2 of $\\Delta_{21}$", labelpad=-8)
+    # §4.6: a per-panel refit is not comparable cell to cell, and that has to be
+    # said where the panels are. Everything else about the plane is README's.
     ordered_legend(fig, fig.axes[0], 4, -0.06,
-        f"game {g['game']}, $t_0$={g['t0']}; $\\Delta_{{21}}(t)$ = ReStraV descriptor of "
-        f"positions $t_0..t$ (every {STRIDE}nd ply) minus the reference's, coordinates "
-        f"rescaled to unit RMS,\nuncentred PCA refit per space (arb. units, not comparable "
-        f"across cells); view elev={ELEV}, azim={AZIM}. The descriptor needs "
-        f"{MIN_WINDOW} sampled positions, so the curve\nstarts {(MIN_WINDOW - 1) * STRIDE} "
-        f"plies after $t_0$ and only the 8 moment coordinates move along it. One game "
-        f"(n=1): shape only, not a claim." + (ROLLOUT_NOTE if rollout else ""))
+        "uncentred PCA of $\\Delta_{21}$, refit per space: arb. units, not comparable "
+        "across cells — only the shape of the fork is. One game (n=1): shape only, not "
+        "a claim." + (ROLLOUT_NOTE if rollout else ""))
     if not camera_ready:
         fig.suptitle("The fork in the curvature space $R^{21}$, expanding window anchored "
                      f"at $t_0$ (game {g['game']})", fontsize=11)
@@ -249,19 +246,15 @@ def companion(g: dict, b: Branches, k0: int, rollout: bool, camera_ready: bool) 
     ax2.set_title("(b) how far the curve travels, against a time-shuffled null",
                   loc="left", fontsize=10)
     fig.tight_layout()
-    # The legend's title grows upward from its anchor, so extra caption lines have to
-    # push the whole block down or they land on panel (b)'s rotated tick labels.
-    drop = 0.04 * ROLLOUT_NOTE.count("\n") if rollout else 0
-    ordered_legend(fig, [ax1, ax2], 4, -0.26 - drop,
-        "One game (n=1), 8 non-reference branches; each marker in (b) is one branch, the "
-        "black bar its median. The null recomputes the same\nexpanding window over a random "
-        "permutation of the post-$t_0$ positions, so growing the window is the only thing "
-        "left that can move the\ndescriptor. Both panels use the expanding window anchored "
-        "at $t_0$; coordinates rescaled to unit RMS."
+    # The legend's title grows upward from its anchor, so the rollout line has to
+    # push the whole block down or it lands on panel (b)'s rotated tick labels.
+    drop = 0.035 if rollout else 0
+    ordered_legend(fig, [ax1, ax2], 4, -0.175 - drop,
+        "one game (n=1), 8 non-reference branches — each marker in (b) is one branch."
         + (ROLLOUT_NOTE if rollout else ""))
     if not camera_ready:
         fig.suptitle("What the $R^{21}$ curve can and cannot show", fontsize=11, y=1.04)
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.50 - drop)
+    rule_key(fig, ["R1", "R2", "R3"], y=-0.30 - drop)
     return save_figure(fig, FIG_DIR / f"r21_expanding_magnitude{suffix(rollout)}",
                        camera_ready)
 
