@@ -94,15 +94,6 @@ class Fork:
         return reference_row(self.rows)
 
     @property
-    def n_rollouts(self) -> int:
-        return self.theta.shape[1]
-
-    @property
-    def positions(self) -> np.ndarray:
-        """Board position of each theta column."""
-        return np.arange(self.theta.shape[-1]) + FIRST_TURN
-
-    @property
     def last_shared(self) -> int:
         """Last theta column whose window is inside the shared prefix: the turn at
         t0-2, since the turn at t0-1 already reaches the branch token."""
@@ -151,11 +142,6 @@ def load_fork(tree: str, game: int = FIGURE_GAME, entry=None,
     return Fork(game, g.t0, rows, _geometry(acts, idx, entry, device)[1], g.tokens)
 
 
-def branch_curves(fork: Fork) -> np.ndarray:
-    """[n_branch, n_turn]: each branch's turning angle, averaged over its rollouts."""
-    return np.nanmean(fork.theta, axis=1)
-
-
 @dataclass(frozen=True)
 class Rule:
     """One rule's curve and the sequences it is the mean of.
@@ -178,15 +164,6 @@ class Rule:
         if self.n_sequences < 2:
             return None
         return np.nanstd(self.members, 0) / np.sqrt(self.n_sequences)
-
-
-def rule_profiles(fork: Fork) -> dict[str, Rule]:
-    """Per rule, the mean turning-angle curve over its member categories."""
-    curves = branch_curves(fork)
-    return {rule: Rule(curves[members].mean(0),
-                       fork.theta[members].reshape(-1, fork.theta.shape[-1]),
-                       len(members))
-            for rule, members in rule_rows(fork.rows).items()}
 
 
 def aligned_delta(fork: Fork) -> tuple[np.ndarray, np.ndarray]:

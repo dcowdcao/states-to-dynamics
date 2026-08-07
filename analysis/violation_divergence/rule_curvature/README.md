@@ -8,13 +8,13 @@ categories into the three constraint rules they violate.
 
 The fork is n = 1, so panel (a) carries the same three rules over a population of
 games, beside the class baselines and on the same axis. That is the panel a claim
-can rest on; (b)–(d) show what one instance of the construction looks like.
+can rest on; (b)–(c) show what one instance of the construction looks like.
 
 **That population is one fork position.** *t0* is round-robin over [10, 34]
 across the 2000 rule-complete games, so pooling them puts *where* the violation
 happened inside the rule curves. Panel (a) takes the **80 games that fork at
-*t0* = 20** — game 1235's own position, so the dashed line means the same thing
-in (a) as in (b). It costs a factor of 25 in n and the interval is ~5× wider;
+*t0* = 20** — game 1235's own position, so (a)'s dashed line is the branch point
+(b) locks to. It costs a factor of 25 in n and the interval is ~5× wider;
 what survives that is in the captions below, and `--t0 all` restores the pooled
 panel.
 
@@ -55,16 +55,16 @@ Skip-if-exists is per product.
 
 | file | what it is |
 |---|---|
-| `curvature_rules_{tree}_raw_L5` | the four panels in raw layer 5 |
-| `curvature_rules_{tree}_{family}` | the same four panels in one SAE's latents (8 families) |
-| `curvature_rules_{tree}_combined` | panel (c) alone in all nine spaces, shared axes, over the board |
+| `curvature_rules_{tree}_raw_L5` | the three panels in raw layer 5 |
+| `curvature_rules_{tree}_{family}` | the same three panels in one SAE's latents (8 families) |
+| `curvature_rules_{tree}_combined` | panel (b) alone in all nine spaces, shared axes, over the board |
 
 `{tree}` is `branches` (spliced) or `rollout` (resampled).
 
 ## θ is comparable, and only because of the sampling convention
 
 Panel (a)'s three class profiles are the straightness study's committed geometry
-npz; its three rule curves and panels (b)–(c) are computed here. Putting them on
+npz; its three rule curves and panel (b) are computed here. Putting them on
 one scale is legitimate **only** under the per-ply convention — positions 1..58,
 one angle per point, no stride and no trailing window, for the many-game rules
 exactly as for the single game — and that was checked rather than assumed:
@@ -128,18 +128,16 @@ that **fork at *t0* = 20**: **n = 80 games for each of R1, R2 and R3**, mean ±
 `CLASS_STYLE["rollout"]` and `RULE_STYLE["R1 placement"]` are the same blue, so
 the dash and the rule marker are what keep six series apart; the dash also says
 these are branched moves inside games rather than whole games. Every rule curve
-forks at the dashed vertical line, which is also game 1235's own *t0*, so the
-line means one thing in (a) and in (b).
-Panel **(b)**: the same quantity for game 1235's nine branches, on (a)'s x and y
-axes, with **n = 1 game and no uncertainty display**. One path per rule is the
-mean over its member categories of each member's own θ curve; every legend entry
-carries n, including **`R3 turn (mean of 1)`**, which is one branch and not an
-average. Panel **(c)**: the violation-locked Δ turning angle against the game's
+forks at the dashed vertical line, which is also game 1235's own *t0* — the
+branch point panel (b) locks to and panel (c) draws the board of.
+Panel **(b)**: the violation-locked Δ turning angle for game 1235, against its
 own reference branch — the move as played, which is this figure's "matched source
-game" — with both legal controls in the null styling, again at **n = 1 game and
-with no uncertainty display**. Δ ≡ 0 for *t* − *t0* ≤ −2 by construction
-(shaded): every branch shares the prefix, and the turn at *t0* − 2 is the last
-whose window excludes *t0*. Panel **(d)**: the
+game" — with a legal control in the null styling, at **n = 1 game and with no
+uncertainty display**. One path per rule is the mean over its member categories
+of each member's own Δ, and the R1/R2/R3 key under the panels names those members;
+**R3 has one**, so its path is a single branch and not an average. Δ ≡ 0 for
+*t* − *t0* ≤ −2 by construction (shaded): every branch shares the prefix, and the
+turn at *t0* − 2 is the last whose window excludes *t0*. Panel **(c)**: the
 position at the end of the shared prefix, discs in absolute colour, Black to
 move; an outlined cell is a branch square with its rule marker in the corner so a
 disc underneath stays visible, the small dashed translucent disc in the opposite
@@ -171,7 +169,7 @@ carry:
 - **The rule curves belong to their tree and the class curves do not.** The
   classes are the straightness study's and know nothing about either tree; the
   rules are rebuilt per tree, so the spliced and resampled figures differ in (a)
-  as well as in (b)–(c), by the suffix and nothing else.
+  as well as in (b), by the suffix and nothing else.
 - **The classes stay at n = 2000 and are not restricted to anything.** They are
   whole legal-by-construction games with no injected move, so there is no fork
   position to hold fixed; the legend says `forked at t0 = 20` on the rule entries
@@ -246,18 +244,19 @@ of this game is 0.885, against a population median of 0.945 [IQR 0.872–1.020]
 over all 1550 branch-complete games, above 1 in 30% of them
 (`python -m spade.violation_divergence.rule_groups`).
 
-**Both legal controls are drawn, and they are the point.** `../fork_and_board`
-draws one; this figure keeps both, because in panel (c) a legal alternative move
-produces a Δ of the same order as the illegal branches (raw layer 5: at
-*t* − *t0* = −1, controls −7.99 and −12.38 deg against −19.11 .. +5.11 across the
-six illegal categories; at *t* − *t0* = 0, controls −5.14 and −9.25 against
-−13.60 .. −3.46). The separation this study is about is not
-visible at n = 1, and a figure showing only the illegal branches would imply it
-is. The population numbers with CIs over 13,531 branches are in `../README.md`.
+**The legal control is drawn, and it is the point.** In panel (b) a legal
+alternative move produces a Δ of the same order as the illegal branches (raw
+layer 5: at *t* − *t0* = −1, the two legal controls read −7.99 and −12.38 deg
+against −19.11 .. +5.11 across the six illegal categories; at *t* − *t0* = 0,
+−5.14 and −9.25 against −13.60 .. −3.46 — the panel draws the first of each pair,
+since the second said nothing the first did not). The separation this study is
+about is not visible at n = 1, and a figure showing only the illegal branches
+would imply it is. The population numbers with CIs over 13,531 branches are in
+`../README.md`.
 
 ### `curvature_rules_rollout_*` — the resampled tree
 
-**The same four panels with every branch's continuation sampled from OthelloGPT
+**The same three panels with every branch's continuation sampled from OthelloGPT
 instead of spliced.** `tokens[:t0]` and the branch token are kept and the
 remaining tokens are sampled at temperature 1.0, K = 4 per branch, with the
 reference resampled on the same footing — replaying its real continuation would
@@ -353,7 +352,7 @@ co-variation is the game, not the splice.
 
 ## Reading it honestly
 
-- **n = 1, and a selected game.** Panels (b)–(d) are an illustration of the
+- **n = 1, and a selected game.** Panels (b)–(c) are an illustration of the
   construction, not a claim-supporting figure, and they carry **no uncertainty
   display at all** — no ribbon, no bar, nothing faint behind the means. At n = 1
   there is nothing over which an interval could be taken that a reader should
@@ -367,16 +366,14 @@ co-variation is the game, not the splice.
   support at this n — `--t0 all` pools all 2000 games and gets the resolution back
   by putting fork position back into the curves, which is a different figure with
   a different weakness, not a stronger version of this one.
-- **Two registers, two axes.** (a) is a population and (b) is one game. They share
-  x and y so the comparison is exact, but a single game's swing is not a
-  population difference and the overlay would invite reading it as one. Inside
-  (a) the two constructions — whole games, branched moves — are told apart by
-  line style, because `CLASS_STYLE["rollout"]` and `RULE_STYLE["R1 placement"]`
-  are the same blue and colour alone would name one series twice.
+- **One axis, two constructions.** (a) draws whole games and branched moves
+  together, and they are told apart by line style rather than colour, because
+  `CLASS_STYLE["rollout"]` and `RULE_STYLE["R1 placement"]` are the same blue and
+  colour alone would name one series twice.
 - **Three lines are six categories.** The rule means are a labelling convenience;
   the spread ratio near 1 says the members barely cohere. If a claim ever rests on
   a rule it has to be scored per category and aggregated with a CI.
-- **Angles are scale-free, so the nine spaces share panel (c)'s y-axis.** Step
+- **Angles are scale-free, so the nine spaces share panel (b)'s y-axis.** Step
   lengths and latent norms would not — SpaDE codes live on a simplex — which is
   why this figure draws the angle and nothing else.
 - **The sampling convention is stated because it flips signs.** See the θ section

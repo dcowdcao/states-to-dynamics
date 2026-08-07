@@ -1,20 +1,13 @@
 """Curvature over the board, forked at t0 into the three rules a branch violates.
 
-Four panels. (a) is the population clock: the straightness study's many-game
+Three panels. (a) is the population clock: the straightness study's many-game
 class profiles -- legal, OthelloGPT rollout, championship, 2000 games each -- and
 the three rules measured over every game that forks at one position (--t0,
 default 20, which is FIGURE_GAME's own fork: ~80 games of the 2000).
-(b) is one game's fork on (a)'s scale: game 1235 branching at t0 = 20 into R1
-placement, R2 bracketing and R3 turn, over its own reference and two legal
-controls. (c) is the violation-locked response, Δ against the matched source
-game, which here is the game's own reference branch. (d) is the board the
-branches fork on, with each branch move on its square.
-
-**Why (a) and (b) are still two axes.** (a) is a population and (b) is one game,
-so an overlay would invite reading a single game's swing as a population
-difference; the dashed t0 line and the annotated fork belong to that one game and
-to nothing in (a). The rules appear in both, and the two registers are what the
-split keeps apart. They share x and y, so the comparison is still exact.
+(b) is one game's violation-locked response -- game 1235, branched at t0 = 20 into
+R1 placement, R2 bracketing and R3 turn -- as Δ against the matched source game,
+which here is the game's own reference branch. (c) is the board the branches fork
+on, with each branch move on its square.
 
 **(a) carries six series, so line style is load-bearing.**
 `CLASS_STYLE["rollout"]` and `RULE_STYLE["R1 placement"]` are the same blue --
@@ -28,7 +21,7 @@ over [10, 34] across the 2000 rule-complete games, and where a violation happens
 moves curvature on its own, so pooling them would put the fork position inside
 the rule curves. Restricting to t0 = 20 costs a factor of 25 in n -- the CI is
 5x wider and the legend and the caption say the real number -- and buys a panel
-whose dashed line means the same thing it means in (b).
+whose dashed line is the same fork (b) and (c) draw.
 
 **The sampling convention is load-bearing.** Both sides are measured per ply over
 positions 1..58, one angle at its own vertex, no stride and no trailing window --
@@ -62,7 +55,7 @@ from spade.figures.branch_panels import board_note, board_panel, mover_name
 from spade.figures.branch_style import (
     below, branch_style, ordered_legend, rule_member_key)
 from spade.figures.paper_style import (
-    GRID, INK, MUTED, REFERENCE, RULE_STYLE, apply_style, save_figure)
+    GRID, MUTED, RULE_STYLE, apply_style, save_figure)
 from spade.figures.straightness_panels import (
     ci_bars, class_blocks, event_axes, profile_panel)
 from spade.othello.boards import flip_set, replay
@@ -92,17 +85,16 @@ def rule_style(fork: rc.Fork, members: list[int]) -> dict:
     return branch_style(fork.rows[members[0]]["category"], 0, by_rule=True)
 
 
-def draw_rule(ax, x: np.ndarray, y: np.ndarray, st: dict, label: str | None,
-              lo: int = 0) -> None:
-    """One rule's mean curve in (b) or (c), with no uncertainty display at all.
+def draw_rule(ax, x: np.ndarray, y: np.ndarray, st: dict, label: str | None) -> None:
+    """One rule's mean curve in (b), with no uncertainty display at all.
 
-    n = 1 game there, and nothing honest fits: five +/-1.96 SEM ribbons per axes
-    swallowed the curves they annotated, and the faint per-member traces that
-    replaced them were clutter. Panel (a) is where the interval lives, over games.
-    What a single game's between-member spread was is printed by `main` and quoted
-    in the study README, which is where an n = 1 number belongs.
+    n = 1 game there, and nothing honest fits: +/-1.96 SEM ribbons swallowed the
+    curves they annotated, and the faint per-member traces that replaced them were
+    clutter. Panel (a) is where the interval lives, over games. What a single
+    game's between-member spread was is printed by `main` and quoted in the study
+    README, which is where an n = 1 number belongs.
     """
-    ax.plot(x[lo:], y[lo:], ls=st["ls"], color=st["color"], lw=st["lw"],
+    ax.plot(x, y, ls=st["ls"], color=st["color"], lw=st["lw"],
             marker=st["marker"], ms=4, markevery=(2, 5), markerfacecolor=st["mfc"],
             markeredgecolor=st["mec"], markeredgewidth=0.5, zorder=st["zorder"],
             label=label)
@@ -124,13 +116,13 @@ def t0_line(ax, t0: int) -> None:
 
 
 def class_profile(ax, fork: rc.Fork, entry, tree: str, blocks: dict,
-                  t0: int | None) -> None:
+                  t0: int | None) -> rc.Population:
     """(a) the population clock: three game classes and the three rules.
 
     The classes are the straightness study's committed npz; the rules are measured
     here on the same tree the fork panels read, per ply and over the games forking
     at `t0` -- one position, so the dashed line is where every rule curve forks and
-    means what it means in (b). Under `--t0 all` the games fork all over [10, 34]
+    is the fork (b) locks to. Under `--t0 all` the games fork all over [10, 34]
     and that range is shaded instead. The classes get neither: they are whole
     games and do not fork.
     """
@@ -155,36 +147,8 @@ def class_profile(ax, fork: rc.Fork, entry, tree: str, blocks: dict,
                 markeredgewidth=0.5, zorder=4)
     if lo != fork.t0:  # the drawn game's own fork, when the population is elsewhere
         t0_line(ax, fork.t0)
-    ax.set_xlabel("")
-    return pop
-
-
-def fork_profile(ax, fork: rc.Fork) -> None:
-    """(b) the same quantity for one game's nine branches, on (a)'s scale."""
-    t0_line(ax, fork.t0)
-    pos, curves, profiles = fork.positions, rc.branch_curves(fork), rc.rule_profiles(fork)
-    ax.plot(pos, curves[fork.ref], color=REFERENCE["color"], ls=(0, (3, 1.5)), lw=1.3,
-            marker=REFERENCE["marker"], ms=4, markevery=(4, 9), markerfacecolor="white",
-            markeredgecolor=REFERENCE["color"], markeredgewidth=0.8, zorder=4,
-            label=f"reference: the move as played at $t_0$" + (
-                "" if fork.n_rollouts == 1 else f" (mean of {fork.n_rollouts})"))
-    # From the last shared turn, so a branch visibly leaves the reference rather
-    # than appearing out of nowhere; before it every branch is that same curve.
-    for control in (CONTROL,):
-        st = branch_style(LEGAL, control)
-        ax.plot(pos[fork.last_shared:], curves[control_row(fork, control), fork.last_shared:],
-                ls=st["ls"], color=st["color"], lw=st["lw"], marker=st["marker"], ms=4,
-                markevery=(3, 9), markerfacecolor=st["mfc"], markeredgecolor=st["mec"],
-                markeredgewidth=0.5, zorder=st["zorder"], label=st["label"])
-    for rule, members in rule_rows(fork.rows).items():
-        st = rule_style(fork, members)
-        draw_rule(ax, pos, profiles[rule].mean, st, st["label"], fork.last_shared)
     ax.set_xlabel("board position $t$")
-    ax.set_ylabel("mean turning angle (deg)")
-    lo, hi = ax.get_ylim()
-    ax.annotate(f"$t_0$ = {fork.t0}: the fork\nbranches coincide to its left",
-                xy=(fork.t0 - 1.2, lo + 0.02 * (hi - lo)), fontsize=7.5, color=INK,
-                ha="right", va="bottom")
+    return pop
 
 
 def control_row(fork: rc.Fork, control: int) -> int:
@@ -194,7 +158,7 @@ def control_row(fork: rc.Fork, control: int) -> int:
 def locked(ax, fork: rc.Fork, legend: bool) -> None:
     """The violation-locked Δ per rule, against the legal control as the null.
 
-    (c) in the per-space figure and every cell of the combined one, so it carries
+    (b) in the per-space figure and every cell of the combined one, so it carries
     no panel letter of its own.
     """
     event_axes(ax)
@@ -245,34 +209,27 @@ def title(entry, label: str, tree: str, fork: rc.Fork) -> str:
 
 def per_space(fork: rc.Fork, entry, label: str, tree: str, blocks: dict,
               t0: int | None, camera_ready: bool) -> Path:
-    fig = plt.figure(figsize=(9.6, 2 * PANEL_H + BOARD_H + 0.9))
-    gs = fig.add_gridspec(2, 1, height_ratios=[2 * PANEL_H, BOARD_H],
-                          left=0.07, right=0.98, top=0.90, bottom=0.05, hspace=0.30)
-    # (a) and (b) stack on one shared position axis; (c) has its own, so it takes
-    # the full height beside them rather than leaving a band of white.
-    top = gs[0].subgridspec(2, 2, wspace=0.34, hspace=0.24, width_ratios=[1.3, 1])
+    fig = plt.figure(figsize=(9.6, PANEL_H + BOARD_H + 1.2))
+    gs = fig.add_gridspec(2, 1, height_ratios=[PANEL_H, BOARD_H],
+                          left=0.07, right=0.98, top=0.87, bottom=0.06, hspace=0.32)
+    # Board position and offset-from-the-branch are unrelated axes, so the two
+    # panels sit side by side rather than stacking on a shared x.
+    top = gs[0].subgridspec(1, 2, wspace=0.30, width_ratios=[1.3, 1])
 
-    ax_a = fig.add_subplot(top[0, 0])
+    ax_a = fig.add_subplot(top[0])
     pop = class_profile(ax_a, fork, entry, tree, blocks, t0)
-    ax_a.tick_params(labelbottom=False)
     ax_a.set_title("(a) the population's curvature clock\nclasses solid: whole games, "
                    "no fork, $n$ = 2000 each\n"
                    f"rules dashed: {rule_n(pop)}\n"
                    "mean $\\pm$ 95% CI over games, at the markers",
                    loc="left", fontsize=9.5)
 
-    ax_b = fig.add_subplot(top[1, 0], sharex=ax_a, sharey=ax_a)
-    fork_profile(ax_b, fork)
-    ax_b.set_title("(b) one game's fork, on (a)'s scale\n$n$ = 1 game — no "
-                   "uncertainty display; (a) is where the interval is",
-                   loc="left", fontsize=9.5)
-
-    ax_c = fig.add_subplot(top[:, 1])
-    locked(ax_c, fork, legend=True)
-    ax_c.set_title("(c) violation-locked response\n$n$ = 1 game — no uncertainty "
+    ax_b = fig.add_subplot(top[1])
+    locked(ax_b, fork, legend=True)
+    ax_b.set_title("(b) violation-locked response\n$n$ = 1 game — no uncertainty "
                    "display", loc="left", fontsize=9.5)
 
-    apparatus(fig, gs[1], fork, [ax_a, ax_b, ax_c], NCOL, "d")
+    apparatus(fig, gs[1], fork, [ax_a, ax_b], NCOL, "c")
     if not camera_ready:
         fig.suptitle(title(entry, label, tree, fork), fontsize=12)
     return save_figure(fig, FIG_DIR / f"curvature_rules_{tree}_{space_stem(entry)}",
