@@ -80,6 +80,7 @@ CLASSES = ["legal", "rollout", "championship"]
 TREE_TITLE = {"branches": "spliced suffix", "rollout": "resampled suffix"}
 NCOL = 3
 PANEL_H, BOARD_H, CELL_W, CELL_H = 3.9, 3.6, 3.2, 2.8
+CONTROL = 1                    # one legal-move null; a second said nothing more
 POPULATION_LS = (0, (6, 1.6))  # (a)'s rules: a branch population, not a game class
 
 
@@ -89,17 +90,6 @@ def space_stem(entry) -> str:
 
 def rule_style(fork: rc.Fork, members: list[int]) -> dict:
     return branch_style(fork.rows[members[0]]["category"], 0, by_rule=True)
-
-
-def rule_label(fork: rc.Fork, st: dict, members: list[int]) -> str:
-    """The legend entry, carrying what the mean is over (FIGURE_GUIDELINES 1.7).
-
-    On the rollout tree a member category is K sampled continuations, so the
-    count a reader needs is both numbers and not their product.
-    """
-    n = (f"{len(members)}" if fork.n_rollouts == 1
-         else f"{len(members)} $\\times$ {fork.n_rollouts} rollouts")
-    return f"{st['label']} (mean of {n})"
 
 
 def draw_rule(ax, x: np.ndarray, y: np.ndarray, st: dict, label: str | None,
@@ -120,21 +110,6 @@ def draw_rule(ax, x: np.ndarray, y: np.ndarray, st: dict, label: str | None,
 
 def t0_line(ax, t0: int) -> None:
     ax.axvline(t0, color=MUTED, lw=1.2, ls=(0, (4, 3)), zorder=1)
-
-
-def population_label(st: dict, pop: rc.Population, j: int) -> str:
-    """The legend entry, carrying this rule's own n and its fork position.
-
-    n is per rule and need not match across the three (FIGURE_GUIDELINES 1.7): a
-    rule takes every selected game with one of its member categories available.
-    "forked at" is what keeps the entry from being read like a class entry -- the
-    classes are whole games and have no t0 at all.
-    """
-    lo, hi = pop.t0_range
-    where = f"$t_0$ = {lo}" if lo == hi else f"$t_0 \\in$ [{lo}, {hi}]"
-    n = (f"{pop.n_games[j]} games" if pop.n_rollouts == 1
-         else f"{pop.n_games[j]} games $\\times$ {pop.n_rollouts} rollouts")
-    return f"{st['label']} (mean over {n} forked at {where})"
 
 
 def class_profile(ax, fork: rc.Fork, entry, tree: str, blocks: dict,
@@ -166,7 +141,7 @@ def class_profile(ax, fork: rc.Fork, entry, tree: str, blocks: dict,
         ax.plot(pop.positions, pop.mean[j], ls=POPULATION_LS, color=st["color"], lw=1.5,
                 marker=st["marker"], ms=4, markevery=(6 + j, 9),
                 markerfacecolor=st["color"], markeredgecolor="white",
-                markeredgewidth=0.5, zorder=4, label=population_label(st, pop, j))
+                markeredgewidth=0.5, zorder=4)
     if lo != fork.t0:  # the drawn game's own fork, when the population is elsewhere
         t0_line(ax, fork.t0)
     ax.set_xlabel("")
@@ -183,7 +158,7 @@ def fork_profile(ax, fork: rc.Fork) -> None:
                 "" if fork.n_rollouts == 1 else f" (mean of {fork.n_rollouts})"))
     # From the last shared turn, so a branch visibly leaves the reference rather
     # than appearing out of nowhere; before it every branch is that same curve.
-    for control in (1, 2):
+    for control in (CONTROL,):
         st = branch_style(LEGAL, control)
         ax.plot(pos[fork.last_shared:], curves[control_row(fork, control), fork.last_shared:],
                 ls=st["ls"], color=st["color"], lw=st["lw"], marker=st["marker"], ms=4,
@@ -191,8 +166,7 @@ def fork_profile(ax, fork: rc.Fork) -> None:
                 markeredgewidth=0.5, zorder=st["zorder"], label=st["label"])
     for rule, members in rule_rows(fork.rows).items():
         st = rule_style(fork, members)
-        draw_rule(ax, pos, profiles[rule].mean, st,
-                  rule_label(fork, st, members), fork.last_shared)
+        draw_rule(ax, pos, profiles[rule].mean, st, st["label"], fork.last_shared)
     ax.set_xlabel("board position $t$")
     ax.set_ylabel("mean turning angle (deg)")
     lo, hi = ax.get_ylim()
@@ -206,21 +180,20 @@ def control_row(fork: rc.Fork, control: int) -> int:
 
 
 def locked(ax, fork: rc.Fork, legend: bool) -> None:
-    """The violation-locked Δ per rule, against both legal controls as nulls.
+    """The violation-locked Δ per rule, against the legal control as the null.
 
     (c) in the per-space figure and every cell of the combined one, so it carries
     no panel letter of its own.
     """
     event_axes(ax)
     rels, rules = rc.rule_locked(fork)
-    for control in (1, 2):
+    for control in (CONTROL,):
         st = branch_style(LEGAL, control)
         draw_rule(ax, rels, rc.locked(fork, [control_row(fork, control)])[1].mean, st,
                   st["label"] if legend else None)
     for rule, members in rule_rows(fork.rows).items():
         st = rule_style(fork, members)
-        draw_rule(ax, rels, rules[rule].mean, st,
-                  rule_label(fork, st, members) if legend else None)
+        draw_rule(ax, rels, rules[rule].mean, st, st["label"] if legend else None)
     ax.set_xlabel("position relative to the branch ($t - t_0$)")
     ax.set_ylabel("Δ turning angle vs. the game's\nreference branch (deg)")
 
