@@ -102,6 +102,10 @@ same planes, same styling. The windowed twins stop at `t − t0 = 8`; the whole
 twins keep `r = 0…24` because R^21 has no shorter form. "The rollout variant"
 below is their caption.
 
+The two **windowed** grids end in a read-out strip — the number the 3-D panels
+make the reader guess at. The two **whole** grids do not, and "How far each
+branch runs from the reference" below says why.
+
 ## Captions
 
 The grids carry no prose. What a reader needs in order not to over-read them is
@@ -165,6 +169,16 @@ medians, so neither ordering means anything. A rule's members travel barely clos
 to each other than to another rule's, so the faint members and not the three means
 carry the evidence.
 
+The strip below the nine cells is the quantitative companion a 3-D projection
+owes the reader (FIGURE_GUIDELINES §4.8): **how far each rule's mean path runs
+from the reference, averaged over the 13 drawn offsets `r = 0…24`, divided by the
+legal control's run in the same field**, on a log axis whose 1.0 line is the
+control itself. Filled marker and line = the plane the cell draws; open marker =
+the same statistic in **full R^21**, with a bar spanning its 11 step-length and
+10 turning-angle components. Faint marks are the rule's member categories, the
+only spread one game supports. The reference is 0 in every field by construction
+and is not a point on the strip.
+
 ### `fork_r21_windowed_fixed`
 
 **The same fork against a fixed pair of named R^21 axes instead of a fitted
@@ -174,6 +188,15 @@ across cells; `mean d` is on each space's own activation scale and is not** —
 SpaDE codes live on a simplex — so only its sign and the within-cell ordering
 mean anything across the grid. Everything else, the spread ratio included, reads
 as for `fork_r21_windowed_pca`.
+
+Its strip differs in one respect. The two drawn axes carry *different units*, so
+a Euclidean distance in the drawn coordinates would be a statistic about θ alone
+(θ is in degrees; `mean d` is 0.65 in raw layer 5 and 0.001 in SpaDE). The
+read-out therefore measures the fixed pair **after each axis is put in its own
+column SD** — the same scaling `fit_plane` and `measure.py` apply, and the same
+scaling the panel's independent x/y autoscale is already showing. The number is
+the distance in the *scaled* fixed plane, not the millimetres between two drawn
+marks.
 
 ### `fork_r21_whole_pca`
 
@@ -185,6 +208,11 @@ ellipse around each point is the **50% contour of a Gaussian fit to its 13
 leave-one-position-out jackknife replicates — a dispersion over which move enters
 the descriptor, not a confidence interval**; for a rule it is the jackknife of the
 rule mean.
+
+**No read-out strip here, on purpose.** See "How far each branch runs from the
+reference" below: with no move axis, "averaged over `r ≥ 0`" is what the point
+already *is*, and the in-plane distance from the reference is the length of a
+segment the reader can measure off the ticks.
 
 **The rule grouping is gone in this variant.** The same within ÷ between statistic
 on φ, one point per branch, is **1.03**: above 1 means a rule's members sit
@@ -219,6 +247,108 @@ replicates of the rule mean — drawn as a 50% Gaussian contour. It is a dispers
 over which move enters the descriptor, not a confidence interval, and the legend
 entry says exactly that. The windowed grids are n = 1 with no error bars; the
 separation numbers with CIs over 40 games are below.
+
+## How far each branch runs from the reference
+
+A fork panel asks the reader to judge how far a branch travels from the vertical
+line at the origin, and until now nothing answered it. The windowed grids now
+carry the answer as a strip:
+
+> mean over `r ≥ 0` of `‖coords_b(r)‖` in the plane the cell draws, for the
+> **mean path** each rule is drawn as, **divided by the legal control's** value
+> in the same field.
+
+Two decisions are load-bearing.
+
+**It is a ratio, and it has to be.** The plane is refit per cell and holds only
+part of Δφ — 44% + 18% on raw layer 5's windowed PCA — so a raw in-plane distance
+is in units nine different fits do not share. Nine panels side by side *will* be
+compared, so the alternative to a disclaimer nobody reads is a quantity for which
+the comparison is defensible. Dividing by the control's run in the same field
+cancels the cell's units and its arbitrary axis scale, and leaves a question with
+a meaning: **does this branch run further from the game as played than another
+legal move does?** 1.0 is exactly "no", and the strip draws it as the null line.
+What is still not comparable is absolute magnitude; nothing on the strip claims
+it, and the axis label says "÷ the control's".
+
+**The rule's number is the run of the mean path, not the mean of its members'
+runs.** The panel draws the mean path, so the strip measures the mean path; where
+the members leave in different directions the two differ, and the faint member
+marks show by how much. `R3 turn` is one category, so for it there is nothing to
+average and the legend says `(mean of 1)`.
+
+### The plane exaggerates, and the two halves of R^21 disagree
+
+Game 1235, spliced, PCA plane, 13 offsets `r = 0…24`, raw layer 5, with the
+full-R^21 value in brackets:
+
+| rule | in the drawn plane | full R^21 | 11 step-length | 10 turning-angle |
+|---|---|---|---|---|
+| R1 placement (mean of 2) | 0.91 | 1.04 | 0.78 | 1.34 |
+| R2 bracketing (mean of 3) | 1.69 | 1.20 | 0.98 | 1.50 |
+| R3 turn (mean of 1) | 2.93 | 2.15 | 2.05 | 2.33 |
+
+Over the nine spaces the plane spans R1 0.49–1.32, R2 1.13–2.17, R3 2.24–3.94,
+against full R^21's much narrower R1 0.77–1.19, R2 0.89–1.30, R3 1.69–2.47.
+**Plane ÷ full R^21 runs 0.60–2.12 with a median of 1.31** (1.27 on the fixed
+plane): the plane stretches the branch that is already far and shrinks the one
+that is close, so the panel's visual ordering is real but its visual *spacing* is
+the fit, not the geometry. That is the whole reason the open R^21 marker sits
+beside the filled one instead of in this file only.
+
+**Which of R^21's two halves the plane's number follows is a coin flip.** The 11
+step-length and 10 turning-angle components disagree about the same branch —
+R2 in raw layer 5 is 0.98 on `d` and 1.50 on θ — and the in-plane number lands
+nearer the θ block in **14 of 27** rule × space cells on the PCA plane and 17 of
+27 on the fixed one. It is not that PC1 loads on θ and drags the number with it;
+it is that a single in-plane scalar averages over an opposition and which side it
+lands on is not stable. The bar on the strip is that opposition drawn, so a
+reader cannot take the plane's number for a statement about step length or about
+curvature.
+
+**Which block leads also flips with the offset range.** Measured the other way
+round — the mean over the *six illegal branches* of their own runs, rather than
+the run of their mean path — game 1235 in raw layer 5 gives illegal ÷ control of
+**1.11 on the 11 step-length components and 0.92 on the 10 turning-angle ones at
+`r = 0` alone**, and **1.21 vs 1.80** averaged over `r = 0…24`: the block that
+sits above the control swaps. Nothing in this tree computes a population version
+of that; a figure-brief for this work quotes 1.312 [1.224, 1.405] and 0.931
+[0.869, 0.992] for the same `r = 0` contrast with a bootstrap over games, whose
+signs the single game reproduces but whose interval this repo cannot regenerate
+— `measure.py` scores separation, not run length. Treat the population numbers as
+external until something here recomputes them.
+
+### Where the read-out is refused
+
+- **The two whole grids get no strip.** They draw one R^21 point per branch over
+  `r = 0…24`, so the average over `r ≥ 0` is not a summary of the panel — it *is*
+  the panel, and the in-plane distance from the reference is a segment the
+  reader can measure off the axes. Printing it would also invite the comparison
+  it must not support: φ of one long trajectory and a mean over 13 short windows
+  are different quantities, and side by side on the same page they would read as
+  one.
+- **The strip carries no error bar over games.** One game, no CI; the spread it
+  shows is the rule's member categories. The 40-game bootstrap with an exact
+  permutation null is `measure.py`'s, on the separation statistic, below.
+- **There is no legal-vs-legal scale here**, because this study draws one control
+  and the strip's denominator *is* that control. `../r21_shared_basis`'s
+  `run_from_reference` draws both controls and carries "a third legal move ÷ the
+  control" as an empirical null; read the two together.
+
+### Under rollout
+
+Same strip, over the 5 drawn offsets `r = 0…8` — the window the rollout grids
+actually draw, past which two rollouts of one branch differ by more than the
+branch differs from the reference. Raw layer 5, PCA plane: R1 **0.31** (0.70 in
+full R^21), R2 **1.07** (0.89), R3 **2.43** (2.19). Plane ÷ full R^21 is
+0.32–2.65, median 1.17. R1 drops to a third of the control's run in the plane and
+to 0.70 in full R^21, where the spliced strip has it at 0.91 and 1.04 — the gap
+between those two is the plane again, and the drop is a fact about *this* branch
+set: when every branch including the reference resamples its own future, a
+resampled legal control is itself a long way from the reference, so the
+denominator grows. Read it with "The rollout variant" below; every offset here is
+inside the region where the branch still outweighs the sampler, but the branch
+set answers a different question from the spliced one.
 
 ## The rollout variant
 
@@ -293,9 +423,12 @@ comparable, and their ellipses are changed to say it (below).
   `fork_r21_whole_fixed_rollout` the **reference's own ellipse swallows most of
   the panel and every branch mean inside it**, in all nine spaces, which is the
   honest picture of what resampling costs.
-- The windowed grids stop at `r = 8`. Everything else — rule grouping with faint
-  members, one control, three symmetric ticks on the windowed planes, `PC1 (NN%
-  var)` and nothing else, named units on the fixed planes — is unchanged.
+- The windowed grids stop at `r = 8`, and their **read-out strip averages over
+  exactly the 5 offsets drawn** — `r = 0, 2, 4, 6, 8` — which its legend title
+  states, so the strip can never summarise a window the panel above it does not
+  show. Everything else — rule grouping with faint members, one control, three
+  symmetric ticks on the windowed planes, `PC1 (NN% var)` and nothing else, named
+  units on the fixed planes — is unchanged.
 
 ### The rule-spread ratio under rollout, recomputed
 
@@ -480,3 +613,8 @@ across cells; only its sign and the within-cell ordering are.
   reference's future", not "what did the move at *t0* do".
 - `measure.py`'s separation table and its 40-game bootstrap are **spliced-only**.
   Nothing in the rollout section above carries a CI.
+- **The read-out strip measures the plane, not R^21.** A branch that leaves the
+  plane reads as close in the filled marker and far in the open one; that gap is
+  drawn rather than argued, but it is a gap in the *figure's* plane and no
+  correction is applied to the panels themselves. The strip's own numbers are
+  n = 1 with no CI over games, like everything else drawn here.

@@ -32,6 +32,15 @@ Score: illegal-vs-control centroid distance in pooled within-group SDs, over
 anchors t >= t0, against the exact permutation null over the 28 ways to split
 the 8 non-reference branches 6/2.
 
+`run_from_reference` answers the other question the grids raise and none of them
+can: how far a branch runs from the reference, and how much of that run each
+plane keeps. It is a ratio to the legal control's run, because every field is
+z-scored per space and `refit` is fit per space, so nothing absolute carries
+across cells. (a) puts the four planes against full R^21; (b) splits full R^21
+into its 11 step-length and 10 turning-angle components, which disagree. Isomap
+is in neither: it is not a linear image of R^21 and its reference is not at the
+origin, so a distance in it is not a share of anything.
+
 --variant rollout reads the resampled-continuation copy of the study, where every
 branch INCLUDING the reference samples its own K=4 suffixes instead of replaying
 the source game's. A branch is then K rows, and the mean over them is taken AFTER
@@ -50,14 +59,16 @@ from itertools import combinations
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 import numpy as np
 import torch
 
 from spade.common.device import select_device
 from spade.common.study import variant_dir
+from spade.figures.branch_panels import plane_displacement
 from spade.figures.paper_style import (
-    CATEGORY_STYLE, GRID, INK, MUTED, NULL, OKABE_ITO, REFERENCE, apply_style,
-    rule_key, sae_label, save_figure)
+    CATEGORY_STYLE, CEILING, GRID, INK, MUTED, NULL, OKABE_ITO, QUANTITY_STYLE,
+    REFERENCE, apply_style, rule_key, sae_label, save_figure)
 from spade.othello.taxonomy import CATEGORIES
 from spade.saes.registry import seed42_entries
 from spade.spaces import EXCLUDED_SAE
@@ -102,6 +113,18 @@ PLANE_STYLE = {
     "named":  {"color": OKABE_ITO[2], "marker": "^", "ls": "-",
                "label": "$R^{21}$, fixed named axes (mean $d$, mean $\\theta$)"},
 }
+
+# The two halves of R^21, which disagree about how far an illegal branch runs.
+# No component name carries both letters, so the split is exact.
+BLOCKS = {q: [i for i, n in enumerate(RESTRAV_FEATURE_NAMES) if c in n]
+          for q, c in (("d", "d"), ("theta", "θ"))}
+# The unprojected space the three R^21 planes are shares of. Solid and heavy, so
+# it never reads as the dotted black activation plane it sits next to.
+FULL_STYLE = {"color": CEILING["color"], "marker": CEILING["marker"], "ls": "-",
+              "lw": 2.2, "label": "full $R^{21}$ (all 21 components, no plane)"}
+RUN_AXIS = ("run from the reference ÷ the control's\n(log, ↑ further than another "
+            "legal move)")
+RUN_TICKS = [0.25, 0.5, 1, 2, 4, 8]    # a ratio axis, so doubling steps
 
 
 # ---------------------------------------------------------------- features
@@ -259,6 +282,19 @@ def permutation_null(P: np.ndarray, branches: np.ndarray) -> np.ndarray:
     return np.array([separation(P, np.array([b for b in branches if b not in pair]),
                                 np.array(pair))
                      for pair in combinations(branches, 2)])
+
+
+def run_ratio(P: np.ndarray, rows: np.ndarray, ctl: int, meta: dict) -> float:
+    """How far `rows`' mean path runs from the reference over the drawn anchors,
+    divided by the control's run in the same field.
+
+    A ratio and never a distance: the field is z-scored per space and, for the
+    refit planes, fit per space too, so only "this branch against this space's own
+    legal control" carries from one space to the next.
+    """
+    run = plane_displacement(np.stack([P[meta["ref"]], P[rows].mean(0), P[ctl]]),
+                             meta["anchors"], meta["t0"], 0)
+    return float(run[1] / run[2])
 
 
 # ---------------------------------------------------------------- panels
@@ -431,6 +467,83 @@ def separation_figure(scores: dict[str, list[float]], nulls: dict[str, np.ndarra
     return save_figure(fig, FIG_DIR / f"separation_by_plane{suffix}", camera_ready)
 
 
+def run_figure(coords: dict, X: dict, names: list[str], ill: np.ndarray,
+               c1: int, c2: int, meta: dict, camera_ready: bool, suffix: str,
+               foot: str) -> Path:
+    """The number the fork grids make the reader guess at: how far a branch runs.
+
+    (a) asks how much of that run each candidate plane keeps; (b) asks what the
+    single R^21 number is averaging over, and answers that its two halves
+    disagree. Isomap is absent from both on purpose: its embedding is not a
+    linear image of R^21 and puts the reference nowhere in particular, so a
+    distance in it is not a share of anything (README).
+    """
+    x = np.arange(len(names))
+    fig, (ax, bx) = plt.subplots(1, 2, figsize=(9.6, 3.6))
+    series = [(PLANE_STYLE[k], [run_ratio(coords[k][n], ill, c1, meta) for n in names])
+              for k in PLANE_STYLE]
+    series.append((FULL_STYLE, [run_ratio(X[n], ill, c1, meta) for n in names]))
+    for st, y in series:
+        ax.plot(x, y, color=st["color"], marker=st["marker"], ls=st["ls"], ms=5,
+                lw=st.get("lw", 1.6), markeredgecolor="white", markeredgewidth=0.5,
+                label=st["label"], zorder=5 if st is FULL_STYLE else 4)
+    ax.set_title("(a) how much of the run each candidate plane keeps",
+                 loc="left", fontsize=9.5)
+
+    members = np.array([[run_ratio(X[n], np.array([i]), c1, meta) for n in names]
+                        for i in ill])
+    bx.plot(x, members.T, color=MUTED, lw=0.7, alpha=0.38, zorder=2)
+    bx.plot([], [], color=MUTED, lw=0.7, alpha=0.38,
+            label="one illegal category (the 6 the mean is over)")
+    for key, st in (("full", FULL_STYLE), ("d", QUANTITY_STYLE["d"]),
+                    ("theta", QUANTITY_STYLE["theta"])):
+        cols = slice(None) if key == "full" else BLOCKS[key]
+        y = [run_ratio(X[n][:, :, cols], ill, c1, meta) for n in names]
+        bx.plot(x, y, color=st["color"], marker=st["marker"], ls=st.get("ls", "-"),
+                ms=5, lw=st.get("lw", 1.6), markeredgecolor="white",
+                markeredgewidth=0.5, zorder=4, label=st["label"] if key == "full"
+                else f"{st['label']} only ({len(BLOCKS[key])} of the 21)")
+    bx.set_title("(b) the two halves of $R^{21}$ disagree about the same branches",
+                 loc="left", fontsize=9.5)
+
+    for a in (ax, bx):
+        a.axhline(1.0, color=NULL["color"], ls=NULL["ls"], lw=NULL["lw"], zorder=1,
+                  label="the legal control itself (1 by construction)")
+        a.plot(x, [run_ratio(X[n], np.array([c2]), c1, meta) for n in names],
+               color=NULL["color"], marker=NULL["marker"], ls="none", ms=5, zorder=3,
+               label="a third legal move ÷ the control, full $R^{21}$ (empirical null)")
+        a.set_yscale("log")
+        a.set_yticks(RUN_TICKS)
+        a.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
+        a.minorticks_off()
+        a.set_ylabel(RUN_AXIS, fontsize=8)
+        a.set_xticks(x)
+        a.set_xticklabels(names, rotation=30, ha="right", fontsize=7.5)
+        a.axvline(0.5, color=GRID, lw=0.8, zorder=0)
+    both = [h + b for h, b in zip(ax.get_legend_handles_labels(),
+                                  bx.get_legend_handles_labels())]
+    seen = {lab: h for h, lab in zip(*both)}
+    # Nulls last (FIGURE_GUIDELINES 3); the sort is stable, so everything else keeps
+    # the order it was drawn in, which is the order the panels read in.
+    order = sorted(seen, key=lambda lab: "null" in lab or "control itself" in lab)
+    fig.legend([seen[lab] for lab in order], order, loc="lower center", ncol=3,
+               fontsize=8, frameon=False, bbox_to_anchor=(0.5, -0.26))
+    if not camera_ready:
+        fig.suptitle("How far an illegal branch runs from the reference, and how "
+                     "much of it survives the plane", fontsize=10.5)
+    fig.tight_layout()
+    r = meta["anchors"] - meta["t0"]
+    fig.text(0.5, -0.32, f"one game (n=1): the mean over 6 illegal branches of the run "
+             f"from the reference, averaged over the {int((r >= 0).sum())} drawn "
+             f"anchors $t-t_0$ = {r[r >= 0][0]}…{r[-1]}, divided by the legal control's "
+             f"run in the same field. Every field is z-scored per space, so only the "
+             f"ratio\ncarries across spaces — a mark twice as high is not twice the "
+             f"absolute change. The reference is 0 in every field by construction. "
+             f"Isomap is not shown: it is not a linear image of $R^{{21}}$." + foot,
+             ha="center", va="top", fontsize=7.5, color=MUTED)
+    return save_figure(fig, FIG_DIR / f"run_from_reference{suffix}", camera_ready)
+
+
 # ---------------------------------------------------------------- main
 
 def main():
@@ -508,7 +621,10 @@ def main():
 
     n_state = (f"one game (n=1): {len(branches)} non-reference branches x {nw} windows "
                f"= {n * nw} rows per space in $R^{{{k}}}$ — a shape illustration, not a "
-               f"claim; the separation each plane keeps is in analysis/violation_divergence/r21_shared_basis.")
+               f"claim; the separation each plane keeps is in analysis/violation_divergence/r21_shared_basis."
+               f"\nHOW FAR each branch runs from the reference — in this plane, in full "
+               f"$R^{{{k}}}$, and split into the step-length and turning-angle halves, "
+               f"which disagree — is run_from_reference{suffix}, same game and anchors.")
     rollout_note = ("" if n_roll == 1 else
                     f"\nROLLOUT VARIANT: every branch including the reference samples its "
                     f"own future, K={n_roll} times. A point is the MEAN OVER THE {n_roll} "
@@ -560,6 +676,19 @@ def main():
              "When every branch resamples its own future, the activation plane beats "
              "$R^{21}$ against each plane's own null")
     print(f"wrote {separation_figure(scores, nulls, names, args.camera_ready, suffix, foot, title)}")
+
+    c1, c2 = (int(np.flatnonzero(meta["is_control"] == k)[0]) for k in (1, 2))
+    print(f"\nrun from the reference / control 1's run, illegal (mean of 6) except the "
+          f"last column, anchors >= t0\n{'space':34}"
+          + "".join(f"{p:>22}" for p in list(PLANE_STYLE)
+                    + ["full 21-D", "11 d", "10 θ", "control 2, full 21-D"]))
+    for name in names:
+        cells = [run_ratio(coords[p][name], ill, c1, meta) for p in PLANE_STYLE]
+        cells += [run_ratio(X[name][:, :, c], ill, c1, meta)
+                  for c in (slice(None), BLOCKS["d"], BLOCKS["theta"])]
+        cells.append(run_ratio(X[name], np.array([c2]), c1, meta))
+        print(f"{name:34}" + "".join(f"{v:22.2f}" for v in cells))
+    print(f"wrote {run_figure(coords, X, names, ill, c1, c2, meta, args.camera_ready, suffix, foot)}")
 
 
 if __name__ == "__main__":

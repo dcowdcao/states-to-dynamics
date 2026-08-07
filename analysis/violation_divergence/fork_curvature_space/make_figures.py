@@ -27,6 +27,18 @@ phi is nonlinear, so it is applied to each member's own trajectory and the rule
 means are taken afterwards, in the plane; the README carries the within- over
 between-rule spread that says how little the grouping is worth.
 
+Each windowed grid ends in a read-out strip: how far each rule's mean path runs
+from the reference, averaged over the drawn offsets r >= 0, DIVIDED BY the legal
+control's run in the same field. A 3-D projection shows shape and never
+magnitude, so the strip is the quantitative companion FIGURE_GUIDELINES 4.8 asks
+for. The ratio is what makes it readable across the grid at all: the plane is
+refit per space and carries its own units, and only a within-panel contrast
+survives the move from one cell to the next. Beside each plane number sits the
+same statistic in full R^21 -- the gap between them is what the plane threw away
+-- with a bar spanning the 11 step-length and the 10 turning-angle components,
+which disagree. The whole grids get no strip: one point per branch over r >= 0
+IS the average, so the number would restate the panel (README).
+
 The grids carry no prose block. The spread ratio, the selection of the game, the
 n=1 caveat and the cells-are-not-comparable disclaimer are the figures' captions
 and live in README.md (FIGURE_GUIDELINES 2, 5).
@@ -55,17 +67,18 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
+from matplotlib.ticker import FuncFormatter, MaxNLocator
 import numpy as np
 import torch
 
-from spade.figures.branch_panels import PLANE_TICKS, axis_labels
+from spade.figures.branch_panels import PLANE_TICKS, axis_labels, plane_displacement
 from spade.figures.branch_style import (
     CONTOUR_LABEL, MEMBER, MEMBER_LABEL, below, branch_style, legend_proxy,
     ordered_legend, rule_member_key)
 from spade.figures.embedding_panels import class_ellipse
-from spade.figures.paper_style import INK, MUTED, apply_style, save_figure
+from spade.figures.paper_style import GRID, INK, MUTED, NULL, apply_style, save_figure
 from spade.othello.taxonomy import LEGAL
+from spade.straightness.geometry import RESTRAV_FEATURE_NAMES
 from spade.violation_divergence import curvature_plane as dsc
 from spade.violation_divergence.fork_plane import RAW_SPACE
 from spade.violation_divergence.branches import FIGURE_GAME
@@ -103,6 +116,23 @@ ROLLOUT_WHOLE_NOTE = (
     f"$t-t_0 \\leq {ROLLOUT_MAX_R}$ region where the branch still outweighs the rollout "
     "sampling spread; the ellipses are that spread (README).")
 ROLLOUT_CONTOUR = "50% Gaussian contour of {n} rollout descriptors (sampling spread, not a CI)"
+
+# The read-out strip under the windowed grids: the number the fork panel makes the
+# reader guess at. R^21's two halves are measured apart because they disagree --
+# no component name carries both letters, so the split is exact.
+STRIP_H = 3.3            # inches of figure height the strip and its legend take
+STRIP_LEGEND = 0.85      # of which, the row above the axes its legend sits in
+DODGE = 0.15             # x offset that keeps the plane mark off the R^21 mark
+RUN_TICKS = [0.125, 0.25, 0.5, 1, 2, 4, 8, 16]   # a ratio axis, so doubling steps
+D_COLS = [i for i, n in enumerate(RESTRAV_FEATURE_NAMES) if "d" in n]
+THETA_COLS = [i for i, n in enumerate(RESTRAV_FEATURE_NAMES) if "θ" in n]
+RUN_AXIS = ("run from the reference\n÷ the control's (log, ↑ further)")
+RUN_LEGEND = {
+    "plane": "in the plane drawn above (what the eye is judging)",
+    "full": "in full $R^{21}$ — the plane keeps only part of it",
+    "block": f"the same split into its {len(D_COLS)} step-length and "
+             f"{len(THETA_COLS)} turning-angle components",
+}
 
 
 @dataclass(frozen=True)
@@ -164,6 +194,99 @@ def scaled(phi: np.ndarray) -> np.ndarray:
     lengths, so a Euclidean statistic on the raw columns is one about θ alone."""
     sd = np.nanstd(phi.reshape(-1, phi.shape[-1]), axis=0)
     return phi / np.where(sd > 0, sd, 1)
+
+
+def runs(F: np.ndarray, r: np.ndarray, ref: int, ctl: int,
+         groups: dict[str, list[int]]) -> dict[str, np.ndarray]:
+    """Per rule, `[mean path, member, member, ...]` runs from the reference in the
+    field F, each divided by the control's run in the same field.
+
+    The rule's own entry is the run of the MEAN PATH the panel draws, not the mean
+    of its members' runs: the two differ whenever the members leave in different
+    directions, and the drawn line is the mean path. Dividing by the control makes
+    the field's units cancel, which is the only thing that lets nine refit planes
+    be read side by side (README).
+    """
+    order = ([F[ref], F[ctl]] + [F[g].mean(0) for g in groups.values()]
+             + [F[i] for g in groups.values() for i in g])
+    run = plane_displacement(np.stack(order), r, 0, 0)
+    out, at = {}, 2 + len(groups)
+    for k, (rule, g) in enumerate(groups.items()):
+        out[rule] = np.concatenate([run[[2 + k]], run[at:at + len(g)]]) / run[1]
+        at += len(g)
+    return out
+
+
+@dataclass(frozen=True)
+class Run:
+    """One space's answer to "how far does each branch run from the reference",
+    every entry a ratio to that space's own control (`runs`)."""
+    plane: dict[str, np.ndarray]    # in the 2-D plane the panel draws
+    full: dict[str, np.ndarray]     # in all 21 components
+    d: dict[str, np.ndarray]        # in the 11 step-length components
+    theta: dict[str, np.ndarray]    # in the 10 turning-angle components
+
+
+def read_out(metric: np.ndarray, z: np.ndarray, r: np.ndarray, d: Draw) -> Run:
+    """`metric` is the plane in the same column scaling as `z`, so plane ÷ full is
+    the share of the run the plane keeps rather than a change of units."""
+    ctl = next(i for i, row in enumerate(d.rows) if row["is_control"])
+    groups = rule_rows(d.rows)
+    return Run(*(runs(F, r, d.ref, ctl, groups)
+                 for F in (metric, z, z[:, :, D_COLS], z[:, :, THETA_COLS])))
+
+
+def run_strip(ax, names: list[str], read: list[Run], d: Draw, r: np.ndarray) -> None:
+    """The quantitative companion the 3-D panels owe the reader (§4.8).
+
+    Ratios, not distances: each panel's plane is refit and carries its own units,
+    so only "this branch against this panel's legal control" survives the move
+    from one cell to the next.
+    """
+    x = np.arange(len(names))
+    ax.axhline(1.0, color=NULL["color"], ls=NULL["ls"], lw=NULL["lw"], zorder=1,
+               label="the legal control itself (1 by construction)")
+    for rule, members in rule_rows(d.rows).items():
+        st = branch_style(d.rows[members[0]]["category"], 0, by_rule=True)
+        # No label: the rule colours and markers are the grid's, and the figure
+        # legend below already carries them with their n (FIGURE_GUIDELINES 5).
+        ax.plot(x - DODGE, [q.plane[rule][0] for q in read], color=st["color"],
+                marker=st["marker"], ms=5, lw=1.4, markeredgecolor="white",
+                markeredgewidth=0.5, zorder=4)
+        for k in range(len(members)):
+            ax.plot(x - DODGE, [q.plane[rule][1 + k] for q in read], ls="none",
+                    marker=st["marker"], ms=3, color=st["color"], **MEMBER)
+        lo = np.minimum([q.d[rule][0] for q in read], [q.theta[rule][0] for q in read])
+        hi = np.maximum([q.d[rule][0] for q in read], [q.theta[rule][0] for q in read])
+        full = [q.full[rule][0] for q in read]
+        ax.vlines(x + DODGE, lo, hi, color=st["color"], lw=0.9, zorder=3)
+        ax.plot(x + DODGE, full, ls="none", marker=st["marker"], ms=5,
+                markerfacecolor="white", markeredgecolor=st["color"],
+                markeredgewidth=1.1, zorder=4)
+    for key, kw in (("plane", {"marker": "o", "ls": "-"}),
+                    ("full", {"marker": "o", "ls": "none",
+                              "markerfacecolor": "white", "markeredgewidth": 1.1}),
+                    ("block", {"marker": "|", "ls": "none", "ms": 9})):
+        ax.plot([], [], color=MUTED, lw=1.4, markeredgecolor=MUTED,
+                label=RUN_LEGEND[key], **kw)
+    vals = [v for q in read for rule in rule_rows(d.rows)
+            for v in [*q.plane[rule], q.full[rule][0], q.d[rule][0], q.theta[rule][0]]]
+    ax.set_yscale("log")
+    ax.set_ylim(min(vals) / 1.35, max(vals) * 1.35)
+    ax.set_yticks(RUN_TICKS)
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
+    ax.minorticks_off()
+    ax.set_ylabel(RUN_AXIS, fontsize=8)
+    ax.set_xticks(x)
+    ax.set_xticklabels(names, rotation=30, ha="right", fontsize=6.5)
+    ax.set_xlim(-0.5, len(names) - 0.5)
+    ax.axvline(0.5, color=GRID, lw=0.8, zorder=0)
+    ax.tick_params(axis="y", labelsize=7)
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=4, fontsize=7.5,
+              frameon=False, title=f"mean over the {len(r)} drawn offsets "
+              f"$t-t_0$ = {r[0]}…{r[-1]}, one game (n = 1); the reference is 0 in "
+              f"every field by construction and is not a point here",
+              title_fontsize=7.5)
 
 
 def _path(ax, seg: np.ndarray, z: np.ndarray, st: dict, label: str | None) -> None:
@@ -292,36 +415,66 @@ def windowed_grid(g: dict, w: int, plane: str, d: Draw, v: View,
     r = g["pos"][c:] - g["t0"]
     drawn = r <= v.r_max
     r = r[drawn]
-    fig = plt.figure(figsize=(3.9 * NCOL, 3.0 * NCOL))
+    h = 3.0 * NCOL + STRIP_H
+    fig = plt.figure(figsize=(3.9 * NCOL, h))
+    # Two boxes rather than one gridspec: the strip is a 2-D axes and needs a left
+    # margin for its y label, which the 3-D cells give away to their panes.
+    cells = fig.add_gridspec(NCOL, NCOL, left=0.02, right=0.97, top=1 - 0.72 / h,
+                             bottom=STRIP_H / h, wspace=0.04, hspace=0.18)
+    read = []
     for j, (name, _) in enumerate(dsc.spaces()):
         phi = phi_mean(dsc.windowed(g[name], w)[:, c:], d.groups)[:, drawn]
         dphi = phi - phi[d.ref]
         flat = dphi.reshape(-1, dphi.shape[2])
+        sd = np.nanstd(flat, axis=0)
+        z = dphi / np.where(sd > 0, sd, 1)
         if plane == "pca":
             p = dsc.fit_plane(flat, centred=False)
             coords = p.project(flat).reshape(dphi.shape[:2] + (2,))
+            metric = coords          # project() divides by the same column SDs as z
             labels = axis_labels("pca", p.var)
         else:
             ax_i = [dsc.names_of(dphi.shape[2]).index(a) for a in dsc.FIXED_AXES]
             coords = dphi[:, :, ax_i]
+            # Drawn in named units, measured in each axis's own SD: degrees and an
+            # activation norm do not add, and the panel's independent x/y autoscale
+            # is already showing the scaled arrangement.
+            metric = z[:, :, ax_i]
             labels = [D_AXIS_3D, THETA_AXIS_3D]
-        ax = fig.add_subplot(NCOL, NCOL, j + 1, projection="3d")
+        ax = fig.add_subplot(cells[j // NCOL, j % NCOL], projection="3d")
         ax.set_box_aspect((1, 1, 0.85))
         fork_panel(ax, coords, d.rows, r, legend=(j == 0), named=(plane == "fixed"),
                    zlabel=(j % NCOL == 0))
         ax.set_xlabel(labels[0], labelpad=-2, fontsize=6.5)
         ax.set_ylabel(labels[1], labelpad=-2, fontsize=6.5)
         ax.set_title(name, loc="left", fontsize=8)
+        read.append(read_out(metric, z, r, d))
+    strip = fig.add_subplot(fig.add_gridspec(1, 1, left=0.07, right=0.97,
+                                             bottom=0.95 / h,
+                                             top=(STRIP_H - STRIP_LEGEND) / h)[0])
+    run_strip(strip, [name for name, _ in dsc.spaces()], read, d, r[r >= 0])
     leg = ordered_legend(fig, fig.axes[0], 4, loc="lower center",
                          bbox_to_anchor=(0.5, -0.035))
     if not camera_ready:
         fig.suptitle(f"The fork inside the 21-D ReStraV descriptor space, "
                      f"game {g['game']} ({plane} plane)", fontsize=11)
-    fig.subplots_adjust(left=0.02, right=0.97, top=0.92, bottom=0.07,
-                        wspace=0.04, hspace=0.18)
     rule_member_key(fig, y=note_and_key(fig, leg, v.note))
+    print(run_table(plane, [name for name, _ in dsc.spaces()], read, d))
     return save_figure(fig, FIG_DIR / f"fork_r21_windowed_{plane}{v.suffix}",
                        camera_ready)
+
+
+def run_table(plane: str, names: list[str], read: list[Run], d: Draw) -> str:
+    """The strip's numbers as text, so the README can quote them without a reader
+    measuring them off a log axis."""
+    rules = list(rule_rows(d.rows))
+    head = (f"\nrun from the reference / the control's run, {plane} plane\n"
+            f"{'space':34}" + "".join(f"{rule + ' plane/21/d/θ':>30}" for rule in rules))
+    return "\n".join([head] + [
+        f"{name:34}" + "".join(
+            f"{q.plane[rule][0]:8.2f}{q.full[rule][0]:8.2f}"
+            f"{q.d[rule][0]:7.2f}{q.theta[rule][0]:7.2f}" for rule in rules)
+        for name, q in zip(names, read)])
 
 
 def whole_grid(g: dict, plane: str, d: Draw, v: View, camera_ready: bool) -> Path:
