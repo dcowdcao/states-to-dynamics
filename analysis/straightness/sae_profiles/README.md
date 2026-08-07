@@ -177,7 +177,12 @@ yet and is the obvious follow-up.
 The figure carries no prose block, so its published caption is this: per-class
 Gaussian KDE (Scott bandwidth) of the per-game mean turning angle, triangles
 marking class medians on the baseline, n = 2000 games per class, shared axes, raw
-(uncentered) variant at layer 5, seed 42. R1/R2/R3 are branched moves inside games
+(uncentered) variant at layer 5, seed 42. **Each curve is a density normalized on
+its own** — it integrates to 1 over the axis, in units of deg⁻¹ — so peak height
+is dispersion and never count: all six classes carry the same 2000 games, and the
+rules peak lower than legal only because they are 15–20% wider (SD 1.08–1.13
+against 0.94 at raw layer 5). Bandwidth is per class, so the wider classes are
+smoothed slightly more than legal. R1/R2/R3 are branched moves inside games
 and the other three classes are whole games. The curves carry no interval — the
 separation is scored with a bootstrap CI in `sae_families_auroc.png`.
 
