@@ -6,6 +6,53 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## feature_pca draws the three rules, and borrows them (2026-08-07)
+
+Branch `fig/pca-rule-split`, worktree `../spade_sae_worktrees/pca-rule-split`. The
+descriptor PCA now splits the illegal move into R1/R2/R3 instead of drawing one
+violation class. Random tokens were already out of it (`fig/drop-random-tokens`); what
+this adds is the split, and the figure had never been rendered in this tree.
+
+**The straightness study cannot supply an R1, and regenerating it is the wrong fix.**
+`build_games.EMPTY_CATEGORIES = [3,4,5,6]` injects on empty squares only, so its
+violation class is R2 (n=1450) and R3 (n=550) and nothing else; `place_no_flip` asserts
+the square is empty. Adding R1 there means deciding what a placement on an *occupied*
+square does to the board — for `occupied_opp`, an overwrite with no flip line, which is
+not an Othello operation and leaves "random legal continuation" meaning something else.
+The violation-divergence branch set sidesteps all of that by never advancing the board
+past the illegal move, and carries all six categories over 2000 rule-complete games. So
+the rules are read from there.
+
+**One pass, two products.** `rule_curvature.build` was already streaming those
+activations through nine encoders for panel (a)'s curves; it now also returns each
+game's 21-D ReStraV descriptor per rule (`rule_descriptors/<space>.npz`). Encoding is
+the cost and the geometry is free — 7 min on an H100 for the spliced tree, against ~3 h
+on a login node. Skip-if-exists is per product, so the pass will not rewrite a
+`rule_population` npz another job just wrote.
+
+**Mixing the two studies on one plane is legitimate and it is not free.** Both drop the
+sink and measure per ply, agreeing to 1.5e-5 deg on the 1998 shared games, so the
+descriptors are the same number. But a rule point is a branched move inside a game and a
+class point is a whole game — which is exactly why panel (a) of `rule_curvature` refuses
+to draw the straightness violation class beside its rules. Same call here, same caption.
+
+**Result: the rules do not move.** Championship reaches 2.07 pooled SD from legal; no
+rule exceeds 0.40 on either PC in any space. Much of that is structural — `d1..d7` and
+`θ1..θ6` all pivot before the earliest t0 = 10, so 13 of the 21 components are identical
+across a game's three branches, and only the 8 moments can carry the violation at all.
+A faint R2 > R3 > R1 ordering appears wherever the displacement is readable; the three
+means average over 2, 2.77 and 1 categories, so it is suggestive and not more.
+
+**The CosineSpaDE outlier cloud is a property of the game.** Its 114 legal games are,
+token for token, the same 114 source games whose R1, R2 and R3 branches also land there;
+82 rollouts join them and no championship game does. Delayed code recruitment (L0 13/34
+at positions 2/3 against 44/114, caught up by position 4), and branching an illegal move
+into one of those games does not move it out. The old README read the same cloud as a
+class mixture, which it never was.
+
+Left open: the rollout tree has no `rule_descriptors`. The figure reads the spliced tree
+only, and a resampled-suffix version would be a second figure rather than a variant.
+
 ## The fork panels' excursion is mostly the plane (2026-08-07)
 
 Branch `nfig/fig-plane-metric-r21`, worktree `../spade_sae_worktrees/fig-plane-metric-r21`.
