@@ -8,6 +8,11 @@ irrelevant to the population) and another in (b). The population is now the **80
 games that fork at *t0* = 20**, which is game 1235's own position, so one dashed
 line serves both panels.
 
+*Renumbered since — panel (b), one game's fork on (a)'s scale, was removed: (a)
+stays (a), the violation-locked response (c) → (b), the board (d) → (c). Every
+panel letter below is the four-panel layout as it stood, including the "one
+dashed line serves both panels" above. See `docs/finish_notes/panelb-docs.md`.*
+
 - `src/spade/violation_divergence/rule_curvature.py` — `build` takes the game
   list; `--t0` selects the population; *t0* is in the cache file's name.
 - `analysis/violation_divergence/rule_curvature/make_figures.py` — `--t0`, the
