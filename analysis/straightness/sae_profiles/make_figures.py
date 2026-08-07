@@ -32,13 +32,26 @@ from spade.common.study import study_dir
 from spade.figures.straightness_panels import (
     REL_WINDOW, ci_bars, class_blocks, density_panel, event_axes, profile_panel,
     value_delta, value_profile_panel, violation_delta, violation_panel)
-from spade.figures.paper_style import MUTED, QUANTITY_STYLE, apply_style, sae_label
+from spade.figures.paper_style import (
+    CLASS_STYLE, MUTED, QUANTITY_STYLE, VIOLATION_RULE_STYLE, apply_style, sae_label)
+from spade.straightness.geometry import RESTRAV_FEATURE_NAMES
+from spade.violation_divergence import rule_curvature as rc
+from spade.violation_divergence.fork_plane import spaces as fork_spaces
 
 apply_style()
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 GEOM = study_dir("straightness") / "geometry"
 RAW_SPACE = "resid_post_5"
+TREE = "branches"  # the spliced suffix; the rules are drawn beside whole games
+STYLE = CLASS_STYLE | VIOLATION_RULE_STYLE
+# Legend order, reference first. The violation class is what the three rules
+# replace, so STYLE still holds it and nothing draws it.
+DRAWN = [c for c in CLASS_STYLE if c != "violation"] + list(VIOLATION_RULE_STYLE)
+MEAN_THETA = RESTRAV_FEATURE_NAMES.index("mean θ")
+# One key for both sources: rule_curvature.space_key names the divergence cache
+# and this study's geometry npz with the same stem.
+ENTRY = {rc.space_key(e): e for _, e in fork_spaces()}
 CI_NOTE = ("error bars are mean ± 95% CI at the drawn markers, n = 2000 games per "
            "class; gray span = prefix identical to the source game, Δ ≡ 0 by "
            "construction")
@@ -202,11 +215,35 @@ def combined_comparison(blocks: dict, t0: np.ndarray, src: np.ndarray,
     return peaks
 
 
-def theta_dist_comparison(blocks: dict) -> None:
+def whole_game_theta(space: str) -> tuple[np.ndarray, dict[str, slice]]:
+    """Per-game mean turning angle for the six drawn classes, and each one's rows.
+
+    The illegal move is drawn as the three constraint rules, which this study
+    cannot supply -- its violation class injects on empty squares only and carries
+    no R1. They come off the violation-divergence branch population, which holds
+    the same quantity as the ReStraV descriptor's `mean θ` component. What that
+    costs is in ../feature_pca/README.md, and the caption carries it.
+    """
+    games = np.nanmean(theta(space), 1)
+    rules, _ = rc.descriptors(TREE, ENTRY[space])
+    parts = [(c, games[b]) for c, b in class_blocks(len(games)).items()
+             if c != "violation"]
+    parts += [(r, rules[:, j, MEAN_THETA]) for j, r in enumerate(rc.RULES)]
+
+    blocks, at = {}, 0
+    for c, v in parts:
+        blocks[c] = slice(at, at + len(v))
+        at = blocks[c].stop
+    return np.concatenate([v for _, v in parts]), blocks
+
+
+def theta_dist_comparison() -> None:
     """Small multiples: the whole-game curvature distribution in every space.
 
     The per-panel gap between the legal median triangle and another class's is
     the separation sae_families_auroc.png scores; here it is readable in degrees.
+    Those gaps are printed rather than drawn -- five per panel would not fit a
+    title -- and README.md quotes what is printed.
     """
     spaces = [(RAW_SPACE, "raw L5 (reference)")]
     spaces += [(s, sae_label(label)) for s, label in families()]
@@ -214,39 +251,29 @@ def theta_dist_comparison(blocks: dict) -> None:
     nrow = -(-len(spaces) // ncol)
     fig, axes = plt.subplots(nrow, ncol, figsize=(9.5, 2.9 * nrow),
                              sharex=True, sharey=True)
+    ood = DRAWN[1:]
+    print(f"{'space':34}" + "".join(f"{c.split()[0][:5] + ' Δmed':>13}" for c in ood))
     for ax, (space, label) in zip(axes.flat, spaces):
-        per_game = np.nanmean(theta(space), 1)
-        density_panel(ax, per_game, blocks)
+        per_game, blocks = whole_game_theta(space)
+        density_panel(ax, per_game, blocks, STYLE)
+        ax.set_title(label, loc="left", fontsize=9)
         legal = np.median(per_game[blocks["legal"]])
-        gap = {c: np.median(per_game[blocks[c]]) - legal
-               for c in ["violation", "championship"]}
-        ax.set_title(f"{label}\nΔmedian:  viol {gap['violation']:+.2f}°"
-                     f"   ·   champ {gap['championship']:+.2f}°", loc="left", fontsize=8.5)
-        ax.set_xlabel("")
-        ax.set_ylabel("")
+        print(f"{label:34}" + "".join(
+            f"{np.median(per_game[blocks[c]]) - legal:+12.2f}°" for c in ood))
     for ax in axes.flat[len(spaces):]:
         ax.set_visible(False)
-    for ax in axes[-1]:
-        if ax.get_visible():
-            ax.set_xlabel("per-game mean turning angle (deg)")
-    for ax in axes[:, 0]:
-        ax.set_ylabel("density")
     axes.flat[0].set_ylim(bottom=0)  # after every panel: shared axes freeze on set_ylim
 
     handles, labels = axes.flat[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", ncol=4, fontsize=8,
-               bbox_to_anchor=(0.5, -0.015))
-    fig.suptitle("Every dictionary keeps the violation shift — and most surface a "
-                 "human-game shift that raw layer 5 hides", fontsize=11, y=1.00)
-    fig.text(0.5, 0.962, "per-class Gaussian KDE (Scott bandwidth); triangles mark "
-             "class medians; the curves carry no interval — the separation is scored "
-             "with a bootstrap CI in sae_families_auroc.png\n"
-             "Δmedian = class median − legal median; shared axes; raw variant; "
-             "n = 2000 games per class. Rollout overlaps legal in every space; "
-             "championship separates in 7 of 8 SAE latents but not raw L5",
-             fontsize=8, color=MUTED, style="italic", ha="center", va="top",
-             linespacing=1.5)
-    fig.tight_layout(rect=(0, 0.02, 1, 0.925))
+    # Two columns of three: whole-game classes on the left, the three rules on the
+    # right, which is the split the reader has to hold to read the panels.
+    fig.legend(handles, labels, loc="lower center", ncol=2, fontsize=8,
+               columnspacing=2.5, bbox_to_anchor=(0.5, -0.045))
+    # Descriptive, not a claim, and no prose block: the published caption is in
+    # README.md, as in ../../violation_divergence/rule_curvature.
+    fig.suptitle("Whole-game curvature distribution per class, "
+                 "per representation space", fontsize=11, y=1.00)
+    fig.tight_layout(rect=(0, 0.03, 1, 0.97))
     fig.savefig(FIG_DIR / "theta_dist_comparison.png", dpi=300, bbox_inches="tight")
     plt.close(fig)
 
@@ -314,7 +341,7 @@ def main():
         print(f"{label:24} theta trough {mu.min():+.2f}°")
 
     comparison(profiles, raw_rels, sems, raw_mu)
-    theta_dist_comparison(blocks)
+    theta_dist_comparison()
     peaks = combined_comparison(blocks, t0, src, viol)
     print(f"\n{'space':34} {'θ':>16} {'‖Δz‖':>16} {'‖z‖':>16}   (peak %, offset)")
     for label in dict.fromkeys(k[0] for k in peaks):

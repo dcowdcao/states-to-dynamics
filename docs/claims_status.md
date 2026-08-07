@@ -122,6 +122,15 @@ itself carries the seed-42 qualifier under Narrowed.
 
 ## Narrowed — quote with the qualifier
 
+- **"Every dictionary keeps the violation shift" is a claim about R2 and R3 only.** The
+  straightness violation class injects on empty squares, so it *is* bracketing and turn
+  violations by construction and holds no R1. Split against the violation-divergence branch
+  population, which does carry R1, `sae_profiles/theta_dist_comparison.png` shows R2 and R3
+  straightening the whole-game median in all nine spaces (−0.06 to −0.62°) while **R1 moves
+  it by at most 0.19° and sits on the wrong side of legal in three spaces**. The shift was
+  never evidence about placement violations. Median gaps, not AUROCs — the rules have no
+  bootstrap CI anywhere yet (`analysis/straightness/sae_profiles/README.md` § The shift is
+  R2 and R3).
 - **Distance-SpaDE VE ≈ 0.43** is a seed-42 number, and seed 42 is the odd one out across the
   whole family. In `results/multiseed/all_seeds.csv` every distance-SpaDE config's seed-42 row
   sits at 0.35–0.44 while seeds 43–46 of the *same* config sit at 0.93–0.98 with near-zero

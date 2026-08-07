@@ -6,6 +6,32 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The violation shift was R2 and R3 all along (2026-08-07)
+
+`theta_dist_comparison` got the same treatment as `feature_pca`: the illegal move is drawn
+as its three constraint rules, borrowed from the divergence branch population, and the
+figure lost its in-figure prose block and its conclusion-shaped title.
+
+**The split paid for itself immediately.** R2 and R3 straighten the whole-game median in
+all nine spaces (−0.06 to −0.62°); R1 moves it at most 0.19° and lands on the *wrong* side
+of legal in three. That is not a refinement of "every dictionary keeps the violation
+shift" — it is the explanation. The straightness violation class injects on empty squares
+only, so it is R2 and R3 by construction, and the shift it carried was never evidence about
+placement violations. An illegal move detectable from the target square alone leaves
+whole-game curvature where it was. Narrowed in `docs/claims_status.md`.
+
+**No new compute.** Per-game mean θ is component `mean θ` of the ReStraV descriptor already
+cached in `rule_descriptors/`, and it is the same estimator the geometry npz gives
+(`moment4` is `nanmean` over the trajectory), so the two sides of the panel are one number.
+
+`density_panel` now takes its style table as an argument, the way
+`embedding_panels.class_cloud` already did — a panel draws the game classes or the rules
+that replace the violation class, and those are two dicts. Both callers pass it.
+
+Left open: the rules are median gaps with no interval. `sae_families_auroc` still scores
+the violation class, so an R1/R2/R3 AUROC with a bootstrap CI does not exist. That is the
+figure this one now argues for.
+
 ## feature_pca draws the three rules, and borrows them (2026-08-07)
 
 Branch `fig/pca-rule-split`, worktree `../spade_sae_worktrees/pca-rule-split`. The

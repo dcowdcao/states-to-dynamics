@@ -135,6 +135,52 @@ an angle-only effect — `norm_diagnostics.png`'s logic applies. And raw layer 5
 own centered variant does separate championship (0.546), in the *opposite*
 direction from the SAE latents. Seed 42 only.
 
+## The shift is R2 and R3, and R1 barely moves
+
+`theta_dist_comparison.png` draws the illegal move as the three constraint rules
+it can break, not as this study's violation class. It has to borrow them: that
+class injects on empty squares only, so it is R2 and R3 by construction and holds
+no R1 at all. The rules come from the violation-divergence branch population,
+which stores the same per-game quantity as the ReStraV descriptor's `mean θ`
+component; the construction that differs, and what it costs, is in
+`../feature_pca/README.md`.
+
+Splitting it says something the single violation curve could not. As a median gap
+against legal, in degrees (printed by `make_figures.py`):
+
+| space | R1 | R2 | R3 | rollout | championship |
+|---|---|---|---|---|---|
+| raw L5 (reference) | −0.19 | −0.57 | −0.49 | −0.05 | +0.05 |
+| BatchTopK | −0.02 | −0.28 | −0.23 | +0.01 | +0.06 |
+| TopK | +0.01 | −0.23 | −0.20 | −0.04 | −0.05 |
+| PAnneal | −0.10 | −0.47 | −0.39 | −0.02 | +0.16 |
+| GatedSAE | +0.12 | −0.11 | −0.06 | −0.05 | −0.30 |
+| GatedAnneal | −0.09 | −0.36 | −0.30 | −0.06 | −0.27 |
+| Standard | +0.04 | −0.26 | −0.25 | −0.02 | −1.14 |
+| SpaDE (γ=1e-4) | −0.11 | −0.35 | −0.35 | −0.01 | −0.66 |
+| CosineSpaDE (γ=1.0) | −0.10 | −0.62 | −0.47 | −0.01 | −0.80 |
+
+**R2 and R3 straighten the whole-game trajectory in all nine spaces; R1 does not
+move it in any of them** — it is within ±0.19° everywhere and lands on the wrong
+side of legal in three spaces. That is not a refinement of "every dictionary keeps
+the violation shift", it is the reason for it: the violation class *is* R2 and R3,
+so the shift it carried was never evidence about placement violations. An illegal
+move the model can detect from the target square alone leaves whole-game curvature
+where it was.
+
+Read it as suggestive rather than scored. These are median gaps, not AUROCs with a
+bootstrap CI, and the three rules average over 2, 2.77 and 1 member categories, so
+they are not equally smoothed. The rules have no entry in `sae_families_auroc.png`,
+which still scores the violation class — an R1/R2/R3 AUROC with CIs does not exist
+yet and is the obvious follow-up.
+
+The figure carries no prose block, so its published caption is this: per-class
+Gaussian KDE (Scott bandwidth) of the per-game mean turning angle, triangles
+marking class medians on the baseline, n = 2000 games per class, shared axes, raw
+(uncentered) variant at layer 5, seed 42. R1/R2/R3 are branched moves inside games
+and the other three classes are whole games. The curves carry no interval — the
+separation is scored with a bootstrap CI in `sae_families_auroc.png`.
+
 ## Files
 
 | file | contents |
@@ -143,7 +189,7 @@ direction from the SAE latents. Seed 42 only.
 | `step_vs_t_<Family>.png` | per-family, two panels: (a) step-length ‖Δz‖ profile over the game, (b) violation-locked Δ step length. The displacement-magnitude counterpart of curvature, and the quantity ReStraV pairs with the turning angle |
 | `norm_vs_t_<Family>.png` | per-family, two panels: (a) latent-norm ‖z‖ profile over the game, (b) violation-locked Δ latent norm. A confound diagnostic, not a trajectory metric |
 | `violation_spike_comparison.png` | small multiples of the curvature panel (b) across all spaces on a shared y-axis, raw layer 5 ghosted in gray, each titled with its trough and net |
-| `theta_dist_comparison.png` | small multiples of the whole-game curvature distribution across all spaces on shared axes: per-class KDE, class medians on the baseline, each titled with its violation−legal and championship−legal median gap. The distribution behind `analysis/straightness/figures/sae_families_auroc.png`, which is where the separation gets its bootstrap CI — the KDE curves themselves carry no interval |
+| `theta_dist_comparison.png` | small multiples of the whole-game curvature distribution across all spaces on shared axes: per-class KDE with class medians on the baseline, drawing the illegal move as the three constraint rules rather than as this study's violation class (see § *The shift is R2 and R3*). Median gaps are printed by `make_figures.py`, not drawn. The distribution behind `analysis/straightness/figures/sae_families_auroc.png`, which is where the separation gets its bootstrap CI — the KDE curves themselves carry no interval |
 
 | `quantity_comparison.png` | all three quantities at once, small multiples across all spaces on a shared axis. Each Δ is a percentage of that space's own mean level, which is what makes the nine dictionaries commensurable |
 

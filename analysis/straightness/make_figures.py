@@ -50,7 +50,7 @@ def f1_theta_dist(blocks):
     fig, axes = plt.subplots(1, 2, figsize=(9, 3.6), sharey=True)
     for ax, variant, panel in zip(axes, ["raw", "centered"], "ab"):
         mt = mean_theta_per_game(load("resid_post_5", variant)["theta"])
-        density_panel(ax, mt, blocks)
+        density_panel(ax, mt, blocks, CLASS_STYLE)
         ax.set_title(f"({panel}) {'raw' if variant == 'raw' else 'per-t centered'}",
                      loc="left")
     axes[1].set_ylabel("")

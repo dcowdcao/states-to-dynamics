@@ -63,7 +63,7 @@ def kde_ci(vals: np.ndarray, grid: np.ndarray) -> tuple[np.ndarray, np.ndarray, 
     return kernel.mean(1), lo, hi
 
 
-def density_panel(ax, per_game: np.ndarray, blocks: dict) -> None:
+def density_panel(ax, per_game: np.ndarray, blocks: dict, styles: dict) -> None:
     """Per-game mean turning angle, one KDE curve per class.
 
     Medians are marked on the baseline: the gap between two triangles is the
@@ -72,15 +72,19 @@ def density_panel(ax, per_game: np.ndarray, blocks: dict) -> None:
     every panel is drawn — set_ylim freezes autoscale, which on shared axes would
     clip whichever panel peaks highest.
 
-    The curves carry no interval: four densities whose medians sit ~0.3° apart
-    overlap too much for a per-curve interval to stay readable. The separation
-    they show is scored with a bootstrap CI in the AUROC figures instead.
+    `styles` is passed rather than assumed, as in `embedding_panels.class_cloud`:
+    a panel may draw the game classes or the constraint rules that replace the
+    violation class, and those live in two style tables.
+
+    The curves carry no interval: densities whose medians sit ~0.3° apart overlap
+    too much for a per-curve interval to stay readable. The separation they show
+    is scored with a bootstrap CI in the AUROC figures instead.
     """
     drawn = np.concatenate([per_game[b] for b in blocks.values()])
     pad = 0.03 * np.ptp(drawn)
     grid = np.linspace(drawn.min() - pad, drawn.max() + pad, KDE_GRID)
     for i, c in enumerate(blocks):
-        style, is_ref = CLASS_STYLE[c], c == "legal"
+        style, is_ref = styles[c], c == "legal"
         vals = per_game[blocks[c]]
         dens, _, _ = kde_ci(vals, grid)
         body = np.flatnonzero(dens > 0.02 * dens.max())  # no markers on flat tails
