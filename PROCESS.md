@@ -62,12 +62,23 @@ descriptors are the same number. But a rule point is a branched move inside a ga
 class point is a whole game — which is exactly why panel (a) of `rule_curvature` refuses
 to draw the straightness violation class beside its rules. Same call here, same caption.
 
-**Result: the rules do not move.** Championship reaches 2.07 pooled SD from legal; no
-rule exceeds 0.40 on either PC in any space. Much of that is structural — `d1..d7` and
-`θ1..θ6` all pivot before the earliest t0 = 10, so 13 of the 21 components are identical
-across a game's three branches, and only the 8 moments can carry the violation at all.
-A faint R2 > R3 > R1 ordering appears wherever the displacement is readable; the three
-means average over 2, 2.77 and 1 categories, so it is suggestive and not more.
+**Result: the rules do not move *in the plane*.** Championship reaches 2.07 pooled SD
+from legal; no rule exceeds 0.40 on either PC in any space. A faint R2 > R3 > R1 ordering
+appears wherever the displacement is readable.
+
+**Corrected the same day by `centroid_distances.py`: that is a fact about two components,
+not about the descriptor.** In the full 21-D the rules sit 1.13-1.68 pooled SD from legal
+against a legal-vs-legal null of 0.16, and rule-to-rule 0.25-0.64. In the plane,
+rule-to-rule averages 0.05 over the nine spaces, which is the null exactly — the three
+rules there are indistinguishable from one class sampled twice. The plane carries ~34% of
+the variance and is fitted without labels, so it was never obliged to hold the
+rule-discriminating direction, and it does not. Anything quoting the 0.40 has to say "in
+this plane" or it is wrong; the wording in the README and claims_status was tightened.
+
+What *is* structural is where the separation sits: `d1..d7` and `θ1..θ6` pivot before the
+earliest t0 = 10 and the legal class is (1998/2000) the same games as the rules' sources,
+so those 13 components differ by exactly 0.00 and all 1.68 SD is carried by the 8 moments,
+led by `mean d`, `var d`, `max d`, `mean θ`.
 
 **The CosineSpaDE outlier cloud is a property of the game.** Its 114 legal games are,
 token for token, the same 114 source games whose R1, R2 and R3 branches also land there;

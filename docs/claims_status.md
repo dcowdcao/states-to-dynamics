@@ -71,7 +71,12 @@ drew this study's own violation class until 2026-08-07 and reported it as never 
 class carries no R1, so no R1/R2/R3 split of it exists — and the rules come off the
 violation-divergence branch population, which is a different construction. Nothing was
 refuted; the two are not interchangeable, and the old number must not be restated as a
-rule's. The rules reach 0.40 (`analysis/straightness/feature_pca/README.md`).
+rule's. The rules reach 0.40 in that plane — and **a displacement in the top-2 plane is
+not a displacement in the descriptor**, which is the trap this figure sets. Measured in
+the full 21-D, the rules are 1.13–1.68 pooled SD from legal against a legal-vs-legal null
+of 0.16, while in the plane rule-to-rule averages the null exactly. Quote a plane number
+only with "in this plane" attached
+(`analysis/straightness/feature_pca/README.md` § How far apart the classes actually are).
 
 **Straightness: the championship effect at layer 5.** 0.509 [0.483, 0.535] — not
 distinguishable from chance. Adding bootstrap CIs turned a claimed gradual rise into a

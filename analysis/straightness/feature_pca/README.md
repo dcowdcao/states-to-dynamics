@@ -11,11 +11,15 @@ It is the unsupervised counterpart of the `auc_lr21` column: same 21 features,
 no labels.
 
 ```
-python analysis/straightness/feature_pca/make_figures.py
+python analysis/straightness/feature_pca/make_figures.py        # the figure
+python analysis/straightness/feature_pca/centroid_distances.py  # how far apart the classes are
 ```
 
-Reads geometry two studies already wrote — no re-extraction. Writes
-`figures/restrav_pca.png` and prints the table below.
+Reads geometry two studies already wrote — no re-extraction. `make_figures.py`
+writes `figures/restrav_pca.png` and prints the basis table below;
+`centroid_distances.py` draws nothing and prints the distances, because the plane
+is a poor place to read a distance off by eye and a worse place to read its
+absence.
 
 ## Where the six classes come from
 
@@ -108,12 +112,19 @@ turning-angle component in 7 of 9, the exceptions being SpaDE and Standard. The
 panels do not name their components — nine of those labels crowd a grid that is
 already carrying six classes — so `make_figures.py` prints them instead.
 
-**Championship games are the only class that moves in the plane, and the three
+**Championship games are the only class that moves *in this plane*, and the three
 rules do not.** As a class mean minus legal's, in pooled SD along each PC
 (`class_shift`), championship reaches 2.07; no rule exceeds 0.40 on either
-component in any space, and rollout never exceeds 0.27. Unsupervised structure
-says nothing here about information: the supervised LR-21 probe reaches 0.66 on
-violations and 0.96 on championship games in this same 21-D space (see
+component in any space, and rollout never exceeds 0.27.
+
+**That is a fact about two components, not about the descriptor**, and it must not
+be quoted as one — `centroid_distances.py` measures the same classes in the full
+21-D and the rules are 1.13–1.68 pooled SD from legal there against a legal-vs-legal
+null of 0.16 (§ *How far apart the classes actually are*). The plane holds ~34% of
+the variance and is fitted without labels, so it is under no obligation to contain
+the direction that separates a rule from a legal game — and it does not. This is
+the same gap the supervised LR-21 probe exploits when it reaches 0.66 on violations
+and 0.96 on championship games in this same 21-D space (see
 `analysis/straightness/README.md`).
 
 **The rules do order themselves, faintly and in one direction.** Wherever the
@@ -148,6 +159,50 @@ lower than a fit over all the stored classes gives: one gross out-of-distributio
 direction then dominates every space's PC1, and the spaces agree about that
 direction rather than about the descriptor. Restricting the fit to the drawn
 classes is what exposes the disagreement.
+
+## How far apart the classes actually are
+
+```
+python analysis/straightness/feature_pca/centroid_distances.py
+```
+
+Centroid gaps in units of the pooled within-class SD, so 1.0 means the two
+centroids sit one within-class SD apart. Legal split even/odd — the study's own
+train mask, 1000 games a side — is the empirical floor: two centroids that differ
+only by sampling. At n = 2000 a centroid's standard error is ~0.02 SD, so nothing
+here is about significance and everything is about size.
+
+Raw layer 5, with a percentile bootstrap over games (1000 resamples) on the 21-D
+column:
+
+| pair | top-2 plane | full 21-D | 21-D 95% CI |
+|---|---|---|---|
+| legal ↔ championship | 1.79 | 3.51 | [3.42, 3.62] |
+| legal ↔ R2 bracketing | 0.39 | 1.68 | [1.61, 1.78] |
+| legal ↔ R3 turn | 0.33 | 1.42 | [1.33, 1.51] |
+| legal ↔ R1 placement | 0.26 | 1.13 | [1.06, 1.23] |
+| R1 ↔ R2 | 0.13 | 0.64 | [0.56, 0.74] |
+| R1 ↔ R3 | 0.07 | 0.42 | [0.35, 0.53] |
+| R2 ↔ R3 | 0.06 | 0.25 | [0.20, 0.38] |
+| legal ↔ rollout | 0.07 | 0.17 | [0.15, 0.29] |
+| legal vs legal (null) | 0.05 | 0.16 | — |
+
+Averaged over the nine spaces: in the plane, rule-to-legal 0.16 against a null of
+0.05, and **rule-to-rule 0.05, which is the null exactly** — in this plane the
+three rules are not merely close, they are indistinguishable from one class
+sampled twice. In the full 21-D the same comparisons are 1.00 and 0.36 against a
+null of 0.18.
+
+**All of the rule separation is carried by the 8 moments.** Per component, the
+legal↔rule centroid gap is exactly 0.00 on every one of `d1..d7` and `θ1..θ6`: a
+branch shares its source game's tokens before *t0* ≥ 10, and 1998 of the 2000
+legal games are those source games, so the two classes are the same trajectories
+there. What is left carries it all — `mean d` 0.68/0.95/0.80 for R1/R2/R3, then
+`var d`, `max d` and `mean θ`. Read `min d` and `min θ` as inert (≤ 0.03).
+
+R2 > R3 > R1 holds in the full space as it does in the plane and in
+`../sae_profiles/`'s median gaps, which is three estimators agreeing. The rules
+still have no AUROC with a CI anywhere — these are distances, not detection rates.
 
 ## What the CosineSpaDE cluster is
 
