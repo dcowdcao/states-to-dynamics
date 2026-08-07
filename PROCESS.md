@@ -37,6 +37,20 @@ And `measure.py` writes **raw** distances, normalising at figure time: the raw s
 themselves a result (the control's displacement runs 13.19 in raw layer 5 to 0.0225 in
 SpaDE, **585x**), and they are what makes the ÷control form mandatory rather than tidy.
 
+**The rollout twin (n = 1553 as well) removes the ordering and keeps the inflation.**
+Full-space ratios pooled over the nine cells go to R1 0.969, R2 1.019, R3 1.016 against
+the control's 1.000 — where the spliced tree put R1 8-10% below — and past r = 10 nothing
+is more than 0.3% off 1. The plane still inflates in 27/27 cells (median 1.105), and
+inside the evidence window r in [0, 8] the pooled inflation on R2 hits **1.29**: a fork
+panel there shows R2 at 1.36x the control when the branch is at 1.05x. Drawn to the full
+window with r >= 8 shaded as not-evidence rather than truncated, as F1 does.
+
+Its K reduction is `fork_and_board`'s and not F1's: the K displacement **vectors** are
+averaged (paired on the sample index) before the plane is fit, because that is the
+trajectory the fork panels draw, while F1's `reduce_k` averages the scalar δ̂. Vector
+averaging cancels whatever is incoherent across a branch's four samples, so magnitudes
+here run smaller; ÷control removes most of it and **the residual is not measured**.
+
 Gotcha for anyone else sweeping spaces: `fork_plane.space_features` calls `sae_encoder`
 on every invocation, so it reloads a checkpoint per game — 57 s each here. Build the nine
 encoders once. The fix belongs in `src` and was not made from this worktree.

@@ -19,13 +19,13 @@ python analysis/violation_divergence/divergence_by_space/make_figures.py  [--var
 ```
 
 `measure.py` writes `$SPADE_DIVERGENCE_DIR[/rollout]/divergence_by_space/curves.npz`
-(~35 min for the spliced tree on one core, I/O-bound); `make_figures.py` reads it and
+(~35 min spliced, ~45 min rollout on one core, I/O-bound); `make_figures.py` reads it and
 writes the figure plus `results/violation_divergence/divergence_by_space[_rollout].csv`,
 one row per (space, series, measured_in, r) with the mean and its 95% CI.
 
 ## The figures
 
-`figures/divergence_by_space.{png,pdf}` — the rollout twin lands in a follow-up commit.
+`figures/divergence_by_space.{png,pdf}` · `figures/divergence_by_space_rollout.{png,pdf}`
 
 **In the plane the fork panels draw, R2 and R3 run 6–24% further from the reference than
 a legal alternative does — and roughly half of that is the plane, not the branch.** One
@@ -137,7 +137,24 @@ whatever legality does (`../README.md`). The figure draws the whole window and *
 r ≥ 8 as not-evidence** rather than stopping there, because the event-locked shape before
 that point is the content and a truncated axis hides where the saturation starts.
 
-The rollout figure and its numbers are not in this commit; the sweep is still running.
+**The branch move stops setting the distance, in every space.** Over the whole window,
+pooled across the nine cells, the full-space ratios are R1 0.969, R2 1.019, R3 1.016
+against the control's 1.000 — nothing more than 2% off the null, where the spliced tree
+put R1 8–10% below it. In the shaded region the ordering is gone entirely (r ≥ 10: R1
+0.974, R2 0.997, R3 0.992). Inside the evidence window the separation survives but is
+small: r ∈ [0, 8] gives R1 0.961, R2 1.054, R3 1.056 in the full space.
+
+The plane still inflates, and by more here: 27 of 27 cells above 1, median **1.105**,
+range 1.053–1.268, and inside the evidence window the pooled inflation reaches **1.29 on
+R2**. So a fork panel drawn on the rollout tree shows R2 at 1.36× the control when the
+branch is really at 1.05×. That is the figure's own warning about reading a projection,
+at its largest.
+
+r = 0 is the same measurement in both trees for δ̂ (the rollout copies the prefix
+verbatim), but **not for this quantity**, because the plane is refit on the rollout's
+K-averaged displacements: raw layer 5, R2 at r = 0 is 1.711 in the spliced plane and
+1.802 in the rollout plane. The full-space numbers move too (1.528 → 1.363), which is the
+vector-vs-scalar K reduction above, not a difference in the model's behaviour at t₀.
 
 ## Choices and limits
 
@@ -159,8 +176,11 @@ The rollout figure and its numbers are not in this commit; the sweep is still ru
   The figure carries that number and draws the members faint; three confident lines
   should not be read as three coherent classes.
 - **Seed 42 only**, like the rest of the study.
-- **The y-cap is 2.0** and the two SpaDE panels' r = 0 spike runs past it; the value it
-  reaches is printed in-panel. One shared y-axis is the point of the normalisation, and
+- **The rollout K reduction is the fork figures' and not F1's**, and the difference is
+  unmeasured. See "The rollout variant" above.
+- **The y-cap is 2.0** and a few panels' r = 0 spike runs past it (two spliced, three
+  rollout); each prints the value it reaches. One shared y-axis is the point of the
+  normalisation, and
   the alternative — a top set by one cell's spike — leaves the plateau, where the claim
   is, in the bottom eighth of every panel.
 - **Not measured here**: whether the inflation is the plane's *variance share* per branch
