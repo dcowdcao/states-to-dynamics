@@ -41,7 +41,7 @@ import pandas as pd
 
 from spade.common.paths import results_dir
 from spade.common.study import variant_dir
-from spade.figures.branch_style import MEMBER, MEMBER_LABEL, branch_style
+from spade.figures.branch_style import branch_style
 from spade.figures.paper_style import (
     GRID, INK, MUTED, NULL, apply_style, rule_key, save_figure)
 from spade.othello.taxonomy import CATEGORIES, LEGAL, RULE_MEMBERS
@@ -54,12 +54,11 @@ CONTROL = "control_legal"
 # Which space the distance was measured in rides on line style and marker fill,
 # so hue stays free for the rule and a panel carries four classes, not eight
 # series. The plane is the figure's quantity and takes the solid line.
-PLANE = {"ls": "-", "lw": 1.7, "ms": 4.2, "fill": True, "alpha": 0.20,
-         "label": "in the 2-D PCA plane its fork panel draws"}
-FULL = {"ls": (0, (1, 1.6)), "lw": 1.1, "ms": 4.2, "fill": False, "alpha": 0.12,
-        "label": "the same distance in that cell's full space "
-                 "(the plane holds only part of it)"}
-MEASURES = {"plane": PLANE, "full": FULL}
+PLANE = {"ls": "-", "lw": 1.7, "ms": 4.2, "fill": True}
+MEASURES = {"plane": PLANE}
+# Drawn: the plane only. Tabulated: both, because the gap between them is how
+# much of a branch's run the fork panel actually shows, and the README quotes it.
+TABLE_MEASURES = ("plane", "full")
 # Measured on the full displacement field of this same population by
 # `spade.violation_divergence.rule_groups`; a mean over a group owes the reader
 # the spread it hides (FIGURE_GUIDELINES 1.7).
@@ -109,7 +108,7 @@ def mean_ci(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 def table(z, variant: str) -> pd.DataFrame:
     """Every drawn point, so the README can quote a number without reading a curve."""
     rows = []
-    for key in MEASURES:
+    for key in TABLE_MEASURES:
         r = ratios(z, key)
         for si, space in enumerate(z["space"]):
             for ci, name in enumerate(series_rows(z)):
@@ -130,10 +129,8 @@ def style_of(name: str) -> dict:
     return st | {"label": f"{st['label']} (mean of {len(RULE_MEMBERS[name])})"}
 
 
-def draw_series(ax, w, mu, half, name: str, how: dict, offset: int) -> None:
+def draw_series(ax, w, mu, name: str, how: dict, offset: int) -> None:
     st = style_of(name)
-    ax.fill_between(w, mu - half, mu + half, color=st["color"], alpha=how["alpha"],
-                    lw=0, zorder=st["zorder"] - 1)
     ax.plot(w, mu, color=st["color"], marker=st["marker"], ls=how["ls"], lw=how["lw"],
             ms=how["ms"], markevery=(offset % 3, 3), zorder=st["zorder"],
             markerfacecolor=st["color"] if how["fill"] else "white",
@@ -162,19 +159,6 @@ def legend_marks(n_games: int) -> tuple[list, list]:
         handles.append(plt.Line2D([], [], color=st["color"], marker=st["marker"], ms=5,
                                   lw=1.7, markeredgecolor="white", markeredgewidth=0.6))
         labels.append(st["label"])
-    handles.append(plt.Line2D([], [], color=MUTED, **MEMBER))
-    labels.append(MEMBER_LABEL)
-    for how in MEASURES.values():
-        handles.append(plt.Line2D([], [], color=MUTED, marker="o", ms=5, ls=how["ls"],
-                                  lw=how["lw"],
-                                  markerfacecolor=MUTED if how["fill"] else "white",
-                                  markeredgecolor="white" if how["fill"] else MUTED,
-                                  markeredgewidth=0.6 if how["fill"] else 1.0))
-        labels.append(how["label"])
-    handles.append(plt.Line2D([], [], color=NULL["color"], lw=0.9, ls=(0, (5, 2))))
-    labels.append("the cell's own legal control, averaged over $r \\geq 0$")
-    handles.append(plt.Line2D([], [], color=MUTED, lw=6, alpha=0.20))
-    labels.append(f"95% CI of the mean over {n_games} source games")
     return handles, labels
 
 
@@ -202,11 +186,8 @@ def figure(z, variant: str, camera_ready: bool) -> Path:
         for ci, (name, rows) in enumerate(series_rows(z).items()):
             # The members of a rule, faint behind their mean, in the plane: the
             # reader sees the spread the mean is taken over (1.7).
-            if name != CONTROL:
-                ax.plot(w, members[si, :, rows].mean(1).T, color=style_of(name)["color"],
-                        **MEMBER)
             for key, how in MEASURES.items():
-                draw_series(ax, w, *mean_ci(curves[key][si, :, ci]), name, how, ci)
+                draw_series(ax, w, mean_ci(curves[key][si, :, ci])[0], name, how, ci)
         ax.set_title(space, loc="left", fontsize=8)
         ax.set_ylim(-0.09, YMAX)
         off = curves["plane"][si].mean(0).max(0)
@@ -216,7 +197,7 @@ def figure(z, variant: str, camera_ready: bool) -> Path:
                         xytext=(w[ri] + 2.5, YMAX * 0.86), fontsize=7.5, color=INK,
                         arrowprops=dict(arrowstyle="->", color=MUTED, lw=0.8))
         if si % NCOL == 0:
-            ax.set_ylabel("distance from the reference\n$\\div$ the cell's legal control",
+            ax.set_ylabel("distance from the reference\n(legal control = 1)",
                           fontsize=8.5)
     axes.flat[-NCOL + 1].set_xlabel("position relative to the branch move "
                                     "($r = s - t_0$)", fontsize=9)
