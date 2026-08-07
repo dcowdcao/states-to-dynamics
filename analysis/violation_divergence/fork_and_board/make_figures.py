@@ -18,6 +18,17 @@ Planes are refit per space, so cells are comparable in the *shape* of the fork
 and never in position. One game (n=1): an illustration of the design, not a
 claim; the study's numbers are in the parent README.
 
+(c) is the number (a) asks the reader to eyeball: how far each rule runs from
+the reference, averaged over the drawn offsets r >= 0. It is drawn twice per
+rule -- in the plane the cell above it draws, and in that cell's full space --
+and both are divided by the same cell's legal control. The division is what
+makes nine cells readable side by side at all: a refit plane's units are the
+space's own, and those differ by ~800x across the grid, so the raw distances
+are not a quantity nine panels share. The pair is what keeps the plane honest,
+since a plane holds only part of the displacement (27%+10% here) and holds
+different parts of different branches: in raw layer 5 the plane says R3 runs
+4.1x the control while the full 512-d space says 1.5x.
+
 Two planes, same panels. `displacement` embeds D(t) = z_b(t) - z_ref(t), the
 better-validated default. `r21` embeds the curvature displacement
 Δφ(t) = φ(z_b(t)) - φ(z_ref(t)) inside ReStraV's 21-D descriptor space. φ is
@@ -36,9 +47,9 @@ ROLLOUT_RMAX and not to the study window's r = 24; README.md carries the numbers
 
 The figure carries no prose block. Those facts, the selection of the game above
 all, are the figure's caption and live in README.md (FIGURE_GUIDELINES 2, 5);
-the rule key and, on the rollout variant, what was averaged and where the drawn
-window stops stay inside the figure, because a reader must not need another
-document to know what R2 is or what a path is a mean of.
+the rule key, (c)'s n and window, and, on the rollout variant, what was averaged
+and where the drawn window stops stay inside the figure, because a reader must
+not need another document to know what R2 is or what a path is a mean of.
 
 Usage: python analysis/violation_divergence/fork_and_board/make_figures.py
        [--game 1235] [--plane displacement|r21] [--embedding pca|isomap]
@@ -46,31 +57,35 @@ Usage: python analysis/violation_divergence/fork_and_board/make_figures.py
 """
 
 import argparse
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from matplotlib.patches import Patch
 
 from spade.common.device import select_device
 from spade.common.study import variant_dir
 from spade.figures.branch_panels import (
-    axis_labels, board_note, board_panel, mover_name, rule_fork_panel)
-from spade.figures.branch_style import below, ordered_legend, rule_member_key
-from spade.figures.paper_style import MUTED, apply_style, save_figure
+    axis_labels, board_note, board_panel, mover_name, plane_displacement, rule_fork_panel)
+from spade.figures.branch_style import (
+    below, branch_style, ordered_legend, rule_member_key)
+from spade.figures.paper_style import GRID, INK, MUTED, NULL, apply_style, save_figure
 from spade.othello.boards import flip_set, replay
 from spade.violation_divergence.branches import (
     FIGURE_GAME, Game, complete_games, load_game, reference_row)
 from spade.violation_divergence.curvature_plane import W, fit_plane, windowed
 from spade.violation_divergence.fork_plane import (
     EMBEDDINGS, positions, space_features, spaces)
-from spade.violation_divergence.rule_groups import spread_ratio
+from spade.violation_divergence.rule_groups import rule_rows, spread_ratio
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 NCOL = 3
 CELL_W, CELL_H = 3.7, 3.5  # one fork cell, as in ../game_trajectory's grid
 BOARD_H = 3.9              # the board row; the board is square, so this is its width too
+METRIC_H = 2.8             # the (c) row; bars need far less height than the board
+BAR_W = 0.26               # three rule bars inside a space's unit-wide group
 ROW_GAP = 0.7              # clear air between the grid's axis labels and (b)'s title
 # R^21 is 11 step-length components and 10 turning-angle ones, so it carries
 # displacement magnitude as well as curvature; the name says both.
@@ -94,20 +109,35 @@ def paired_mean(X: np.ndarray, ref: int, K: int) -> np.ndarray:
     return (Y - Y[ref]).mean(axis=1)
 
 
-def project(plane: str, method: str, F: np.ndarray, ref: int, k: int, K: int):
-    """(coords [n, T', 2], the two axis labels, positions dropped from the front).
+@dataclass(frozen=True)
+class Projection:
+    """One cell: the plane it draws, and the space that plane was fit in.
 
-    `k` indexes t0 in the sampled positions. The R^21 plane applies phi to each
+    `coords` and `space` carry the same rows over the same positions, so a
+    distance can be measured in either and the two answers compared."""
+    coords: np.ndarray          # [n, T', 2], what the fork panel draws
+    space: np.ndarray           # [n, T', dim], the quantity the plane projects
+    labels: tuple[str, str]     # the two plane axis labels
+    dropped: int                # sampled positions dropped from the front
+
+
+def project(plane: str, method: str, F: np.ndarray, ref: int, k: int,
+            K: int) -> Projection:
+    """`k` indexes t0 in the sampled positions. The R^21 plane applies phi to each
     branch on its own and differences inside R^21: phi(D) is undefined over the
     shared prefix, where D is exactly zero, and phi of a mean of trajectories
     would be the curvature of a path no branch takes. That is also why the K
     rollouts are averaged after phi and never before it.
+
+    `space` is the projected-from quantity itself, column-scaled in R^21 exactly
+    as `fit_plane` scales it, so a distance in it is a distance in the space the
+    plane was fit in and not in raw descriptor units.
     """
     if plane == "displacement":
         D = paired_mean(F, ref, K)
         n, T, dim = D.shape
         coords, var, _ = EMBEDDINGS[method](D.reshape(-1, dim))
-        return coords.reshape(n, T, 2), axis_labels(method, var), 0
+        return Projection(coords.reshape(n, T, 2), D, axis_labels(method, var), 0)
     dphi = paired_mean(windowed(F, W), ref, K)[:, W - 1:]
     branch_free = k - (W - 1)
     assert branch_free > 0, \
@@ -116,8 +146,23 @@ def project(plane: str, method: str, F: np.ndarray, ref: int, k: int, K: int):
         "the shared prefix does not collapse onto the origin in R^21"
     flat = dphi.reshape(-1, dphi.shape[-1])
     p = fit_plane(flat, centred=False)
-    return (p.project(flat).reshape(dphi.shape[:2] + (2,)),
-            axis_labels(method, p.var), W - 1)
+    return Projection(p.project(flat).reshape(dphi.shape[:2] + (2,)), dphi / p.scale,
+                      axis_labels(method, p.var), W - 1)
+
+
+def control_ratio(X: np.ndarray, pos: np.ndarray, t0: int, rows: list[dict]) -> np.ndarray:
+    """[n]: each branch's mean distance from the reference over the drawn r >= 0,
+    as a multiple of the legal control's.
+
+    The distance itself is `plane_displacement`, and in a plane it is not a
+    quantity nine cells share: the plane is refit per space and the spaces
+    differ ~800x in scale, so the raw numbers only ever compare branches inside
+    one cell. Dividing by that cell's own control leaves a dimensionless
+    within-cell contrast -- the study's own illegal/control form -- which is
+    what may be set side by side. The reference is 0 by construction.
+    """
+    d = plane_displacement(X, pos, t0, reference_row(rows))
+    return d / d[next(i for i, r in enumerate(rows) if r["is_control"] == 1)]
 
 
 def spread_field(plane: str, Z: np.ndarray, ref: int, post: np.ndarray,
@@ -149,6 +194,63 @@ def variant_note(plane: str, K: int) -> str:
             f"0.5% and the fork\ncarries no separation (README).")
 
 
+def metric_panel(ax, cells: list[tuple[str, np.ndarray, np.ndarray]],
+                 rows: list[dict], offsets: np.ndarray):
+    """(c): the number every cell of (a) asks the reader to eyeball.
+
+    Bar = the distance in the plane that cell draws; open marker = the same
+    distance in that cell's full space. The gap between the two is the part of
+    the displacement the plane does not hold, which is otherwise invisible --
+    a branch that leaves the plane reads as a branch that stayed near the
+    reference. Both are ratios to the cell's own legal control, the only form
+    in which nine refit planes may be set side by side (`control_ratio`).
+    """
+    groups = rule_rows(rows)
+    ax.axhline(1, color=NULL["color"], ls=NULL["ls"], lw=1.1, zorder=1)
+    for j, (_, plane, space) in enumerate(cells):
+        ax.axvline(j - 0.5, color=GRID, lw=0.8, zorder=0)
+        for m, members in enumerate(groups.values()):
+            st = branch_style(rows[members[0]]["category"], 0, by_rule=True)
+            x = j + (m - 1) * BAR_W
+            ax.bar(x, plane[members].mean(), BAR_W * 0.88, color=st["color"],
+                   alpha=0.85, edgecolor=INK, lw=0.4, zorder=2)
+            ax.plot([x] * len(members), plane[members], lw=0, marker="o", ms=2.8,
+                    color=INK, alpha=0.6, zorder=4)
+            ax.plot(x, space[members].mean(), lw=0, marker=st["marker"], ms=7,
+                    markerfacecolor="white", markeredgecolor=st["color"],
+                    markeredgewidth=1.3, zorder=5)
+
+    top = max(v.max() for _, p, s in cells for v in (p, s))
+    ax.set_ylim(0, top * 1.34)
+    ax.set_xlim(-0.5, len(cells) - 0.5)
+    ax.set_xticks(range(len(cells)), [name for name, _, _ in cells], fontsize=9)
+    ax.set_ylabel("distance from the reference,\n$\\div$ the cell's own legal control",
+                  fontsize=9)
+    ax.tick_params(labelsize=9)
+    ax.grid(False, axis="x")
+    marks = [(Patch(facecolor=MUTED, alpha=0.85, edgecolor=INK, lw=0.4),
+              "in the plane that cell draws (2-D)"),
+             (plt.Line2D([], [], lw=0, marker="o", ms=7, markerfacecolor="white",
+                         markeredgecolor=INK, markeredgewidth=1.3),
+              "in that cell's full space (marker = rule)"),
+             (plt.Line2D([], [], lw=0, marker="o", ms=2.8, color=INK, alpha=0.6),
+              "one category inside the rule"),
+             (plt.Line2D([], [], color=NULL["color"], ls=NULL["ls"], lw=1.1),
+              "the cell's legal control (null) = 1")]
+    ax.legend(*zip(*marks), ncol=2, fontsize=9, loc="upper left")
+    # Returned so the rule key can hang off its bottom edge: both live in the
+    # band under the figure, and how many lines this wraps to moves the key.
+    return ax.text(
+        0.0, -0.20, f"bar and marker: the mean over a rule's member categories "
+        f"(n = 2, 3, 1), one dot per member, of that branch's mean distance over the "
+        f"{len(offsets)} drawn offsets r = "
+        f"{', '.join(str(r) for r in offsets[:2])}, …, {offsets[-1]}.\n"
+        f"One game (n = 1), so no interval over games; the within-rule spread the dots "
+        f"show is the only spread a single game supports.",
+        transform=ax.transAxes, ha="left", va="top", fontsize=9, color=MUTED,
+        linespacing=1.5)
+
+
 def figure(g: Game, Z: np.ndarray, pos: np.ndarray, plane: str, method: str,
            variant: str, K: int, device: str, camera_ready: bool) -> Path:
     cells = spaces()
@@ -157,9 +259,11 @@ def figure(g: Game, Z: np.ndarray, pos: np.ndarray, plane: str, method: str,
     nrow = int(np.ceil(len(cells) / NCOL))
 
     # ROW_GAP buys clear air between the grid's bottom axis labels and (b)'s
-    # title; it is added to the canvas rather than taken out of the panels.
-    fig = plt.figure(figsize=(CELL_W * NCOL, CELL_H * nrow + BOARD_H + ROW_GAP))
-    gs = fig.add_gridspec(2, 1, height_ratios=[CELL_H * nrow, BOARD_H],
+    # title; it is added to the canvas rather than taken out of the panels, once
+    # per seam, so the grid and the board keep the size they had before (c).
+    fig = plt.figure(figsize=(CELL_W * NCOL,
+                              CELL_H * nrow + BOARD_H + METRIC_H + 2 * ROW_GAP))
+    gs = fig.add_gridspec(3, 1, height_ratios=[CELL_H * nrow, BOARD_H, METRIC_H],
                           left=0.03, right=0.97, top=0.93, bottom=0.02,
                           hspace=ROW_GAP / BOARD_H)
     grid = gs[0].subgridspec(nrow, NCOL, wspace=0.06, hspace=0.16)
@@ -175,17 +279,31 @@ def figure(g: Game, Z: np.ndarray, pos: np.ndarray, plane: str, method: str,
                    "one path per rule",
                    loc="left", fontsize=11, pad=18)
 
+    measured = []
     for j, (name, entry) in enumerate(cells):
         F = space_features(Z, entry, device)
-        coords, (xlab, ylab), dropped = project(plane, method, F, ref, k, K)
+        p = project(plane, method, F, ref, k, K)
         ax = fig.add_subplot(grid[j // NCOL, j % NCOL], projection="3d")
-        rule_fork_panel(ax, coords, g.rows, pos[dropped:], g.t0,
+        rule_fork_panel(ax, p.coords, g.rows, pos[p.dropped:], g.t0,
                         legend=(j == 0), zlabel=(j % NCOL == 0))
-        ax.set_xlabel(xlab, labelpad=-2, fontsize=8)
-        ax.set_ylabel(ylab, labelpad=-2, fontsize=8)
+        ax.set_xlabel(p.labels[0], labelpad=-2, fontsize=8)
+        ax.set_ylabel(p.labels[1], labelpad=-2, fontsize=8)
         ax.set_title(name, loc="left", fontsize=8.5)
+        # The cell's own name minus its hyperparameters: (c) has nine ticks to
+        # fit and the settings are already on the cell above each of them.
+        measured.append((name.split(" (")[0],
+                         control_ratio(p.coords, pos[p.dropped:], g.t0, g.rows),
+                         control_ratio(p.space, pos[p.dropped:], g.t0, g.rows)))
         if j == 0:
             keyed = ax
+
+    # (c) as text, so the README can quote it without reading it off the bars.
+    print("(c) mean distance from the reference over the drawn r >= 0, "
+          "/ the cell's legal control — plane | full space")
+    for name, dp, ds in measured:
+        print(f"  {name:<14} " + "  ".join(
+            f"{rule.split()[0]} {dp[m].mean():5.2f}|{ds[m].mean():5.2f}"
+            for rule, m in rule_rows(g.rows).items()))
 
     board = replay(g.tokens[:g.t0])
     flipped = flip_set(board.state, g.rows[ref]["square"], board.next_hand_color)
@@ -208,7 +326,14 @@ def figure(g: Game, Z: np.ndarray, pos: np.ndarray, plane: str, method: str,
         note += "\n\n" + variant_note(plane, K)
     band.text(0.0, below(band, leg, 0.06), note,
               ha="left", va="top", fontsize=8, color=MUTED, linespacing=1.5)
-    rule_member_key(fig, x=0.005, y=-0.012)
+
+    metric = fig.add_subplot(gs[2])
+    metric_note = metric_panel(metric, measured, g.rows, pos[pos >= g.t0] - g.t0)
+    metric.set_title("(c) how far they run: each rule's distance from the reference, "
+                     "in the plane its cell draws (bar)\nand in that cell's full space "
+                     "(open marker), as a multiple of the same cell's legal control",
+                     loc="left", fontsize=11)
+    rule_member_key(fig, x=0.005, y=below(fig, metric_note, 0.004))
 
     if not camera_ready:
         fig.suptitle(f"Fork Trajectory ({PLANE_NAME[plane]} {METHOD_NAME[method]}) in "

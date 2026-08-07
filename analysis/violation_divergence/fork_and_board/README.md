@@ -11,6 +11,12 @@ Eight branches are drawn — the played move, one legal control, and one move pe
 illegal category — and the six illegal categories are grouped into the three
 constraint rules they violate, so the figure carries five series.
 
+Panel **(c)** is the number (a) asks the reader to eyeball and does not answer:
+how far each rule runs from the reference, once per cell, in the plane that cell
+draws and in that cell's full space, as a multiple of the same cell's legal
+control. *[(c): the fork as a number](#c-the-fork-as-a-number-and-why-it-is-a-ratio)*
+below is what a reader has to know before reading a bar off it.
+
 ```
 python analysis/violation_divergence/fork_and_board/make_figures.py \
     [--game 1235] [--plane displacement|r21] [--embedding pca|isomap] \
@@ -72,7 +78,17 @@ stays visible; the small dashed translucent disc in the opposite corner is **the
 disc that branch would place — never a disc on the board**, which matters most on
 the two `R1 occupied` squares, where the real disc's colour is the only evidence
 for which of the two categories the branch is; the dashed ring marks a disc the
-played move flips.
+played move flips. Panel **(c)**: per cell and per rule, the mean over the rule's
+member categories (n = 2, 3, 1, one dot per member) of that branch's mean
+distance from the reference over the 13 drawn offsets *r* = 0, 2, …, 24 —
+**as a bar in the plane the cell above draws and as an open marker in that
+cell's full space, both divided by the same cell's legal control**. The
+reference is 0 and the control 1, both by construction. The division is what
+makes nine refit planes readable side by side at all; the raw distances differ
+by ~800× across the grid and are never drawn. **Every bar in this figure stands
+above its marker, by a factor that is a property of the plane and not of the
+branch** — see the section below, which is the section to read before quoting a
+number off (c).
 
 **Game 1235 is selected, not typical.** It is the argmax, over all 1550
 branch-complete games, of the mutual separation of its six illegal displacement
@@ -109,10 +125,25 @@ ending at *t***; the plane is the top-2 uncentred PCs of the column-scaled Δφ,
 refit per space. **15 of the study window's 17 offsets carry a descriptor** — the
 two earliest windows run off the board — **and 2 of those are branch-free**, where
 Δφ is exactly 0, so the prefix still *is* the origin (asserted at render time in
-all nine spaces). Everything else — panel (b), the sampling, the view, n = 1, the
-selection of game 1235, one control, per-space refits and the
+all nine spaces). Panel **(c)** measures this plane and this space: the bar is a
+distance in the R²¹ plane the cell draws and the marker is a distance in the
+**column-scaled** Δφ, which is the vector `fit_plane` actually projects, so the
+two are the same quantity at two dimensionalities and neither is in raw
+descriptor units. Everything else — panel (b), the sampling, the view, n = 1,
+the selection of game 1235, one control, per-space refits and the
 not-comparable-across-cells disclaimer — reads exactly as for the displacement
 figure above.
+
+**(c) reads differently here, and the difference is real.** R3 sits 1.69–2.47×
+the control in the full R²¹ space against 1.34–1.61× in the displacement space:
+a turn violation moves the curvature descriptor further, relative to a legal
+alternative, than it moves the activation. R1 is the other way — 0.88–1.32×,
+straddling 1, so on this game an occupied-square violation bends the trajectory
+no more than a second legal move does. **Do not read that as R²¹ being the
+better space.** It is one game, the two fields are scaled differently by
+construction (Δφ is column-scaled, Δ is not), and the population sweep that
+would license the comparison has not been run for this statistic in either
+field.
 
 **φ is nonlinear, so it is applied to each member category on its own and the
 rule mean is taken afterwards, in the plane.** Averaging the six trajectories
@@ -159,6 +190,16 @@ on the K-averaged full-512-d layer-5 displacement, *t* ≥ *t0*, is **0.887**
 against the spliced figure's 0.885 on the same game — one game, so read it as
 "the rollout did not change the grouping", not as a measurement.
 
+**(c) averages 5 offsets, not 13** — *r* = 0, 2, …, 8, the window `ROLLOUT_RMAX`
+leaves, and the panel says so. It is where the saturation shows up as a number:
+in the full space R1 runs **0.89–0.99× the control across all nine cells**, i.e.
+an occupied-square branch ends up no further from the reference than a second
+legal move, and R3's excess falls from 34–61% on the spliced set to 11–44%. The
+bars keep more separation than the markers do (R3 1.21–2.96× in the plane)
+because the plane is still fit on the branches it draws. R2 is the clearest
+case: its bar stands above 1 in all nine cells while its marker sits at or below
+1 in four of them (GatedSAE 1.01, TopK 1.00, BatchTopK 0.99, GatedAnneal 0.96).
+
 Everything else — n = 1, the selection of game 1235, one control, per-space
 refits, the not-comparable-across-cells disclaimer, the fixed camera — reads
 exactly as for the spliced displacement figure above, and the same caveat about
@@ -186,6 +227,139 @@ layer 5).
 game and field. One game and one draw of four continuations: it is not evidence
 that the rules cohere better under rollout, and no population sweep of the R²¹
 ratio has been run on this branch set.
+
+**(c) has one cell that sets the whole y scale, and it is not an artifact.** In
+CosineSpaDE the control's Δφ is the smallest of the nine cells (mean 1.72
+against 2.4–4.6 elsewhere) while its illegal branches are among the largest, so
+its ratios reach **12.3 in the plane and 5.1 in the space** and the other eight
+cells are compressed against them. The axis is not capped and no bar is broken:
+one linear axis from zero is what a bar chart owes the reader, and the
+compression is the honest consequence of putting nine cells on it. It is also
+the sharpest illustration of the panel's own rule — these are *within-cell*
+numbers, and a cell whose control barely moves will report large ones. Read
+CosineSpaDE against its own control, not against raw layer 5's bars. The rest of
+(c) here reads as elsewhere: R1 below 1 in eight of nine cells, R3 above 1 in
+all nine, and the bar below its marker for R1 in eight of nine — the plane
+understating, where the spliced figures have it overstating.
+
+## (c): the fork as a number, and why it is a ratio
+
+A fork panel asks the reader to judge how far each branch runs from the
+reference, and until (c) nothing on the figure answered it. (c) is that
+judgement as a number: for each branch, its **mean distance from the reference
+over the drawn offsets *r* ≥ 0** (`spade.figures.branch_panels.plane_displacement`),
+averaged over a rule's member categories, with the members drawn as dots so the
+spread the mean hides is on the panel. The drawn window is what it averages
+over — 13 offsets *r* = 0, 2, …, 24 on the spliced figures, **5 offsets
+*r* = 0, 2, …, 8 on the rollout ones**, where `ROLLOUT_RMAX` cuts the fork — and
+the panel prints which.
+
+### The comparability problem, and what was done about it
+
+The plane is refit per space and its axes are that space's own units. In the
+displacement plane, `control_legal` sits a mean 2.80 from the reference in raw
+layer 5 and 0.0036 in SpaDE: the same branch, the same game, a factor of ~800.
+Nine such numbers side by side would be nine unit systems in one bar chart, and
+a reader would compare them, because that is what a bar chart is for.
+
+**So (c) never draws a distance. It draws each branch's distance ÷ the same
+cell's legal control's**, which is dimensionless, is a within-cell contrast by
+construction, and is the form the rest of this study already argues in (illegal
+δ̂ ÷ control δ̂ in `../README.md`). The reference is 0 and the control is 1 in
+every cell, both by construction, and the dashed line at 1 is drawn.
+
+That makes side-by-side reading defensible. It does **not** make the nine bars
+nine measurements of the same thing, for a reason the panel also draws:
+
+### It measures the plane, not the space — so the marker is there too
+
+A plane holds part of a displacement, and it holds a *different* part of each
+branch. In raw layer 5, the displacement plane carries **30% of the control's
+displacement and 81% of `opponent_only`'s** — the plane is the top two PCs of
+exactly these branches, so it is fit where the largest of them travel. The ratio
+(c) would report from the plane alone is therefore inflated by the ratio of
+those shares, exactly:
+
+```
+plane ratio = full-space ratio × (branch's share of its own ‖Δ‖ ÷ control's share)
+      4.08  =           1.53   ×            (0.810 ÷ 0.303)
+```
+
+The error runs the other way too: a branch that leaves the plane reads as a
+branch that stayed near the reference. Neither is visible on a fork panel.
+
+So every bar carries an **open marker: the same ratio measured in that cell's
+full space** — the SAE's own 8192-d code, or the column-scaled Δφ in R²¹, the
+space the plane was fit in. The gap between a bar and its marker *is* the part
+the plane does not hold. Where the two disagree, the marker is the answer to
+"how far", and the bar is the answer to "how far *in this picture*".
+
+This is also what makes the across-cell reading honest. Displacement, spliced,
+R3: the **bars** run 3.81–6.18 across the nine cells and the **markers** run
+1.34–1.61. The spread the bars show across the grid is ~9× the markers' and is
+mostly the plane fit moving, not the spaces differing. Read differences between
+cells off the markers.
+
+### The numbers
+
+Displacement plane, spliced branches, game 1235, layer 5, mean over
+*r* = 0, 2, …, 24, as a multiple of each cell's own `control_legal`, printed by
+`make_figures.py` on every render — **plane | full space**:
+
+| cell | R1 placement (2) | R2 bracketing (3) | R3 turn (1) |
+|---|---|---|---|
+| raw layer 5 | 1.22 \| 1.05 | 2.43 \| 1.20 | 4.08 \| 1.53 |
+| PAnneal | 1.19 \| 1.05 | 2.37 \| 1.19 | 4.29 \| 1.56 |
+| Standard | 1.22 \| 1.04 | 3.17 \| 1.22 | 6.18 \| 1.60 |
+| GatedSAE | 1.74 \| 1.18 | 2.02 \| 1.13 | 3.81 \| 1.40 |
+| TopK | 1.69 \| 1.11 | 2.62 \| 1.16 | 4.69 \| 1.45 |
+| GatedAnneal | 1.44 \| 1.07 | 2.11 \| 1.12 | 3.84 \| 1.34 |
+| BatchTopK | 1.59 \| 1.10 | 2.63 \| 1.16 | 5.01 \| 1.53 |
+| CosineSpaDE | 1.34 \| 1.14 | 3.26 \| 1.30 | 4.65 \| 1.61 |
+| SpaDE | 1.23 \| 1.02 | 2.86 \| 1.19 | 5.00 \| 1.49 |
+
+What the full-space column says, in one line: on this game a rule's branches sit
+**2–30% further from the reference than a second legal move does**, and the
+ordering R3 > R2 > R1 holds in all nine spaces. The plane column says 1.2×–6.2×
+of the same thing.
+
+The other three figures, as ranges over the nine cells (plane | full space):
+
+| figure | R1 | R2 | R3 |
+|---|---|---|---|
+| displacement, rollout | 0.79–0.95 \| 0.89–0.99 | 1.09–1.88 \| 0.96–1.12 | 1.21–2.96 \| 1.11–1.44 |
+| R²¹, spliced | 0.57–1.37 \| 0.88–1.32 | 1.25–2.22 \| 1.09–1.58 | 2.24–3.94 \| 1.69–2.47 |
+| R²¹, rollout | 0.21–2.75 \| 0.62–1.76 | 0.55–7.18 \| 0.56–3.30 | 1.16–12.33 \| 1.06–5.06 |
+
+The rollout displacement figure is the saturation of the section below as one
+number per rule: **R1 falls under 1 in every cell** — those branches end up
+*closer* to the reference than a second legal move does — and R3's full-space
+excess shrinks from 34–61% to 11–44%. The R²¹ rollout figure is the one to
+distrust: its ranges are wide because a single cell (CosineSpaDE) carries the
+top of every one of them, and it is one game, one draw of four continuations,
+and a descriptor whose window still reaches 14 plies back at *r* = +8. It is
+also where the plane *understates* rather than overstates — the bar sits below
+its marker for R1 in eight of the nine cells — which is the same distortion
+running the other way.
+
+### What (c) does not carry
+
+- **No interval over games.** n = 1, like the rest of the figure. The dots are
+  the within-rule spread over member categories (n = 2, 3, 1) and nothing else;
+  `R3 turn` has one member, so its bar has one dot sitting on it and is not an
+  average. The within ÷ between-rule spread ratio of **0.885** on this game says
+  that spread is nearly as wide as the spread between rules, so the three bars
+  are three labels more than three findings.
+- **No claim about a space.** A cell whose bars are tall has a plane that
+  happens to hold more of this game's displacement, not a dictionary that
+  separates violations better. Nothing in this figure licenses ranking the nine.
+- **Not the study's ratio.** `../README.md`'s 0.978 is mean illegal δ̂ ÷ mean
+  control δ̂ over 13,531 branches with a CI. (c)'s numbers are one game, no CI,
+  and a different estimator (a mean of per-branch distances, not a ratio of
+  population means). They are not comparable and neither replicates the other.
+- In grayscale the three rule hues are told apart by the marker shape on each
+  bar (`RULE_STYLE`: square, triangle, diamond) and by position in the group,
+  since a bar cannot carry a marker of its own.
 
 ## The rollout variant, and why its window stops at *r* = +8
 
@@ -270,6 +444,14 @@ width its three lines need (FIGURE_GUIDELINES §5: shorthand in a legend earns a
 key inside the figure). It names each rule, how many categories it averages, and
 what each of them is, driven by `RULE_MEMBERS` and `CATEGORY_GLOSS` so the counts
 cannot disagree with the legend's `(mean of n)`.
+
+Panel **(c)** is a third full-width row under the board rather than an inset in
+each of the nine cells: nine cells × five series is 45 numbers, which no set of
+in-panel labels survives, and the whole point of the panel is that the nine are
+read against one axis. The canvas grows by (c)'s height plus one more row gap,
+so the fork grid and the board keep the size they had before it — the cells are
+within 0.4% of their previous height. The bars sit next to nothing else, which
+is what a nine-group grouped bar chart needs at 9 pt.
 
 Panel letters sit top-left of their region; the working PNG carries an in-figure
 title and `--camera-ready` drops it and emits vector PDF (§2, §6).
@@ -423,12 +605,27 @@ is comparable across cells anyway.
   comparable across the grid" disclaimer is what keeps them honest (§4.6, §4.8).
   The ordered axis keeps its ticks and reads `move index t`, once per row.
 - Board: `file` / `rank (1 at the top)`.
+- Panel (c): `distance from the reference, ÷ the cell's own legal control`. The
+  divisor is in the axis label rather than the caption because it is what makes
+  the nine groups one axis at all — a reader who misses it reads nine
+  incommensurable planes as one bar chart. Zero-based and linear (§1.6), one
+  panel for one scale, and the tick labels are 9 pt like the rest of (c).
 
 ## Reading it honestly
 
 - **Planes are refit per space.** Cells are comparable in the *shape* of the
   fork and never in position or magnitude; SAE latent spaces live on different
   scales. The caption says so.
+- **(c) is a ratio because a distance would be a lie.** Nine refit planes carry
+  nine unit systems — the same control branch sits 2.80 from the reference in
+  raw layer 5 and 0.0036 in SpaDE — so (c) divides every distance by its own
+  cell's legal control and never draws the distance. Even then, compare cells
+  through the open markers: the bars carry the plane's per-cell distortion on
+  top of the quantity.
+- **A bar in (c) measures the picture, not the space.** The plane is fit on the
+  branches it draws, so it holds 81% of `opponent_only`'s displacement and 30%
+  of the control's in raw layer 5, and the bar inflates by exactly that ratio.
+  The marker beside it is the same contrast in the full space. Quote the marker.
 - **One game is n = 1, and a selected one.** See the section above: the panels
   look cleaner than a typical fork does, by construction. This is an
   illustration of the design, not a claim-supporting figure. Every number — the
