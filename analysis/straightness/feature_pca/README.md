@@ -204,6 +204,43 @@ R2 > R3 > R1 holds in the full space as it does in the plane and in
 `../sae_profiles/`'s median gaps, which is three estimators agreeing. The rules
 still have no AUROC with a CI anywhere — these are distances, not detection rates.
 
+### Half of it is the suffix, not the illegal move
+
+Everything above is the **spliced** tree, which is what the figure draws: after
+*t0* a branch replays the source game's real moves onto a board the illegal move
+has already changed. That continuation is off-distribution for reasons unrelated
+to which rule was broken, and since the separation lives entirely in whole-game
+moments with *t0* ∈ [10, 34] of 58 positions, most of the descriptor is computed
+over it. `--tree rollout` is the control: same games, same *t0*, same rules, but
+OthelloGPT continues from the post-violation board (K = 4). The suffix is then the
+only difference between the two columns.
+
+| pair (raw L5, 21-D) | spliced | resampled |
+|---|---|---|
+| legal ↔ R1 placement | 1.13 | 0.40 |
+| legal ↔ R2 bracketing | 1.68 | 1.14 |
+| legal ↔ R3 turn | 1.42 | 0.72 |
+| R1 ↔ R2 | 0.64 | 0.99 |
+| R2 ↔ R3 | 0.25 | 0.43 |
+| legal ↔ championship | 3.51 | 3.41 |
+| legal vs legal (null) | 0.16 | 0.16 |
+
+Over the nine spaces, rule-to-legal falls **1.00 → 0.56** and rule-to-rule rises
+**0.36 → 0.56**. So about half the distance from legal was the spliced tail, worst
+for R1 (1.13 → 0.40, which is not far off the 0.16 null).
+
+The two moving in opposite directions is the informative part: the spliced suffix
+adds a displacement **common to all three rules**, which inflates every rule's gap
+from legal while compressing the rules against each other. Remove it and the
+rule-identity signal comes out — R1 ↔ R2 goes 0.64 → 0.99. Championship is
+near-invariant (3.51 → 3.41), which is the check that the swap touched only the
+branch classes, and R2 > R3 > R1 survives on both trees.
+
+**Quote the resampled column for anything about violations, and the spliced column
+only when the figure is what is being described.** The figure is drawn on the
+spliced tree because that is the tree the rest of the divergence study's fork
+panels read; a resampled-suffix version of it does not exist yet.
+
 ## What the CosineSpaDE cluster is
 
 CosineSpaDE's panel has a second cloud up and to the right, at PC1 > 2, PC2 > 3:

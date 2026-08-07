@@ -78,6 +78,17 @@ of 0.16, while in the plane rule-to-rule averages the null exactly. Quote a plan
 only with "in this plane" attached
 (`analysis/straightness/feature_pca/README.md` § How far apart the classes actually are).
 
+- **Every rule distance is a spliced-suffix number until stated otherwise, and about half
+  of it is the suffix.** The figures read the spliced branch tree, where a branch replays
+  its source game's real moves after *t0* onto a board the illegal move has changed. Under
+  the resampled tree — same games, same *t0*, same rules, OthelloGPT continuing from the
+  post-violation board — rule-to-legal falls from 1.00 to 0.56 averaged over the nine
+  spaces (raw layer 5: R1 1.13 → 0.40, R2 1.68 → 1.14, R3 1.42 → 0.72) while rule-to-rule
+  *rises* 0.36 → 0.56. The spliced tail adds a displacement common to all three rules.
+  Use the resampled column for any claim about what a violation does to the geometry;
+  championship is near-invariant across the swap (3.51 → 3.41), which is the control.
+  `centroid_distances.py --tree rollout`.
+
 **Straightness: the championship effect at layer 5.** 0.509 [0.483, 0.535] — not
 distinguishable from chance. Adding bootstrap CIs turned a claimed gradual rise into a
 late-layer-specific effect.

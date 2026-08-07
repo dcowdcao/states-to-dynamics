@@ -18,15 +18,25 @@ carry:
   makes a centroid's own standard error ~0.02 SD, so significance is not the
   question -- size is.
 
+`--tree` is not a variant, it is the control. The spliced tree replays the source
+game's real moves after t0 onto a board the illegal move has changed, so most of
+the trajectory the moments run over is off-distribution for reasons unrelated to
+which rule was broken; the resampled tree has OthelloGPT continue from the
+post-violation board instead. Half the rule-to-legal distance does not survive the
+swap, and README.md gives both.
+
 Usage: python analysis/straightness/feature_pca/centroid_distances.py
+                  [--tree branches|rollout]
 """
 
+import argparse
 from itertools import combinations
 
 import numpy as np
 
 from spade.straightness.geometry import RESTRAV_FEATURE_NAMES
 
+import make_figures
 from make_figures import DRAWN, features, pca, spaces
 
 BOOT, BOOT_SEED = 1000, 0
@@ -62,6 +72,12 @@ def table(title: str, rows: dict, pairs: list) -> None:
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--tree", default=make_figures.TREE,
+                        choices=["branches", "rollout"])
+    make_figures.TREE = parser.parse_args().tree
+    print(f"suffix after t0: {make_figures.TREE}")
+
     pairs = list(combinations(DRAWN, 2))
     plane, full, raw_basis = {}, {}, None
     for label, entry in spaces():

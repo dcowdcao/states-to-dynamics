@@ -80,6 +80,23 @@ earliest t0 = 10 and the legal class is (1998/2000) the same games as the rules'
 so those 13 components differ by exactly 0.00 and all 1.68 SD is carried by the 8 moments,
 led by `mean d`, `var d`, `max d`, `mean θ`.
 
+**And roughly half of that is the spliced suffix.** Because the separation is entirely in
+whole-game moments and t0 ∈ [10, 34] of 58 positions, most of the descriptor is computed
+over a tail the illegal move has invalidated -- the source game's real moves replayed onto
+a changed board. `--tree rollout` swaps that for OthelloGPT continuing from the
+post-violation board and nothing else: rule-to-legal 1.00 -> 0.56 over the nine spaces,
+worst for R1 (1.13 -> 0.40, near the 0.16 null), while rule-to-rule *rises* 0.36 -> 0.56.
+The spliced tail adds a displacement common to all three rules, so it inflates the gap
+from legal and compresses the rules together; removing it exposes the rule-identity signal
+(R1/R2 0.64 -> 0.99). Championship moves 3.51 -> 3.41, the control that says the swap
+touched only the branch classes. Every rule distance in this repo is a spliced number
+unless it says otherwise.
+
+Left open here too: the figures are still spliced-tree only. `rule_descriptors` now exists
+for both trees, so a `_rollout` variant of restrav_pca and theta_dist_comparison is a
+render away -- the divergence study already uses that suffix convention for exactly this
+contrast -- and has not been done.
+
 **The CosineSpaDE outlier cloud is a property of the game.** Its 114 legal games are,
 token for token, the same 114 source games whose R1, R2 and R3 branches also land there;
 82 rollouts join them and no championship game does. Delayed code recruitment (L0 13/34
