@@ -12,8 +12,10 @@ every one of 2000 games carries a branch for every rule
 (spade.violation_divergence.rule_curvature). Both sides drop the attention sink
 and measure per ply, which is what makes their descriptors the same number -- the
 check is in analysis/violation_divergence/rule_curvature/README.md. What differs
-is the construction: a rule branch keeps its source game's real suffix, while the
-game classes are whole games. The caption says so.
+is the construction: a rule point is a branched move inside a game, a game-class
+point is a whole game, and what the branch does after t0 is `--tree`. The caption
+says so, and the two trees are not interchangeable -- half the rule-to-legal
+distance is the spliced suffix (README).
 
 Every space gets its own PCA, fit on that space's z-scored features over the six
 classes drawn. Raw covariance PCA would answer a different question here: the
@@ -22,9 +24,10 @@ differ by ~450x across dictionaries (SpaDE step lengths ~0.05, raw layer 5 ~22.8
 so PC1 lands on turning-angle variance in every space and reports units, not
 structure.
 
-Usage: python analysis/straightness/feature_pca/make_figures.py
+Usage: python analysis/straightness/feature_pca/make_figures.py [--tree branches|rollout]
 """
 
+import argparse
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -45,7 +48,12 @@ apply_style()
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 GEOM = study_dir("straightness") / "geometry"
-TREE = "branches"  # the spliced suffix; the rules are drawn beside whole games
+TREE = "branches"  # --tree overrides; see TREE_TITLE for what the two are
+# What a branch does after t0, which is most of what the moments average over and
+# so is not a detail: `branches` replays the source game's real moves onto a board
+# the illegal move has changed, `rollout` has OthelloGPT continue from that board.
+# Half the rule-to-legal distance does not survive the swap (README).
+TREE_TITLE = {"branches": "spliced suffix", "rollout": "resampled suffix"}
 STYLE = CLASS_STYLE | VIOLATION_RULE_STYLE
 # Legend order, reference first. The study's violation class is what the three
 # rules replace, so it is drawn by none of these.
@@ -151,15 +159,24 @@ def restrav_pca() -> dict[str, Fit]:
     # Descriptive, not a claim, and no prose block: what a reader needs in order
     # not to over-read the panels is the published caption in README.md, as in
     # ../../violation_divergence/rule_curvature (FIGURE_GUIDELINES 5).
+    # The suffix goes in the title because the two renders are otherwise the same
+    # picture, and which one a reader is holding decides what the rules mean.
     fig.suptitle("The 21-D ReStraV descriptor in its top-2 principal plane, "
-                 "per representation space", fontsize=11, y=1.00)
+                 f"per representation space ({TREE_TITLE[TREE]})",
+                 fontsize=11, y=1.00)
     fig.tight_layout(rect=(0, 0.03, 1, 0.97))
-    fig.savefig(FIG_DIR / "restrav_pca.png", dpi=300, bbox_inches="tight")
+    stem = "restrav_pca" + ("" if TREE == "branches" else f"_{TREE}")
+    fig.savefig(FIG_DIR / f"{stem}.png", dpi=300, bbox_inches="tight")
     plt.close(fig)
     return fits
 
 
 def main():
+    global TREE
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--tree", default=TREE, choices=list(TREE_TITLE))
+    TREE = parser.parse_args().tree
+
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     fits = restrav_pca()
     raw = fits["raw L5 (reference)"]

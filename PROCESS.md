@@ -92,10 +92,19 @@ from legal and compresses the rules together; removing it exposes the rule-ident
 touched only the branch classes. Every rule distance in this repo is a spliced number
 unless it says otherwise.
 
-Left open here too: the figures are still spliced-tree only. `rule_descriptors` now exists
-for both trees, so a `_rollout` variant of restrav_pca and theta_dist_comparison is a
-render away -- the divergence study already uses that suffix convention for exactly this
-contrast -- and has not been done.
+`make_figures.py --tree rollout` now renders `restrav_pca_rollout.png` beside the spliced
+one, with the suffix in the suptitle because the two are otherwise the same picture and
+which one a reader is holding decides what the rules mean. The resampled panels show the
+rules collapsed onto legal harder than the spliced ones do (raw L5 PC2: R2 -0.18 against
+-0.40), which is the distance table drawn.
+
+One reason the drop is conservative: a resampled rule point averages K = 4 rollouts on top
+of its member categories, so its class tightens (within-class SD 0.96-0.97 -> 0.92-0.94,
+game classes flat at ~0.99). Standardized distance divides by that, so the shrinking
+spread inflates the resampled column and it still halves.
+
+Left open: `theta_dist_comparison` is still spliced-only, and its "R1 barely moves" median
+gaps come off the same tree that the distances say is inflating R1 most.
 
 **The CosineSpaDE outlier cloud is a property of the game.** Its 114 legal games are,
 token for token, the same 114 source games whose R1, R2 and R3 branches also land there;

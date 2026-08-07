@@ -11,9 +11,18 @@ It is the unsupervised counterpart of the `auc_lr21` column: same 21 features,
 no labels.
 
 ```
-python analysis/straightness/feature_pca/make_figures.py        # the figure
-python analysis/straightness/feature_pca/centroid_distances.py  # how far apart the classes are
+python analysis/straightness/feature_pca/make_figures.py [--tree branches|rollout]
+python analysis/straightness/feature_pca/centroid_distances.py [--tree branches|rollout]
 ```
+
+| file | what a rule branch does after *t0* |
+|---|---|
+| `figures/restrav_pca.png` | `--tree branches`, the **spliced** suffix: the source game's real moves, replayed onto a board the illegal move has changed |
+| `figures/restrav_pca_rollout.png` | `--tree rollout`, the **resampled** suffix: OthelloGPT continues from the post-violation board, K = 4 |
+
+Same games, same *t0*, same rules both times, so the difference between the two is
+the suffix and nothing else. It is not a small difference — see § *Half of it is
+the suffix*.
 
 Reads geometry two studies already wrote — no re-extraction. `make_figures.py`
 writes `figures/restrav_pca.png` and prints the basis table below;
@@ -236,10 +245,17 @@ rule-identity signal comes out — R1 ↔ R2 goes 0.64 → 0.99. Championship is
 near-invariant (3.51 → 3.41), which is the check that the swap touched only the
 branch classes, and R2 > R3 > R1 survives on both trees.
 
-**Quote the resampled column for anything about violations, and the spliced column
-only when the figure is what is being described.** The figure is drawn on the
-spliced tree because that is the tree the rest of the divergence study's fork
-panels read; a resampled-suffix version of it does not exist yet.
+**The drop is conservative, because the denominator moved the wrong way.** A
+resampled rule point averages K = 4 rollouts as well as its member categories, so
+its class is tighter: within-class SD falls from 0.96–0.97 to 0.92–0.94 while the
+game classes hold at ~0.99. A standardized distance divides by that, so the
+shrinking spread *inflates* the resampled column — and it still comes in at half
+the spliced one. The raw centroid gap fell by more than these numbers say.
+
+**Quote the resampled column for anything about what a violation does to the
+geometry.** Both figures ship, and `restrav_pca.png` stays the spliced one because
+that is the tree the rest of the divergence study's fork panels read; which of the
+two should be the headline is not settled here.
 
 ## What the CosineSpaDE cluster is
 
