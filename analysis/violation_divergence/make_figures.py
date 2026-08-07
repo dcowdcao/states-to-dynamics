@@ -318,18 +318,12 @@ F1_TITLE = {
     "rollout": "Once every branch samples its own future, illegal and legal displace "
                "layer 5 alike",
 }
+# The §1.2 line: what the estimator is, over what, and where the interval lives.
+# Everything else these notes used to carry is in the README.
 F1_NOTE = {
-    "spliced": "layer 5 resid_post, event-locked to the branch position $t_0$; each curve "
-               "is a mean over source games, n in the legend, 95% CIs in "
-               "divergence_curves.csv\n"
-               "$t_0$ round-robin over [10, 34], so every game contributes to every "
-               "offset and n is constant across $r$",
-    "rollout": f"layer 5 resid_post, rollout branch set: every branch including the "
-               f"reference samples its own continuation, K={K_ROLLOUTS} per branch, "
-               "averaged so one branch is one item\n"
-               "each curve is a mean over source branches, 95% CIs in "
-               "divergence_curves_rollout.csv; $r=0$ depends only "
-               "on the shared prefix and is the spliced study's own number",
+    "spliced": "mean over source games; n in the legend, 95% CIs in divergence_curves.csv",
+    "rollout": f"mean over source branches, K={K_ROLLOUTS} rollouts averaged per branch; "
+               "n in the legend, 95% CIs in divergence_curves_rollout.csv",
 }
 
 
@@ -372,9 +366,7 @@ def f1_divergence_layer5(variant: str, camera_ready: bool) -> None:
                         "two games' rollouts at the same position", fontsize=7,
                         color=MUTED, ha="left", va="bottom")
         axes[0][0].text(SATURATED_R + 0.4, 0.44,
-                        f"$r \\geq {SATURATED_R}$: the two classes are within\n"
-                        "0.5% of each other and still climbing\ntoward that ceiling — a "
-                        "ratio read here\nmeasures saturation, not legality",
+                        f"$r \\geq {SATURATED_R}$: saturated,\nnot evidence on legality",
                         fontsize=7.5, color=MUTED, style="italic", ha="left", va="bottom")
     axes[0][0].set_ylim(-0.03, 1.45 if rollout else 0.95)
     legend_order(axes[0][0], fontsize=7, loc="lower right", ncol=2, columnspacing=0.8)
@@ -386,16 +378,14 @@ def f1_divergence_layer5(variant: str, camera_ready: bool) -> None:
     if rollout:
         saturated_band(axes[0][1], w)
     axes[0][1].set_ylim(-0.155, 0.115)
-    axes[0][1].text(-8, -0.152, "above 0: the violation displaces the residual\n"
-                    "stream further than a legal move at the same prefix",
+    axes[0][1].text(-8, -0.152, "above 0: the violation displaces further than a legal move",
                     fontsize=7.5, color=MUTED, style="italic", ha="left", va="bottom")
 
     if not camera_ready:
         fig.suptitle(F1_TITLE[variant], fontsize=11, y=1.0)
-    fig.text(0.5, 0.905, F1_NOTE[variant],
-             fontsize=8, color=MUTED, style="italic", ha="center", va="top",
-             linespacing=1.5)
-    fig.tight_layout(rect=(0, 0, 1, 0.86))
+    fig.text(0.5, 0.95, F1_NOTE[variant],
+             fontsize=8, color=MUTED, style="italic", ha="center", va="top")
+    fig.tight_layout(rect=(0, 0, 1, 0.93))
     rule_key(fig, ["R1", "R2", "R3"])
     save_figure(fig, HERE / "figures" / named("divergence_layer5", variant), camera_ready)
 
@@ -421,17 +411,10 @@ F3_TITLE = {
                "against a silent input",
 }
 F3_NOTE = {
-    "spliced": "$W_E$ is the input anchor, separated by a rule: its "
-               r"$\hat\delta$ is $\approx\sqrt{2}$ at $r=0$ and exactly 0 afterwards, "
-               "so everything right of the rule is computed, not inherited\n"
-               "error bars are 95% CI of the mean over source games (panel b: normal "
-               "approximation on a proportion); n per category in the legend",
-    "rollout": "$W_E$ is the input anchor, separated by a rule — and in this variant it "
-               "is no longer silent: the branches' suffixes are different tokens, so its "
-               r"plateau $\hat\delta$ is $\approx 1.23$, not 0."
-               "\nNothing here is 'computed, not inherited'. Error bars are 95% CI of the "
-               f"mean over source branches, K={K_ROLLOUTS} rollouts averaged per branch "
-               "(panel b: normal approximation, conservative on a mean of K indicators)",
+    "spliced": "error bars: 95% CI of the mean over source games (b: normal approximation "
+               "on a proportion); n in the legend",
+    "rollout": f"error bars: 95% CI of the mean over source branches, K={K_ROLLOUTS} "
+               "rollouts averaged per branch (b: normal approximation); n in the legend",
 }
 
 
@@ -474,10 +457,9 @@ def f3_depth_sweep(depth: pd.DataFrame, variant: str, camera_ready: bool) -> Non
 
     if not camera_ready:
         fig.suptitle(F3_TITLE[variant], fontsize=11, y=1.0)
-    fig.text(0.5, 0.905, F3_NOTE[variant],
-             fontsize=8, color=MUTED, style="italic", ha="center", va="top",
-             linespacing=1.5)
-    fig.tight_layout(rect=(0, 0, 1, 0.86))
+    fig.text(0.5, 0.95, F3_NOTE[variant],
+             fontsize=8, color=MUTED, style="italic", ha="center", va="top")
+    fig.tight_layout(rect=(0, 0, 1, 0.93))
     rule_key(fig, ["R1", "R2", "R3"])
     save_figure(fig, HERE / "figures" / named("depth_sweep", variant), camera_ready)
 

@@ -306,6 +306,25 @@ drawn on the sampled-suffix tree and carrying the saturation caveat in-figure. T
 a robustness check on the shared-suffix confound, not a second set of results: read
 them together with "The rollout variant" above.
 
+What the figures no longer repeat, because it is here:
+
+- **F1, F3.** Layer 5 `resid_post`, event-locked to *t0*; *t0* is round-robin over
+  [10, 34], so every game contributes to every offset and n is constant across *r*.
+  In the rollout twins every branch including the reference samples its own
+  continuation, K = 4 per branch, averaged so a branch is one item; δ̂(0) depends only
+  on the shared prefix and is the spliced study's own number. `$W_E$` is the input
+  anchor, separated by a rule (§4.1): its δ̂ is ≈√2 at *r* = 0 and exactly 0 afterwards
+  in the spliced tree, which is what "computed, not inherited" is read off, and 1.23 in
+  the rollout tree, where nothing is.
+- **`sae_feature_recurrence`.** Dictionary width 8192 in every space. Panel (b) fits
+  the top-10 ranking on even-numbered games and scores it on odd, and vice versa, so no
+  event contributes to the ranking it is scored against; chance for that overlap is
+  10²/8192 = 0.0122 against 10/8192 = 0.0012 for panel (a).
+- **F6.** Each branch is scored against the reference of its own group — the source
+  game in the spliced tree, the (game, rollout) sample in the rollout tree.
+- **F7 rollout.** Both anchors rise as each branch's own rollout fills the square, not
+  as a shared suffix does.
+
 **The design itself**, in `fork_and_board/` (see its README):
 `game_1235_fork_and_board_displacement_pca` puts the fork in all nine
 representation spaces over the board the game forks on, so a coloured trajectory

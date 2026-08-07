@@ -149,6 +149,5 @@ Nothing failed and nothing OOMed. Two notes for whoever renders next:
   the F3 bullet enumerates a panel (d) that no longer exists. I edited only the sentences
   about bands; correcting the panel inventory is a separate change and I did not want to
   guess at it inside this one.
-- **`probe_readout/make_figures.py:127 parity_panel()` is dead.** `main()` drops the parity
-  panel (with a comment saying why) and never calls it; `PARITY_BRANCHES` exists only for
-  it. Pre-existing, so left in place.
+- ~~**`probe_readout/make_figures.py:127 parity_panel()` is dead.**~~ Deleted with
+  `PARITY_BRANCHES` on `gray/gray-parent`; `probe_parity.csv` still holds the data.

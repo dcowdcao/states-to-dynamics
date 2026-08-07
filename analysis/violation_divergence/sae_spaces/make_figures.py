@@ -241,21 +241,17 @@ def feature_recurrence(meta, mask, variant: str, k: int) -> None:
                  f"{min(empty_square_rates):.0%}-{max(empty_square_rates):.0%} of "
                  "empty-square violations",
                  fontsize=11, y=1.02)
-    fig.text(0.5, 0.95, "Top-$|\\Delta|$ features at $r = 0$, dictionary width 8192. "
-             "Error bars are 95% percentile bootstrap over source games (1000 "
-             "resamples); n per category is 1636-2000 games, 2000 for the control. "
-             "Log y.\nIn (b) the ranking is fit on even-numbered games and scored on odd, "
-             "and vice versa, so no event contributes to the ranking it is scored "
-             "against." if variant == "spliced" else
-             "Top-$|\\Delta|$ features at $r = 0$, dictionary width 8192. $r = 0$ "
-             "depends only on the shared prefix, so this panel is the spliced study's "
-             f"own measurement read over K={K_ROLLOUTS} rollouts per branch.\n"
-             "Error bars are 95% percentile bootstrap over source branches (1000 "
-             "resamples), each branch's K scores averaged first; n per category is "
-             "1630-2000 branches, 2000 for the control. Log y.",
-             fontsize=8, color=MUTED, style="italic", ha="center", va="top",
-             linespacing=1.5)
-    fig.tight_layout(rect=(0, 0.02, 1, 0.87))
+    fig.text(0.5, 0.955,
+             "Top-$|\\Delta|$ features at $r = 0$. Error bars are 95% percentile "
+             "bootstrap over source games (1000 resamples); n per category is "
+             "1636-2000 games, 2000 for the control."
+             if variant == "spliced" else
+             "Top-$|\\Delta|$ features at $r = 0$. Error bars are 95% percentile "
+             "bootstrap over source branches (1000 resamples),\neach branch's K="
+             f"{K_ROLLOUTS} scores averaged first; n per category is 1630-2000 "
+             "branches, 2000 for the control.",
+             fontsize=8, color=MUTED, style="italic", ha="center", va="top")
+    fig.tight_layout(rect=(0, 0.02, 1, 0.90))
     rule_key(fig, ["R1", "R2", "R3"], y=-0.12)
     save_figure(fig, FIG_DIR / named("sae_feature_recurrence", variant))
 

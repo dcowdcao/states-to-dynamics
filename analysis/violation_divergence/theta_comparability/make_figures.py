@@ -63,9 +63,8 @@ def level_panel(ax, g: dict, gid: int) -> None:
     hi, lo = (g[f"profile {r}"][legal][g[f"vertex {r}"] == at].item() for r in RULES)
     ax.annotate("", xy=(at, hi), xytext=(at, lo),
                 arrowprops=dict(arrowstyle="<->", color=MUTED, lw=0.9))
-    ax.text(at - 1.5, (hi + lo) / 2, f"{hi - lo:.1f}° apart at $t$={at};\nno drawn class differs\n"
-            "from legal by more than 1.3°", fontsize=7.5, color=MUTED, style="italic",
-            ha="right", va="center")
+    ax.text(at - 1.5, (hi + lo) / 2, f"{hi - lo:.1f}° apart at $t$={at}",
+            fontsize=7.5, color=MUTED, style="italic", ha="right", va="center")
     ax.set_xlabel("board position $t$ (the angle's vertex ply)")
     ax.set_ylabel("mean turning angle (deg)")
 
@@ -113,19 +112,14 @@ def main():
     if not args.camera_ready:
         fig.suptitle("Two ply-samplings, one name: the straightness and fork studies' "
                      "“mean turning angle” are different quantities", fontsize=11, y=1.02)
-    fig.text(0.5, 0.945, "layer 5, raw activations, same estimator "
-             "(spade.straightness.geometry.temporal_geometry), different sampled sequence.  "
-             "(a) mean over games; its 95% CI half-width is ≤ 0.34° at every $t$, "
-             "well inside the gap the panel annotates, and is not drawn.\n"
-             "(b) 95% percentile bootstrap over games, 1000 "
-             "resamples, n = 2000 per class.  Sign flips in (b) on every class: no rescale "
-             "or reindex reconciles them.",
-             fontsize=7.5, color=MUTED, style="italic", ha="center", va="top",
-             linespacing=1.5)
+    fig.text(0.5, 0.945, "(a) mean over games; its 95% CI half-width is ≤ 0.34° at every "
+             "$t$ and is not drawn.  (b) 95% percentile bootstrap over games, 1000 "
+             "resamples, n = 2000 per class.",
+             fontsize=7.5, color=MUTED, style="italic", ha="center", va="top")
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="lower center", ncol=3, fontsize=7.5,
                bbox_to_anchor=(0.5, -0.07), columnspacing=1.6)
-    fig.tight_layout(rect=(0, 0.02, 1, 0.90))
+    fig.tight_layout(rect=(0, 0.02, 1, 0.92))
     print(f"wrote {save_figure(fig, FIG_DIR / 'theta_sampling_mismatch', args.camera_ready)}")
 
 
