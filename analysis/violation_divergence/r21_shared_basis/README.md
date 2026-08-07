@@ -46,6 +46,7 @@ comparability claim below.
 | `space_fork_grid_r21_named` | no fit at all: the axes are Δ mean *d* and Δ mean θ |
 | `space_fork_grid_r21_isomap` | one Isomap fit on the pooled non-degenerate rows (§4.8's nonlinear companion) |
 | `separation_by_plane` | what each plane costs, against an exact permutation null |
+| `run_from_reference` | how far a branch runs from the reference, and how much of that each plane keeps |
 
 Each has a `*_rollout` twin from `--variant rollout`.
 
@@ -59,6 +60,68 @@ is absolute magnitude — the unit is each space's own descriptor SD, so a longe
 excursion in one cell is not a larger absolute change. The refit grid keeps the
 old disclaimer in full and keeps its ticks off.
 
+## How far a branch runs from the reference — `run_from_reference`
+
+The grids ask the reader to eyeball how far each branch travels from the vertical
+line at the origin. `run_from_reference` is that number:
+
+> mean over the 10 drawn anchors (`t − t0 = 6…24`) of the distance from the
+> reference, for the mean path of the six illegal branches, **divided by the
+> legal control's** value in the same field.
+
+A ratio, because every field is z-scored per space and the `refit` plane is fit
+per space too: only a within-space contrast carries from one cell to the next. A
+mark twice as high is not twice the absolute change, and the caption says so.
+1.0 is the control itself; the empirical legal-vs-legal scale — a *third* legal
+move against the control, in full R^21 — is drawn as gray triangles at
+**0.88–1.53, median 1.13**, so 1.0 is roughly where a legal alternative really
+lands and not just where the arithmetic puts it.
+
+**Panel (a): every 2-D plane says the illegal branches run further than the
+control. Full R^21 mostly says they do not.** Spliced, illegal ÷ control:
+
+| space | activation refit | R²¹ refit | R²¹ shared | R²¹ named | **full R²¹** | control 2, full R²¹ |
+|---|---|---|---|---|---|---|
+| raw layer 5 | 1.20 | 2.10 | 1.77 | 1.82 | **0.97** | 1.13 |
+| PAnneal | 1.15 | 1.78 | 1.63 | 1.96 | **0.96** | 1.13 |
+| Standard | 1.19 | 2.43 | 2.50 | 3.59 | **1.42** | 1.46 |
+| GatedSAE | 1.05 | 1.69 | 1.12 | 0.96 | **0.73** | 0.88 |
+| TopK | 1.09 | 0.76 | 1.08 | 0.80 | **0.66** | 0.92 |
+| GatedAnneal | 1.03 | 1.22 | 1.24 | 1.23 | **0.88** | 1.14 |
+| BatchTopK | 1.07 | 0.48 | 0.65 | 0.55 | **0.59** | 0.94 |
+| CosineSpaDE | 1.36 | 1.81 | 1.77 | 4.03 | **1.49** | 1.53 |
+| SpaDE | 1.34 | 1.57 | 1.29 | 1.69 | **0.82** | 1.11 |
+
+Full R^21 is **below 1 in six of the nine spaces**, and — the sharper statement —
+**below the third legal move's own ratio in all nine**: over these anchors an
+illegal branch's curvature descriptor sits *closer* to the reference's than a
+second legal alternative does. The three R^21 planes move it upward in 25 of the
+27 plane × space cells, by 0.81–2.70× with a median of 1.64 — the fitted planes
+because a top-2 of the pooled displacement is chosen where the illegal rows have
+their variance, the named pair because two of 21 coordinates is a small and
+non-representative sample of the object. The direction matches the parent study's
+headline (`ratio_illegal_control_L5` = 0.979, an illegal move displacing layer 5
+slightly *less* than a legal alternative), and it is why the grids now carry a
+line pointing here: **the excursion the panels show is largely the plane.**
+
+**Panel (b): the two halves of R^21 disagree.** The 11 step-length components and
+the 10 turning-angle ones give different answers about the same branches — raw
+layer 5 is 0.87 on `d` and 1.04 on θ, TopK 0.34 against 0.94, CosineSpaDE 1.91
+against 1.31. The step-length half is the one that moves; the turning-angle half
+stays near 1 in every space. So a single R^21 number is an average over an
+opposition, and which side it lands on is decided by whichever half happens to
+carry the variance in that space. The six illegal categories are drawn faint
+behind their mean, which is the only spread one game supports.
+
+**Isomap is not in either panel.** Its embedding is not a linear image of R^21,
+its reference is not at the origin, and its distances are not a share of anything
+— a ratio in it would be a number with no denominator's worth of meaning. The
+`space_fork_grid_r21_isomap` grid keeps its shape-only reading.
+
+Under `--variant rollout` the picture inverts, as it does for `separation_by_plane`:
+full R^21 goes to 0.83–1.54 (above 1 in six of nine) and the activation plane to
+1.29–2.11. Every anchor is at `r ≥ +6`, so read it with the caveat below.
+
 ## Reading them honestly
 
 - One game, n = 1. Per space there are 9 branches × 10 windows = 90 rows in R^21,
@@ -71,6 +134,11 @@ old disclaimer in full and keeps its ticks off.
   attainable p is 1/28 = 0.04.
 - Routing through R^21 raises the null too (median 0.4–0.8 SDs, against 0.2–0.4
   for the activation plane). Panel (b) of `separation_by_plane` divides it out.
+- `run_from_reference` is the same n = 1 and carries no interval either; its only
+  spread is the six illegal categories drawn faint. It measures **run length**,
+  which is a different question from `separation_by_plane`'s **class gap**: a
+  plane can move the illegal branches further out and separate them from the
+  controls no better, and here it does exactly that.
 - Numbers and the verdict: `REPORT.md` at the repo root.
 
 ## The rollout variant, and where the mean is taken

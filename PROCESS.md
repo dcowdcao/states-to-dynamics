@@ -6,6 +6,64 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The fork panels' excursion is mostly the plane (2026-08-07)
+
+Branch `nfig/fig-plane-metric-r21`, worktree `../spade_sae_worktrees/fig-plane-metric-r21`.
+Additive: the two R^21 fork studies now answer "how far does each branch run from the
+reference", which their 3-D panels had only ever invited the reader to guess at
+(FIGURE_GUIDELINES §4.8 asks for the companion; it was missing). `plane_displacement`
+in `src/spade/figures/branch_panels.py` is the statistic.
+
+**Every number is a ratio to the panel's own legal control, and that is not
+cosmetic.** The plane is refit per space and holds part of Δφ (44% + 18% on raw layer
+5), so a raw in-plane distance is in units the nine cells do not share — and nine
+panels side by side get compared whatever the disclaimer says. Dividing by the
+control's run in the same field cancels the cell's units and leaves a question with a
+meaning: does this branch run further from the game as played than another legal move
+does? 1.0 is "no" and is drawn as the null line. Absolute magnitude is still not
+comparable and nothing claims it is.
+
+**The finding.** In `r21_shared_basis`, full R^21 puts the illegal branches at
+0.59–1.49 of the control's run — below 1 in six of nine spaces and **below a third
+legal move's own ratio in all nine** — while every 2-D plane raises it, in 25 of 27
+plane × space cells, by 0.81–2.70× (median 1.64). In `fork_curvature_space` the plane
+inflates the far rule and deflates the near one (plane ÷ full R^21, 0.60–2.12, median
+1.31), so the panels' visual *ordering* is real and their visual *spacing* is the fit.
+That direction agrees with the parent study's `ratio_illegal_control_L5` = 0.979.
+
+**The two halves of R^21 disagree and the figures draw it.** The 11 step-length
+components and the 10 turning-angle ones give different answers about the same branch
+(raw layer 5: 0.87 vs 1.04 in `r21_shared_basis`; R2 bracketing 0.98 vs 1.50 in
+`fork_curvature_space`), and which one the in-plane scalar lands nearer to is a coin
+flip — 14 of 27 rule × space cells on the PCA plane, 17 of 27 on the fixed one. So the
+strip carries the split as a bar on the R^21 marker rather than letting one averaged
+number pass for a statement about curvature.
+
+**Where the read-out was refused.** Not on the two `whole` grids: one point per branch
+over r = 0…24 makes "averaged over r >= 0" what the point already is, the in-plane
+distance is a segment the ticks give, and printing it beside the windowed strips would
+invite a comparison between φ of one long trajectory and a mean over 13 short windows.
+Not on the Isomap grid: it is not a linear image of R^21 and its reference is not at
+the origin, so a ratio in it has no denominator worth the name.
+
+**Fixed-plane subtlety.** `fork_r21_windowed_fixed` draws `Δ mean d` against
+`Δ mean θ` in named units, which do not add — a Euclidean distance there would be a
+statistic about θ alone. The read-out measures that pair after each axis is put in its
+own column SD (as `fit_plane` and `measure.py` do, and as the panel's independent x/y
+autoscale already shows). The number is the distance in the scaled fixed plane, not
+the millimetres between two marks; the README says so.
+
+**Rollout.** Both variants ship. The windowed strips average over exactly the offsets
+the panel draws — r = 0…8, five of them under rollout — and the legend title states
+which, so a strip can never summarise a window its panel does not show.
+
+Two loose ends. `plane_displacement`'s docstring says `[n, T, 2]`; it is used here on
+21 columns too, and the shape line should read `[n, T, k]` (no code change needed,
+this is `src/` and was left alone). And the two `space_fork_grid_r21_isomap*` figures
+do not reproduce byte-for-byte across runs of an unmodified script — `sklearn`'s
+Isomap is nondeterministic here — so those two files are the only ones whose diff
+carries no information.
+
 ## Karvonen reproduced exactly; the failure was our eval, not our SAEs (2026-08-06)
 
 Branches `karvonen/*`, worktrees `../spade_sae_worktrees/karvonen-*`. **Nothing is
