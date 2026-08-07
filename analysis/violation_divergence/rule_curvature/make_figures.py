@@ -116,7 +116,7 @@ def t0_line(ax, t0: int) -> None:
 
 
 def class_profile(ax, fork: rc.Fork, entry, tree: str, blocks: dict,
-                  t0: int | None) -> rc.Population:
+                  t0: int | None, note: bool = True) -> rc.Population:
     """(a) the population clock: three game classes and the three rules.
 
     The classes are the straightness study's committed npz; the rules are measured
@@ -129,13 +129,14 @@ def class_profile(ax, fork: rc.Fork, entry, tree: str, blocks: dict,
     pop = rc.population(tree, entry, t0)
     lo, hi = pop.t0_range
     if lo == hi:
-        note = f"every rule forks here, at $t_0$ = {lo}"
+        where_note = f"every rule forks here, at $t_0$ = {lo}"
         t0_line(ax, lo)
     else:
-        note = f"the rules fork anywhere in $t_0 \\in$ [{lo}, {hi}]"
+        where_note = f"the rules fork anywhere in $t_0 \\in$ [{lo}, {hi}]"
         ax.axvspan(lo, hi, color=GRID, alpha=0.5, lw=0, zorder=0)
-    ax.annotate(note, xy=(lo + 0.6, 0.97), xycoords=("data", "axes fraction"),
-                fontsize=7.5, color=MUTED, ha="left", va="top")
+    if note:
+        ax.annotate(where_note, xy=(lo + 0.6, 0.97), xycoords=("data", "axes fraction"),
+                    fontsize=7.5, color=MUTED, ha="left", va="top")
     profile_panel(ax, np.load(GEOM / f"{rc.space_key(entry)}_raw.npz")["theta"], blocks)
     for j, rule in enumerate(rc.RULES):
         st = RULE_STYLE[rule]
@@ -144,7 +145,7 @@ def class_profile(ax, fork: rc.Fork, entry, tree: str, blocks: dict,
         ax.plot(pop.positions, pop.mean[j], ls=POPULATION_LS, color=st["color"], lw=1.5,
                 marker=st["marker"], ms=4, markevery=(6 + j, 9),
                 markerfacecolor=st["color"], markeredgecolor="white",
-                markeredgewidth=0.5, zorder=4)
+                markeredgewidth=0.5, zorder=4, label=st["label"])
     if lo != fork.t0:  # the drawn game's own fork, when the population is elsewhere
         t0_line(ax, fork.t0)
     ax.set_xlabel("board position $t$")
@@ -280,6 +281,54 @@ def combined(forks: list[tuple[str, object, rc.Fork]], tree: str,
     return save_figure(fig, FIG_DIR / f"curvature_rules_{tree}_combined", camera_ready)
 
 
+def combined_population(forks: list[tuple[str, object, rc.Fork]], tree: str,
+                        blocks: dict, t0: int | None, camera_ready: bool) -> Path:
+    """The population clock in every representation space, shared axes.
+
+    The companion to `combined`: that one carries the violation-locked response of
+    a single game, this one the many-game population the response is read against.
+    No board here -- (a) is a population forking at one position, and drawing one
+    game's board beside nine population panels would invite reading the population
+    as that game.
+    """
+    nrow = -(-len(forks) // NCOL)
+    fig = plt.figure(figsize=(NCOL * CELL_W, CELL_H * nrow + 1.9))
+    gs = fig.add_gridspec(2, 1, height_ratios=[CELL_H * nrow, 1.0],
+                          left=0.07, right=0.98, top=0.90, bottom=0.03, hspace=0.30)
+    grid = gs[0].subgridspec(nrow, NCOL, wspace=0.12, hspace=0.42)
+
+    head = fig.add_subplot(gs[0])
+    head.axis("off")
+    head.patch.set_visible(False)
+    head.set_title("(a) the population's curvature clock in every representation "
+                   "space", loc="left", fontsize=11, pad=16)
+
+    axes = []
+    for j, (_, entry, fork) in enumerate(forks):
+        ax = fig.add_subplot(grid[j // NCOL, j % NCOL],
+                             sharex=axes[0] if axes else None,
+                             sharey=axes[0] if axes else None)
+        axes.append(ax)
+        pop = class_profile(ax, fork, entry, tree, blocks, t0, note=False)
+        ax.set_title(forks[j][0], loc="left", fontsize=8.5)
+        ax.set_xlabel("")
+        ax.set_ylabel("")
+    for ax in axes[-NCOL:]:
+        ax.set_xlabel("board position $t$")
+    for ax in axes[::NCOL]:
+        ax.set_ylabel("mean turning angle (deg)")
+
+    band = fig.add_subplot(gs[1])
+    band.axis("off")
+    ordered_legend(band, axes[0], 3, loc="upper left", bbox_to_anchor=(0.0, 1.0))
+
+    if not camera_ready:
+        fig.suptitle(f"The curvature clock across nine spaces "
+                     f"(layer 5, {rule_n(pop)}, {TREE_TITLE[tree]})", fontsize=12)
+    return save_figure(fig, FIG_DIR / f"curvature_rules_{tree}_population_combined",
+                       camera_ready)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--tree", default="branches", choices=list(rc.TREE_VARIANT))
@@ -337,6 +386,8 @@ def main():
                           for j, r in enumerate(rc.RULES)))
     if len(cells) > 1:
         written.append(combined(forks, args.tree, args.camera_ready))
+        written.append(combined_population(forks, args.tree, blocks, t0,
+                                           args.camera_ready))
     print("\n".join(f"wrote {p}" for p in written))
 
 
