@@ -4,6 +4,11 @@ A four-panel figure putting one game's rule-violating branches on the straightne
 study's curvature axis, rendered from the spliced and the resampled branch trees
 through one code path.
 
+*Renumbered since — panel (b), one game's fork on (a)'s scale, was removed: (a)
+stays (a), the violation-locked response (c) → (b), the board (d) → (c). Every
+panel letter below is the four-panel layout as it stood. See
+`docs/finish_notes/panelb-docs.md`.*
+
 - `src/spade/violation_divergence/rule_curvature.py` — the measurement.
 - `analysis/violation_divergence/rule_curvature/make_figures.py` — draws only.
 - `analysis/violation_divergence/rule_curvature/README.md` — the captions, the

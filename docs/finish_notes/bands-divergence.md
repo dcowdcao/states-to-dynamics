@@ -111,6 +111,9 @@ so `curvature_rules_*` still ships three shaded class bands in its top-left pane
 own panels (b) and (c) have had theirs removed. That is the one visible inconsistency left
 in this directory and I could not fix it from here. `theta_comparability` imports only
 `DRAWN_CLASSES` from that module, so nothing else of mine is affected.
+*Renumbered since — the panels named here are the four-panel layout: (b), one game's
+fork on (a)'s scale, was removed, so the (c) above is now (b) and the board (d) is now
+(c). See `docs/finish_notes/panelb-docs.md`.*
 
 If `profile_panel` loses its band, `rule_curvature/README.md:85` ("each a mean ± 95% CI
 over n = 2000 games") and `rule_curvature/make_figures.py:228` (panel (a)'s title, "mean
