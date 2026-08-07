@@ -17,6 +17,12 @@ own direction result. See RED_TEAM.md F1.
 t0 is round-robin over [10, 34] so the analysis window r in [-8, +24] fits
 inside every 59-token game; a skipped game retries the same t0.
 
+**Do not re-run this over a tree that already exists.** `game_id` is the
+accepted-game index, so a rerun under any changed acceptance rule renumbers every
+game, moving FIGURE_GAME and breaking the row alignment that acts/*.pt, the rollout
+tree and the game-selection studies are all built on. To add games, append them with
+extend_branches, which replays this draw first and proves the existing rows unchanged.
+
 Usage: python -m spade.violation_divergence.branches [--n_prefixes 2000] [--smoke]
 """
 
@@ -33,7 +39,8 @@ from spade.common.study import study_dir
 from spade.othello.boards import replay
 from spade.othello.games import (  # imports force_ipv4() + karvonen path
     classify_prefix, collect_legal, first_illegal_pos, stream_games)
-from spade.othello.taxonomy import CATEGORIES, LEGAL, classify
+from spade.othello.taxonomy import (
+    CATEGORIES, LEGAL, RULE_MEMBERS, RULE_OF, classify)
 from spade.rules.flip_labels import flip_stats
 
 from circuits.othello_engine_utils import to_string
@@ -109,6 +116,23 @@ def complete_games(meta: dict) -> list[int]:
         if len(kind[meta["game_id"] == g].unique()) == n_types]
 
 
+def rules_present(categories) -> set[str]:
+    """Which of R1-R3 the given branch categories cover."""
+    return {RULE_OF[CATEGORIES[int(c)]] for c in categories if int(c) != LEGAL}
+
+
+def rule_complete_games(meta: dict) -> list[int]:
+    """Games carrying at least one branch of every rule -- what a per-rule curve needs.
+
+    Much weaker than `complete_games`, which wants all six categories. R3's only
+    member `opponent_only` is the one a t0 can fail to offer at all, so it decides
+    the membership; the ids are written out beside branches.pt by extend_branches
+    and a figure should read that file rather than re-derive this.
+    """
+    return [g for g in meta["game_id"].unique().tolist()
+        if len(rules_present(meta["category"][meta["game_id"] == g])) == len(RULE_MEMBERS)]
+
+
 def pick_branches(reference: int, cats: list[int], rng: Random) -> list[tuple[int, int, int]] | None:
     """(token, category, is_control) per branch; None when t0 offers too few legal moves."""
     assert cats[reference - 1] == LEGAL, f"played token {reference} is not legal at t0"
@@ -120,6 +144,54 @@ def pick_branches(reference: int, cats: list[int], rng: Random) -> list[tuple[in
     return ([(reference, LEGAL, 0)]
         + [(tok, LEGAL, i + 1) for i, tok in enumerate(controls)]
         + [(rng.choice(by_cat[c]), c, 0) for c in range(1, len(CATEGORIES)) if by_cat[c]])
+
+
+def t0_for(game_id: int) -> int:
+    """Round-robin over [T0_MIN, T0_MAX] by accepted-game index."""
+    return T0_MIN + (game_id % (T0_MAX - T0_MIN + 1))
+
+
+def draw(games, rng: Random, t0: int, skips: Counter) -> list[dict] | None:
+    """The branch rows of the next streamed source game at `t0`, None if it is skipped.
+
+    One call consumes exactly one game from `games` and, when that game is usable,
+    one block of draws from `rng`. Replaying the call sequence therefore replays
+    the tensor, which is what lets extend_branches append without renumbering.
+    """
+    seq = collect_legal(games, 1, skips)[0]
+    prefix = classify_prefix(seq, t0, skips)
+    if prefix is None:
+        return None
+    board, cats = prefix
+    picks = pick_branches(seq[t0], cats, rng)
+    if picks is None:
+        skips[f"fewer_than_{N_CONTROLS + 1}_legal"] += 1
+        return None
+    n_legal = sum(c == LEGAL for c in cats)
+    return [{"tokens": seq[:t0] + [token] + seq[t0 + 1:],
+             "t0": t0,
+             "category": category,
+             "is_control": is_control,
+             "branch_token": token,
+             "n_flipped": flip_stats(board.state, to_string(token), board.next_hand_color)[0]
+                 if category == LEGAL else -1,
+             "n_legal": n_legal}
+        for token, category, is_control in picks]
+
+
+def summary(items: dict[str, torch.Tensor]) -> dict:
+    """The manifest fields that are re-derivable from the saved rows."""
+    is_reference = (items["category"] == LEGAL) & (items["is_control"] == 0)
+    counts = Counter(role(int(c), int(k))
+                     for c, k in zip(items["category"], items["is_control"]))
+    t0_hist = Counter(items["t0"][is_reference].tolist())
+    return {
+        "n_games": len(items["game_id"].unique()),
+        "n_branches": len(items["t0"]),
+        "t0_range": [T0_MIN, T0_MAX],
+        "branch_counts": {name: counts[name] for name in ROLE_NAMES},
+        "t0_histogram": {str(t0): n for t0, n in sorted(t0_hist.items())},
+    }
 
 
 def verify(items: dict[str, torch.Tensor]) -> None:
@@ -171,28 +243,13 @@ def main():
 
     game_id = 0
     while game_id < n_games:
-        seq = collect_legal(games, 1, skips)[0]
-        t0 = T0_MIN + (game_id % (T0_MAX - T0_MIN + 1))
-        prefix = classify_prefix(seq, t0, skips)
-        if prefix is None:
+        branches = draw(games, rng, t0_for(game_id), skips)
+        if branches is None:
             continue
-        board, cats = prefix
-        picks = pick_branches(seq[t0], cats, rng)
-        if picks is None:
-            skips[f"fewer_than_{N_CONTROLS + 1}_legal"] += 1
-            continue
-        n_legal = sum(c == LEGAL for c in cats)
-        for token, category, is_control in picks:
-            flipped = flip_stats(board.state, to_string(token), board.next_hand_color)[0] \
-                if category == LEGAL else -1
-            rows["tokens"].append(seq[:t0] + [token] + seq[t0 + 1:])
+        for branch in branches:
             rows["game_id"].append(game_id)
-            rows["t0"].append(t0)
-            rows["category"].append(category)
-            rows["is_control"].append(is_control)
-            rows["branch_token"].append(token)
-            rows["n_flipped"].append(flipped)
-            rows["n_legal"].append(n_legal)
+            for key, value in branch.items():
+                rows[key].append(value)
         game_id += 1
         if game_id % 250 == 0:
             print(f"{game_id}/{n_games} games, {len(rows['t0'])} branches")
@@ -204,18 +261,11 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
     torch.save(items, out_dir / "branches.pt")
 
-    is_reference = (items["category"] == LEGAL) & (items["is_control"] == 0)
-    counts = Counter(role(c, k) for c, k in zip(rows["category"], rows["is_control"]))
-    t0_hist = Counter(items["t0"][is_reference].tolist())
     manifest = {
         "seed": args.seed,
         "dataset": args.dataset_name,
         "datasets_version": hf_datasets.__version__,
-        "n_games": n_games,
-        "n_branches": len(rows["t0"]),
-        "t0_range": [T0_MIN, T0_MAX],
-        "branch_counts": {name: counts[name] for name in ROLE_NAMES},
-        "t0_histogram": {str(t0): n for t0, n in sorted(t0_hist.items())},
+        **summary(items),
         "skips": dict(skips),
         "categories": CATEGORIES,
         "note": "t0 assigned to accepted games; skips retry the same t0, so late-t0 "

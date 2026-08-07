@@ -5,6 +5,8 @@ move of each category, and two legal controls — then measure how far each bran
 from the reference in every representation space, and what the model does next.
 
   branches.py           step 1: build the branch set from one prefix
+  extend_branches.py    append further source games to it, renumbering nothing
+  extend_rollout_branches.py  the same append on the resampled tree
   extract_acts.py       step 2: 8-layer activations + logits per branch
   divergence.py         the metric kernels (relative divergence, direction cosine,
                         top-k share, participation ratio, support Jaccard, persistence)
