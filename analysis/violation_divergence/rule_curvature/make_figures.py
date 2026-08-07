@@ -1,20 +1,27 @@
 """Curvature over the board, forked at t0 into the three rules a branch violates.
 
-Four panels. (a) is the straightness study's many-game class profiles -- legal,
-OthelloGPT rollout, championship, 2000 games each. (b) is one game's fork on (a)'s
-scale: game 1235 branching at t0 = 20 into R1 placement, R2 bracketing and R3
-turn, over its own reference and two legal controls. (c) is the violation-locked
-response, Δ against the matched source game, which here is the game's own
-reference branch. (d) is the board the branches fork on, with each branch move on
-its square. The vertical line at t0 in (a) and (b) is only well defined because
-the violation condition is a single game with a single t0.
+Four panels. (a) is the population clock: the straightness study's many-game
+class profiles -- legal, OthelloGPT rollout, championship, 2000 games each -- and
+the three rules measured over every game that carries them (2000, 2000 and 1997).
+(b) is one game's fork on (a)'s scale: game 1235 branching at t0 = 20 into R1
+placement, R2 bracketing and R3 turn, over its own reference and two legal
+controls. (c) is the violation-locked response, Δ against the matched source
+game, which here is the game's own reference branch. (d) is the board the
+branches fork on, with each branch move on its square.
 
-**Why (a) and (b) are two axes and not one overlay.** Two reasons, and either
-alone is decisive. `CLASS_STYLE["rollout"]` and `RULE_STYLE["R1 placement"]` are
-the same blue, so one axes carrying both would give one colour two meanings. And
-`profile_panel`'s classes are population means where the fork is n = 1, so the
-overlay invites reading a single game's swing as a class difference. They share
-x and y, so the comparison a reader wants is still exact.
+**Why (a) and (b) are still two axes.** (a) is a population and (b) is one game,
+so an overlay would invite reading a single game's swing as a population
+difference; the dashed t0 line and the annotated fork belong to that one game and
+to nothing in (a). The rules appear in both, and the two registers are what the
+split keeps apart. They share x and y, so the comparison is still exact.
+
+**(a) carries six series, so line style is load-bearing.**
+`CLASS_STYLE["rollout"]` and `RULE_STYLE["R1 placement"]` are the same blue --
+two style tables built for two figures -- so the rule curves take a long dash and
+their rule marker, and no series on that axes is named by colour alone
+(FIGURE_GUIDELINES 1). The dash also separates the two constructions: a class is
+a whole game, a rule is one branched move inside one, forking anywhere in the
+shaded t0 band rather than at a single position.
 
 **The sampling convention is load-bearing.** Both sides are measured per ply over
 positions 1..58, one angle at its own vertex, no stride and no trailing window --
@@ -46,11 +53,11 @@ from spade.common.device import select_device
 from spade.common.study import study_dir
 from spade.figures.branch_panels import board_note, board_panel, mover_name
 from spade.figures.branch_style import (
-    MEMBER, below, branch_style, legend_proxy, ordered_legend, rule_member_key)
+    below, branch_style, ordered_legend, rule_member_key)
 from spade.figures.paper_style import (
-    INK, MUTED, REFERENCE, apply_style, save_figure)
+    GRID, INK, MUTED, REFERENCE, RULE_STYLE, apply_style, save_figure)
 from spade.figures.straightness_panels import (
-    class_blocks, event_axes, profile_panel)
+    ci_bars, class_blocks, event_axes, profile_panel)
 from spade.othello.boards import flip_set, replay
 from spade.othello.taxonomy import LEGAL
 from spade.violation_divergence import rule_curvature as rc
@@ -66,11 +73,7 @@ CLASSES = ["legal", "rollout", "championship"]
 TREE_TITLE = {"branches": "spliced suffix", "rollout": "resampled suffix"}
 NCOL = 3
 PANEL_H, BOARD_H, CELL_W, CELL_H = 3.9, 3.6, 3.2, 2.8
-
-
-def space_key(entry) -> str:
-    """The straightness geometry npz this space's class baselines live in."""
-    return f"resid_post_{rc.LAYER}" if entry is None else f"sae_{entry.config}"
+POPULATION_LS = (0, (6, 1.6))  # (a)'s rules: a branch population, not a game class
 
 
 def space_stem(entry) -> str:
@@ -92,20 +95,17 @@ def rule_label(fork: rc.Fork, st: dict, members: list[int]) -> str:
     return f"{st['label']} (mean of {n})"
 
 
-def draw_rule(ax, x: np.ndarray, rule: rc.Rule, st: dict, label: str | None,
+def draw_rule(ax, x: np.ndarray, y: np.ndarray, st: dict, label: str | None,
               lo: int = 0) -> None:
-    """One rule's mean over the sequences it averages, drawn faint behind it.
+    """One rule's mean curve in (b) or (c), with no uncertainty display at all.
 
-    No ribbon. Five series per axes -- three rules and two controls -- each with a
-    +/-1.96 SEM fill made the overlaps unreadable, which is the failure
-    FIGURE_GUIDELINES 1.7 warns about: the uncertainty display swallowed the
-    curves it was annotating. The member traces show the same spread, sequence by
-    sequence rather than summarised, and are what a reader should be looking at.
-    R3 has one member and so never had a band to lose.
+    n = 1 game there, and nothing honest fits: five +/-1.96 SEM ribbons per axes
+    swallowed the curves they annotated, and the faint per-member traces that
+    replaced them were clutter. Panel (a) is where the interval lives, over games.
+    What a single game's between-member spread was is printed by `main` and quoted
+    in the study README, which is where an n = 1 number belongs.
     """
-    for member in rule.members:
-        ax.plot(x[lo:], member[lo:], color=st["color"], **MEMBER)
-    ax.plot(x[lo:], rule.mean[lo:], ls=st["ls"], color=st["color"], lw=st["lw"],
+    ax.plot(x[lo:], y[lo:], ls=st["ls"], color=st["color"], lw=st["lw"],
             marker=st["marker"], ms=4, markevery=(2, 5), markerfacecolor=st["mfc"],
             markeredgecolor=st["mec"], markeredgewidth=0.5, zorder=st["zorder"],
             label=label)
@@ -115,16 +115,41 @@ def t0_line(ax, fork: rc.Fork) -> None:
     ax.axvline(fork.t0, color=MUTED, lw=1.2, ls=(0, (4, 3)), zorder=1)
 
 
-def class_profile(ax, fork: rc.Fork, entry, blocks: dict) -> None:
-    """(a) the many-game class profiles: the population clock every game rides.
+def population_label(st: dict, pop: rc.Population, j: int) -> str:
+    """The legend entry, carrying this rule's own n (FIGURE_GUIDELINES 1.7).
 
-    Drawn on its own axes rather than under the fork. `CLASS_STYLE["rollout"]`
-    and `RULE_STYLE["R1 placement"]` are the same blue -- two style tables built
-    for two figures -- so one axes carrying both would name one colour twice
-    (FIGURE_GUIDELINES 1, 5). The x and y axes are shared with (b), so the two
-    registers are still read off one scale.
+    n is per rule and the three do not match: R3 is short by the three games whose
+    t0 offers no opponent_only square, so no R3 branch exists there to measure.
     """
-    profile_panel(ax, np.load(GEOM / f"{space_key(entry)}_raw.npz")["theta"], blocks)
+    n = (f"{pop.n_games[j]} games" if pop.n_rollouts == 1
+         else f"{pop.n_games[j]} games $\\times$ {pop.n_rollouts} rollouts")
+    return f"{st['label']} (mean over {n})"
+
+
+def class_profile(ax, fork: rc.Fork, entry, tree: str, blocks: dict) -> None:
+    """(a) the population clock: three game classes and the three rules.
+
+    The classes are the straightness study's committed npz; the rules are measured
+    here on the same tree the fork panels read, per ply and over every game that
+    carries them. A rule's branch is not at one position -- each game forks at its
+    own t0 -- so the shaded band is the range of those t0 and the dashed line is
+    only `fork`'s own. The classes carry no such band: they are whole games.
+    """
+    pop = rc.population(tree, entry)
+    ax.axvspan(*pop.t0_range, color=GRID, alpha=0.5, lw=0, zorder=0)
+    ax.annotate(f"the rules fork anywhere in $t_0 \\in$ "
+                f"[{pop.t0_range[0]}, {pop.t0_range[1]}]",
+                xy=(pop.t0_range[0] + 0.6, 0.97), xycoords=("data", "axes fraction"),
+                fontsize=7.5, color=MUTED, ha="left", va="top")
+    profile_panel(ax, np.load(GEOM / f"{rc.space_key(entry)}_raw.npz")["theta"], blocks)
+    for j, rule in enumerate(rc.RULES):
+        st = RULE_STYLE[rule]
+        at = np.arange(6 + j, len(pop.positions), 9)
+        ci_bars(ax, pop.positions[at], pop.mean[j][at], 1.96 * pop.sem[j][at], st["color"])
+        ax.plot(pop.positions, pop.mean[j], ls=POPULATION_LS, color=st["color"], lw=1.5,
+                marker=st["marker"], ms=4, markevery=(6 + j, 9),
+                markerfacecolor=st["color"], markeredgecolor="white",
+                markeredgewidth=0.5, zorder=4, label=population_label(st, pop, j))
     t0_line(ax, fork)
     ax.set_xlabel("")
 
@@ -148,9 +173,8 @@ def fork_profile(ax, fork: rc.Fork) -> None:
                 markeredgewidth=0.5, zorder=st["zorder"], label=st["label"])
     for rule, members in rule_rows(fork.rows).items():
         st = rule_style(fork, members)
-        draw_rule(ax, pos, profiles[rule], st,
+        draw_rule(ax, pos, profiles[rule].mean, st,
                   rule_label(fork, st, members), fork.last_shared)
-    legend_proxy(ax)
     ax.set_xlabel("board position $t$")
     ax.set_ylabel("mean turning angle (deg)")
     lo, hi = ax.get_ylim()
@@ -164,19 +188,21 @@ def control_row(fork: rc.Fork, control: int) -> int:
 
 
 def locked(ax, fork: rc.Fork, legend: bool) -> None:
-    """(b) the violation-locked Δ per rule, against both legal controls as nulls."""
+    """The violation-locked Δ per rule, against both legal controls as nulls.
+
+    (c) in the per-space figure and every cell of the combined one, so it carries
+    no panel letter of its own.
+    """
     event_axes(ax)
     rels, rules = rc.rule_locked(fork)
     for control in (1, 2):
         st = branch_style(LEGAL, control)
-        draw_rule(ax, rels, rc.locked(fork, [control_row(fork, control)])[1], st,
+        draw_rule(ax, rels, rc.locked(fork, [control_row(fork, control)])[1].mean, st,
                   st["label"] if legend else None)
     for rule, members in rule_rows(fork.rows).items():
         st = rule_style(fork, members)
-        draw_rule(ax, rels, rules[rule], st,
+        draw_rule(ax, rels, rules[rule].mean, st,
                   rule_label(fork, st, members) if legend else None)
-    if legend:
-        legend_proxy(ax)
     ax.set_xlabel("position relative to the branch ($t - t_0$)")
     ax.set_ylabel("Δ turning angle vs. the game's\nreference branch (deg)")
 
@@ -224,21 +250,22 @@ def per_space(fork: rc.Fork, entry, label: str, tree: str, blocks: dict,
     top = gs[0].subgridspec(2, 2, wspace=0.34, hspace=0.24, width_ratios=[1.3, 1])
 
     ax_a = fig.add_subplot(top[0, 0])
-    class_profile(ax_a, fork, entry, blocks)
+    class_profile(ax_a, fork, entry, tree, blocks)
     ax_a.tick_params(labelbottom=False)
-    ax_a.set_title("(a) the population's curvature clock\nmean $\\pm$ 95% CI, "
-                   "$n$ = 2000 games per class", loc="left", fontsize=9.5)
-    ax_a.legend(fontsize=7, loc="lower center", ncol=3, columnspacing=1.0)
+    ax_a.set_title("(a) the population's curvature clock\nclasses solid, $n$ = 2000 "
+                   "games · rules dashed, $n$ in the legend\nmean $\\pm$ 95% CI over "
+                   "games, at the markers", loc="left", fontsize=9.5)
 
     ax_b = fig.add_subplot(top[1, 0], sharex=ax_a, sharey=ax_a)
     fork_profile(ax_b, fork)
-    ax_b.set_title("(b) one game's fork, on (a)'s scale\n$n$ = 1 game; every "
-                   "sequence a rule averages is drawn faint", loc="left", fontsize=9.5)
+    ax_b.set_title("(b) one game's fork, on (a)'s scale\n$n$ = 1 game — no "
+                   "uncertainty display; (a) is where the interval is",
+                   loc="left", fontsize=9.5)
 
     ax_c = fig.add_subplot(top[:, 1])
     locked(ax_c, fork, legend=True)
-    ax_c.set_title("(c) violation-locked response\nevery sequence a rule averages "
-                   "is drawn faint; $n$ = 1 game", loc="left", fontsize=9.5)
+    ax_c.set_title("(c) violation-locked response\n$n$ = 1 game — no uncertainty "
+                   "display", loc="left", fontsize=9.5)
 
     apparatus(fig, gs[1], fork, [ax_a, ax_b, ax_c], NCOL, "d")
     if not camera_ready:
@@ -251,8 +278,8 @@ def combined(forks: list[tuple[str, object, rc.Fork]], tree: str,
              camera_ready: bool) -> Path:
     """The violation-locked panel in every representation space, shared axes.
 
-    Only panel (b): it is the measurement, and nine copies of the class profiles
-    would be nine copies of a figure the per-space files already carry. Turning
+    Only the violation-locked panel: it is the measurement, and nine copies of the
+    population clock would repeat what the per-space files already carry. Turning
     angles are scale-free, so the nine cells really do share a y-axis, which
     latent norms and step lengths would not.
     """
@@ -265,7 +292,8 @@ def combined(forks: list[tuple[str, object, rc.Fork]], tree: str,
     head = fig.add_subplot(gs[0])
     head.axis("off")
     head.patch.set_visible(False)
-    head.set_title("(a) the violation-locked response in every representation space",
+    head.set_title("(a) the violation-locked response in every representation "
+                   "space — $n$ = 1 game, no uncertainty display",
                    loc="left", fontsize=11, pad=16)
 
     axes = []
@@ -326,6 +354,20 @@ def main():
             f"+-{np.nan if v.sem is None else np.nanmean(v.sem):.2f}"
             for r, v in rules.items())
         print(f"{label:34} spread {rc.spread(fork):.3f}  {cols}")
+        # (a)'s gap is under a degree on an axis spanning thirty, so it is not
+        # measurable off that panel; here are its extremum and its own CI. The
+        # pre-fork residual is the check: left of the first t0 no branch exists yet,
+        # so the rules and the legal class are the same games measured twice.
+        pop = rc.population(args.tree, entry)
+        legal = np.nanmean(np.load(GEOM / f"{rc.space_key(entry)}_raw.npz"
+                                   )["theta"][blocks["legal"]], axis=0)
+        gap = pop.mean - legal
+        k = np.nanargmin(gap, axis=1)
+        print(f"{'':34} vs legal  pre-fork |Δ| <= "
+              f"{np.nanmax(np.abs(gap[:, pop.positions < pop.t0_range[0]])):.2f}  "
+              + "  ".join(f"{r.split()[0]} {gap[j, k[j]]:+5.2f}@{pop.positions[k[j]]}"
+                          f"+-{1.96 * pop.sem[j, k[j]]:.2f}"
+                          for j, r in enumerate(rc.RULES)))
     if len(cells) > 1:
         written.append(combined(forks, args.tree, args.camera_ready))
     print("\n".join(f"wrote {p}" for p in written))
