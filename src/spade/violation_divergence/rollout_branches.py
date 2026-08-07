@@ -178,6 +178,7 @@ def main():
         "source": str(base / "branches" / "branches.pt"),
         "n_source_branches": len(source["t0"]),
         "n_rows": len(items["t0"]),
+        "appended": [],  # one block per extend_rollout_branches run, in append order
         "note": "tokens[:t0+1] copied from the source branch, tokens[t0+1:] sampled from the "
                 "model; the reference is sampled too, so branches differ at every position "
                 "after t0 and single-token attribution does not hold here",

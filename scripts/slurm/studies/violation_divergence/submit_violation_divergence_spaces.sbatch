@@ -9,8 +9,8 @@
 #SBATCH --array=0-5
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=64G
-#SBATCH --time=0-00:30:00
+#SBATCH --mem=96G
+#SBATCH --time=0-02:00:00
 #SBATCH --output=logs/violation_divergence/%x_%A_%a.out
 #SBATCH --error=logs/violation_divergence/%x_%A_%a.err
 
@@ -21,6 +21,9 @@ source activate spade_env
 export PYTHONUNBUFFERED=1
 
 cd "${SPADE_REPO:?}"
+# The env's editable install points at whichever clone was installed, so a
+# worktree run needs its own src first; in the main clone this is the same path.
+export PYTHONPATH="${SPADE_REPO}/src${PYTHONPATH:+:$PYTHONPATH}"
 mkdir -p logs/violation_divergence
 
 N_SHARDS=$(( SLURM_ARRAY_TASK_MAX - SLURM_ARRAY_TASK_MIN + 1 ))

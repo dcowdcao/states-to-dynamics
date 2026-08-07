@@ -66,13 +66,13 @@ def main():
     manifest = json.loads((out_dir / "manifest.json").read_text())
     manifest["n_source_branches"] = len(source["t0"])
     manifest["n_rows"] = len(full["t0"])
-    manifest["appended"] = {
+    manifest["appended"].append({
         "n_source_branches": len(new["t0"]),
         "n_rows": len(items["t0"]),
         "first_row": len(saved["t0"]),
         "reason": "the source games extend_branches appended; sampled on their own "
                   "(game_id, k) streams, with no existing row recomputed",
-    }
+    })
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2))
     print(f"wrote {len(full['t0'])} rollout rows to {out_dir}")
 

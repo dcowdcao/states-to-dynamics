@@ -1,16 +1,17 @@
 #!/bin/bash
-# Append rule-complete source games to the spliced tree, then re-extract its
-# activations. The append replays all 2000 existing games from the stream before it
-# draws anything, so this is a ~10 min CPU walk followed by the usual batched GPU
-# pass; extract_acts has no append mode and rewrites $DIR/acts/ whole, which is why
-# it is not guarded by a [ -f ] here the way the first-run script guards it.
+# Append source games forking at t0=20 to the spliced tree, then re-extract its
+# activations. The append replays every game already on disk from the stream before
+# it draws anything, so this is a long CPU walk (a few thousand streamed games, then
+# a board replay per game in verify) followed by the usual batched GPU pass;
+# extract_acts has no append mode and rewrites $DIR/acts/ whole, which is why it is
+# not guarded by a [ -f ] here the way the first-run script guards it.
 #SBATCH --job-name=extend_branches
 #SBATCH --account=kempner_ba_lab
 #SBATCH --partition=kempner_h100
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=96G
-#SBATCH --time=0-02:00:00
+#SBATCH --mem=192G
+#SBATCH --time=0-08:00:00
 #SBATCH --output=logs/violation_divergence/%x_%j.out
 #SBATCH --error=logs/violation_divergence/%x_%j.err
 
@@ -31,5 +32,6 @@ mkdir -p logs/violation_divergence
 # alone does not decide which tree a worktree's job imports from.
 export PYTHONPATH="${SPADE_REPO}/src:${PYTHONPATH:-}"
 
-python -m spade.violation_divergence.extend_branches
+# t0 = 20 is rule_curvature.FIGURE_T0, the one position the population panel draws.
+python -m spade.violation_divergence.extend_branches --t0 20
 python -m spade.violation_divergence.extract_acts

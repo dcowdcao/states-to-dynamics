@@ -25,20 +25,19 @@ know which tree it is reading.
 One game is not a population, so the same three rules are also measured over a
 population of games (`build`). The straightness study cannot supply them: its
 violation class is built from empty-square categories only and carries no R1 at
-all. The population is the **rule-complete** set -- the 2000 games
-carrying at least one member of every rule, listed in `rule_complete_games.json`
-so the membership rule has one definition. Of the original 2000 source games only
-1997 qualified, three t0 offering no opponent_only square at all; `extend_branches`
-appended three more rather than let R3 run short, so all three rules share n =
-2000. A rule's member composition still varies by game (R2 averages under its
-three categories), which the figure caption states.
+all. The population is drawn from the **rule-complete** games -- those carrying at
+least one member of every rule, listed in `rule_complete_games.json` so the
+membership rule has one definition. A rule's member composition still varies by
+game (R2 averages under its three categories), which the figure caption states.
 
-Those 2000 games do not fork at one position: `extend_branches` assigns t0
-round-robin over [10, 34], ~80 games each. Fork position moves curvature on its
-own, so a mean over all of them confounds the violation with where it happened.
-The population is therefore taken at one t0 (`--t0`, default FIGURE_T0 = 20,
-n = 80), and t0 is in the cache file's name so two positions cannot be mistaken
-for each other. `--t0 all` pools all 2000 as before.
+Fork position moves curvature on its own, so a mean over games that fork in
+different places confounds the violation with where it happened. The population is
+therefore the rule-complete games at a single t0 (`--t0`, default FIGURE_T0 = 20),
+and t0 is in the cache file's name so two positions cannot be mistaken for each
+other. branches.py's round-robin over [10, 34] leaves only ~80 games per position,
+so `extend_branches` drew further games all forking at 20 until that one position
+held n = 2000. `--t0 all` pools every position, which is what the confound argument
+is against.
 
 The population is one product of this module; the other is each game's 21-D
 ReStraV descriptor per rule, which the straightness study's `feature_pca` figure
@@ -337,7 +336,7 @@ def rule_complete() -> list[int]:
 
 
 def forks_at(t0: int | None) -> list[int]:
-    """The rule-complete games forking at `t0` (~80 of the 2000); all of them if None."""
+    """The rule-complete games forking at `t0` (2000 of them at FIGURE_T0); all if None."""
     if t0 is None:
         return rule_complete()
     meta = torch.load(variant_dir("divergence", False, "") / "branches" / "branches.pt",

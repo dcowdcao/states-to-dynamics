@@ -5,7 +5,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
-#SBATCH --time=0-02:00:00
+#SBATCH --time=0-06:00:00
 #SBATCH --array=0-1
 #SBATCH --output=logs/violation_divergence/%x_%A_%a.out
 #SBATCH --error=logs/violation_divergence/%x_%A_%a.err
@@ -25,10 +25,11 @@ mkdir -p logs/violation_divergence
 # The rule population in all nine spaces, per tree: the per-rule turning-angle
 # curves panel (a) of the rule_curvature figure draws, and the per-game 21-D
 # ReStraV descriptors the straightness feature_pca figure draws the rules from.
-# The population is the ~80 games forking at one t0 (--t0, default 20); the
-# descriptors are all 2000 rule-complete games, so a run that has to rebuild them
-# encodes 2000 games x ~9 branches x K rollouts per space -- a login node with one
-# core takes ~3 h and is capped at 8 GB; an H100 does the spliced tree in ~7 min.
+# The population is the rule-complete games forking at one t0 (--t0, default 20),
+# 2000 of them since extend_branches drew that many at t0=20; the descriptors are
+# every rule-complete game. Either product encodes ~2000 games x ~9 branches x K
+# rollouts per space -- a login node with one core takes ~3 h and is capped at 8 GB;
+# an H100 does the spliced tree in minutes and the rollout tree in about half an hour.
 # Resumable per product and per t0, both of which are in the npz name: a space is
 # re-encoded only for the npz it is missing.
 # One array task per tree: they read different tensors and share nothing, so
