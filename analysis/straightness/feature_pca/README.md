@@ -78,12 +78,35 @@ members are not drawn; one point per game per rule is the whole rule population.
   identity rides on the 50% contour and the centroid marker. Ellipses are a
   dispersion summary, not a confidence interval.
 
+## Caption
+
+The figure carries no prose block — only its panel titles, axis labels and
+legend. What a reader needs in order not to over-read it is here, and this is the
+caption it is published with (FIGURE_GUIDELINES §5).
+
+**Championship games are the only class that moves in the 21-D descriptor's
+principal plane, and the three constraint rules do not.** One point per game in
+the top-2 principal plane of that space's z-scored ReStraV features, drawn in one
+shuffled pass so no class sits on top of another; ellipses enclose 50% of a
+Gaussian fit per class (a dispersion summary, not a confidence interval) and large
+markers are class means. n per class is in the legend: 2000 everywhere. Legal,
+rollout and championship are whole games; **R1/R2/R3 are branched moves inside
+games** — one point is one game's mean over that rule's member categories, on a
+branch that keeps its source game's real suffix, forking at *t0* ∈ [10, 34]. Each
+space fits its own basis on the six classes drawn, so **panels compare only in
+within-panel arrangement, never point-for-point**; the alignment between bases is
+the table below. Axis labels carry each panel's own variance ratio. PCA is
+unsupervised — the supervised LR-21 probe separates classes this plane does not.
+Raw (uncentered) variant, layer 5, seed 42, spliced branch tree.
+
 ## Results
 
 **PC1 is a step-length axis in all nine spaces**, carrying 16–23% of the
 variance against PC2's 11–14% — a shallow spectrum, as befits six classes that
-mostly overlap. Its largest loading is always in the `d` block; PC2 leads on a
-turning-angle component in 7 of 9.
+mostly overlap. Its largest loading is in the `d` block in 9 of 9; PC2 leads on a
+turning-angle component in 7 of 9, the exceptions being SpaDE and Standard. The
+panels do not name their components — nine of those labels crowd a grid that is
+already carrying six classes — so `make_figures.py` prints them instead.
 
 **Championship games are the only class that moves in the plane, and the three
 rules do not.** As a class mean minus legal's, in pooled SD along each PC

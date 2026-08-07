@@ -35,7 +35,7 @@ import torch
 from spade.common.study import study_dir
 from spade.figures.embedding_panels import class_cloud
 from spade.figures.paper_style import (
-    CLASS_STYLE, MUTED, VIOLATION_RULE_STYLE, apply_style)
+    CLASS_STYLE, VIOLATION_RULE_STYLE, apply_style)
 from spade.figures.straightness_panels import class_blocks
 from spade.straightness.geometry import RESTRAV_FEATURE_NAMES, restrav_features
 from spade.violation_divergence import rule_curvature as rc
@@ -133,16 +133,13 @@ def restrav_pca() -> dict[str, Fit]:
             raw_loadings = vecs
         fits[label] = Fit(vecs, evr, class_shift(scores, labels))
         class_cloud(ax, scores, labels, STYLE, DRAWN, reference="legal")
-        lead = [RESTRAV_FEATURE_NAMES[i] for i in np.abs(vecs).argmax(1)]
-        ax.set_title(f"{label}\nPC1 {evr[0]:.0%} ({lead[0]})  ·  PC2 {evr[1]:.0%} "
-                     f"({lead[1]})", loc="left", fontsize=8.5)
+        ax.set_title(label, loc="left", fontsize=9)
+        # On every panel rather than on the edges: each space fits its own basis,
+        # so the variance ratio belongs on the axis it describes (§4.6).
+        ax.set_xlabel(f"PC1 ({evr[0]:.0%} var)")
+        ax.set_ylabel(f"PC2 ({evr[1]:.0%} var)")
     for ax in axes.flat[len(panels):]:
         ax.set_visible(False)
-    for ax in axes[-1]:
-        if ax.get_visible():
-            ax.set_xlabel("PC1")
-    for ax in axes[:, 0]:
-        ax.set_ylabel("PC2")
 
     handles, labels = axes.flat[0].get_legend_handles_labels()
     # Two columns of three: whole-game classes on the left, the three rules on the
@@ -151,22 +148,12 @@ def restrav_pca() -> dict[str, Fit]:
                         columnspacing=2.5, bbox_to_anchor=(0.5, -0.055))
     for h in legend.legend_handles:
         h.set_alpha(1)
-    fig.suptitle("Championship games are the only class that moves in the 21-D "
-                 "descriptor's principal plane — the three rules do not",
-                 fontsize=11, y=1.00)
-    fig.text(0.5, 0.966, "one point per game in the top-2 principal plane of that "
-             "space's z-scored ReStraV features, drawn in one shuffled pass; "
-             "ellipses enclose 50% of a Gaussian fit\nper class and large markers "
-             "are class means. R1/R2/R3 are branched moves inside games, not whole "
-             "games: one point is one game's mean over that\nrule's member "
-             "categories, on a branch keeping its source game's suffix. Each space "
-             "fits its own basis on the six classes drawn, so panels compare\nonly "
-             "in within-panel arrangement, never point-for-point (alignment with "
-             "raw L5: README). PCA is unsupervised — the supervised LR-21 probe\n"
-             "separates classes this plane does not. Raw (uncentered) variant.",
-             fontsize=8, color=MUTED, style="italic", ha="center", va="top",
-             linespacing=1.5)
-    fig.tight_layout(rect=(0, 0.03, 1, 0.925))
+    # Descriptive, not a claim, and no prose block: what a reader needs in order
+    # not to over-read the panels is the published caption in README.md, as in
+    # ../../violation_divergence/rule_curvature (FIGURE_GUIDELINES 5).
+    fig.suptitle("The 21-D ReStraV descriptor in its top-2 principal plane, "
+                 "per representation space", fontsize=11, y=1.00)
+    fig.tight_layout(rect=(0, 0.03, 1, 0.97))
     fig.savefig(FIG_DIR / "restrav_pca.png", dpi=300, bbox_inches="tight")
     plt.close(fig)
     return fits
@@ -177,13 +164,18 @@ def main():
     fits = restrav_pca()
     raw = fits["raw L5 (reference)"]
     ood = list(raw.shift)
-    print(f"{'space':34} {'PC1%':>5} {'PC2%':>5} {'|cos| raw PC1':>14} {'PC2':>5}"
+    # The leading loadings are printed rather than drawn: naming a component on
+    # nine panels crowds them, and the README's claim about them has to stay
+    # re-derivable without measuring a figure by eye.
+    print(f"{'space':34} {'PC1%':>5} {'PC2%':>5} {'lead PC1':>9} {'PC2':>7} "
+          f"{'|cos| raw PC1':>14} {'PC2':>5}"
           + "".join(f"{c.split()[0][:5] + ' d(PC1,PC2)':>22}" for c in ood))
     for label, fit in fits.items():
         cos = np.abs((fit.vecs @ raw.vecs.T).diagonal())
+        lead = [RESTRAV_FEATURE_NAMES[i] for i in np.abs(fit.vecs).argmax(1)]
         shift = "".join(f"{fit.shift[c][0]:+11.2f},{fit.shift[c][1]:+10.2f}" for c in ood)
-        print(f"{label:34} {fit.evr[0]:5.0%} {fit.evr[1]:5.0%} {cos[0]:14.2f} "
-              f"{cos[1]:5.2f}" + shift)
+        print(f"{label:34} {fit.evr[0]:5.0%} {fit.evr[1]:5.0%} {lead[0]:>9} "
+              f"{lead[1]:>7} {cos[0]:14.2f} {cos[1]:5.2f}" + shift)
     print(f"figure written to {FIG_DIR}")
 
 
