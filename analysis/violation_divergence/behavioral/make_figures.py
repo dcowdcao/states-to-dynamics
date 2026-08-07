@@ -433,29 +433,24 @@ def f6(curve_data: pd.DataFrame, control_own_board: float, odd_r_parity: float,
         panel_letter(ax, i)
         ax.set_xlabel("move offset $r = s - t_0$ (plies since the branch move)")
         ax.set_xlim(WINDOW[0], WINDOW[-1] + 0.4)
-    axes[0].text(0.02, 0.21, "the sawtooth is turn parity, not noise: at odd $r$ the\n"
-                 "colour that played the branch move is to move again\n"
-                 f"({odd_r_parity:.1%} of window positions)" if variant == "spliced" else
-                 "no sawtooth: the branches no longer share a suffix, so\n"
-                 "turn parity is not aligned across them\n"
-                 f"(the branch's colour still moves at odd $r$ in {odd_r_parity:.1%} "
-                 "of positions)",
+    # The sawtooth is structure, not noise, so §4.2 wants it named on the panel.
+    axes[0].text(0.02, 0.17, "the sawtooth is turn parity, not noise: at odd $r$ the "
+                 f"branch's\ncolour moves again ({odd_r_parity:.1%} of window positions)"
+                 if variant == "spliced" else
+                 "no sawtooth: the branches no longer share a suffix, so turn\n"
+                 f"parity is not aligned ({odd_r_parity:.1%} at odd $r$)",
                  transform=axes[0].transAxes, ha="left", va="top", fontsize=7.5, color=MUTED)
     handles, labels = axes[1].get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 0.04), ncol=4,
                fontsize=8, title_fontsize=8,
-               title="curves are means over source games; n = branch sequences, one per "
-                     "source game. Their 95% CIs are in behavioral_curves.csv.\n"
-                     "The reference branch scored against itself is 0 nats at every $r$ "
-                     "and is drawn only in (b), where it is the ceiling."
+               title="means over source games; n = branch sequences, one per game; 95% CIs "
+                     "in behavioral_curves.csv. The reference is 0 nats by construction "
+                     "and drawn only in (b), where it is the ceiling."
                if variant == "spliced" else
-               f"curves are means over source branches, a branch's K={k} rollouts held "
-               f"together; n = source branches. Their 95% CIs are in "
-               f"behavioral_curves_rollout.csv.\n"
-               "Each branch is scored against the reference of its own rollout. In (b) the "
-               "reference's board is itself sampled and ends at its first illegal move, "
-               f"which {left_legal:.1%} of reference rollouts reach inside the window; "
-               "those positions are dropped, not scored as zero.")
+               f"means over source branches, a branch's K={k} rollouts held together; "
+               "n = source branches; 95% CIs in behavioral_curves_rollout.csv.\n"
+               "In (b) the sampled reference's board ends at its first illegal move in "
+               f"{left_legal:.1%} of rollouts; those positions are dropped, not zeroed.")
     if not camera_ready:
         fig.suptitle(F6_TITLE[variant], y=1.0)
     fig.tight_layout()

@@ -43,17 +43,17 @@ CRITERION_LABEL = {
 }
 S3, S1 = "s3_category_differentiation", "s1_illegal_vs_control"
 
+# One line per criterion code (§5) plus the uncertainty semantics (§1.2). The
+# field the scores are computed on is in game_selection/README.md.
 KEY = (
     r"$S_3$ — mean pairwise $\|X_i-X_j\|$ over the six illegal branches $\div$ "
-    r"RMS $\|X\|$, where $X_b$ stacks $D(t)=z_b(t)-z_{\mathrm{ref}}(t)$ over "
-    r"$r\in[0,24]$ at $t_0$'s parity, in full $\mathbb{R}^{512}$."
+    r"RMS $\|X\|$; 0 = they displace identically, $\sqrt{2}$ = mutually orthogonal."
     "\n"
-    r"0 = the six illegal branches displace identically; $\sqrt{2}$ = mutually "
-    r"orthogonal. $S_1$ — $\|\mu_{\mathrm{illegal}}-\mu_{\mathrm{control}}\|$ "
-    r"$\div$ pooled within-group RMS radius, same stacked vectors."
+    r"$S_1$ — $\|\mu_{\mathrm{illegal}}-\mu_{\mathrm{control}}\|$ $\div$ pooled "
+    r"within-group RMS radius, same stacked vectors."
     "\n"
-    "Panels (a) and (b) are the whole population of complete games, not a sample, "
-    "so the spread is the population IQR and not an error bar.")
+    "(a) and (b) are the whole population of complete games, not a sample: the "
+    "spread is the population IQR, not an error bar.")
 
 
 def read(path: Path) -> list[dict]:

@@ -1972,3 +1972,48 @@ Left open: the metric carries no interval over games — n = 1, like the figures
 in — and the only spread on it is over a rule's member categories (n = 2, 3, 1). A
 population version of "how far does a rule run, relative to a legal control" would
 belong in `../README.md` with a bootstrap over games, and does not exist yet.
+
+## Gray text: the parent violation-divergence figures (`gray/gray-parent`)
+
+Every figure in `analysis/violation_divergence/` outside `rule_curvature/` and the
+fork/board directories carried a multi-line muted note block under its suptitle. Most
+of it was the README's caption pasted into the canvas. Removed, with the line each
+figure still owes FIGURE_GUIDELINES kept and nothing else.
+
+The keep test was a section number, not taste. What stayed: §1.2's estimator line (what
+the interval is, over what unit, and where it lives), §1.4's axis-direction annotations
+(`above 0: the violation displaces further than a legal move`, theta's
+`← straighter / curvier →`), §3's chance and ceiling line labels, §4.2's
+zero-by-construction and shaded-region notes, and §5's `S1`/`S3` key in
+`game_selection`. What went: anything a reader could look up. The saturation band on
+the rollout figures kept its shading and lost its four-line paragraph — the band is the
+claim, the paragraph was the README's.
+
+Two judgement calls. **The suptitles stay.** They are claims, not prose, they are what
+§5 wants the caption's first sentence to be, and they already vanish under
+`--camera-ready`. **The n / CI-source lines stay**, compressed to one line: §1.2 is not
+satisfied by a README, and F1's curves carry no drawn band, so where the interval lives
+has to be on the figure. In `behavioral/` that line stays a legend title rather than
+moving to a `fig.text` — the legend is where its n already is.
+
+Layout re-tune: `F1_NOTE`/`F3_NOTE` were anchored at `y=0.905` with `tight_layout`
+reserving 14% of the canvas; one line needs `y=0.95` and `rect` top `0.93`. Same move in
+`sae_spaces` (0.92) and `theta_comparability` (0.92). `probe_readout`'s rollout note and
+rule key came up from `-0.45`/`-0.52` to `-0.36`/`-0.42`. Nothing changed size except
+`theta_sampling_mismatch`, which shrank to its declared 9.0 in — the old note was wider
+than the panels and `bbox_inches="tight"` had been stretching the canvas to fit it.
+
+`probe_readout.parity_panel` and `PARITY_BRANCHES` deleted: `main()` has dropped that
+panel since the cosine cut and never called it. `docs/finish_notes/bands-divergence.md`
+had flagged it as known rot.
+
+`sae_spaces/make_figures.py` has no `--camera-ready` flag, so its two figures ship as
+PNG only. That predates this change and is the one figure pair in the study without a
+vector twin.
+
+One thing rides along that is not about text: re-running the scripts on the current
+tree picks up the three appended rule-complete games, so every regenerated figure and
+CSV moves from n = 2000 to n = 2003 per category. The committed artifacts predated
+`extend_branches`. No number the READMEs quote changes past the fourth decimal
+(`ratio_illegal_control_L5` 0.9797 -> 0.9798 spliced, 1.0016 unchanged on the rollout
+tree), but the diff on the CSVs is larger than the diff on the figure text.

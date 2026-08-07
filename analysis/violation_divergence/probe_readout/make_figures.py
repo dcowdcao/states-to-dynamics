@@ -3,8 +3,6 @@
 (a) does the illegal branch write the illegal disc, and for how long
 (b) the occupied pair: does an illegal move on an occupied square read as a
     no-op or as a recolor
-(c) does the branch's decoded mover track the reference's -- R3 turn confusion
-    read straight off the representation
 
 Every branch is scored against the reference game's board in the reference
 game's frame; decode.py's docstring states the convention and RESULTS.md spells
@@ -38,10 +36,11 @@ VARIANTS = ("spliced", "rollout")
 
 EMPTY_SQUARE_CATEGORIES = ["empty_detached", "empty_own_only", "empty_no_bracket", "opponent_only"]
 OCCUPIED_CATEGORIES = ["occupied_own", "occupied_opp"]
-PARITY_BRANCHES = [c for c in CATEGORY_STYLE if c != "legal"]  # taxonomy order
 # Six to eight curves per panel, so the CI is reported rather than shaded: eight
 # overlapping ribbons hid the anchors the panels are read against.
-ESTIMATOR = "mean over source games; 95% bootstrap CIs in the CSV"
+ESTIMATOR = {"spliced": "mean over source games; 95% bootstrap CIs in the CSV",
+             "rollout": "mean over source branches, K=4 averaged; "
+                        "95% bootstrap CIs in the CSV"}
 
 
 def curve(ax, df: pd.DataFrame, style: dict, label: str, offset: int = 0, **kw) -> None:
@@ -70,8 +69,9 @@ def label_with_n(df: pd.DataFrame, key: str, category: str) -> str:
     return f"{CATEGORY_STYLE[category]['label']} (n={n})"
 
 
-def curve_legend(ax, note: str = "", **kw) -> None:
-    ax.legend(title=ESTIMATOR + note, fontsize=7.4, title_fontsize=7, alignment="left", **kw)
+def curve_legend(ax, **kw) -> None:
+    ax.legend(title=ESTIMATOR["spliced"], fontsize=7.4, title_fontsize=7,
+              alignment="left", **kw)
 
 
 def occupancy_panel(ax, square: pd.DataFrame, notes: bool) -> None:
@@ -92,10 +92,8 @@ def occupancy_panel(ax, square: pd.DataFrame, notes: bool) -> None:
           ls=NULL["ls"], lw=NULL["lw"], zorder=4)
     if not notes:
         return
-    ax.annotate("a disc that really was placed", xy=(18, 0.995), xytext=(14, 0.87),
-                fontsize=7, color=MUTED, ha="center",
-                arrowprops={"arrowstyle": "-", "color": MUTED, "lw": 0.6})
-    ax.annotate("nothing was played here; both anchors rise\nonly as the shared suffix fills the square",
+    ax.annotate("nothing played here — both anchors rise\nonly as the shared suffix "
+                "fills the square",
                 xy=(20, 0.55), xytext=(0.5, 0.33), fontsize=7, color=MUTED, va="bottom",
                 arrowprops={"arrowstyle": "-", "color": MUTED, "lw": 0.6})
     curve_legend(ax, loc="center left", bbox_to_anchor=(0.28, 0.62))
@@ -116,25 +114,13 @@ def recolor_panel(ax, square: pd.DataFrame, notes: bool) -> None:
     gap = p[(p.category == "occupied_opp") & (p.r == 0)].set_index("role")["mean"]
     ax.annotate("", xy=(0.7, gap["illegal"]), xytext=(0.7, gap["reference"]),
                 arrowprops={"arrowstyle": "<->", "color": MUTED, "lw": 0.8})
-    ax.annotate(f"recolor: at $r$ = 0 the illegal branch reads\nthe mover's colour {gap['illegal'] - gap['reference']:+.2f} more often than\nthe reference branch does on the same square",
+    ax.annotate(f"recolor: {gap['illegal'] - gap['reference']:+.2f} at $r$ = 0 against "
+                "the\nreference branch on the same square",
                 xy=(1.2, gap.mean()), xytext=(24, 0.24), fontsize=7, color=MUTED,
                 ha="right", va="top", arrowprops={"arrowstyle": "-", "color": MUTED, "lw": 0.6})
     ax.text(24, 0.99, "no-op: occupied (own) tracks\nits own reference anchor", fontsize=7,
             color=MUTED, ha="right", va="top")
     curve_legend(ax, loc="lower left", bbox_to_anchor=(0.02, 0.30))
-
-
-def parity_panel(ax, parity: pd.DataFrame) -> None:
-    p = parity[parity.metric == "p_aligned"]
-    for i, branch in enumerate(PARITY_BRANCHES):
-        curve(ax, p[p.branch == branch], CATEGORY_STYLE[branch],
-              label_with_n(p, "branch", branch), offset=i, zorder=5)
-    curve(ax, p[p.branch == "reference"], REFERENCE, "reference branch (the probe's own frame accuracy)",
-          offset=0, lw=REFERENCE["lw"], zorder=4)
-    curve(ax, p[p.branch == "control_legal"], NULL, "control_legal branch", offset=3,
-          ls=NULL["ls"], lw=NULL["lw"], zorder=NULL["zorder"])
-    curve_legend(ax, note="\na parity-confused branch swaps theirs and mine on\nevery untouched disc at once, and would sit near 0",
-                loc="lower left", bbox_to_anchor=(0.20, 0.02))
 
 
 def main():
@@ -168,17 +154,13 @@ def main():
         for i, ax in enumerate(axes):
             handles, labels = ax.get_legend_handles_labels()
             fig.legend(handles, labels, loc="upper left", fontsize=7,
-                       bbox_to_anchor=(0.04 + 0.5 * i, -0.02), title=ESTIMATOR,
+                       bbox_to_anchor=(0.04 + 0.5 * i, -0.02), title=ESTIMATOR["rollout"],
                        title_fontsize=7, alignment="left")
-        fig.text(0.5, -0.45, "rollout branch set: every branch samples its own "
-                 "continuation, K=4 averaged per branch, so a branch is one item.\n"
-                 "The reference's board is sampled too and ends at its first illegal "
+        fig.text(0.5, -0.36, "the sampled reference's board ends at its first illegal "
                  "move: 1.1% of window positions have no board and are dropped, so n "
-                 "falls with $r$.\nBoth anchors now rise as each branch's own rollout "
-                 "fills the square, not as a shared suffix does.",
-                 ha="center", va="top", fontsize=7.5, color=MUTED, style="italic",
-                 linespacing=1.5)
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.01 if spliced else -0.62)
+                 "falls with $r$.",
+                 ha="center", va="top", fontsize=7.5, color=MUTED, style="italic")
+    rule_key(fig, ["R1", "R2", "R3"], y=-0.01 if spliced else -0.42)
     print(save_figure(fig, FIGURES / figure, camera_ready=args.camera_ready))
 
 
