@@ -128,6 +128,25 @@ index, (k) legality or novelty, (l) where each rule group lands.
 resampled-continuation tree; see *The suffix confound* below before reading
 anything but its *r* = 0 column.
 
+**The caption, which is here and not on the figure.** (a)–(i) draw game 1235,
+*t0* = 20, every 2nd ply, viewed at `elev = 18, azim = −58` (the parent fork
+figure's camera, so the two read together); the descriptor window is the trailing
+8 plies. Axis 1 is the LR-21 probe direction, fit on the straightness study's
+violation/source-legal pairs at the window ending at *t0*, on games disjoint from
+every game scored here; axis 2 is the leading PC of the residual, fit on the
+575-game population. Neither axis is fit on this game. (j)–(l) aggregate the 575
+held-out divergence games (5175 branches) and the held-out straightness pairs; the
+SAE line is the **median over the 8 dictionaries**, each of which is one row of
+`evaluation.csv`, and every error bar is a **percentile bootstrap 95% CI over
+games, 1000 resamples**.
+
+The figure itself carries three things and no more: the panel-header key (`ctrl`,
+`rand`, `1 game ×null`), which is shorthand a reader cannot decode otherwise
+(FIGURE_GUIDELINES §5); that the cells are not comparable point-for-point (§4.6);
+and that game 1235 was **selected**, because a reader who does not know that reads
+its clean arrangement as the population's. Everything above is apparatus a reader
+can look up without the figure in front of them, so it stays here.
+
 ## Results (575 held-out games, 5175 branches; probe trained on 1000 pairs)
 
 At *r* = 0, illegal vs the two **held-out legal controls**, against a within-game
@@ -258,3 +277,9 @@ unrelated-activations ceiling, and the illegal/control ratio is pinned to 1.00 b
 plane getting better at legality. Axis 2 is the leading PC of the residual over
 all offsets, so under rollout it picks up the branches' divergent futures, which
 are a large real signal that says nothing about the move at *t0*.
+
+**The rollout figure does not restate this in gray, because the panels already
+draw it.** Everything past *r* = 0 sits in the region (j) and (k) shade and label
+`axis not calibrated here`, and that shading is on both variants. A second
+sentence saying the same region is uninformative would be the caveat competing
+with the annotation that already carries it.

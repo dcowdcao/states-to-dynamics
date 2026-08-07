@@ -39,9 +39,10 @@ same statistic in full R^21 -- the gap between them is what the plane threw away
 which disagree. The whole grids get no strip: one point per branch over r >= 0
 IS the average, so the number would restate the panel (README).
 
-The grids carry no prose block. The spread ratio, the selection of the game, the
-n=1 caveat and the cells-are-not-comparable disclaimer are the figures' captions
-and live in README.md (FIGURE_GUIDELINES 2, 5).
+The grids carry one line of prose: that the game was selected. Everything else --
+the spread ratio, where the mean over K rollouts is taken, the saturation horizon,
+the cells-are-not-comparable disclaimer -- is the figures' caption and lives in
+README.md (FIGURE_GUIDELINES 2, 5).
 
   pca       top-2 uncentred PCs of the column-scaled descriptor, refit per space,
             so cells are comparable in arrangement only.
@@ -103,19 +104,12 @@ FULL_R = 24              # the study window's last offset; the spliced grids run
 # ||Δφ_branch|| / ||φ_k − φ_k'|| is 0.93 at r=8 and falls monotonically after
 # (README, "Where the rollout curve stops being about the branch").
 ROLLOUT_MAX_R = 8
-ROLLOUT_NOTE = (
-    "rollout branch set: each branch is the mean over its K = 4 sampled continuations, "
-    "taken AFTER φ — φ is nonlinear, and the mean of the trajectories has a curvature no "
-    f"rollout has.\nDrawn to $t-t_0$ = {ROLLOUT_MAX_R}: past it two rollouts of one branch "
-    "differ by more than the branch differs from the reference, so the curve is sampling "
-    "noise (README).")
-ROLLOUT_WHOLE_NOTE = (
-    "rollout branch set: each point is the mean over its K = 4 sampled continuations, taken "
-    "AFTER φ — φ is nonlinear, and the mean of the trajectories has a curvature no rollout "
-    f"has.\nThe descriptor needs 8 sampled positions, so it cannot be confined to the "
-    f"$t-t_0 \\leq {ROLLOUT_MAX_R}$ region where the branch still outweighs the rollout "
-    "sampling spread; the ellipses are that spread (README).")
 ROLLOUT_CONTOUR = "50% Gaussian contour of {n} rollout descriptors (sampling spread, not a CI)"
+# The one thing a reader cannot look up while looking at the panels: this game was
+# chosen, so its clean arrangement is not what a draw from the population gives.
+SELECTED = (f"game {FIGURE_GAME} is selected, not typical: the argmax over 1550 "
+            "branch-complete games of its illegal branches' mutual separation "
+            "(../game_selection). One game, n = 1.")
 
 # The read-out strip under the windowed grids: the number the fork panel makes the
 # reader guess at. R^21's two halves are measured apart because they disagree --
@@ -151,10 +145,9 @@ class Draw:
 
 @dataclass(frozen=True)
 class View:
-    """How far the curve runs, the in-figure note, and the filename suffix that
-    keeps the two variants' outputs apart."""
+    """How far the curve runs, and the filename suffix that keeps the two
+    variants' outputs apart."""
     r_max: int
-    note: str
     suffix: str
 
 
@@ -284,8 +277,8 @@ def run_strip(ax, names: list[str], read: list[Run], d: Draw, r: np.ndarray) -> 
     ax.tick_params(axis="y", labelsize=7)
     ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=4, fontsize=7.5,
               frameon=False, title=f"mean over the {len(r)} drawn offsets "
-              f"$t-t_0$ = {r[0]}…{r[-1]}, one game (n = 1); the reference is 0 in "
-              f"every field by construction and is not a point here",
+              f"$t-t_0$ = {r[0]}…{r[-1]}; the reference is 0 in every field by "
+              f"construction and is not a point here",
               title_fontsize=7.5)
 
 
@@ -458,7 +451,7 @@ def windowed_grid(g: dict, w: int, plane: str, d: Draw, v: View,
     if not camera_ready:
         fig.suptitle(f"The fork inside the 21-D ReStraV descriptor space, "
                      f"game {g['game']} ({plane} plane)", fontsize=11)
-    rule_member_key(fig, y=note_and_key(fig, leg, v.note))
+    selection_and_key(fig, leg, int(g['game']))
     print(run_table(plane, [name for name, _ in dsc.spaces()], read, d))
     return save_figure(fig, FIG_DIR / f"fork_r21_windowed_{plane}{v.suffix}",
                        camera_ready)
@@ -511,20 +504,22 @@ def whole_grid(g: dict, plane: str, d: Draw, v: View, camera_ready: bool) -> Pat
         fig.suptitle(f"One R$^{{21}}$ point per branch, game {g['game']} "
                      f"({plane} plane)", fontsize=11)
     fig.tight_layout(rect=(0, 0.015, 1, 0.955))
-    rule_member_key(fig, y=note_and_key(fig, leg, v.note))
+    selection_and_key(fig, leg, int(g['game']))
     return save_figure(fig, FIG_DIR / f"fork_r21_whole_{plane}{v.suffix}", camera_ready)
 
 
-def note_and_key(fig, leg, note: str) -> float:
-    """y for the rule key, with `note` written above it when the variant has one.
+def selection_and_key(fig, leg, game: int) -> None:
+    """The selection line, then the rule key under it.
 
-    Where a mean is taken is apparatus a reader needs while looking at the panels,
-    so it sits with the rule key rather than in the README caption (§5)."""
-    y = below(fig, leg)
-    if not note:
-        return y
-    return below(fig, fig.text(0.005, y, note, ha="left", va="top", fontsize=7.5,
-                               color=MUTED, linespacing=1.5))
+    Everything else a reader needs -- where the mean over K is taken, the spread
+    ratio, the saturation horizon -- is the caption's job and lives in README.md
+    (§5). The selection is not: a reader who does not know the game was chosen
+    over-reads the panels in front of them. `--game` can draw an unselected one,
+    and then the line must not claim the argmax."""
+    note = SELECTED if game == FIGURE_GAME else f"game {game}, n = 1: shape only."
+    y = below(fig, fig.text(0.005, below(fig, leg), note, ha="left", va="top",
+                            fontsize=7.5, color=MUTED))
+    rule_member_key(fig, y=y)
 
 
 def main():
@@ -540,9 +535,8 @@ def main():
     rollout = args.variant == "rollout"
     d = one_control(g)
     suffix = "_rollout" if rollout else ""
-    windowed = View(ROLLOUT_MAX_R if rollout else FULL_R,
-                    ROLLOUT_NOTE if rollout else "", suffix)
-    whole = View(FULL_R, ROLLOUT_WHOLE_NOTE if rollout else "", suffix)
+    windowed = View(ROLLOUT_MAX_R if rollout else FULL_R, suffix)
+    whole = View(FULL_R, suffix)
     # The ratios are the figures' caption, not the figures': README.md quotes them.
     for r_max in ([ROLLOUT_MAX_R, FULL_R] if rollout else [FULL_R]):
         print(f"within/between rule spread ratio, game {args.game}, {args.variant}, "

@@ -50,6 +50,19 @@ comparability claim below.
 
 Each has a `*_rollout` twin from `--variant rollout`.
 
+**The caption, which is here and not on the grids.** Game 0, *t0* = 10; a point
+is the ReStraV descriptor of the W = 8 sampled positions (every 2nd ply) ending
+at *t*, minus the reference's, z-scored per space. The 3-D grids are viewed at
+`elev = 18, azim = −58`, the parent fork figure's camera, so the two read
+together. `run_from_reference` averages over the 10 drawn anchors
+(`t − t0 = 6…24`); `separation_by_plane` scores anchors `t ≥ t0` against the
+exact 28-way permutation null, whose floor on *p* is 1/28 = 0.04.
+
+Each grid keeps exactly one thing in gray, and it is the one thing that differs
+per grid and cannot be looked up while looking at the cells: **what this plane
+does and does not make comparable across cells** (FIGURE_GUIDELINES §4.6), plus
+`one game (n=1)` and, on the rollout twins, the anchor caveat below.
+
 ## What the panels license
 
 The shared and named grids are drawn on **shared axis limits with ticks on**, and

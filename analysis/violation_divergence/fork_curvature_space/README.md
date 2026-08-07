@@ -108,11 +108,15 @@ branch runs from the reference" below says why.
 
 ## Captions
 
-The grids carry no prose. What a reader needs in order not to over-read them is
-here (FIGURE_GUIDELINES §2, §5); what stays inside the figure is the apparatus
-that cannot be looked up while looking at it — per-panel space names, axis
-labels, the legend (which carries n per rule and what the ellipses are), and the
-R1/R2/R3 key naming each rule's member categories.
+The grids carry one line of prose: that game 1235 was selected. Everything else a
+reader needs in order not to over-read them is here (FIGURE_GUIDELINES §2, §5);
+what stays inside the figure is the apparatus that cannot be looked up while
+looking at it — per-panel space names, axis labels, the legend (which carries n
+per rule and what the ellipses are), the R1/R2/R3 key naming each rule's member
+categories, and that one selection line. The selection line is in-figure and the
+rest is not for the same reason: a reader who does not know the game was chosen
+misreads the panels in front of them, while one who does not know where the mean
+over K rollouts is taken reads them correctly and can look the rest up here.
 
 **Common to all four.** Game **1235**, *t0* = 20, eight branches: the played move,
 one legal control, and one move per illegal category, the six of them collapsed
@@ -366,8 +370,9 @@ from OthelloGPT (temperature 1.0, K = 4, seed 42), the reference included.
 path no rollout took. Every rollout row gets its own `windowed` / `descriptor` /
 jackknife and the K descriptors are averaged afterwards (`phi_mean`). The plane
 projection and the difference from the reference are linear, so they commute with
-that average; nothing else in the pipeline does. The figures say so in the block
-under the legend.
+that average; nothing else in the pipeline does. This is the figures' caption and
+lives only here: it is a fact about how the numbers were made, not about how the
+panels read, so it does not belong on the page a reader is looking at.
 
 **The prefix survives the construction — checked, not assumed.** `tokens[:t0+1]`
 is copied from the source branch, so the activations before *t0* should still be
@@ -411,6 +416,14 @@ needs 9, i.e. `r` out to 16 at the very least, so one point per branch over the
 post-branch trajectory is *by construction* a summary of the saturated region.
 They are drawn over the same `r = 0…24` as the spliced twins so the two are
 comparable, and their ellipses are changed to say it (below).
+
+**Neither figure restates this caveat in gray.** It does not have to. The
+windowed grids cut the axis at `r = 8`, so the region the caveat is about is not
+drawn at all — the window *is* the caveat. The whole grids cannot cut it, but
+they draw the sampling spread as an ellipse the legend names, and in every space
+that ellipse swallows the reference and every branch mean inside it. A reader
+looking at either figure sees the thing a sentence would have asserted, so the
+sentence is here and not on the page.
 
 ### What changes on the rollout figures
 

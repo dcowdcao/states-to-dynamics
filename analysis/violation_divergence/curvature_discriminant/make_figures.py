@@ -44,7 +44,8 @@ tokens the rollout copies verbatim, and panel (k) at r <= 0 is the same number i
 both variants, to three decimals in all nine spaces (evaluate.variant_agreement
 returns the residual, 1e-3 to 1e-1, which is two extraction passes' fp16 noise).
 Only r > 0 can differ, and that is the regime the rollout study found
-uninformative (ROLLOUT_CAVEAT).
+uninformative -- which the panels already shade and label "axis not calibrated
+here", so it needs no caveat of its own (README.md carries the numbers).
 
 Usage: python analysis/violation_divergence/curvature_discriminant/make_figures.py
            [--variant {spliced,rollout}] [--camera-ready]
@@ -52,7 +53,6 @@ Usage: python analysis/violation_divergence/curvature_discriminant/make_figures.
 
 import argparse
 from pathlib import Path
-from textwrap import fill
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -62,8 +62,7 @@ from spade.figures.paper_style import (
     rule_key, sae_label, save_figure)
 from spade.othello.taxonomy import CATEGORIES
 
-from curvature_axis import (
-    WINDOW_PLIES, fit_axis, residual_plane, spaces, transported_auroc)
+from curvature_axis import fit_axis, residual_plane, spaces, transported_auroc
 from branch_geometry import VARIANTS, PLOT_GAME
 from evaluate import (
     CONTROL_BINS, FIT_OFFSET, N_DIRS, OFFSETS, PLOT_STRIDE, RULE_NAMES, boot_ci,
@@ -74,13 +73,16 @@ from evaluate import (
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 ELEV, AZIM = 18, -58              # the parent figure's camera, so the two compare
 UNCAL_ALPHA = 0.22                # r > 0 is drawn as shape, not as a coordinate
-ROLLOUT_CAVEAT = (
-    "ROLLOUT CAVEAT: with every branch resampling its own future, $\\hat{\\delta}$ climbs "
-    "monotonically and illegal and control both saturate near 1.23 against a ~1.41 "
-    "unrelated-activations ceiling; the illegal/control ratio is pinned to 1.00 by "
-    "$r\\geq8$, and only $r=0$ separates (1.032, sign opposite the spliced 0.979). "
-    "Long-horizon rollout geometry is not informative, so the $r>0$ part of these panels "
-    "is shape, not a result.")
+# Line 1 is the one thing that cannot be looked up while looking at the panels: a
+# reader who does not know the game was chosen reads its arrangement as the
+# population's. Line 2 is the panel-header key -- three abbreviations that live in a
+# spec elsewhere, and §5 says a figure only readable next to its doc gets read wrong.
+# The axis fit, the effective sample size and the rollout caveat are README.md's.
+SELECTED = (f"game {PLOT_GAME} is selected as the argmax over 1550 games of its "
+            "illegal branches' mutual separation (../game_selection), not typical")
+HEADER_KEY = (f"panel headers — ctrl: illegal-vs-control AUROC · rand: 95th percentile "
+              f"of {N_DIRS} random directions in $R^{{21}}$ · 1 game ×null: the one-game "
+              "centroid gap over its own exact label-permutation null.")
 R0 = int(np.flatnonzero(OFFSETS == 0)[0])
 CONTROL_LABEL = {1: "control: another legal move (null)",
                  2: "control 2: a third legal move (null)"}
@@ -89,6 +91,13 @@ CONTROL_LABEL = {1: "control: another legal move (null)",
 GROUP_STYLE = {CONTROL_BINS[0]: {**NULL, "marker": "v"},
                CONTROL_BINS[1]: {**NULL, "marker": "^"},
                **{RULE_NAMES[r]: RULE_STYLE[RULE_NAMES[r]] for r in (1, 2, 3)}}
+
+
+def legend_note(game: int) -> str:
+    """`--game` can draw a game the selection claim is not about."""
+    chosen = SELECTED if game == PLOT_GAME else f"game {game} is not the selected one"
+    return (f"(a)–(i) one game (n = 1), cells not comparable point-for-point; "
+            f"{chosen}.\n{HEADER_KEY}")
 
 
 # --- branch styling, identical to analysis/violation_divergence/game_trajectory ---
@@ -201,10 +210,10 @@ def auroc_panel(ax, curves: dict[str, np.ndarray], ylabel: str, title: str,
         ax.text(OFFSETS[-1], 0.505, "chance", fontsize=7, color=MUTED,
                 ha="right", va="bottom")
     else:
+        # No in-panel label: this panel's legend carries the null, the chance
+        # panel's does not (§3 wants one or the other, not both).
         ax.axhspan(*null, color=NULL["color"], alpha=0.45, lw=0, zorder=1,
                    label="within-game label-permutation null (95%)")
-        ax.text(OFFSETS[-1], null[1] + 0.005, "permutation null", fontsize=7,
-                color=MUTED, ha="right", va="bottom")
     ax.axvline(0, color=MUTED, lw=1.2, ls=(0, (4, 3)), zorder=1)
     ax.plot(OFFSETS, median, color=RULE_STYLE["R1 placement"]["color"], lw=1.6,
             marker="s", ms=3.5, markevery=3, zorder=3,
@@ -246,7 +255,9 @@ def landing_panel(ax, landing: dict, space_labels: list[str], rho: float) -> Non
     ax.set_yticks(y, space_labels, fontsize=7)
     ax.set_ylim(len(y) - 0.5, -1.05)
     lo, hi = ax.get_xlim()
-    ax.set_xlim(lo, hi + 0.32 * (hi - lo))  # room for the legend, clear of the data
+    ax.set_xlim(lo, hi + 0.60 * (hi - lo))  # room for the legend, clear of the data
+    # The band above the first space belongs to this line; the legend used to sit
+    # in it and clip the line's tail, so it moved to the corner the data leaves free.
     ax.text(0, -0.9, " reference = 0 by construction", fontsize=7, color=MUTED,
             va="center")
     ax.set_xlabel("probe log-odds, branch $-$ reference, at $r=0$"
@@ -254,7 +265,7 @@ def landing_panel(ax, landing: dict, space_labels: list[str], rho: float) -> Non
     ax.set_title("(l) where the branches the probe never saw land\n"
                  f"     raw L5: Spearman $\\rho$ = {rho:+.2f} with flip count, "
                  "within the legal controls", loc="left", fontsize=9.5)
-    ax.legend(fontsize=6.6, loc="upper right", ncol=1, framealpha=0.9,
+    ax.legend(fontsize=6.6, loc="lower right", ncol=1, framealpha=0.9,
               facecolor="white", edgecolor="none", handletextpad=0.4)
 
 
@@ -323,7 +334,6 @@ def figure(res: dict, m: dict, game: int, camera_ready: bool, n_roll: int = 1,
     mean over its K descriptors, taken after phi."""
     idx = np.flatnonzero(m["game_id"] == game)
     t0 = int(m["t0"][idx[0]])
-    n_games = len(np.unique(m["game_id"]))
     names = list(res)
     fig = plt.figure(figsize=(11.5, 13.6))
     top, bottom = fig.subfigures(2, 1, height_ratios=[2.35, 1.0])
@@ -371,43 +381,7 @@ def figure(res: dict, m: dict, game: int, camera_ready: bool, n_roll: int = 1,
                    for name in res[names[0]]["landing"]},
                   [space_label(s) for s in names], res["resid_post_5"]["flip_rho"])
 
-    ordered_legend(fig, fig.axes[0], 5, -0.030, "")
-    caption = (
-        f"(a)-(i) Game {game}, $t_0$={t0}, every {PLOT_STRIDE}nd ply — one game, so "
-        f"shape only. Axis 1 is the LR-21 probe direction, fit on "
-        f"the straightness study's violation/source-legal pairs at the window ending at "
-        f"$t_0$, on games disjoint from every game scored here; axis 2 is the leading PC "
-        f"of the residual, fit on the {n_games}-game population. Neither axis is fit on "
-        f"this game. Cells are not comparable point-for-point. View elev={ELEV}, "
-        f"azim={AZIM}; descriptor window = trailing {WINDOW_PLIES} plies. Per panel: "
-        f"illegal-vs-control AUROC, the 95th percentile of {N_DIRS} random directions in "
-        f"$R^{{21}}$, and the one-game centroid gap as a multiple of its own exact "
-        f"label-permutation null.\n"
-        f"The 17 plotted positions of a branch are windows overlapping in 7 of 8 samples, "
-        f"so one game is 8 branches in 21 dimensions, not 136 points — which is why "
-        f"neither axis is fit here, and why the permutation null (28 assignments, floor "
-        f"p=0.036) can be exact with nothing refit. (j)-(l) aggregate {n_games} held-out "
-        f"divergence games ({len(m['t0'])} branches) and held-out straightness pairs; "
-        f"the SAE line is the median over the 8 dictionaries, each of which is a row of "
-        f"evaluation.csv; error bars = percentile bootstrap 95% CI over games, 1000 "
-        f"resamples.")
-    extra = [] if n_roll == 1 else [
-        f"ROLLOUT VARIANT: every branch, the reference included, samples its own future "
-        f"K={n_roll} times instead of replaying the source game's, and a branch's "
-        f"descriptor is the MEAN OVER THOSE {n_roll} ROLLOUTS — taken after phi and "
-        f"before the difference from the reference, because phi is nonlinear and a mean "
-        f"over the {n_roll} trajectories is the curvature of a path none of them took. "
-        f"The axis itself is unchanged: it is fit on straightness pairs, which have no "
-        f"variant. The descriptor window is TRAILING, so the one ending at t0 sees only "
-        f"tokens the rollout copies verbatim — panel (k) at r ≤ 0, the fitted offset "
-        f"among them, is the SAME measurement as the spliced figure's and not a "
-        f"replication of it. Its AUROCs agree to three decimals in all nine spaces; the "
-        f"descriptors agree to 1e-3 (raw L5) to 1e-1 (GatedSAE), which is the fp16 noise "
-        f"of two separate extraction passes and not the suffix. Only r > 0 differs.",
-        ROLLOUT_CAVEAT]
-    wrapped = [fill(line, 178) for line in caption.split("\n") + extra]
-    fig.text(0.005, -0.075, "\n".join(wrapped),
-             ha="left", va="top", fontsize=7.5, color=MUTED, linespacing=1.45)
+    ordered_legend(fig, fig.axes[0], 5, -0.056, legend_note(game))
     if not camera_ready:
         fig.suptitle("Most of the separation in $R^{21}$ is magnitude, not direction — "
                      "and on one game the plane does not beat its own null"
@@ -415,10 +389,7 @@ def figure(res: dict, m: dict, game: int, camera_ready: bool, n_roll: int = 1,
                      "Resampling every branch's future changes nothing at $r=0$: the "
                      "trailing window there never saw the suffix",
                      fontsize=12, y=0.996)
-    # The rule key sits under the caption, so it has to fall by whatever the
-    # rollout paragraphs added; zero extra lines leaves the spliced figure alone.
-    n_extra = sum(w.count("\n") + 1 for w in wrapped[len(caption.split("\n")):])
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.178 - 0.0115 * n_extra)
+    rule_key(fig, ["R1", "R2", "R3"], y=-0.082)
     return save_figure(fig, FIG_DIR / f"space_fork_grid_discriminant{suffix}", camera_ready)
 
 
