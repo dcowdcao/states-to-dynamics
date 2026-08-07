@@ -574,6 +574,57 @@ def f4_metric_vs_rules(fit: pd.DataFrame, readout: pd.DataFrame, quality: pd.Dat
     save_figure(fig, FIGURES / "f4_metric_vs_rules", camera_ready)
 
 
+def f0_which_space(fit: pd.DataFrame, quality: pd.DataFrame, camera_ready: bool) -> None:
+    """The one-question figure: how well does each space support the rule probe?
+
+    Bars are the 4-way legality macro-F1, spaces ordered best to worst. The open marker on
+    each bar is the same space's 3-class *board* probe, and it is the reason this figure
+    cannot be read as a ranking of rule encoding: board accuracy tracks legality almost
+    perfectly (pearson 0.998), and decoding the board then applying the rules engine beats
+    the legality probe in all 11 spaces. The ordering is information preservation.
+    """
+    legality, board = macro(fit, "legality"), macro(fit, "board")
+    floor = macro(fit, "legality_shuffled").value.mean()
+    order = legality.drop(index=CONTROL_SPACES).value.sort_values(ascending=False)
+    spaces = list(order.index) + CONTROL_SPACES
+
+    fig, ax = plt.subplots(figsize=(7.6, 4.4))
+    y = np.arange(len(spaces))
+    for row, space in zip(y, spaces):
+        style = styled(space)
+        value = legality.value[space]
+        ax.barh(row, value, height=0.62, color=style["color"],
+                alpha=1.0 if space == REFERENCE_SPACE else 0.82,
+                edgecolor=INK, lw=0.9 if space == REFERENCE_SPACE else 0.0, zorder=3)
+        ax.plot(board.value[space], row, marker="|", ms=11, mew=1.6, color=INK, zorder=5)
+        ax.text(1.02, row, f"{value:.3f}", va="center", fontsize=7.5, color=INK)
+
+    ax.axvline(floor, color=MUTED, ls=(0, (2, 2)), lw=1.2, zorder=4)
+    ax.text(floor + 0.008, -0.42, f"shuffled-label floor {floor:.2f}",
+            fontsize=6.8, color=MUTED, style="italic", va="center")
+    ax.set_yticks(y, [styled(s)["short"] for s in spaces], fontsize=8)
+    ax.set_ylim(len(spaces) - 0.5, -0.75)
+    ax.axhline(0.5, color=MUTED, lw=0.6)
+    ax.axhline(len(spaces) - len(CONTROL_SPACES) - 0.5, color=MUTED, lw=0.6)
+    ax.set_xlim(0, 1.14)
+    ax.set_xticks(np.arange(0, 1.01, 0.2))
+    ax.set_xlabel("macro-F1 of the 4-way rule probe (legal / R1 / R2 / R3), held-out positions")
+    ax.grid(axis="y", visible=False)
+    ax.plot([], [], marker="|", ms=11, mew=1.6, ls="none", color=INK,
+            label="the same space's 3-class board probe — always higher")
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.13), fontsize=7.5, frameon=False)
+    fig.text(0.5, 0.925,
+             "the two bottom rows are UNTRAINED controls; random projection beats a trained "
+             "dictionary,\nand every bar sits below its own board marker — this orders "
+             "information, not rule encoding",
+             fontsize=7.2, color=MUTED, style="italic", ha="center", va="top", linespacing=1.5)
+    if not camera_ready:
+        fig.suptitle("Which representation space supports the rule probe best?",
+                     fontsize=11, y=0.995)
+    fig.tight_layout(rect=(0, 0, 1, 0.88))
+    save_figure(fig, FIGURES / "f0_which_space", camera_ready)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--results", type=Path, default=HERE / "results",
@@ -584,11 +635,12 @@ def main():
     apply_style(camera_ready=args.camera_ready)
 
     fit, readout, quality = read(args.results)
+    f0_which_space(fit, quality, args.camera_ready)
     f1_probes_per_space(fit, args.camera_ready)
     f2_readout_window(readout, args.camera_ready)
     f3_per_rule(readout, fit, args.camera_ready)
     f4_metric_vs_rules(fit, readout, quality, args.camera_ready)
-    print(f"4 figures in {FIGURES}")
+    print(f"5 figures in {FIGURES}")
 
 
 if __name__ == "__main__":
