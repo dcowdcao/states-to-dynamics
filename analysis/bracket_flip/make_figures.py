@@ -1,7 +1,7 @@
 """The two headline figures for the bracket-flip study.
 
 Fig 1  where each square's read-out moves when a flanking move is played, in the
-       probe's native mover-relative basis and relabeled to absolute colour.
+       probe's native mover-relative basis.
 Fig 2  that the displacement carries a flip-specific direction, and that editing
        along that direction changes what the model plays.
 
@@ -29,20 +29,12 @@ RESULTS = HERE / "results"
 FIGURES = HERE / "figures"
 
 ROLES = ["flipped", "unflipped_own", "unflipped_opp", "placed", "empty"]
-# Two probes of the same architecture and layer, one per label convention, so the
-# panels are two measurements rather than one relabeled twice.
-BASIS_TITLE = {"relative": "TPR trained on mine / theirs / empty",
-               "absolute": "a second TPR, trained on black / white"}
-AXIS = {
-    "relative": (r"$\ell_{\rm mine}-\ell_{\rm theirs}$ (logits)"
-                 "\n" r"$>0$: owned by the player to move",
-                 r"$\frac{1}{2}(\ell_{\rm mine}+\ell_{\rm theirs})-\ell_{\rm empty}$"
-                 "\n" r"$>0$: occupied"),
-    "absolute": (r"$(\ell_{\rm black}-\ell_{\rm white})\times$ mover of $m$ (logits)"
-                 "\n" r"$>0$: the colour the flanking player plays",
-                 r"$\frac{1}{2}(\ell_{\rm black}+\ell_{\rm white})-\ell_{\rm empty}$"
-                 "\n" r"$>0$: occupied"),
-}
+# m2_field.csv still carries both label bases; only the mover-relative one is drawn.
+BASIS = "relative"
+X_AXIS = (r"$\ell_{\rm mine}-\ell_{\rm theirs}$ (logits)"
+          "\n" r"$>0$: owned by the player to move")
+Y_AXIS = (r"$\frac{1}{2}(\ell_{\rm mine}+\ell_{\rm theirs})-\ell_{\rm empty}$"
+          "\n" r"$>0$: occupied")
 
 
 def panel_letter(ax, i: int) -> None:
@@ -50,7 +42,7 @@ def panel_letter(ax, i: int) -> None:
             color=INK, fontsize=9)
 
 
-def field_panel(ax, field: pd.DataFrame, basis: str, annotate: bool = False) -> None:
+def field_panel(ax, field: pd.DataFrame, annotate: bool = False) -> None:
     """One arrow per square role, tail = before, head = after the flanking move.
 
     The bars are on the displacement, not on the head: an arrow asserts a change,
@@ -59,11 +51,11 @@ def field_panel(ax, field: pd.DataFrame, basis: str, annotate: bool = False) -> 
     square carries a second, dashed arrow to where the matched non-flipping move
     leaves it, and the gap between those two heads is the panel's one contrast.
 
-    Each probe's held-out accuracy and its occupancy-only ceiling live in the
+    The probe's held-out accuracy and its occupancy-only ceiling live in the
     study README, not the panel title: they are findings, not a description of
     what is drawn.
     """
-    d = field[field.basis == basis].set_index("role")
+    d = field[field.basis == BASIS].set_index("role")
     for role in ROLES:
         r, style = d.loc[role], SQUARE_ROLE_STYLE[role]
         ax.annotate("", xy=(r.after_x, r.after_y), xytext=(r.before_x, r.before_y),
@@ -102,9 +94,9 @@ def field_panel(ax, field: pd.DataFrame, basis: str, annotate: bool = False) -> 
     ax.axhline(0, color=MUTED, lw=0.6, ls=(0, (1, 3)), zorder=0)
     ax.axvline(0, color=MUTED, lw=0.6, ls=(0, (1, 3)), zorder=0)
     ax.margins(y=0.12)
-    ax.set_xlabel(AXIS[basis][0])
-    ax.set_ylabel(AXIS[basis][1])
-    ax.set_title(BASIS_TITLE[basis], fontsize=9)
+    ax.set_xlabel(X_AXIS)
+    ax.set_ylabel(Y_AXIS)
+    ax.set_title("TPR trained on mine / theirs / empty", fontsize=9)
 
 
 def board_panel(ax, event: pd.DataFrame, meta: pd.Series) -> None:
@@ -132,7 +124,7 @@ def board_panel(ax, event: pd.DataFrame, meta: pd.Series) -> None:
         ax.annotate(label, (col, row - 0.52), ha="center", va="bottom", fontsize=9,
                     color=SQUARE_ROLE_STYLE[role]["color"], zorder=5,
                     fontweight="bold")
-    ax.set_title(f"one event ($t$={int(meta.t)}): the board before $m$")
+    ax.set_title(f"the board before $m$ ($t$={int(meta.t)})")
 
 
 def figure_one(camera_ready: bool) -> None:
@@ -142,25 +134,22 @@ def figure_one(camera_ready: bool) -> None:
     layer = int(field.layer.iloc[0])
     # Board is square, so the left column's height sets the figure's: any extra
     # becomes dead space beside it.
-    fig = plt.figure(figsize=(10.4, 5.5))
-    gs = fig.add_gridspec(2, 2, width_ratios=[0.80, 1.0], wspace=0.26, hspace=0.62)
-    board = fig.add_subplot(gs[:, 0])
-    # The two bases share both axes, or the absolute panel's 0.2-logit spread
-    # blows up to the width of the panel and reads as separation.
+    fig = plt.figure(figsize=(9.6, 4.6))
+    gs = fig.add_gridspec(1, 2, width_ratios=[0.85, 1.0], wspace=0.32,
+                          bottom=0.24, top=0.87)
+    board = fig.add_subplot(gs[0, 0])
     native = fig.add_subplot(gs[0, 1])
-    absolute = fig.add_subplot(gs[1, 1], sharex=native, sharey=native)
 
     board_panel(board, event, meta)
-    field_panel(native, field, "relative", annotate=True)
-    field_panel(absolute, field, "absolute")
-    for i, ax in enumerate((board, native, absolute)):
+    field_panel(native, field, annotate=True)
+    for i, ax in enumerate((board, native)):
         panel_letter(ax, i)
     fig.legend(*native.get_legend_handles_labels(), loc="upper left",
-               bbox_to_anchor=(0.44, 0.015), ncol=2, fontsize=7, alignment="left",
+               bbox_to_anchor=(0.50, 0.015), ncol=3, fontsize=7, alignment="left",
                labelspacing=0.3, columnspacing=1.0)
     if not camera_ready:
-        fig.suptitle(f"Layer-{layer} board read-out before and after a flanking move, "
-                     "under two label bases", y=0.99)
+        fig.suptitle(f"Layer-{layer} board read-out before and after a flanking move",
+                     y=0.99)
     save_figure(fig, FIGURES / "fig1_flip_and_basis", camera_ready)
 
 

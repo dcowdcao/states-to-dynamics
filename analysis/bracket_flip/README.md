@@ -82,31 +82,28 @@ numbers are below and their CSVs are still in `results/`.
 - **Fig 1 — the basis** (`make_figures.py`). Panel (a) is one event's board just
   before the flanking move, every square shaded by the role whose arrow it feeds
   and three squares outlined — *s*, the disc that gets flanked, *m*, the empty
-  square the mover takes, and *m′*, the matched non-flipping control. Panels (b)
-  and (c) are before→after arrows per role, in **gauge-invariant logit
+  square the mover takes, and *m′*, the matched non-flipping control. Panel (b)
+  is before→after arrows per role, in **gauge-invariant logit
   differences**: `x = ℓ_mine − ℓ_theirs` (who owns it),
   `y = ½(ℓ_mine + ℓ_theirs) − ℓ_empty` (is it occupied). Not filler coordinates —
   `logit = rᵀBf` is invariant under `f → Af, B → BA⁻¹`, so that plane has four
   arbitrary degrees of freedom and its angles move 131° → 105° across seeds at
   constant accuracy.
 
-  **(b) is definitional, (c) is the measurement.** Everything in (b) — 63 discs
-  crossing, *s* not crossing — is what any correct board tracker does in a
+  **(b) is definitional, and the caption has to say so.** Everything in it — 63
+  discs crossing, *s* not crossing — is what any correct board tracker does in a
   mover-relative frame, which is the retracted claim above and not a fact about
   the model. The one contrastive element is the dashed arrow to where the matched
   non-flipping move *m′* leaves *s*, **14.59 logits [14.46, 14.73] in x** from
-  where *m* leaves it. Panel (c) is a **second TPR** — same architecture, layer
-  and seed, trained on absolute-colour labels — and it separates occupied from
-  empty while placing every role within 0.22 logits of *x* = 0, empty squares
-  included, which have no colour to read. The same flip contrast is 0.04 logits
-  [0.01, 0.07] there. The two panels share axes, so the collapse shows as a
-  collapse. This is finding 1 drawn, and it is the only part of Fig 1 a board
-  oracle would fail.
+  where *m* leaves it.
 
-  Each panel titles its accuracy against **its own occupancy-only ceiling**
-  (`ceiling_{relative,absolute}` in `m1_basis.csv`), because 0.7349 alone reads as
-  partial colour ability and is the opposite: (b) clears 0.75181 by +23.1 points,
-  (c) sits 0.004 points under 0.73494. That pair, not either number, is the claim.
+  An absolute-colour companion panel was dropped from the figure. Finding 1 still
+  rests on that probe — same architecture, layer and seed, trained on
+  absolute-colour labels, collapsing the flip contrast to 0.04 logits
+  [0.01, 0.07] and sitting 0.004 points *under* its 0.73494 ceiling while the
+  relative fit clears 0.75181 by +23.1 points. The numbers are in `m1_basis.csv`
+  (`acc_tpr_{relative,absolute}`, `ceiling_{relative,absolute}`); nothing in the
+  figure carries them, so a caption or the text has to.
 
   Arrows are means over the **1,596 strict-control events**, not all 2,000: the
   control arrow is the panel's one contrast and a control move touching *s*'s
