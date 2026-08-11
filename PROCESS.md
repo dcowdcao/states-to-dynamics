@@ -6,6 +6,76 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The move-legality probe works and the logits beat it (2026-08-11)
+
+Branch `study/move-legality-probe`, worktree `../spade_sae_worktrees/move-legality-probe`.
+New: `src/spade/move_legality/`, `analysis/move_legality/`,
+`src/spade/figures/move_legality_panels.py`. A plain L2 logistic regression on the layer-5
+residual at the position of a *played* move -- 2-class and 4-class -- read out over every
+position of the 34,546-sequence violation-divergence branch tree.
+
+**The headline is the control, not the probe.** In raw layer 5 the probe localizes the
+spliced illegal move (argmax over t <= t0) in 87.4% of games against a 5.0% legal-control
+false-alarm rate and AUROC 0.960. The model's own `1 - P(the move played)`, off the logits
+already sitting beside the activations, does it in **3923/3923** games at **AUROC 1.0000**,
+with the illegal move above every other position in its own sequence by a median 0.072 in
+100.0% of games. Every probe in every space is strictly worse than reading the output head.
+So "a probe finds the illegal move" is not on its own evidence about the representation --
+the same shape of finding `legality_probe`'s RED_TEAM.md reached against board argmax.
+`model_baseline.py` exists so that cannot be forgotten; it is the rightmost column of
+`space_summary`.
+
+**What survives is R1, and it inverts the taxonomy.** Every violation on an *empty* square
+reads off at AUROC >= 0.998; an occupied square reads off at 0.82-0.93, and `occupied_opp`
+-- playing on an opponent's disc -- is 0.819 with a 0.502 hit rate, the worst cell in the
+study. The logits are at 1.000 on all six, so this is the linear read-out and not the
+model's knowledge. `taxonomy.CATEGORIES` sorts occupancy *first* as the shallowest check;
+the residual disagrees. The 4-class posterior shows the mechanism -- 0.25 of the mass on R1
+for moves that are legal -- and it lines up with the generation study's finding that the
+model's own illegal mass is suppressed 0.10x on R1 and inflated 7.1x on R3.
+
+**Balance is structural.** A fit-set item is one (game, position) pair carrying one row per
+class; `probe.balanced` keeps whole items, so classes are equal in every split *and* share
+their game and move-index marginals exactly. No reweighting, and a probe reading move index
+scores at chance. The 2-class form draws one illegal row per item rather than averaging the
+three, which would give the illegal class 1/sqrt(3) of its spread.
+
+**Two things cost a rebuild, and both are worth knowing.**
+
+*Position 0 is the attention sink and this was the only study reading it.* Left in the fit
+set and the argmax, the probe emits a per-space **constant** there -- 1.0 in BatchTopK, 0.0
+in raw -- and BatchTopK's localization came out as exactly 0.00000 with a median rank of 2
+while its AUROC at t0 stayed at 0.99. An exact zero beside a near-perfect AUROC is what
+caught it. `manifold_capture.build_corpus` and `straightness` already drop position 0;
+`move_legality.SINK` now does too, at both ends.
+
+*The batched rank AUROC had to go.* It is ~30x faster and cannot average ties, and the
+no-probe baseline saturates `1 - P(played)` at exactly 1.0 in float32 on most of the illegal
+arm -- the one arm whose estimator would then have differed. The baseline is computed in
+float64 (22,732 distinct values out of 22,777, none exactly 1.0) and every bootstrap
+resample now goes through the same tie-averaged `probe.auroc` as the point estimate.
+
+**Ground truth stops at t0 and the figures had to say so.** A branch keeps the source game's
+`tokens[t0+1:]`, legal on the reference's board and no other, and `umpire` asserts rather
+than replaying past an illegal move. Everything is scored over t in [1, t0]; the rest is
+drawn and hatched. That region turns out to carry a result of its own: after t0 the illegal
+arm averages 0.422 but the *legal* control averages 0.362 against the reference's 0.156, so
+six sevenths of the post-event elevation is the splice and not the illegality.
+
+**Across spaces, width buys more than training.** `random_proj` -- a ReLU of a random
+512->8192 projection -- reaches 0.894/0.790 test macro-F1 and 0.888 localization, above raw
+on all three and above every trained dictionary except Standard, which clears it by 0.006
+and 0.030. At matched sparsity TopK/BatchTopK do beat `random_topk` (L0 80) by 0.04/0.09, so
+training buys something -- less than the 16x expansion does. PAnneal is the trap: 0.888 on
+held-out fit-set positions, essentially raw's 0.889, and 0.758 localization against raw's
+0.874. A fit-set accuracy table would have called it faithful.
+
+Left open: every branch token is a uniform draw from its category, not from the model's own
+illegal conditional. The model's real illegal moves are near-misses it finds likely, so a
+model-sampled branch set would shrink the baseline's margin -- and that is the experiment
+that decides whether the probe is redundant. Single seed (42) throughout, so no probe number
+here has an across-seed interval.
+
 ## The model's own illegal moves are near-misses (2026-08-11)
 
 Branch `study/generation-legality`, worktree `../spade_sae_worktrees/generation-legality`.
