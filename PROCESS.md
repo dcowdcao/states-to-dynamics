@@ -6,6 +6,44 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The model's own illegal moves are near-misses (2026-08-11)
+
+Branch `study/generation-legality`, worktree `../spade_sae_worktrees/generation-legality`.
+New study `spade.generation_legality` — every other study here *injects* an illegal move;
+this one asks whether the model emits any, and of what kind. It does: 0.9982 of next-move
+mass on legal squares, 18 illegal argmax moves in 56,000 positions, and 11.5% of
+self-generated 59-ply games containing one.
+
+**The skew needed a per-position null or it would have been a plot of the board filling up.**
+R1's share of the illegal squares goes from 5/60 at ply 1 to ~55/60 at ply 56, so a pooled
+square-count null measures that and nothing else. Every skew number is instead the model's
+own illegal mass at each position redistributed uniformly over that position's illegal
+squares. Also: the three rule shares sum to 1, so R2/R3 > 1 is partly forced by R1 < 1 —
+the ordering and the per-category magnitudes survive that, the absolute ratios less so.
+
+**Rules were the wrong grouping and the §1.7 spread caught it.** Within-rule ÷ between-rule
+spread is 0.64, because R2 splits: `empty_no_bracket` 6.7× against `empty_detached` 0.45 and
+`empty_own_only` 0.33. Read at category level the result is cleaner than "R3 goes" — the two
+over-weighted categories (`opponent_only` 7.1, `empty_no_bracket` 6.7) are exactly the two
+that look like legal moves, and everything detectable from the target square alone is
+suppressed 3–10×.
+
+**Both survival arms ship because the composed one is a modelling assumption.** ∏(1 − p) over
+a game's plies assumes independence and, worse, assumes the model stays on the prefix
+distribution it was measured on. The free-running arm (reusing `straightness.build_games.
+sample_rollouts` unchanged) is 22% higher at 57 plies. The gap is the cost of
+self-conditioning and it is the only thing here that is not teacher-forced.
+
+**t ∈ [0, 56), not [4, 55].** Forfeits are not spread over the game: they are 13.5% at
+*t* = 56 and 4.0% at *t* = 57 and ~0 before, so cutting exactly those two plies keeps
+whole-game acceptance at 96% while covering the rest of the game. Over [0, 58) it drops 18%.
+
+**Gotchas.** The divergence read-out set is 3,923 games, not 2,000, so excluding it by token
+match consumes ~3,900 stream rows before this study's first game. And an sbatch run from a
+worktree needs `PYTHONPATH=$SPADE_REPO/src` exported at submit time — the editable install
+points at the main checkout, so `cd "${SPADE_REPO:?}"` alone silently runs main's code, or
+here fails with ModuleNotFoundError because the package only exists in the worktree.
+
 ## The violation shift was R2 and R3 all along (2026-08-07)
 
 `theta_dist_comparison` got the same treatment as `feature_pca`: the illegal move is drawn
