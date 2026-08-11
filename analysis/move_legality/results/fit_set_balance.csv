@@ -1,0 +1,13 @@
+split,class,n_rows,n_rows_4class,n_games
+train,legal,27743,23641,480
+train,R1,27743,23641,480
+train,R2,24163,23641,480
+train,R3,26297,23641,480
+val,legal,9258,7699,160
+val,R1,9258,7699,160
+val,R2,7867,7699,160
+val,R3,8749,7699,160
+test,legal,9255,7774,160
+test,R1,9255,7774,160
+test,R2,7930,7774,160
+test,R3,8744,7774,160

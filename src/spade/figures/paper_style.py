@@ -304,6 +304,15 @@ PROBE_CLASS_STYLE = {
     "R3": RULE_STYLE["R3 turn"],
 }
 
+# The move-legality probe comes in two head sizes. They are one probe family fit on one
+# corpus, so they separate by line style and marker and spend no hue, the way PROBE_STYLE
+# and BASIS_STYLE already do -- a hue here would collide with the classes being scored.
+PROBE_HEAD_STYLE = {
+    2: {"color": INK, "marker": "o", "ls": "-", "label": "2-class probe (legal vs illegal)"},
+    4: {"color": INK, "marker": "D", "ls": (0, (4, 2)),
+        "label": "4-class probe (legal, R1, R2, R3)"},
+}
+
 
 def apply_style(camera_ready: bool = False) -> None:
     """Working PNG by default; camera_ready switches to vector PDF + serif."""
