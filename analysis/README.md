@@ -19,6 +19,9 @@ that recomputes inside its figure script has put its expensive half in the wrong
 - `rules_manifolds/`, `rules_causal/` — the rules-of-Othello program.
 - `bracket_flip/`, `violation_divergence/`, `straightness/`, `manifold_capture/` — the
   four studies built on top of it.
+- `generation_legality/` — the prior question those four skip: does the model emit illegal
+  moves unprompted (0.9982 of next-move mass is legal; 11.5% of self-generated games are
+  not), and which rule the residual breaks.
 - `cosine_spade_gamma_sweep/` — the γ-sweep writeup; its data lives in `results/multiseed/`.
 
 Each study's README is canonical prose and is ported from the source repo rather than

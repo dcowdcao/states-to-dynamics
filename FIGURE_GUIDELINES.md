@@ -40,7 +40,11 @@ rewrite.
    reads a single condition as an average. Draw the members faint behind their
    mean, and report within-group ÷ between-group spread **on the figure**. Near
    1 the grouping is a label rather than a finding, and the figure says so
-   instead of letting three confident lines imply otherwise.
+   instead of letting three confident lines imply otherwise. When the group
+   aggregate is a **sum** of its members rather than a mean — probability mass
+   over a rule's categories, a count — the legend says `sum of 3`, not
+   `mean of 3`: the two have different units and only one of them is bounded by
+   its members.
 
 ## 2. House style
 
