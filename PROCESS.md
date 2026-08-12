@@ -32,6 +32,47 @@ existed only for the deleted rate-vs-t0 panel; it is gone, and `scalar_rows` is 
 `--camera_ready` along with its plots. `src/spade/figures/move_legality_panels.py` is gone --
 one consumer left and two helpers surviving is not a module.
 
+## The rollouts become a shared bank, and the by-rule picture survives self-conditioning (2026-08-12)
+
+A third generation-legality figure, `generation_legality_by_rule_rollout`: F2 exactly, drawn
+by the same function, on prefixes the model wrote for itself. **The answer is a null and it
+is worth having.** Rollout ÷ teacher-forced illegal mass is median 0.996 over the move axis
+and 0.993 pooled; the R3 > R2 > R1 ordering and the R1 suppression are unchanged. So the
+by-rule claim, which was measured entirely on corpus prefixes, survives the distribution the
+model is actually in — which F1's two arms diverging by 39% over a game said was not free.
+
+**The late-game dip is survivorship and must not be read as the model behaving better.** At
+t >= 40 the ratio is 0.907, because a rollout leaves the table at its first illegal move
+(`umpire` asserts, so no board exists after it) and the games that leave carry the most
+illegal mass. Everything in `rollout/positions.csv` is conditional on survival; n falls
+1000 -> 891 and the panel prints it. `scan.py`'s table conditions on a legal prefix too,
+which is what makes the pair comparable at all.
+
+**The rollout population is now a bank, because it was being redrawn per study.**
+`sample_rollouts` was shared but nothing else was: `straightness` and `generation_legality`
+each spent a GPU pass at their own seed, so "the rollouts" named two populations and neither
+was reusable. `spade.othello.rollout_bank` is that population once, at `study_dir("rollouts")`.
+It **extends by prefix** -- the sampler draws in ROLLOUT_BATCH = 250 blocks from one seeded
+generator, so block k depends only on the seed and on every earlier block being full -- so
+growing the bank leaves every existing consumer's games untouched, which `build` enforces
+and re-derives rather than trusting. `generation_legality.rollout` is deleted: after the
+refactor it was a wrapper around `rollout_bank.load` with a redundant manifest.
+
+Two reproductions worth recording. Re-running the sampler reproduced the committed
+`rollouts.csv` exactly, so saving the sequences was provably non-destructive; and the bank's
+1000 games are token-identical to the ones the first scan ran on, asserted in the job before
+the rescan.
+
+**Not done, deliberately: `straightness` still draws its own.** It uses a different seed, so
+repointing it would silently move committed figures and geometry results. That is the
+remaining half of the uniformity and it needs its own re-render, not a side effect of a
+plotting change.
+
+Also fixed here: `spread()` now takes arrays rather than the skew frame, because there are
+three callers -- skew ratios (0.638), teacher-forced mass shares (0.951) and rollout mass
+shares (0.888) -- and each rule figure must print the spread of its own source, never the
+other's.
+
 ## generation_legality is two single-panel figures now (2026-08-12)
 
 Cut from 2x3 panels to 2x1 on request: F1 is P(at least one illegal move by move t),

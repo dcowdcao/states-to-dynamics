@@ -1,20 +1,29 @@
-"""The two generation-legality figures, one panel each. Drawing only; the statistics are
+"""The three generation-legality figures, one panel each. Drawing only; the statistics are
 in results/.
 
-F1 `generation_legality`         — by move t, has the model played an illegal move yet?
-F2 `generation_legality_by_rule` — at move t, how likely is an illegal move of each rule?
+F1 `generation_legality`                 — by move t, has the model played an illegal move yet?
+F2 `generation_legality_by_rule`         — at move t, how likely is an illegal move of each rule?
+F3 `generation_legality_by_rule_rollout` — F2 on prefixes the model generated for itself
 
-The two answer different questions and their y axes are not the same quantity. F1 is
-**cumulative** and per game: the fraction of games that have committed at least one illegal
-move by ply t, which only rises. F2 is **per move** and is the model's next-move probability
-mass, which is what "the model generates an illegal move here" means for a distribution.
-Reading F2's curves as if they accumulated, or F1's as if it were a per-move rate, is the
-one misreading the pair invites; each panel says which it is on its y axis.
+F1's y axis is not F2's and F3's. F1 is **cumulative** and per game: the fraction of games
+that have committed at least one illegal move by ply t, which only rises. F2 and F3 are
+**per move** and are the model's next-move probability mass, which is what "the model
+generates an illegal move here" means for a distribution. Reading a per-move curve as if it
+accumulated, or F1 as if it were a per-move rate, is the misreading the set invites; each
+panel says which it is on its y axis.
 
-Two conventions F2 states for itself. Its rule series are **sums** over their taxonomy
-categories, not means, so the legend says `sum of 3` (FIGURE_GUIDELINES 1.7); the six
-members are drawn faint behind their rule, and the within-rule ÷ between-rule spread is
-printed, because a spread near 1 would mean the three rules are a label and not a finding.
+F2 and F3 are one function called twice, so they are the same picture and differ only in
+where the legal prefix came from: F2's is a corpus game handed to the model, F3's is a game
+it wrote. F3 is conditional on survival -- a rollout leaves the table at its first illegal
+move -- so its n falls along the move axis and the panel prints it. F2 conditions on a legal
+prefix too, which is what makes the pair comparable; neither is P(illegal at ply t)
+unconditionally.
+
+Two conventions the rule figures state for themselves. Their rule series are **sums** over
+their taxonomy categories, not means, so the legend says `sum of 3` (FIGURE_GUIDELINES 1.7);
+the six members are drawn faint behind their rule, and the within-rule ÷ between-rule spread
+is printed, because a spread near 1 would mean the three rules are a label and not a finding.
+Each figure prints the spread of its own source, never the other's.
 
 Usage: python analysis/generation_legality/make_figures.py [--results DIR] [--camera-ready]
 """
@@ -38,9 +47,20 @@ MARKS = 8          # markers per curve; the move axis has 56 points
 NOTE = {"fontsize": 7.5, "color": MUTED}
 SIZE = (6.4, 4.4)  # one panel, drawn at the width a two-column figure is printed at
 
+# The claim each rule figure makes, per source. Kept beside each other because the pair only
+# means something read together, and because they are claims and not descriptions
+# (FIGURE_GUIDELINES 5): whoever changes one owes the other a look.
+TITLE = {
+    "by_move": "The residual illegal mass is not spread evenly: R3 (turn, one category)\n"
+               "dominates from the midgame on and R1 (placement) is suppressed",
+    "rollout_by_move": "Conditioning on the model's own prefixes barely moves it: the same\n"
+                       "R3 > R2 > R1 ordering, and the mass tracks the corpus scan to ~10%",
+}
+
 
 def read(results: Path) -> dict[str, pd.DataFrame]:
-    return {n: pd.read_csv(results / f"{n}.csv") for n in ["by_move", "survival", "overall"]}
+    return {n: pd.read_csv(results / f"{n}.csv")
+            for n in ["by_move", "rollout_by_move", "survival", "overall"]}
 
 
 def band(ax, x, frame: pd.DataFrame, style: dict, label: str, value: str = "mean", **kw):
@@ -90,10 +110,15 @@ def figure_one(tables: dict[str, pd.DataFrame], camera_ready: bool) -> Path:
     return save_figure(fig, FIGURES / "generation_legality", camera_ready)
 
 
-def figure_two(tables: dict[str, pd.DataFrame], camera_ready: bool) -> Path:
-    """Per move, split by the constraint rule the illegal move would break."""
+def rules_figure(tables: dict[str, pd.DataFrame], source: str, camera_ready: bool) -> Path:
+    """Per move, split by the constraint rule the illegal move would break.
+
+    `source` picks the prefix distribution and nothing else: "by_move" is the teacher-forced
+    corpus scan, "rollout_by_move" the model's own generated games.
+    """
+    rollout = source == "rollout_by_move"
     fig, ax = plt.subplots(figsize=SIZE)
-    by_move = tables["by_move"]
+    by_move = tables[source]
 
     total = move_series(by_move, "p_illegal")
     band(ax, total.t, total, GENERATION_STYLE["mass"], GENERATION_STYLE["mass"]["label"],
@@ -116,24 +141,29 @@ def figure_two(tables: dict[str, pd.DataFrame], camera_ready: bool) -> Path:
     # below R2 by the endgame and would otherwise set the axis for the whole panel.
     floor = min(move_series(by_move, f"p_{k}").lo.min() for k in RULES)
     ax.set_ylim(bottom=floor * 0.6)
-    spread = float(tables["overall"].set_index("metric").value["rule_mass_within_over_between"])
+    spread_key = "rollout_mass_within_over_between" if rollout else "rule_mass_within_over_between"
+    spread = float(tables["overall"].set_index("metric").value[spread_key])
+    n_note = (f"the games still legal at each $t$, $n$ falling {int(total.n_games.iloc[0])} "
+              f"$\\rightarrow$ {int(total.n_games.iloc[-1])}"
+              if rollout else f"$n$ = {int(total.n_games.iloc[0])} games")
     note = ("faint: the 6 taxonomy categories, behind the rule that sums them; some leave the "
-            "axis below.  band: 95% bootstrap CI over "
-            f"$n$ = {int(total.n_games.iloc[0])} games.\n"
-            f"within-rule ÷ between-rule spread = {spread:.2f} (SD of log$_{{10}}$ share), and "
-            "it is all R2: its three members span 1.73 dex where R1's two span 0.11,\n"
-            "so on this axis R2 is a label and R1 is a class.")
+            f"axis below.  band: 95% bootstrap CI over {n_note}.\n"
+            f"within-rule ÷ between-rule spread = {spread:.2f} (SD of log$_{{10}}$ share): "
+            "it is R2 that drives it, and R3 has a single member, so on this axis\n"
+            "R2 is closer to a label than a class.")
     ax.legend(loc="upper left", fontsize=8)
+    if rollout:
+        note += ("\nconditional on survival: a rollout leaves the table at its first illegal "
+                 "move, so $n$ falls along the axis.")
     if not camera_ready:
-        ax.set_title("The residual illegal mass is not spread evenly: R3 (turn, one category)\n"
-                     "dominates from the midgame on and R1 (placement) is suppressed",
-                     fontsize=10)
+        ax.set_title(TITLE[source], fontsize=10)
     fig.tight_layout()
     # Under the panel, not in it: four lines of note inside a log axis sit on the faint
     # members it is telling the reader to look at.
     fig.text(0.005, -0.015, note, ha="left", va="top", linespacing=1.5, **NOTE)
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.135)
-    return save_figure(fig, FIGURES / "generation_legality_by_rule", camera_ready)
+    rule_key(fig, ["R1", "R2", "R3"], y=-0.20 if rollout else -0.135)
+    stem = "generation_legality_by_rule" + ("_rollout" if rollout else "")
+    return save_figure(fig, FIGURES / stem, camera_ready)
 
 
 def main() -> None:
@@ -144,7 +174,9 @@ def main() -> None:
     args = ap.parse_args()
     apply_style(camera_ready=args.camera_ready)
     tables = read(args.results)
-    for path in (figure_one(tables, args.camera_ready), figure_two(tables, args.camera_ready)):
+    for path in (figure_one(tables, args.camera_ready),
+                 rules_figure(tables, "by_move", args.camera_ready),
+                 rules_figure(tables, "rollout_by_move", args.camera_ready)):
         print(f"wrote {path}")
 
 

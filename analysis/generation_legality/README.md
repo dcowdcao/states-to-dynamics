@@ -119,9 +119,9 @@ mass axis, where R3 crosses R2 in the midgame and R1 turns over around *t* = 40.
 
 ## Figures
 
-Two figures, one panel each. **Their y axes are not the same quantity**: F1 is cumulative
-per game and only rises, F2 is per move. Reading either as the other is the one misreading
-the pair invites, so each states which it is on its own y axis.
+Three figures, one panel each. **F1's y axis is not F2's and F3's**: F1 is cumulative per
+game and only rises, F2 and F3 are per move. Reading one as the other is the misreading the
+set invites, so each states which it is on its own y axis.
 
 `figures/generation_legality.png` — **OthelloGPT puts 0.9982 of its next-move mass on legal
 squares, and 11.5% of the 59-ply games it generates for itself still go illegal.**
@@ -146,12 +146,27 @@ the rule series are **sums**, not means, so the legend says `sum of 3`
 setting it for the whole panel. The within-rule ÷ between-rule spread of 0.95 is printed
 under the panel with the reason: on this axis R2 is a label and R1 is a class.
 
-There is no third figure, and no skew, density or played-rate panel. Those measurements were
+There is no skew, density or played-rate panel. Those measurements were
 not deleted with their panels — `rule_skew.csv`, `played_rate.csv` and `overall.csv` still
 carry every number this README quotes — but the ratio-to-matched-null view now lives in the
 CSVs and the prose above, not in a plot.
 
-Both figures are PNG for reading here; `--camera-ready` writes vector PDFs and moves the
+`figures/generation_legality_by_rule_rollout.png` — **Conditioning on the model's own
+prefixes barely moves it: the same R3 > R2 > R1 ordering, and the mass tracks the corpus
+scan to ~10%.** F2 exactly, drawn by the same function, on prefixes the model generated for
+itself instead of corpus games handed to it. Ratio of rollout to teacher-forced mass: median
+**0.996** over the move axis, **0.907** late (*t* ≥ 40), pooled **0.993**; the ordering and
+the R1 suppression are unchanged. The late deficit is **survivorship, not the model behaving
+better** — a rollout leaves the table at its first illegal move, and the games that leave are
+the ones carrying the most illegal mass. n falls 1000 → 891 across the axis and the panel
+prints it. Its own within-rule ÷ between-rule spread is 0.89, the same story as F2's 0.95.
+
+Why this is worth having: F2 alone is a statement about a prefix distribution the model is
+never in once it starts playing. F3 says the by-rule picture survives self-conditioning,
+which was not obvious — F1's two arms diverge by 39% at the end of a game on exactly that
+distinction.
+
+All three are PNG for reading here; `--camera-ready` writes vector PDFs and moves the
 titles into these captions.
 
 ## What this cannot claim

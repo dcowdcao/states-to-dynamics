@@ -30,6 +30,8 @@ from spade.common.config import CTX_LEN
 from spade.common.paths import repo_root
 from spade.common.study import study_dir
 from spade.generation_legality.positions import N_SQUARES, POSITIONS
+from spade.generation_legality.rollout_scan import N_GAMES
+from spade.othello.rollout_bank import load as load_bank
 from spade.othello.taxonomy import CATEGORIES, RULE_MEMBERS, RULE_OF
 
 N_BOOT = 2000
@@ -57,6 +59,21 @@ def ratio_ci(num: np.ndarray, den: np.ndarray,
     with np.errstate(invalid="ignore", divide="ignore"):
         draws = (w @ num) / (w @ den)
         return num.sum(0) / den.sum(0), *np.percentile(draws, [2.5, 97.5], axis=0)
+
+
+def nan_mean_ci(x: np.ndarray, w: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """`mean_ci` where a game contributes to some columns and not others.
+
+    The rollout table is ragged: a game leaves at its first illegal move, so column t is a
+    mean over the games still alive at t. One weight matrix is still used across the whole
+    curve -- the same resampled games, with dead cells simply not contributing -- rather
+    than an independent resample per column, which would decouple neighbouring points.
+    """
+    alive = np.isfinite(x).astype(float)
+    filled = np.nan_to_num(x)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        draws = (w @ filled) / (w @ alive)
+    return np.nanmean(x, axis=0), *np.percentile(draws, [2.5, 97.5], axis=0)
 
 
 def pivot(frame: pd.DataFrame, column: str) -> np.ndarray:
@@ -102,6 +119,34 @@ def by_move(game: dict, w: np.ndarray) -> pd.DataFrame:
         for metric, point, lo, hi in rows for i, t in enumerate(POSITIONS)])
 
 
+def rollout_by_move(frame: pd.DataFrame, w: np.ndarray) -> pd.DataFrame:
+    """`by_move` over the self-generated prefixes of `rollout_scan`, with n alive per ply.
+
+    Same metrics and same estimator as `by_move`; only the prefix distribution differs. The
+    skew columns are not recomputed here -- the by-rule figure draws mass, and a matched-null
+    ratio conditional on survival is a different statistic that nothing plots.
+    """
+    n_games = len(w[0])
+
+    def grid(metric: str) -> np.ndarray:
+        """[n_games, len(POSITIONS)], NaN where the game had already gone illegal.
+
+        Reindexed rather than pivoted straight: a game whose first move is illegal has no
+        rows at all and would otherwise drop out of the array the weights index into.
+        """
+        return (frame.pivot(index="game_id", columns="t", values=metric)
+                .reindex(index=range(n_games), columns=list(POSITIONS)).to_numpy())
+
+    values = {m: grid(m) for m in ["p_legal", *(f"p_{n}" for n in RULES + CATEGORIES[1:])]}
+    values["p_illegal"] = sum(values[f"p_{r}"] for r in RULES)
+    alive = np.isfinite(values["p_legal"]).sum(0)
+    rows = [(metric, *nan_mean_ci(value, w)) for metric, value in values.items()]
+    return pd.DataFrame([
+        {"t": int(t), "metric": metric, "mean": point[i], "lo": lo[i], "hi": hi[i],
+         "n_games": int(alive[i]), "n_games_total": n_games}
+        for metric, point, lo, hi in rows for i, t in enumerate(POSITIONS)])
+
+
 def played_rate(game: dict, w: np.ndarray) -> pd.DataFrame:
     """Greedy/sampled illegal rates in PLAYED_BIN-ply bins; per-t counts are ~1."""
     n_games, edges = len(w[0]), range(POSITIONS.start, POSITIONS.stop, PLAYED_BIN)
@@ -140,21 +185,25 @@ def rule_skew(game: dict, w: np.ndarray) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def spread(skew: pd.DataFrame, column: str = "ratio") -> float:
-    """Within-rule / between-rule spread of a mass-arm column, in log10 (GUIDELINES 1.7).
+def spread(share: np.ndarray, rule: np.ndarray) -> float:
+    """Within-rule / between-rule spread of a per-category quantity, in log10 (GUIDELINES 1.7).
 
-    Near 1 the three rules are a label rather than a finding, and the figure drawing them
-    has to say so. `ratio` answers it for the skew and `share_observed` for the mass; the
-    two are not the same question, because a category's matched null carries its own
-    availability.
+    Near 1 the three rules are a label rather than a finding, and the figure drawing them has
+    to say so. The skew answers it one way and the raw mass share another, because a
+    category's matched null carries its own availability; both are reported.
     """
-    members = skew[(skew.arm == "mass") & (skew.level == "category")]
-    value = np.log10(members[column].to_numpy())
-    rule = members.rule.to_numpy()
+    value = np.log10(share)
     means = np.array([value[rule == r].mean() for r in RULES])
     within = np.sqrt(sum(((value[rule == r] - m) ** 2).sum() for r, m in zip(RULES, means))
                      / (len(value) - len(RULES)))
     return within / means.std(ddof=1)
+
+
+def category_shares(frame: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
+    """(share of illegal mass per category, its rule), pooled over every row of a scan."""
+    mass = np.array([frame[f"p_{c}"].sum() for c in CATEGORIES[1:]])
+    rules = np.array([RULE_OF[c].split()[0] for c in CATEGORIES[1:]])
+    return mass / mass.sum(), rules
 
 
 def survival(game: dict, rollouts: pd.DataFrame, w: np.ndarray) -> pd.DataFrame:
@@ -176,7 +225,7 @@ def survival(game: dict, rollouts: pd.DataFrame, w: np.ndarray) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def overall(game: dict, rollouts: pd.DataFrame, skew: pd.DataFrame,
+def overall(game: dict, rollouts: pd.DataFrame, skew: pd.DataFrame, rollout_share: np.ndarray,
             w: np.ndarray) -> pd.DataFrame:
     n_games, rows = len(w[0]), []
     for metric in ["p_legal", "p_illegal", "p_pass", "uniform_illegal",
@@ -197,9 +246,12 @@ def overall(game: dict, rollouts: pd.DataFrame, skew: pd.DataFrame,
     point, lo, hi = mean_ci(clean, weights(len(clean), np.random.default_rng(BOOT_SEED)))
     rows.append({"metric": "free_running_fully_legal", "value": point[0], "lo": lo[0],
                  "hi": hi[0], "n_games": len(clean), "n": len(clean)})
-    for metric, column in [("rule_skew_within_over_between", "ratio"),
-                           ("rule_mass_within_over_between", "share_observed")]:
-        rows.append({"metric": metric, "value": spread(skew, column), "lo": np.nan,
+    members = skew[(skew.arm == "mass") & (skew.level == "category")]
+    rule = members.rule.to_numpy()
+    for metric, share in [("rule_skew_within_over_between", members.ratio.to_numpy()),
+                          ("rule_mass_within_over_between", members.share_observed.to_numpy()),
+                          ("rollout_mass_within_over_between", rollout_share)]:
+        rows.append({"metric": metric, "value": spread(share, rule), "lo": np.nan,
                      "hi": np.nan, "n_games": n_games, "n": len(CATEGORIES) - 1})
     return pd.DataFrame(rows)
 
@@ -212,7 +264,9 @@ def main() -> None:
 
     base = study_dir("generation")
     frame = pd.read_csv(base / "scan" / "positions.csv")
-    rollouts = pd.read_csv(base / "rollout" / "rollouts.csv")
+    _, first_illegal = load_bank(N_GAMES)
+    rollouts = pd.DataFrame({"first_illegal": first_illegal.numpy()})
+    rollout_frame = pd.read_csv(base / "rollout" / "positions.csv")
     game = per_game(frame)
     rng = np.random.default_rng(BOOT_SEED)
     w = weights(len(game["p_illegal"]), rng)
@@ -220,10 +274,12 @@ def main() -> None:
     skew = rule_skew(game, w)
     tables = {
         "by_move": by_move(game, w),
+        "rollout_by_move": rollout_by_move(
+            rollout_frame, weights(len(rollouts), np.random.default_rng(BOOT_SEED))),
         "played_rate": played_rate(game, w),
         "rule_skew": skew,
         "survival": survival(game, rollouts, w),
-        "overall": overall(game, rollouts, skew, w),
+        "overall": overall(game, rollouts, skew, category_shares(rollout_frame)[0], w),
     }
     args.results.mkdir(parents=True, exist_ok=True)
     for name, table in tables.items():
