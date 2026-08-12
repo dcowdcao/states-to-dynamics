@@ -125,15 +125,17 @@ set invites, so each states which it is on its own y axis.
 
 `figures/generation_legality.png` — **OthelloGPT puts 0.9982 of its next-move mass on legal
 squares, and 11.5% of the 59-ply games it generates for itself still go illegal.**
-P(at least one illegal move by move *t*) against move number, two arms: `free_running`,
-1000 whole games sampled at T = 1.0 from a uniform-random legal opening and judged by the
-engine — this is the measured, averaged-over-games curve — and `teacher_forced`, the same
-quantity composed from the per-position mass of a model that never sees its own output
-(∏(1 − p) over a game's plies, then averaged over games). The two are the same statistic
-under two sequence distributions, so they share a hue and split on line style. The gap at
-the end, 11.5% against 8.3%, is the cost of self-conditioning and is the reason the composed
-arm is not a substitute for the measured one. Bands are 95% percentile bootstrap CIs over
-games (2000 resamples).
+P(at least one illegal move by move *t*) against move number, `free_running` only: 1000 whole
+games sampled at T = 1.0 from a uniform-random legal opening and judged by the engine, so
+this is measured, not composed.
+
+The `teacher_forced` arm is **still computed and still in `results/survival.csv`**, but it is
+no longer drawn. It is the same statistic under a different sequence distribution — the model
+is scored at each position of a *corpus* game, never seeing its own output, and the per-ply
+masses are then composed (∏(1 − p), averaged over games). Drawn beside the rollout it read as
+one measurement with a discrepancy rather than two questions; the gap at 59 plies, 11.5%
+against 8.3%, is in the CSV and in the caveats below, where it belongs as the cost of
+self-conditioning. 95% percentile bootstrap CIs over games (2000 resamples) are in the CSV.
 
 `figures/generation_legality_by_rule.png` — **The residual illegal mass is not spread over
 the illegal squares the way the board offers them: R3 (turn confusion) dominates from the

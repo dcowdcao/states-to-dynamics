@@ -84,32 +84,29 @@ def move_series(by_move: pd.DataFrame, metric: str) -> pd.DataFrame:
 def figure_one(tables: dict[str, pd.DataFrame], camera_ready: bool) -> Path:
     """Cumulative: by move t, what fraction of games have gone illegal?"""
     fig, ax = plt.subplots(figsize=SIZE)
-    table = tables["survival"]
-    # The two arms end four plies apart and their labels collide unless they go opposite
-    # ways off the endpoint: teacher-forced right-and-down into the gap under the rollout.
-    for arm, offset, align in [("teacher_forced", (7, -11), "left"),
-                               ("free_running", (-6, 7), "right")]:
-        rows, style = table[table.arm == arm].sort_values("plies"), GENERATION_STYLE[arm]
-        end = rows.iloc[-1]
-        curve(ax, rows.plies, rows, style,
-             f"{style['label']} ($n$ = {int(rows.n_games.iloc[0])} games)",
-             value="value", zorder=5 if arm == "free_running" else 4)
-        ax.annotate(f"{end.value:.1%}", (end.plies, end.value), textcoords="offset points",
-                    xytext=offset, fontsize=8, color=style["color"], ha=align)
+    # The rollout arm only. The teacher-forced arm is still computed and still in
+    # results/survival.csv, but composing per-position mass from prefixes the model never
+    # wrote answers a different question, and drawing the two together read as one.
+    rows = tables["survival"].query("arm == 'free_running'").sort_values("plies")
+    style = GENERATION_STYLE["free_running"]
+    end = rows.iloc[-1]
+    curve(ax, rows.plies, rows, style, None, value="value")
+    ax.annotate(f"{end.value:.1%}", (end.plies, end.value), textcoords="offset points",
+                xytext=(-6, 7), fontsize=8, color=style["color"], ha="right")
 
     ax.set_xlabel("game move number $t$")
     ax.set_ylabel("P(at least one illegal move by move $t$)   ↓ better")
     ax.set_ylim(bottom=0)
     ax.set_xlim(left=0)
-    ax.text(0.03, 0.97, "cumulative, so the curve can only rise\n"
+    ax.text(0.03, 0.97, f"free-running rollouts, $n$ = {int(rows.n_games.iloc[0])} games\n"
+            "cumulative, so the curve can only rise\n"
             "95% bootstrap CIs are in results/survival.csv, not drawn",
             transform=ax.transAxes, va="top", **NOTE)
-    ax.legend(loc="upper left", bbox_to_anchor=(0.0, 0.86), fontsize=8)
     if not camera_ready:
         legal = tables["overall"].set_index("metric").value["p_legal"]
-        end = table.query("arm == 'free_running'").value.iloc[-1]
         ax.set_title(f"OthelloGPT puts {legal:.4f} of its next-move mass on legal squares, "
-                     f"and {end:.1%} of the games\nit generates for itself still go illegal",
+                     f"and {end.value:.1%} of the games\nit generates for itself still go "
+                     f"illegal",
                      fontsize=10)
     fig.tight_layout()
     return save_figure(fig, FIGURES / "generation_legality", camera_ready)
