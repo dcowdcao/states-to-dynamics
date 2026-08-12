@@ -7,6 +7,10 @@ Subdirectories are by experiment (`cosine_spade_sweep/`, `spade_revival/`), not 
 namespace: the source repo has eight distinct files named `Figure_4_karvonen_extension*.png`
 in six directories, all different. Flattening loses five of them.
 
+`othello_rules/` is the one subdirectory that is not an experiment: it draws the R1-R3
+constraint rules of [docs/othello_rules.md](../docs/othello_rules.md) on a single board, and
+it lives here because every rules study cites that taxonomy and none of them owns it.
+
 How a figure gets made is not a per-script choice. [FIGURE_GUIDELINES.md](../FIGURE_GUIDELINES.md)
 is normative and plotting code cites it by section; `spade.figures.paper_style` is the only
 module where a color literal may appear, and shared panel renderers live beside it. The

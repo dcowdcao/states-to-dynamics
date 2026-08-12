@@ -5,6 +5,8 @@ All functions speak vocab tokens (1..60) at the boundary and engine squares
 forfeit fallback; forfeit handling is explicit at each call site.
 """
 
+from dataclasses import dataclass
+
 import numpy as np
 
 from spade.common.paths import add_karvonen_to_path
@@ -25,20 +27,42 @@ def replay(tokens: list[int]) -> OthelloBoardState:
     return board
 
 
+@dataclass(frozen=True)
+class Ray:
+    """One of the eight directions out of a square, as R2 sees it.
+
+    `run` is the contiguous opponent discs, nearest first. Exactly one of `terminator` (the
+    mover's own disc, so the bracket closes) and `blocker` (the empty square that breaks it)
+    is set; both are None when the run walks off the board.
+    """
+    run: list[int]
+    terminator: int | None
+    blocker: int | None
+
+    @property
+    def closed(self) -> bool:
+        return self.terminator is not None and bool(self.run)
+
+
+def rays(state: np.ndarray, square: int, color: int) -> list[Ray]:
+    """The eight rays out of `square` for `color`, in `eights` order."""
+    r, c = square // 8, square % 8
+    out = []
+    for dr, dc in eights:
+        run, cr, cc = [], r + dr, c + dc
+        while 0 <= cr <= 7 and 0 <= cc <= 7 and state[cr, cc] != 0 and state[cr, cc] != color:
+            run.append(8 * cr + cc)
+            cr, cc = cr + dr, cc + dc
+        on_board = 0 <= cr <= 7 and 0 <= cc <= 7
+        stop = 8 * cr + cc if on_board else None
+        closed = on_board and state[cr, cc] == color
+        out.append(Ray(run, stop if closed else None, None if closed else stop))
+    return out
+
+
 def flip_set(state: np.ndarray, square: int, color: int) -> list[int]:
     """Squares flipped when `color` plays `square`."""
-    r, c = square // 8, square % 8
-    flipped = []
-    for dr, dc in eights:
-        buffer = []
-        cr, cc = r + dr, c + dc
-        while 0 <= cr <= 7 and 0 <= cc <= 7 and state[cr, cc] != 0:
-            if state[cr, cc] == color:
-                flipped.extend(buffer)
-                break
-            buffer.append(8 * cr + cc)
-            cr, cc = cr + dr, cc + dc
-    return flipped
+    return [sq for ray in rays(state, square, color) if ray.closed for sq in ray.run]
 
 
 def regular_moves(state: np.ndarray, color: int) -> set[int]:

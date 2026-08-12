@@ -319,6 +319,33 @@ conditions:
   whose frame alternates (here: a mover-relative board code flipping each ply)
   draws as a sawtooth that hides everything else; plot one phase and say which.
 
+### 4.9 Board panels (a discrete state, drawn where it lives)
+
+- **One renderer owns the board.** `spade.figures.othello_board.draw_board` sets
+  the grid, the algebraic axes and the discs; a panel that draws its own will
+  drift out of register with every other board in the paper, and the same square
+  must land in the same place everywhere. Overlays go on top of it; shading that
+  belongs *under* the pieces is drawn before it.
+- **Let the pieces draw themselves.** Absolute colour — a black disc is a filled
+  black circle, a white one an open circle — so the board needs no legend for its
+  own contents and is unchanged in grayscale.
+- **Never cover the evidence.** The disc sitting on a square is often the whole
+  reason the square is marked. Mark with an outline on the cell edge and a marker
+  inset into a corner, never a fill or a centred marker.
+- **A marker hue has to survive on a black disc, a white disc and the empty
+  cell.** Mid-luminance Okabe–Ito with a white marker edge. Pure black is
+  unavailable: it is already the disc colour and the disc edge.
+- **Draw the rule, not just the square.** A marked square with no geometry asserts
+  something the reader has to take on faith. Draw the line that makes the move
+  legal, or the line that fails to close, and mark the square where it fails.
+- **State the side to move, in the axes.** Any legality that depends on whose turn
+  it is cannot be read without it, and a title does not survive camera-ready
+  (§5), so it does not belong in one.
+- **Name squares algebraically** in the label, so a claim in the prose can be
+  checked against the picture square by square.
+- One marked square needs no marker and no legend: the outline and its name carry
+  it, and a spare marker on a board reads as another piece.
+
 ## 5. Captions and panel labels
 
 - **The caption's first sentence is the claim, not a description.** "Curvature

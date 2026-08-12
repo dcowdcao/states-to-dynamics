@@ -6,6 +6,37 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The constraint rules get drawn, on one board (2026-08-12)
+
+`figures/othello_rules/` — `rules_legal_move.png` and `rules_illegal_moves.png`, off ONE
+position (game 606 of the seed-42 stream, t = 16, black to move) so the legal move and the
+three violations are comparable without the board moving under the reader. Script is
+`src/spade/figures/figure_othello_rules.py`; `docs/othello_rules.md` had defined the taxonomy
+for five studies and never shown it.
+
+**Choices that are not arbitrary.** R2 is drawn as `empty_no_bracket`, not the shallower
+`empty_detached`: the taxonomy orders R2's members by the board computation a violation takes
+to detect, and only the deepest is *visible* as a rule — h3 has a real run of white discs
+that dies on an empty d3. `empty_detached` would show an empty square with nothing to see.
+R1 is `occupied_opp` (the study's worst probe cell) at b2 rather than the better-separated
+e2, because e2 sits directly above e3, the last disc of the R2 run, and read as part of it.
+The position was picked by scanning t in [14,26] of 800 games for: all three rules available,
+a played move flipping several discs in >1 direction, and >= 3 cells between every drawn
+square. All three co-occur at 97.8% of positions, so nothing here is a rarity.
+
+**`boards.rays` is new, and `flip_set` now goes through it.** Drawing R2 needs the *failed*
+bracket — the run and the empty square that breaks it — which the old flat `flip_set` threw
+away. `rays` returns one `Ray` per direction (`run`, `terminator`, `blocker`), `flip_set` is
+a one-line comprehension over the closed ones, and the rewrite was checked identical to the
+pre-refactor body on 16,000 (board, square, colour) cases before anything was built on it.
+
+`othello_board.mark_square` joins `draw_board` so there is still exactly one board renderer.
+FIGURE_GUIDELINES gained §4.9: the disc on a square is usually *why* it is marked, so mark
+with a cell outline and a corner-inset marker and never a fill; pure black is unavailable to
+overlays because it is already the disc colour; and the side to move goes in the axes, not in
+a title, because turn-dependent legality is unreadable without it and titles do not survive
+camera-ready.
+
 ## Move-legality keeps two curves and loses the rest of its figures (2026-08-12)
 
 The study shipped 24 PNGs -- six 4-panel figures per space, plus an 11-space grid per score
