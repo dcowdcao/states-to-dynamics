@@ -139,12 +139,9 @@ games (2000 resamples).
 the illegal squares the way the board offers them: R3 (turn confusion) dominates from the
 midgame on and R1 (placement) is suppressed.** P(illegal move at move *t*) against move
 number, split into the three constraint rules, on a log axis, with `any illegal` as the
-reference. The six taxonomy categories are drawn faint behind the rule that sums them, and
-the rule series are **sums**, not means, so the legend says `sum of 3`
-(FIGURE_GUIDELINES 1.7). The axis floor comes from the rule curves, so a faint member —
-`empty_detached` decays four decades below R2 by the endgame — leaves the axis rather than
-setting it for the whole panel. The within-rule ÷ between-rule spread of 0.95 is printed
-under the panel with the reason: on this axis R2 is a label and R1 is a class.
+reference. The rule series are **sums** over their taxonomy categories, not means, so the legend says
+`sum of 3` (FIGURE_GUIDELINES 1.7), and the within-rule ÷ between-rule spread of 0.95 is
+printed under the panel: on this axis R2 is a label and R1 is a class.
 
 There is no skew, density or played-rate panel. Those measurements were
 not deleted with their panels — `rule_skew.csv`, `played_rate.csv` and `overall.csv` still
@@ -160,6 +157,14 @@ the R1 suppression are unchanged. The late deficit is **survivorship, not the mo
 better** — a rollout leaves the table at its first illegal move, and the games that leave are
 the ones carrying the most illegal mass. n falls 1000 → 891 across the axis and the panel
 prints it. Its own within-rule ÷ between-rule spread is 0.89, the same story as F2's 0.95.
+
+**Neither the six taxonomy members nor the bootstrap bands are drawn**, by request: the
+panels carry the four rule curves alone. This is a deliberate departure from
+FIGURE_GUIDELINES 1.2, which wants every claim-supporting curve to carry its uncertainty.
+Nothing stopped being measured — every `lo`/`hi` column is still computed and written, and
+each panel names the file it lives in (`by_move.csv`, `rollout_by_move.csv`,
+`survival.csv`). The members' story survives as the printed spread, which is the number they
+were there to justify.
 
 Why this is worth having: F2 alone is a statement about a prefix distribution the model is
 never in once it starts playing. F3 says the by-rule picture survives self-conditioning,

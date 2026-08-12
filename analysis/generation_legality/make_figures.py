@@ -37,7 +37,7 @@ import pandas as pd
 from matplotlib.ticker import FuncFormatter
 
 from spade.figures.paper_style import (
-    CATEGORY_STYLE, GENERATION_STYLE, MUTED, RULE_STYLE, apply_style, rule_key, save_figure)
+    GENERATION_STYLE, MUTED, RULE_STYLE, apply_style, rule_key, save_figure)
 from spade.othello.taxonomy import RULE_MEMBERS
 
 HERE = Path(__file__).resolve().parent
@@ -63,11 +63,15 @@ def read(results: Path) -> dict[str, pd.DataFrame]:
             for n in ["by_move", "rollout_by_move", "survival", "overall"]}
 
 
-def band(ax, x, frame: pd.DataFrame, style: dict, label: str, value: str = "mean", **kw):
-    """Point curve with its bootstrap band, markers thinned to MARKS."""
+def curve(ax, x, frame: pd.DataFrame, style: dict, label: str, value: str = "mean", **kw):
+    """Point curve, markers thinned to MARKS. No band: the intervals are in the CSVs.
+
+    Dropping the drawn interval is a deliberate departure from FIGURE_GUIDELINES 1.2, which
+    wants every claim-supporting curve to carry its uncertainty. Every `lo`/`hi` column is
+    still computed and written, and each panel says where; nothing was stopped being
+    measured.
+    """
     every = max(1, len(x) // MARKS)
-    ax.fill_between(x, frame.lo, frame.hi, color=style["color"], alpha=0.22, lw=0,
-                    zorder=kw.get("zorder", 3) - 1)
     return ax.plot(x, frame[value], color=style["color"], ls=style.get("ls", "-"),
                    marker=style["marker"], ms=4, markevery=(every // 2, every),
                    label=label, **kw)[0]
@@ -87,7 +91,7 @@ def figure_one(tables: dict[str, pd.DataFrame], camera_ready: bool) -> Path:
                                ("free_running", (-6, 7), "right")]:
         rows, style = table[table.arm == arm].sort_values("plies"), GENERATION_STYLE[arm]
         end = rows.iloc[-1]
-        band(ax, rows.plies, rows, style,
+        curve(ax, rows.plies, rows, style,
              f"{style['label']} ($n$ = {int(rows.n_games.iloc[0])} games)",
              value="value", zorder=5 if arm == "free_running" else 4)
         ax.annotate(f"{end.value:.1%}", (end.plies, end.value), textcoords="offset points",
@@ -97,8 +101,9 @@ def figure_one(tables: dict[str, pd.DataFrame], camera_ready: bool) -> Path:
     ax.set_ylabel("P(at least one illegal move by move $t$)   ↓ better")
     ax.set_ylim(bottom=0)
     ax.set_xlim(left=0)
-    ax.text(0.03, 0.97, "band: 95% percentile bootstrap CI over games (2000 resamples)\n"
-            "cumulative, so the curve can only rise", transform=ax.transAxes, va="top", **NOTE)
+    ax.text(0.03, 0.97, "cumulative, so the curve can only rise\n"
+            "95% bootstrap CIs are in results/survival.csv, not drawn",
+            transform=ax.transAxes, va="top", **NOTE)
     ax.legend(loc="upper left", bbox_to_anchor=(0.0, 0.86), fontsize=8)
     if not camera_ready:
         legal = tables["overall"].set_index("metric").value["p_legal"]
@@ -121,15 +126,11 @@ def rules_figure(tables: dict[str, pd.DataFrame], source: str, camera_ready: boo
     by_move = tables[source]
 
     total = move_series(by_move, "p_illegal")
-    band(ax, total.t, total, GENERATION_STYLE["mass"], GENERATION_STYLE["mass"]["label"],
-         zorder=6, lw=2.2)
+    curve(ax, total.t, total, GENERATION_STYLE["mass"], GENERATION_STYLE["mass"]["label"],
+          zorder=6, lw=2.2)
     for key, (rule, members) in RULES.items():
-        for category in members:
-            faint = move_series(by_move, f"p_{category}")
-            ax.plot(faint.t, faint["mean"], color=CATEGORY_STYLE[category]["color"],
-                    lw=0.7, alpha=0.55, zorder=3)
         rows = move_series(by_move, f"p_{key}")
-        band(ax, rows.t, rows, RULE_STYLE[rule], f"{rule} (sum of {len(members)})", zorder=5)
+        curve(ax, rows.t, rows, RULE_STYLE[rule], f"{rule} (sum of {len(members)})", zorder=5)
 
     ax.set_yscale("log")
     ax.yaxis.set_major_formatter(
@@ -137,20 +138,15 @@ def rules_figure(tables: dict[str, pd.DataFrame], source: str, camera_ready: boo
     ax.set_xlabel("game move number $t$")
     ax.set_ylabel("P(illegal move at move $t$)   ↓ better")
     ax.set_xlim(left=0)
-    # Floor from the rule curves, not the members: `empty_detached` decays four decades
-    # below R2 by the endgame and would otherwise set the axis for the whole panel.
-    floor = min(move_series(by_move, f"p_{k}").lo.min() for k in RULES)
-    ax.set_ylim(bottom=floor * 0.6)
     spread_key = "rollout_mass_within_over_between" if rollout else "rule_mass_within_over_between"
     spread = float(tables["overall"].set_index("metric").value[spread_key])
     n_note = (f"the games still legal at each $t$, $n$ falling {int(total.n_games.iloc[0])} "
               f"$\\rightarrow$ {int(total.n_games.iloc[-1])}"
               if rollout else f"$n$ = {int(total.n_games.iloc[0])} games")
-    note = ("faint: the 6 taxonomy categories, behind the rule that sums them; some leave the "
-            f"axis below.  band: 95% bootstrap CI over {n_note}.\n"
-            f"within-rule ÷ between-rule spread = {spread:.2f} (SD of log$_{{10}}$ share): "
-            "it is R2 that drives it, and R3 has a single member, so on this axis\n"
-            "R2 is closer to a label than a class.")
+    note = (f"means over {n_note}; 95% bootstrap CIs are in results/{source}.csv, not drawn.\n"
+            f"within-rule ÷ between-rule spread = {spread:.2f} (SD of log$_{{10}}$ share over "
+            "the 6 taxonomy categories): it is R2 that\ndrives it, and R3 has a single "
+            "member, so on this axis R2 is closer to a label than a class.")
     ax.legend(loc="upper left", fontsize=8)
     if rollout:
         note += ("\nconditional on survival: a rollout leaves the table at its first illegal "
