@@ -83,7 +83,7 @@ there)`, off the next-move logits alone. No probe, no fit set, no labels.
 `analysis/generation_legality` measures that OthelloGPT puts 0.9982 of its next-move mass
 on legal squares, so a played illegal move is *already* improbable under the model, and a
 probe that only recovers that has read the output distribution rather than the
-representation. It appears as the rightmost column of `space_summary`.
+representation. It is the `model_baseline` row of `results/localization_by_space.csv`.
 
 ## Results
 
@@ -92,7 +92,8 @@ representation. It appears as the rightmost column of `space_summary`.
 In raw layer 5 the 2-class probe reaches held-out **macro-F1 0.889 / AUROC 0.942** on fit-set
 positions, and over the branch tree its argmax over *t* ∈ [1, *t0*] lands on the spliced move
 in **87.4%** [86.4, 88.4] of games against a legal-control false-alarm rate of **5.0%** and a
-pick-a-position chance of ~4.8%. Paired against the same game's legal control at *t0*, AUROC
+pick-a-position chance of 4.8% (`chance_hit_rate`, the mean 1/(*t0*+1) over the arm's games).
+Paired against the same game's legal control at *t0*, AUROC
 is **0.960** [0.956, 0.965]. The control's own null — scored against the *second* legal
 control every game carries — is **0.502** [0.491, 0.512] in raw and lands inside [0.492,
 0.505] in all eleven spaces, which is the check that the statistic has no thumb on it.
@@ -129,9 +130,10 @@ residual, not of what the model knows.
 
 That **inverts** `othello/taxonomy.py`'s ordering, which sorts the categories by how much
 board computation the violation takes to detect and puts occupancy first as the shallowest
-check. `raw_rule_identity.png` shows the mechanism: the 4-class probe puts 0.25 of its mass
-on R1 for moves that are *legal*, and only 0.55 on R1 for moves that really are R1 — the
-legal and R1 classes are the pair it cannot separate.
+check. `results/rule_posterior_at_t0.csv` — the mean 4-class posterior at *t0*, one row per
+arm — shows the mechanism: the probe puts 0.247 of its mass on R1 for moves that are
+*legal*, and only 0.546 on R1 for moves that really are R1. The legal and R1 classes are the
+pair it cannot separate.
 
 It also lines up with `analysis/generation_legality`, which finds the model's own residual
 illegal mass skewed **7.1×** toward R3 and **3.0×** toward R2 while R1 is suppressed to
@@ -188,7 +190,7 @@ called PAnneal a faithful dictionary.
    `1 − P(played)` margin and might not be perfectly separable. **That is the experiment that
    would decide whether the probe is redundant**, and it has not been run.
 2. **The baseline is a detector, not a classifier.** One scalar cannot name which rule was
-   broken, so `*_rule_identity.png` has no baseline column. This is not proof that the rule
+   broken, so `rule_posterior_at_t0.csv` has no baseline row. This is not proof that the rule
    is unavailable without a probe — a cleverer oracle-free statistic might recover it.
 3. Ground truth exists only for *t* ≤ *t0*; see above. Nothing past *t0* is scored, and the
    figures hatch it.
@@ -197,28 +199,29 @@ called PAnneal a faithful dictionary.
    in one stream order, and a different seed is not a replication.
 5. Single seed (42) throughout: for the fit-set draw, the splits, the balanced draw and the
    bootstrap. There are no across-seed error bars on any probe number.
-6. Detailed per-space figures are rendered for `raw`, `TopK` and `SpaDE` only. Every other
-   space is one `localization.py --space <name>` away; the grids and the summary already
-   carry all eleven.
+6. Only `raw` is rendered. Any other space is one `localization.py --space <name>` away, and
+   `space_comparison.py` scores all eleven into `localization_by_space.csv` without drawing
+   anything.
 
 ## Figures
 
 | file | what it answers |
 |---|---|
 | `raw_2class.png` | does the residual stream localize an illegal move at all? |
-| `raw_4class_R1/R2/R3.png` | one figure per rule, from the 4-class head |
-| `raw_4class_combined.png` | all three rules against one legal control |
-| `raw_rule_identity.png` | when it fires, does it name the right rule? |
-| `space_grid_*.png` | the same event-locked curve in all 11 spaces |
-| `space_summary.png` | probe quality, localization and detection per space, vs the no-probe floor |
+| `raw_4class.png` | the same question per rule, from the 4-class head |
 
-Every band and bar is a 95% percentile bootstrap CI resampling **source games** as
-clusters (1,000 resamples). A game's branches share `tokens[:t0]` and are not independent
-draws; resampling rows would give intervals several times too tight.
+Both are event-locked to the spliced move at *t0*: `P(illegal)` and `1 − P(legal)` on a full
+0–1 axis, the reference game and the same game's matched legal control drawn beside the
+illegal arms, the shared prefix shaded and the no-ground-truth region hatched.
 
-Panels of a space grid **are** comparable point-for-point, unlike the embedding grids
-elsewhere in this repo: the y axis is a posterior probability, not a coordinate in a fitted
-basis, so 0.5 means the same thing in SpaDE's simplex code as in the raw residual.
+Every band is a 95% percentile bootstrap CI resampling **source games** as clusters (1,000
+resamples). A game's branches share `tokens[:t0]` and are not independent draws; resampling
+rows would give intervals several times too tight. Every arm draws one branch per game at
+seed 42 rather than averaging a game's categories, which would give it 1/√k of its spread.
+
+Everything else the study measures is a table: `localization_<space>.csv` and
+`localization_by_space.csv` (localization rate, rank of *t0*, paired AUROC, pick-a-position
+chance) and `rule_posterior_at_t0.csv` (mean 4-class posterior at *t0* per arm).
 
 ## Reproducing
 
