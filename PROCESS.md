@@ -6,6 +6,35 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## generation_legality is two single-panel figures now (2026-08-12)
+
+Cut from 2x3 panels to 2x1 on request: F1 is P(at least one illegal move by move t),
+cumulative and averaged over games; F2 is P(illegal move at move t) split into R1/R2/R3.
+The skew-vs-null panels, the mirrored KDE and the played-rate arms are gone from the
+figures. **Their measurements are not gone** -- `rule_skew.csv`, `played_rate.csv` and
+`overall.csv` still carry every number the README quotes, and the ratio-to-matched-null view
+now lives there and in the prose. Only `illegal_density.csv` was deleted, with its producer
+`aggregate.density`: a KDE grid is a plotting artifact, not a measurement, and the median and
+IQR it was drawing are in `overall.csv`.
+
+**The trim surfaced a number the old figures never showed.** `spread()` was computed on the
+skew ratios (0.64) because that is what the panel drew. F2 draws raw mass, so it owes the
+reader the spread of the mass, and that is **0.95** -- at ~1, FIGURE_GUIDELINES 1.7 says the
+grouping is a label rather than a finding, and the figure now says so under the panel. It is
+one rule's doing: R2's three members span 1.73 dex where R1's two span 0.11 and R3 has a
+single member. Dividing by the matched null was hiding that, because a category's null
+carries its own availability. `overall.csv` now carries both columns.
+
+Two consequences worth knowing. The faint members set the y axis if you let them --
+`empty_detached` decays four decades below R2 by the endgame -- so F2's floor comes from the
+rule curves and a member leaves the axis instead. And `act_geometry.kde_band`'s `bandwidth`
+parameter was reverted along with `density()`: it had exactly one caller and that caller is
+gone, so the file is byte-identical to its pre-study state and bracket_flip's committed
+figures are unaffected.
+
+Re-running `aggregate` changed exactly one CSV (`overall.csv`, the new row); the other four
+came back byte-identical, which is the check that the trim touched no statistic.
+
 ## The move-legality probe works and the logits beat it (2026-08-11)
 
 Branch `study/move-legality-probe`, worktree `../spade_sae_worktrees/move-legality-probe`.

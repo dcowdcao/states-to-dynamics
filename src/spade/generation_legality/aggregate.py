@@ -26,7 +26,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from spade.bracket_flip.act_geometry import kde_band, scott_bandwidth
 from spade.common.config import CTX_LEN
 from spade.common.paths import repo_root
 from spade.common.study import study_dir
@@ -36,7 +35,6 @@ from spade.othello.taxonomy import CATEGORIES, RULE_MEMBERS, RULE_OF
 N_BOOT = 2000
 BOOT_SEED = 0
 PLAYED_BIN = 8  # plies per bin for the greedy/sampled rates; per-t counts are ~1
-KDE_POINTS = 400
 RULES = [rule.split()[0] for rule in RULE_MEMBERS]
 RULE_CATEGORIES = {rule.split()[0]: members for rule, members in RULE_MEMBERS.items()}
 ARMS = ["mass", "greedy", "sampled"]
@@ -142,10 +140,16 @@ def rule_skew(game: dict, w: np.ndarray) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def spread(skew: pd.DataFrame) -> float:
-    """Within-rule / between-rule spread of the mass-arm skew, in log10 (GUIDELINES 1.7)."""
+def spread(skew: pd.DataFrame, column: str = "ratio") -> float:
+    """Within-rule / between-rule spread of a mass-arm column, in log10 (GUIDELINES 1.7).
+
+    Near 1 the three rules are a label rather than a finding, and the figure drawing them
+    has to say so. `ratio` answers it for the skew and `share_observed` for the mass; the
+    two are not the same question, because a category's matched null carries its own
+    availability.
+    """
     members = skew[(skew.arm == "mass") & (skew.level == "category")]
-    value = np.log10(members.ratio.to_numpy())
+    value = np.log10(members[column].to_numpy())
     rule = members.rule.to_numpy()
     means = np.array([value[rule == r].mean() for r in RULES])
     within = np.sqrt(sum(((value[rule == r] - m) ** 2).sum() for r, m in zip(RULES, means))
@@ -172,34 +176,6 @@ def survival(game: dict, rollouts: pd.DataFrame, w: np.ndarray) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def density(game: dict, rng: np.random.Generator) -> pd.DataFrame:
-    """KDE of log10 p_illegal, observed against the uniform-move null, one value per position.
-
-    Both curves take the observed series' Scott bandwidth and both are scaled to peak 1, with
-    the unscaled peak kept in `peak`. The null's spread is ~0.03 dex against the observed
-    ~0.5, so on its own bandwidth it is narrower than the grid step and on a shared density
-    axis it is a spike. The panel is about where the two sit; their true spreads are the IQRs
-    in overall.csv, and the drawn width of the null is the kernel.
-    """
-    values = {"observed": np.log10(game["p_illegal"]).reshape(-1),
-              "uniform": np.log10(game["uniform_illegal"]).reshape(-1)}
-    n_games = len(game["p_illegal"])
-    event = np.repeat(np.arange(n_games), len(POSITIONS))
-    h = scott_bandwidth(values["observed"])
-    lo = min(v.min() for v in values.values()) - 4 * h
-    hi = max(v.max() for v in values.values()) + 4 * h
-    grid = np.linspace(lo, hi, KDE_POINTS)
-    rows = []
-    for name, value in values.items():
-        d = kde_band(value, event, n_games, grid, rng, bandwidth=h)
-        peak = d.density.max()
-        rows.append(pd.DataFrame({"series": name, "log10_p": d.grid, "density": d.density / peak,
-                                  "lo": d.lo / peak, "hi": d.hi / peak, "peak": peak,
-                                  "bandwidth": d.bandwidth, "n_values": d.n_values,
-                                  "n_games": n_games}))
-    return pd.concat(rows, ignore_index=True)
-
-
 def overall(game: dict, rollouts: pd.DataFrame, skew: pd.DataFrame,
             w: np.ndarray) -> pd.DataFrame:
     n_games, rows = len(w[0]), []
@@ -221,8 +197,10 @@ def overall(game: dict, rollouts: pd.DataFrame, skew: pd.DataFrame,
     point, lo, hi = mean_ci(clean, weights(len(clean), np.random.default_rng(BOOT_SEED)))
     rows.append({"metric": "free_running_fully_legal", "value": point[0], "lo": lo[0],
                  "hi": hi[0], "n_games": len(clean), "n": len(clean)})
-    rows.append({"metric": "rule_skew_within_over_between", "value": spread(skew),
-                 "lo": np.nan, "hi": np.nan, "n_games": n_games, "n": len(CATEGORIES) - 1})
+    for metric, column in [("rule_skew_within_over_between", "ratio"),
+                           ("rule_mass_within_over_between", "share_observed")]:
+        rows.append({"metric": metric, "value": spread(skew, column), "lo": np.nan,
+                     "hi": np.nan, "n_games": n_games, "n": len(CATEGORIES) - 1})
     return pd.DataFrame(rows)
 
 
@@ -245,7 +223,6 @@ def main() -> None:
         "played_rate": played_rate(game, w),
         "rule_skew": skew,
         "survival": survival(game, rollouts, w),
-        "illegal_density": density(game, rng),
         "overall": overall(game, rollouts, skew, w),
     }
     args.results.mkdir(parents=True, exist_ok=True)

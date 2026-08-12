@@ -265,23 +265,16 @@ class Density:
     n_values: int
 
 
-def scott_bandwidth(values: np.ndarray) -> float:
-    return values.std(ddof=1) * len(values) ** -0.2
-
-
 def kde_band(values: np.ndarray, event_id: np.ndarray, n_events: int, grid: np.ndarray,
-             rng: np.random.Generator, n_boot: int = 1000,
-             bandwidth: float | None = None) -> Density:
+             rng: np.random.Generator, n_boot: int = 1000) -> Density:
     """Scott's-rule Gaussian KDE, bandwidth fixed at the full-sample value.
 
     Holding h fixed across resamples keeps the band a statement about sampling
     noise rather than about the bandwidth tracking each resample's spread
     (FIGURE_GUIDELINES.md 4.4). Binning onto `grid` first turns each resample into
-    one weighted sum of per-event histograms. Pass `bandwidth` when two series share
-    an axis and must share a kernel; the narrower series' width is then the kernel's,
-    which the caller owes the reader.
+    one weighted sum of per-event histograms.
     """
-    h = bandwidth if bandwidth else scott_bandwidth(values)
+    h = values.std(ddof=1) * len(values) ** -0.2
     step = grid[1] - grid[0]
     offsets = np.arange(-int(np.ceil(4 * h / step)), int(np.ceil(4 * h / step)) + 1) * step
     kernel = np.exp(-0.5 * (offsets / h) ** 2) / (h * np.sqrt(2 * np.pi))

@@ -84,23 +84,17 @@ CATEGORY_STYLE = {
     "opponent_only":    {"color": "#009E73", "marker": "D", "label": "R3 opponent-only"},
 }
 
-# Generation-legality study. Three read-outs of one event -- the model emitting an illegal
-# move -- ordered by how much of the distribution has to agree: all of the probability mass,
-# one temperature-1.0 draw, the argmax. They take hues no rules figure spends, so a curve
-# never means a rule in one panel and a read-out in the next. `uniform` is the availability
-# null, a mover picking uniformly among the 60 candidate squares.
+# Generation-legality study. `mass` is the model's probability of emitting an illegal move,
+# in a hue no rules figure spends, so a curve never means a rule in one panel and the
+# aggregate in the next -- black is unavailable here because RULE_STYLE already spends it on
+# `legal`.
 #
 # `teacher_forced` and `free_running` are the SAME quantity (P of at least one illegal move
 # in k plies) under two sequence distributions, so they share the mass hue and split on line
 # style rather than taking a second colour (FIGURE_GUIDELINES 3).
 GENERATION_STYLE = {
     "mass":    {"color": "#CC79A7", "marker": "o", "ls": "-",
-                "label": "P(illegal), probability mass"},
-    "sampled": {"color": "#56B4E9", "marker": "D", "ls": "-",
-                "label": "sampled move illegal (T=1)"},
-    "greedy":  {"color": "#E69F00", "marker": "s", "ls": "-",
-                "label": "greedy move illegal"},
-    "uniform": {**NULL, "label": "uniform over the 60 candidate squares (null)"},
+                "label": "any illegal move (sum of R1-R3)"},
     "teacher_forced": {"color": "#CC79A7", "marker": "o", "ls": "-",
                        "label": "teacher-forced, composed"},
     "free_running":   {"color": "#CC79A7", "marker": "X", "ls": (0, (4, 2)),

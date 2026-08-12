@@ -88,8 +88,11 @@ position's illegal squares. It has to be per-position: R1 owns 5 of 60 squares a
 The behaviour matches the mass: 66% of illegal mass is R3, and 71% of the 93 sampled illegal
 moves and 16 of the 18 greedy ones are R3.
 
-**The rule grouping hides half the story, and the figure says so.** Within-rule ÷
-between-rule spread of the log₁₀ skew is **0.64** over the six categories, driven by R2:
+**The rule grouping hides half the story, and the figures say so.** Within-rule ÷
+between-rule spread of the log₁₀ skew is **0.64** over the six categories, and of the log₁₀
+mass share **0.95** — at ≈1 the three rules are a label rather than a finding on the mass
+axis. Both numbers are one rule's doing: R2's three members span 1.73 dex where R1's two span
+0.11 and R3 has a single member.
 
 | category | skew | | category | skew |
 |---|---|---|---|---|
@@ -110,34 +113,43 @@ above 1 is partly forced by R1 sitting below it. The claim that survives that ob
 the ordering and the per-category magnitudes, not the absolute ratios.
 
 **The skew is a late-game phenomenon.** Every rule sits at ratio ≈ 1 for *t* < 20 and fans
-out after: by *t* = 55 R2 and R3 are ~30× and R1 is ~0.02. Panel (b) of F2 is where to read
-that; the pooled numbers above average over it.
+out after: by *t* = 55 R2 and R3 are ~30× and R1 is ~0.02. The pooled numbers above average
+over that; `by_move.csv`'s `skew_*` rows carry it per ply. F2 shows the same drift on the raw
+mass axis, where R3 crosses R2 in the midgame and R1 turns over around *t* = 40.
 
 ## Figures
 
-`figures/generation_legality.png` — **OthelloGPT's next move is legal with probability
-0.9982, and 11.5% of the 59-ply games it generates for itself still contain an illegal
-move.** (a) P(illegal) against move index: probability mass with a 95% bootstrap CI over
-n = 1000 games, the greedy and one-draw sampled rates binned over 8 plies (8,000 positions
-per bin, open marker on the floor = no event in the bin, bar = its 95% upper bound), and a
-uniform mover over the 60 candidate squares as the null. (b) Mirrored Gaussian KDE of
-per-position log₁₀ P(illegal) against the same null, shared bandwidth h = 0.05 dex (Scott's
-rule on the observed series, so the null's *drawn* width is the kernel's and its true spread
-is the shaded IQR); median ▾, n = 56,000 positions, band = 95% bootstrap CI over games.
-(c) P(at least one illegal move in the first *k* plies), two arms: the teacher-forced mass
-composed per game (∏(1 − p) over the game's plies, then averaged) and free-running games
-sampled at T = 1.0 from a uniform-random legal opening, measured with the engine.
+Two figures, one panel each. **Their y axes are not the same quantity**: F1 is cumulative
+per game and only rises, F2 is per move. Reading either as the other is the one misreading
+the pair invites, so each states which it is on its own y axis.
+
+`figures/generation_legality.png` — **OthelloGPT puts 0.9982 of its next-move mass on legal
+squares, and 11.5% of the 59-ply games it generates for itself still go illegal.**
+P(at least one illegal move by move *t*) against move number, two arms: `free_running`,
+1000 whole games sampled at T = 1.0 from a uniform-random legal opening and judged by the
+engine — this is the measured, averaged-over-games curve — and `teacher_forced`, the same
+quantity composed from the per-position mass of a model that never sees its own output
+(∏(1 − p) over a game's plies, then averaged over games). The two are the same statistic
+under two sequence distributions, so they share a hue and split on line style. The gap at
+the end, 11.5% against 8.3%, is the cost of self-conditioning and is the reason the composed
+arm is not a substitute for the measured one. Bands are 95% percentile bootstrap CIs over
+games (2000 resamples).
 
 `figures/generation_legality_by_rule.png` — **The residual illegal mass is not spread over
-the illegal squares the way the board offers them: it concentrates on near-misses (turn
-confusion 7.1×, no-bracket empties 6.7×) and avoids occupied squares 10×.** (a) Mass per
-rule against move index, with the six taxonomy categories faint behind their rule, and legal
-as the reference class; bands are 95% bootstrap CIs over 1000 games. The rule series are
-**sums** over their categories, not means, so the legend says `sum of 3`. (b) The same
-against the per-position matched null; 1.0 is no skew and is the gray dashed null line; the
-panel carries the within-rule ÷ between-rule spread of 0.64. (c) The same decomposition for
-the moves actually played — probability mass, one T = 1.0 draw, and the argmax — with n per
-arm in the legend; an empty bar is a rule that arm never played.
+the illegal squares the way the board offers them: R3 (turn confusion) dominates from the
+midgame on and R1 (placement) is suppressed.** P(illegal move at move *t*) against move
+number, split into the three constraint rules, on a log axis, with `any illegal` as the
+reference. The six taxonomy categories are drawn faint behind the rule that sums them, and
+the rule series are **sums**, not means, so the legend says `sum of 3`
+(FIGURE_GUIDELINES 1.7). The axis floor comes from the rule curves, so a faint member —
+`empty_detached` decays four decades below R2 by the endgame — leaves the axis rather than
+setting it for the whole panel. The within-rule ÷ between-rule spread of 0.95 is printed
+under the panel with the reason: on this axis R2 is a label and R1 is a class.
+
+There is no third figure, and no skew, density or played-rate panel. Those measurements were
+not deleted with their panels — `rule_skew.csv`, `played_rate.csv` and `overall.csv` still
+carry every number this README quotes — but the ratio-to-matched-null view now lives in the
+CSVs and the prose above, not in a plot.
 
 Both figures are PNG for reading here; `--camera-ready` writes vector PDFs and moves the
 titles into these captions.
@@ -177,7 +189,6 @@ rule_skew.csv       arm, level, name, rule, share_observed, share_expected, rati
                     arm in {mass, greedy, sampled}; level in {rule, category}
 survival.csv        arm, plies, value, lo, hi, n_games
                     arm in {teacher_forced, free_running}
-illegal_density.csv series, log10_p, density, lo, hi, peak, bandwidth, n_values, n_games
-                    density/lo/hi are scaled to peak 1; `peak` restores the raw density
 overall.csv         metric, value, lo, hi, n_games, n
+                    includes rule_{skew,mass}_within_over_between (GUIDELINES 1.7)
 ```
