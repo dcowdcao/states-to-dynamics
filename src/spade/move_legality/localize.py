@@ -170,22 +170,12 @@ def curve(score: Tensor, meta: dict, rows: Tensor, seed: int = 0) -> tuple:
     return cluster_bootstrap(values, meta["game_id"][rows], seed=seed)
 
 
-def hit_curve(score: Tensor, meta: dict, rows: Tensor, seed: int = 0) -> dict:
-    """Localization rate per t0 and pooled, with a cluster-bootstrap CI over games."""
+def hit_rate(score: Tensor, meta: dict, rows: Tensor, seed: int = 0) -> dict:
+    """Pooled localization rate with a cluster-bootstrap CI over games, and t0's median rank."""
     hit, rank = localization(score, meta["t0"])
-    t0_values = list(range(T0_MIN, T0_MAX + 1))
-    per_t0 = {"mean": [], "lo": [], "hi": [], "n": []}
-    for t0 in t0_values:
-        at = rows[meta["t0"][rows] == t0]
-        for key, value in zip(["mean", "lo", "hi"], cluster_bootstrap(
-                hit[at].float().unsqueeze(1), meta["game_id"][at], seed=seed)):
-            per_t0[key].append(float(value[0]))
-        per_t0["n"].append(len(at))
     pooled = cluster_bootstrap(hit[rows].float().unsqueeze(1), meta["game_id"][rows], seed=seed)
-    return {"t0": t0_values, **{k: np.array(v) for k, v in per_t0.items()},
-            "pooled": tuple(float(v[0]) for v in pooled),
-            "median_rank": float(rank[rows].float().median()),
-            "chance": np.array([1.0 / (t + 1) for t in t0_values])}
+    return {"pooled": tuple(float(v[0]) for v in pooled),
+            "median_rank": float(rank[rows].float().median())}
 
 
 def scalar_rows(space: str, kind: str, score: Tensor, meta: dict, selection: dict,
@@ -201,7 +191,7 @@ def scalar_rows(space: str, kind: str, score: Tensor, meta: dict, selection: dic
     for name in names:
         rows = selection[name]
         null = selection["control2" if name == "control" else "control"]
-        hits = hit_curve(score, meta, rows, seed)
+        hits = hit_rate(score, meta, rows, seed)
         paired = detection(score, meta, rows, matched_control(meta, rows, null), seed=seed)
         out.append({"space": space, "score": kind, "arm": name, "n_games": len(rows),
                     "hit_rate": round(hits["pooled"][0], 5),

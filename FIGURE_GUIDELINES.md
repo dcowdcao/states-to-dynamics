@@ -340,6 +340,11 @@ conditions:
   it once, and place it where the layout already wastes room: a square panel
   beside a wide one leaves a band, and the shared legend plus the in-figure key
   are what belong there. An empty band is a layout bug, not neutral whitespace.
+- **A standalone figure owns its whole key.** The rule above inverts when a grid
+  is cut down to one panel: band semantics, n, seed and the meaning of any
+  shading were living in the figure-level legend and die with it. Whatever the
+  panel needs to be read alone belongs on its own axes, and it drops the panel
+  letter along with the grid.
 - Cross-reference between figures so points can be aligned across panels.
 - Working figures may carry an in-figure title; **camera-ready must not** (ICML:
   "omit titles from inside the graphic file itself") — the title becomes the

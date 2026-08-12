@@ -6,6 +6,32 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Move-legality keeps two curves and loses the rest of its figures (2026-08-12)
+
+The study shipped 24 PNGs -- six 4-panel figures per space, plus an 11-space grid per score
+and a summary. All of it is deleted. What is left is two standalone single-panel event-locked
+curves for `raw` only: `raw_2class.png` (P(illegal)) and `raw_4class.png` (1 - P(legal), one
+line per rule), drawn at 5.5 x 3.4 in with no suptitle and no panel letter, so either drops
+into a paper as-is.
+
+**Deleting figures must not delete evidence.** Three numbers the README cites lived only
+inside a deleted panel, so they moved into CSVs before the panels went: the mean 4-class
+posterior at t0 (the 0.247-on-R1-for-legal leak, the mechanism sentence behind "R1 is the
+hole") is now `results/rule_posterior_<space>.csv`, and the pick-a-position chance `1/(t0+1)`
+that the localization rate is read against is now a `chance_hit_rate` column in
+`localization_<space>.csv`. The per-rule `scalar_rows` calls were interleaved with the deleted
+per-rule `draw` calls and had to be kept -- dropping the loop wholesale would have cost 12 of
+21 rows of that CSV.
+
+Five arms on one axis is past what hue and marker carry: R1/R2/R3 land inside a 32-level gray
+band, so the rules take dash patterns and the reference is left as the only solid heavy line.
+`hit_curve`'s per-`t0` bootstrap loop was the expensive half of every `scalar_rows` call and
+existed only for the deleted rate-vs-t0 panel; it is gone, and `scalar_rows` is ~25x cheaper.
+
+`space_comparison.py` is now a table-only script (`localization_by_space.csv`); it lost
+`--camera_ready` along with its plots. `src/spade/figures/move_legality_panels.py` is gone --
+one consumer left and two helpers surviving is not a module.
+
 ## generation_legality is two single-panel figures now (2026-08-12)
 
 Cut from 2x3 panels to 2x1 on request: F1 is P(at least one illegal move by move t),
@@ -59,9 +85,10 @@ reads off at AUROC >= 0.998; an occupied square reads off at 0.82-0.93, and `occ
 -- playing on an opponent's disc -- is 0.819 with a 0.502 hit rate, the worst cell in the
 study. The logits are at 1.000 on all six, so this is the linear read-out and not the
 model's knowledge. `taxonomy.CATEGORIES` sorts occupancy *first* as the shallowest check;
-the residual disagrees. The 4-class posterior shows the mechanism -- 0.25 of the mass on R1
-for moves that are legal -- and it lines up with the generation study's finding that the
-model's own illegal mass is suppressed 0.10x on R1 and inflated 7.1x on R3.
+the residual disagrees. The 4-class posterior shows the mechanism -- 0.247 of the mass on R1
+for moves that are legal, in `results/rule_posterior_<space>.csv` -- and it lines up with the
+generation study's finding that the model's own illegal mass is suppressed 0.10x on R1 and
+inflated 7.1x on R3.
 
 **Balance is structural.** A fit-set item is one (game, position) pair carrying one row per
 class; `probe.balanced` keeps whole items, so classes are equal in every split *and* share

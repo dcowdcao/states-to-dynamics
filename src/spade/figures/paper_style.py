@@ -15,6 +15,10 @@ OKABE_ITO = ["#0072B2", "#D55E00", "#009E73", "#CC79A7",
 
 INK, MUTED, GRID = "#0b0b0b", "#6e6e6e", "#dcdcdc"
 
+# Event-locked panel furniture (FIGURE_GUIDELINES 4.2): the shaded pre-event window, and the
+# hatch for a region a study can draw but has no ground truth to label.
+PRE_EVENT_FACE, UNDEFINED_HATCH = "#f2f2f2", "///"
+
 # Reference/baseline and null styling: never in the categorical cycle.
 REFERENCE = {"color": "#000000", "marker": "o", "lw": 2.4, "zorder": 5}
 NULL = {"color": "#8c8c8c", "marker": "v", "ls": (0, (5, 2)), "lw": 1.5, "zorder": 2}
