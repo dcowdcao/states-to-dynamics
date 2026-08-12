@@ -225,6 +225,7 @@ called PAnneal a faithful dictionary.
 |---|---|
 | `raw_2class.png` | does the residual stream localize an illegal move at all? |
 | `raw_4class.png` | the same question per rule, from the 4-class head |
+| `raw_detection_rates.png` | at the argmax, how often is each head's call right at *t0*? |
 
 Both are event-locked to the spliced move at *t0* and run *r* ∈ [−9, 0]: `P(illegal)` and
 `1 − P(legal)` on a full 0–1 axis, the reference game and the same game's matched legal
@@ -247,5 +248,6 @@ sbatch scripts/slurm/studies/move_legality/submit_move_legality_fit_set.sbatch -
 sbatch --dependency=afterok:<id> scripts/slurm/studies/move_legality/submit_move_legality_readout.sbatch
 python -m spade.move_legality.model_baseline
 python analysis/move_legality/localization.py --space raw
+python analysis/move_legality/detection_rates.py --space raw
 python analysis/move_legality/space_comparison.py
 ```
