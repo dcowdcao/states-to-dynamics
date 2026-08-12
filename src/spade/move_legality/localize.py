@@ -27,11 +27,12 @@ from spade.move_legality.fit_set import SINK
 from spade.othello.taxonomy import CATEGORIES, LEGAL, RULE_OF
 from spade.violation_divergence.branches import T0_MAX, T0_MIN, role
 
-# Not the divergence study's r in [-8, 24]: there the post-event tail is the measurement,
-# here it is the region with no ground truth, and FIGURE_GUIDELINES 4.2 wants a quarter to
-# a half of the drawn window *before* the event. The ends are what t0 in [10, 34] allows:
-# r = -10 is position 0 of the earliest fork, r = +14 is position 48 of the latest.
-R_MAX = 14
+# The window stops AT the event. Past t0 a branch replays the reference's suffix onto a board
+# that no longer exists, so no move there has a legality label to plot against -- and the
+# probe never saw such a prefix in training either (every fit-set row's tokens[:t] is a legal
+# game), so its output there is extrapolation, not a judgement. r = -9 is what t0 >= 10
+# allows once position 0, the attention sink, is dropped.
+R_MAX = 0
 WINDOW = tuple(range(SINK + 1 - T0_MIN, R_MAX + 1))
 assert T0_MAX + R_MAX < 59, "the window leaves the board at the latest fork"
 

@@ -59,15 +59,15 @@ different legal move at *t0*), and one branch per illegal category. 34,546 seque
 Its 3,923 source games are disjoint from the probe's 800 by exact token match — they are
 literally the first 3,923 games of the same seeded stream, all of which the fit set skips.
 
-## Ground truth stops at *t0*, and the figures say so
+## Ground truth stops at *t0*, and so does the plotted window
 
-A branch keeps the source game's `tokens[t0+1:]`. That suffix is a legal continuation of
-the *reference's* board and of no other; after an illegal move no board exists for it to be
-legal on, and the engine refuses to build one (`OthelloBoardState.umpire` asserts the
-square is empty and that something flips). So:
+A branch keeps the source game's `tokens[t0+1:]` **verbatim** — the suffix assumes the
+*reference's* move, never the spliced one, and `branches.py` asserts every arm of a game
+shares it bitwise. It is a legal continuation of the reference's board and of no other;
+after an illegal move no board exists for it to be legal on, and the engine refuses to build
+one (`OthelloBoardState.umpire` asserts the square is empty and that something flips). So:
 
-- the probe is written out at **all** 59 positions, and the curve past *t0* is drawn,
-  hatched, and labelled as carrying no ground truth;
+- the probe is written out at **all** 59 positions, but the figures stop at *r* = 0;
 - every localization statistic is taken over *t* ∈ [1, *t0*];
 - the **legal control branch of the same game at the same *t0*** is the false-alarm rate of
   exactly that statistic — same prefix, same position, same estimator, legal move.
@@ -140,15 +140,31 @@ illegal mass skewed **7.1×** toward R3 and **3.0×** toward R2 while R1 is supp
 **0.10×**. The violations the representation marks most sharply are the ones the model
 actually makes; the one it marks worst is the one it essentially never makes.
 
-### The rise after *t0* is the splice, not the illegality
+### Why the window stops at *r* = 0
 
 Raw, 2-class, mean over games: the pre-event level is 0.123 for every arm (identical by
 construction — the branches share `tokens[:t0]` bitwise). At *r* = 0 the illegal arm hits
-0.866. After it, the illegal arm averages 0.422 — but the **legal** control averages 0.362
-against the reference's 0.156. Roughly six sevenths of the post-event elevation is present
-in a branch whose *t0* move is perfectly legal. That is the hatched region earning its
-label: what the probe reads after *t0* is mostly "this suffix does not belong to this
-board", and it is why nothing there is scored.
+0.866. Past it the illegal arm averages 0.422 — but the **legal** control averages 0.362
+against the reference's 0.156, so **77.6%** of the post-event elevation over the reference
+is already present in a branch whose *t0* move is perfectly legal.
+
+That tail was drawn and hatched for a while. It is now cut, because it invites two readings
+the study cannot separate:
+
+1. *It is mostly the splice, not the illegality.* Any different move at *t0* — legal or not —
+   leaves the replayed suffix on a board it does not belong to. Adjudicating the control arm,
+   where a board still exists, 24.7% of suffixes are illegal at the very first replayed move,
+   the median first break is *r* = +3, and 99.8% break inside a 14-move window.
+2. *The probe was never fit to answer there.* Every fit-set row's `tokens[:t]` is a legal
+   game, so a prefix containing an illegal move is a state the probe never saw. Its output
+   past *t0* on an illegal branch is extrapolation, not a judgement — and there is no label
+   to check it against, since the suffix assumes the reference move and no board exists for
+   the spliced one.
+
+Where a board does survive the probe tracks it well (AUROC 0.92–0.98 against real legality
+at *r* = +1 … +8 on still-legal control prefixes), but the adjudicable sample collapses from
+1500 to 273 across that range. Nothing past *t0* was ever scored; now nothing past *t0* is
+drawn either.
 
 ### Across spaces: width buys more than training does
 
@@ -193,7 +209,7 @@ called PAnneal a faithful dictionary.
    broken, so `rule_posterior_raw.csv` has no baseline row. This is not proof that the rule
    is unavailable without a probe — a cleverer oracle-free statistic might recover it.
 3. Ground truth exists only for *t* ≤ *t0*; see above. Nothing past *t0* is scored, and the
-   figures hatch it.
+   figures stop there.
 4. `stream_games` reads a ~1% window of the corpus, not a sample of it
    (`docs/game_corpus.md`). The probe games and the read-out games are disjoint but adjacent
    in one stream order, and a different seed is not a replication.
@@ -210,9 +226,10 @@ called PAnneal a faithful dictionary.
 | `raw_2class.png` | does the residual stream localize an illegal move at all? |
 | `raw_4class.png` | the same question per rule, from the 4-class head |
 
-Both are event-locked to the spliced move at *t0*: `P(illegal)` and `1 − P(legal)` on a full
-0–1 axis, the reference game and the same game's matched legal control drawn beside the
-illegal arms, the shared prefix shaded and the no-ground-truth region hatched.
+Both are event-locked to the spliced move at *t0* and run *r* ∈ [−9, 0]: `P(illegal)` and
+`1 − P(legal)` on a full 0–1 axis, the reference game and the same game's matched legal
+control drawn beside the illegal arms, the shared prefix shaded. Nothing past the event is
+drawn — see "Why the window stops at *r* = 0".
 
 Every band is a 95% percentile bootstrap CI resampling **source games** as clusters (1,000
 resamples). A game's branches share `tokens[:t0]` and are not independent draws; resampling

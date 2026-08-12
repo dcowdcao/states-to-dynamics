@@ -12,11 +12,14 @@ pick-a-position chance the rate is read against) and `rule_posterior_<space>.csv
 4-class posterior at t0 per arm, where the probe's legal/R1 leak shows).
 
 The pre-event window is shaded because r < 0 is bit-identical across a game's branches
-(causal attention), so it is a paired baseline and not an approximation of one; the
-post-event region is hatched because the branch replays the source game's suffix onto a board
-that no longer exists, so nothing there carries a ground-truth label. Every scalar in the CSVs
-is therefore scored over t <= t0 only, against the legal control branch of the same game at
-the same t0.
+(causal attention), so it is a paired baseline and not an approximation of one.
+
+The window STOPS at r = 0. A branch keeps the source game's tokens[t0+1:] verbatim -- the
+suffix assumes the *reference* move, never the spliced one -- so past t0 it is replayed onto
+a board that no longer exists and no move there has a legality label to plot against. The
+probe cannot be read as judging those positions either: every fit-set row's tokens[:t] is a
+legal game, so a prefix containing an illegal move is a state it was never fit on. Drawing
+the tail invited both readings; the CSVs already score t <= t0 only.
 
 Usage: python analysis/move_legality/localization.py [--space raw] [--camera_ready]
 """
@@ -31,8 +34,8 @@ from matplotlib import pyplot as plt
 
 from spade.common.paths import repo_root
 from spade.figures.paper_style import (
-    CLASS_STYLE, GRID, INK, MUTED, NULL, PRE_EVENT_FACE, PROBE_CLASS_STYLE, REFERENCE,
-    UNDEFINED_HATCH, apply_style, rule_key, save_figure)
+    CLASS_STYLE, INK, MUTED, NULL, PRE_EVENT_FACE, PROBE_CLASS_STYLE, REFERENCE, apply_style,
+    rule_key, save_figure)
 from spade.move_legality import localize
 from spade.move_legality.fit_set import CLASSES
 
@@ -70,8 +73,6 @@ def draw(space: str, slug: str, ylabel: str, score: torch.Tensor, meta: dict,
     zero = localize.WINDOW.index(0)
 
     ax.axvspan(left, -0.5, color=PRE_EVENT_FACE, zorder=0, lw=0)
-    ax.axvspan(0.5, right, facecolor="none", edgecolor=GRID, hatch=UNDEFINED_HATCH,
-               zorder=0, lw=0)
     ax.axvline(0, color=MUTED, ls=(0, (4, 3)), lw=0.9, zorder=1)
 
     means = {}
@@ -84,6 +85,11 @@ def draw(space: str, slug: str, ylabel: str, score: torch.Tensor, meta: dict,
                 markevery=(i, 4), markeredgecolor="white", markeredgewidth=0.5,
                 zorder=style.get("zorder", 4),
                 label=f"{style['label']}\n($n$ = {len(rows)} games)")
+        # The event is the whole figure, so every arm carries its marker there whatever the
+        # stagger lands on -- at r = 0 the marker is what separates the arms in grayscale.
+        ax.plot(0, means[name][zero], color=style["color"], marker=style["marker"],
+                markersize=4.6, markeredgecolor="white", markeredgewidth=0.5,
+                zorder=style.get("zorder", 4) + 1)
 
     ax.set_xlim(left, right)
     ax.set_ylim(0, 1)
@@ -99,17 +105,15 @@ def draw(space: str, slug: str, ylabel: str, score: torch.Tensor, meta: dict,
     ax.axhline(baseline, color=MUTED, ls=(0, (1, 2)), lw=1.0, zorder=2)
     ax.text(left + 0.3, baseline + 0.012, f"pre-event level {baseline:.3f}", color=MUTED,
             fontsize=7.2, ha="left", va="bottom")
-    ax.text((left - 0.5) / 2, 0.015, "$r<0$: shared prefix,\nidentical in every branch",
-            color=MUTED, fontsize=7.2, ha="center", va="bottom")
-    ax.text((right + 0.5) / 2, 0.015, "$r>0$: replayed suffix,\nno board to judge it on",
+    ax.text((left - 0.5) / 2, 0.015, "$r<0$: shared prefix, identical in every branch",
             color=MUTED, fontsize=7.2, ha="center", va="bottom")
 
     top = max((n for n in arms if n not in ("reference", "control")),
               key=lambda n: means[n][zero])
     ax.annotate(f"illegal move spliced in at $t_0$\n"
-                f"peak {float(means[top][zero]):.3f} ({ARM_STYLE[top]['label']}, $r=0$)",
-                xy=(0, float(means[top][zero])), xytext=(1.1, 1.03),
-                textcoords=("data", "axes fraction"), ha="left", va="bottom", fontsize=8.5,
+                f"peak {float(means[top][zero]):.3f} ({ARM_STYLE[top]['label']})",
+                xy=(0, float(means[top][zero])), xytext=(0.99, 1.03),
+                textcoords="axes fraction", ha="right", va="bottom", fontsize=8.5,
                 color=INK, arrowprops={"arrowstyle": "->", "color": MUTED, "lw": 0.9,
                                        "shrinkB": 4})
     ax.legend(loc="upper left", fontsize=7, handlelength=1.6, labelspacing=0.4,

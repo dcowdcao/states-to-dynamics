@@ -23,8 +23,23 @@ that the localization rate is read against is now a `chance_hit_rate` column in
 per-rule `draw` calls and had to be kept -- dropping the loop wholesale would have cost 12 of
 21 rows of that CSV.
 
+**The window then stopped at r = 0, and the hatched tail went with it.** Drawing it invited
+two readings the study cannot separate. It is mostly the *splice*, not the illegality -- any
+different move at t0 leaves the replayed suffix on a board it does not belong to, and 77.6%
+of the post-event elevation over the reference is already present in a branch whose t0 move
+is perfectly legal. And the probe was never fit to answer past t0 at all: every fit-set row's
+tokens[:t] is a legal game, so a prefix containing an illegal move is a state it never saw,
+and the suffix assumes the *reference* move (branches.py asserts it is shared bitwise), so
+there is no label for the spliced board either. Adjudicating the control arm -- the only one
+where a board survives -- put numbers on the first reading: 24.7% of suffixes are illegal at
+r = +1, median first break r = +3, 99.8% break inside 14 moves, and where a board does
+survive the probe tracks it at AUROC 0.92-0.98 on a sample collapsing 1500 -> 273. Nothing
+past t0 was ever scored; now nothing past t0 is drawn.
+
 Five arms on one axis is past what hue and marker carry: R1/R2/R3 land inside a 32-level gray
 band, so the rules take dash patterns and the reference is left as the only solid heavy line.
+With the window ending on the event, every arm also takes an explicit marker at r = 0 -- the
+staggered `markevery` does not land there, and r = 0 is now the whole figure.
 `hit_curve`'s per-`t0` bootstrap loop was the expensive half of every `scalar_rows` call and
 existed only for the deleted rate-vs-t0 panel; it is gone, and `scalar_rows` is ~25x cheaper.
 
