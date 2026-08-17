@@ -54,14 +54,15 @@ Violation: `opponent_only` (legal for the opponent only — turn confusion).
 **Constraint side implemented.** The representation side — probing whose turn
 it is at every position — is defined but deferred.
 
-The three constraint rules are drawn on one board in `figures/othello_rules/`
-(`src/spade/figures/figure_othello_rules.py`). `rules_legal_move.png` is the move
-a corpus game actually played, with every disc it flips and the mover's own disc
-closing each bracket; `rules_illegal_moves.png` is the *same position* carrying
-one violation of each rule — an occupied square, a line of opponent discs that
-nothing of the mover's closes, and a square that brackets only for the player who
-is not to move. One game, one position, so the three violations are comparable
-against the legal move and against each other.
+The three constraint rules are drawn on one board in
+`figures/othello_rules/rules_legal_and_illegal.png`
+(`src/spade/figures/figure_othello_rules.py`). Panel (a) is the move a corpus game
+actually played, with every disc it flips and the mover's own disc closing each
+bracket; panel (b) is the *same position* carrying one violation of each rule — an
+occupied square, a line of opponent discs that nothing of the mover's closes, and a
+square that brackets only for the player who is not to move. One game, one position,
+two panels, so the three violations are comparable against the legal move and against
+each other without the board changing between them.
 
 **R4 — Forfeit** *(dynamics)*. A player with no legal move anywhere is
 skipped; the opponent moves again. Detecting a forfeit requires concluding

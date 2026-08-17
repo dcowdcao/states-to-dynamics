@@ -345,6 +345,10 @@ conditions:
   checked against the picture square by square.
 - One marked square needs no marker and no legend: the outline and its name carry
   it, and a spare marker on a board reads as another piece.
+- **Two boards of the same position are one figure, not two.** The claim is "same
+  board, one square different", and a reader holding a board in memory across two
+  files cannot check it. Panel them side by side under one key; each panel still
+  states its own side to move, because a panel gets read on its own.
 
 ## 5. Captions and panel labels
 

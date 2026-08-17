@@ -8,11 +8,17 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ## The constraint rules get drawn, on one board (2026-08-12)
 
-`figures/othello_rules/` — `rules_legal_move.png` and `rules_illegal_moves.png`, off ONE
-position (game 606 of the seed-42 stream, t = 16, black to move) so the legal move and the
-three violations are comparable without the board moving under the reader. Script is
-`src/spade/figures/figure_othello_rules.py`; `docs/othello_rules.md` had defined the taxonomy
-for five studies and never shown it.
+`figures/othello_rules/rules_legal_and_illegal.png` — the legal move in panel (a) and one
+violation per rule in panel (b), off ONE position (game 606 of the seed-42 stream, t = 16,
+black to move) so the legal move and the three violations are comparable without the board
+moving under the reader. Script is `src/spade/figures/figure_othello_rules.py`;
+`docs/othello_rules.md` had defined the taxonomy for five studies and never shown it.
+
+**The two panels became one figure (2026-08-17).** They shipped as two PNGs, which made the
+reader hold a board in memory across two files to see that (b) is the same position with one
+square moved — and that identity is the whole point of the pair. One figure, panels side by
+side, one rule key under both. Each panel keeps its own "black to move" and its own note:
+they are two boards, and a panel read on its own must still say whose turn it is.
 
 **Choices that are not arbitrary.** R2 is drawn as `empty_no_bracket`, not the shallower
 `empty_detached`: the taxonomy orders R2's members by the board computation a violation takes

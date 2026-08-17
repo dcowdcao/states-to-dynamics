@@ -1,16 +1,17 @@
 """The three constraint rules of docs/othello_rules.md, drawn on one board.
 
-Two figures off ONE position of one corpus game, so a reader compares a legal move and the
+Two panels off ONE position of one corpus game, so a reader compares a legal move and the
 three ways a move can be illegal without the board changing under them:
 
-    rules_legal_move.png     the move the game actually played, and the brackets that make
-                             it legal -- every disc it flips, and the mover's own disc that
-                             closes each line
-    rules_illegal_moves.png  one illegal candidate per constraint rule at that same position
+    (a)  the move the game actually played, and the brackets that make it legal -- every
+         disc it flips, and the mover's own disc that closes each line
+    (b)  one illegal candidate per constraint rule at that same position
 
-Both boards say whose turn it is, because R3 is *legality is judged for the mover*: its
-square would bracket perfectly well for the opponent, and without the mover the panel is
-unreadable rather than merely terse.
+The panels sit in one figure because the comparison IS the figure: (b) is only readable as
+"the same board, one square moved", and two files make the reader hold a board in memory
+across them. Both keep the side to move in their own axes, because R3 is *legality is judged
+for the mover*: its square would bracket perfectly well for the opponent, and a panel read on
+its own is unreadable rather than merely terse without it.
 
 R2 is drawn as `empty_no_bracket` rather than the shallower `empty_detached`. The taxonomy
 orders R2's members by the board computation a violation takes to detect, and only the
@@ -24,6 +25,7 @@ Usage: python -m spade.figures.figure_othello_rules [--camera_ready]
 import argparse
 from collections import Counter
 from pathlib import Path
+from textwrap import fill
 
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
@@ -39,8 +41,11 @@ from circuits.othello_engine_utils import to_string
 
 FIGURES = repo_root() / "figures" / "othello_rules"
 SEED = 42
-BOARD_SIZE = (3.9, 3.9)
+FIGURE_SIZE = (8.0, 4.4)
+NOTE_WRAP = 62     # characters that fit under one panel at 7.5 pt
 FLIP_RING = 0.36   # outside the disc, so the ring reads on a black one and a white one alike
+
+TITLE = "Move legality at one position: a legal move, and one illegal move per rule"
 
 # Scanned t in [14, 26] over the first 800 games of the seed-42 stream for a position where
 # all three rules have a candidate, the played move flips several discs in more than one
@@ -57,7 +62,7 @@ def name(square: int) -> str:
 
 
 def position(dataset_name: str) -> tuple:
-    """The one board both figures draw, re-derived from the corpus and checked."""
+    """The one board both panels draw, re-derived from the corpus and checked."""
     game = collect_legal(stream_games(dataset_name, SEED), FIGURE_GAME + 1,
                          Counter())[FIGURE_GAME]
     board = replay(game[:FIGURE_T])
@@ -82,8 +87,13 @@ def mover_note(ax, mover: int) -> None:
             fontsize=8.5, color=INK, ha="left", va="bottom", zorder=6)
 
 
-def legal_figure(board, mover: int, played: int, camera_ready: bool) -> Path:
-    fig, ax = plt.subplots(figsize=BOARD_SIZE)
+def panel_note(ax, text: str) -> None:
+    """What the overlay means, under its own panel and wrapped to the panel's width."""
+    ax.text(0, -0.17, fill(text, NOTE_WRAP), transform=ax.transAxes, ha="left", va="top",
+            fontsize=7.5, color=MUTED, linespacing=1.5)
+
+
+def legal_panel(ax, board, mover: int, played: int) -> None:
     draw_board(ax, board.state.flatten())
 
     brackets = [r for r in rays(board.state, played, mover) if r.closed]
@@ -99,17 +109,13 @@ def legal_figure(board, mover: int, played: int, camera_ready: bool) -> Path:
     mark_square(ax, played, RULE_STYLE["legal"], label=name(played), marker=False)
 
     mover_note(ax, mover)
-    fig.tight_layout()
-    fig.text(0.005, -0.005,
-             f"{name(played)} is legal: it brackets in {len(brackets)} directions.\nLines run "
-             f"to the mover's own disc that closes each bracket; the {len(flipped)} ringed "
-             f"discs are the ones it flips.",
-             ha="left", va="top", fontsize=7.5, color=MUTED, linespacing=1.5)
-    return save_figure(fig, FIGURES / "rules_legal_move", camera_ready)
+    ax.set_title("(a) the legal move", loc="left")
+    panel_note(ax, f"{name(played)} is legal: it brackets in {len(brackets)} directions. Lines "
+                   f"run to the mover's own disc that closes each bracket; the {len(flipped)} "
+                   f"ringed discs are the ones it flips.")
 
 
-def illegal_figure(board, mover: int, camera_ready: bool) -> Path:
-    fig, ax = plt.subplots(figsize=BOARD_SIZE)
+def illegal_panel(ax, board, mover: int) -> None:
     draw_board(ax, board.state.flatten())
 
     # R2: the one direction out of the square that holds opponent discs, drawn to the empty
@@ -132,14 +138,25 @@ def illegal_figure(board, mover: int, camera_ready: bool) -> Path:
                     below=square == ILLEGAL["R3 turn"])
 
     mover_note(ax, mover)
+    ax.set_title("(b) one illegal move per rule", loc="left")
+    panel_note(ax, f"R1's square is already occupied. R2's dashed line is the opponent run out "
+                   f"of {name(ILLEGAL['R2 bracketing'])}; the x is the empty square where it "
+                   f"fails to close. R3's line is the bracket "
+                   f"{name(ILLEGAL['R3 turn'])} does make -- for the opponent, who is not to "
+                   f"move.")
+
+
+def rules_figure(board, mover: int, played: int, camera_ready: bool) -> Path:
+    fig, (left, right) = plt.subplots(1, 2, figsize=FIGURE_SIZE)
+    legal_panel(left, board, mover, played)
+    illegal_panel(right, board, mover)
+    if not camera_ready:
+        fig.suptitle(TITLE)
     fig.tight_layout()
-    fig.text(0.005, -0.005,
-             f"R2's dashed line is the opponent run out of {name(ILLEGAL['R2 bracketing'])}; "
-             f"the x is the empty square where it fails to close.\nR3's line is the bracket "
-             f"{name(ILLEGAL['R3 turn'])} does make -- for the opponent, who is not to move.",
-             ha="left", va="top", fontsize=7.5, color=MUTED, linespacing=1.5)
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.115)
-    return save_figure(fig, FIGURES / "rules_illegal_moves", camera_ready)
+    # Under the whole figure, below both panel notes: the key covers both panels, and the
+    # notes hang off the axes, so its offset clears four wrapped lines of them.
+    rule_key(fig, ["R1", "R2", "R3"], x=left.get_position().x0, y=-0.125)
+    return save_figure(fig, FIGURES / "rules_legal_and_illegal", camera_ready)
 
 
 def main() -> None:
@@ -150,8 +167,7 @@ def main() -> None:
 
     apply_style(args.camera_ready)
     board, mover, played = position(args.dataset_name)
-    print(legal_figure(board, mover, played, args.camera_ready))
-    print(illegal_figure(board, mover, args.camera_ready))
+    print(rules_figure(board, mover, played, args.camera_ready))
 
 
 if __name__ == "__main__":
