@@ -225,9 +225,9 @@ called PAnneal a faithful dictionary.
 |---|---|
 | `raw_2class.png` | does the residual stream localize an illegal move at all? |
 | `raw_4class.png` | the same question per rule, from the 4-class head |
-| `raw_detection_rates.png` | at the argmax, how often is each head's call right at *t0*? |
+| `raw_detection_auroc.png` | how well does each head separate the spliced illegal move from that game's legal control at *t0*? |
 
-Both are event-locked to the spliced move at *t0* and run *r* ∈ [−9, 0]: `P(illegal)` and
+The first two are event-locked to the spliced move at *t0* and run *r* ∈ [−9, 0]: `P(illegal)` and
 `1 − P(legal)` on a full 0–1 axis, the reference game and the same game's matched legal
 control drawn beside the illegal arms, the shared prefix shaded. Nothing past the event is
 drawn — see "Why the window stops at *r* = 0".
@@ -236,6 +236,12 @@ Every band is a 95% percentile bootstrap CI resampling **source games** as clust
 resamples). A game's branches share `tokens[:t0]` and are not independent draws; resampling
 rows would give intervals several times too tight. Every arm draws one branch per game at
 seed 42 rather than averaging a game's categories, which would give it 1/√k of its spread.
+
+`raw_detection_auroc.png` is a bar per arm of the paired AUROC at *t0* — one illegal branch
+against the same game's legal control, threshold-free, so a head's hit rate and its false
+alarms are one number. Each head's rightmost bar is the empirical legal-vs-legal null: the
+control scored against the second legal control the game carries, which is what 0.5 looks
+like here. Numbers in `detection_auroc_<space>.csv`.
 
 Everything else the study measures is a table: `localization_<space>.csv` and
 `localization_by_space.csv` (localization rate, rank of *t0*, paired AUROC, pick-a-position
@@ -248,6 +254,6 @@ sbatch scripts/slurm/studies/move_legality/submit_move_legality_fit_set.sbatch -
 sbatch --dependency=afterok:<id> scripts/slurm/studies/move_legality/submit_move_legality_readout.sbatch
 python -m spade.move_legality.model_baseline
 python analysis/move_legality/localization.py --space raw
-python analysis/move_legality/detection_rates.py --space raw
+python analysis/move_legality/detection_auroc.py --space raw
 python analysis/move_legality/space_comparison.py
 ```
