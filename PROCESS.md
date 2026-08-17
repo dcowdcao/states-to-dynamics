@@ -6,6 +6,33 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The two generation-legality panels become one figure (2026-08-17)
+
+`analysis/generation_legality/figures/generation_legality.png` is now (a) P(at least one
+illegal move by move t) beside (b) the per-move illegal mass split by rule — the pair the
+2026-08-12 trim had left as two PNGs. Same reason as the rules board pair below: the study's
+claim is "the model does emit illegal moves, and the ones it emits are R3-heavy", which is one
+sentence and not two files. `generation_legality_by_rule.png` is gone. The rollout figure stays
+standalone: it is a robustness check on (b), not a third question. No statistic moved — only
+plotting code was touched.
+
+**The panels are two different measurements, so the figure has to say so.** They share
+`GENERATION_STYLE`'s "any illegal" hue, so the pair must not read as one curve continued: (a)
+is cumulative per game, (b) is per move, and their prefix distributions differ — (a)'s games
+the model wrote, (b)'s were handed to it. That went into the panel titles, and each panel keeps
+its own note (estimator, n, which CSV the interval is in) under its own axes rather than one
+note under the figure.
+
+**Layout: a note is an axes child, so the rule key's y is only knowable after a draw.**
+`tight_layout` lifts the axes to make room for a note hanging below them, so no fixed figure
+fraction lands just under the deepest one; `key_under` draws the canvas, takes the lowest note
+bbox and puts the key `KEY_PAD` below that. The note wrap comes from the panel's own width for
+the same reason a constant cannot serve both — a panel of the pair is a third of the canvas
+where the rollout figure's is three-quarters of a narrower one. Two smaller moves: (b)'s legend
+went to the lower right, the only region four rules on a log axis leave empty at half width,
+and both y labels broke onto two lines, because `↓ better` on one line runs into the panel
+title at this panel height.
+
 ## The constraint rules get drawn, on one board (2026-08-12)
 
 `figures/othello_rules/rules_legal_and_illegal.png` — the legal move in panel (a) and one

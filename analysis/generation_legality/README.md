@@ -114,17 +114,21 @@ the ordering and the per-category magnitudes, not the absolute ratios.
 
 **The skew is a late-game phenomenon.** Every rule sits at ratio ≈ 1 for *t* < 20 and fans
 out after: by *t* = 55 R2 and R3 are ~30× and R1 is ~0.02. The pooled numbers above average
-over that; `by_move.csv`'s `skew_*` rows carry it per ply. F2 shows the same drift on the raw
-mass axis, where R3 crosses R2 in the midgame and R1 turns over around *t* = 40.
+over that; `by_move.csv`'s `skew_*` rows carry it per ply. Panel (b) below shows the same
+drift on the raw mass axis, where R3 crosses R2 in the midgame and R1 turns over around
+*t* = 40.
 
 ## Figures
 
-Three figures, one panel each. **F1's y axis is not F2's and F3's**: F1 is cumulative per
-game and only rises, F2 and F3 are per move. Reading one as the other is the misreading the
-set invites, so each states which it is on its own y axis.
+Two figures. F1 puts the study's two questions on one canvas — (a) does a game the model
+generates go illegal at all, (b) which rule does the residual mass break — because neither
+answers the other. **Its panels do not share a y axis**: (a) is cumulative per game and only
+rises, (b) is per move. Reading one as the other is the misreading the pair invites, so each
+panel states which it is on its own y axis, and each panel title states whose prefixes it is
+measured on — (a)'s the model wrote, (b)'s were handed to it.
 
-`figures/generation_legality.png` — **OthelloGPT puts 0.9982 of its next-move mass on legal
-squares, and 11.5% of the 59-ply games it generates for itself still go illegal.**
+`figures/generation_legality.png`, panel (a) — **OthelloGPT puts 0.9982 of its next-move mass
+on legal squares, and 11.5% of the 59-ply games it generates for itself still go illegal.**
 P(at least one illegal move by move *t*) against move number, `free_running` only: 1000 whole
 games sampled at T = 1.0 from a uniform-random legal opening and judged by the engine, so
 this is measured, not composed.
@@ -137,13 +141,13 @@ one measurement with a discrepancy rather than two questions; the gap at 59 plie
 against 8.3%, is in the CSV and in the caveats below, where it belongs as the cost of
 self-conditioning. 95% percentile bootstrap CIs over games (2000 resamples) are in the CSV.
 
-`figures/generation_legality_by_rule.png` — **The residual illegal mass is not spread over
-the illegal squares the way the board offers them: R3 (turn confusion) dominates from the
-midgame on and R1 (placement) is suppressed.** P(illegal move at move *t*) against move
-number, split into the three constraint rules, on a log axis, with `any illegal` as the
-reference. The rule series are **sums** over their taxonomy categories, not means, so the legend says
-`sum of 3` (FIGURE_GUIDELINES 1.7), and the within-rule ÷ between-rule spread of 0.95 is
-printed under the panel: on this axis R2 is a label and R1 is a class.
+Panel (b) — **The residual illegal mass is not spread over the illegal squares the way the
+board offers them: R3 (turn confusion) dominates from the midgame on and R1 (placement) is
+suppressed.** P(illegal move at move *t*) against move number, split into the three constraint
+rules, on a log axis, with `any illegal` as the reference. The rule series are **sums** over
+their taxonomy categories, not means, so the legend says `sum of 3` (FIGURE_GUIDELINES 1.7),
+and the within-rule ÷ between-rule spread of 0.95 is printed under the panel: on this axis R2
+is a label and R1 is a class.
 
 There is no skew, density or played-rate panel. Those measurements were
 not deleted with their panels — `rule_skew.csv`, `played_rate.csv` and `overall.csv` still
@@ -152,13 +156,13 @@ CSVs and the prose above, not in a plot.
 
 `figures/generation_legality_by_rule_rollout.png` — **Conditioning on the model's own
 prefixes barely moves it: the same R3 > R2 > R1 ordering, and the mass tracks the corpus
-scan to ~10%.** F2 exactly, drawn by the same function, on prefixes the model generated for
+scan to ~10%.** Panel (b) exactly, drawn by the same function, on prefixes the model generated for
 itself instead of corpus games handed to it. Ratio of rollout to teacher-forced mass: median
 **0.996** over the move axis, **0.907** late (*t* ≥ 40), pooled **0.993**; the ordering and
 the R1 suppression are unchanged. The late deficit is **survivorship, not the model behaving
 better** — a rollout leaves the table at its first illegal move, and the games that leave are
 the ones carrying the most illegal mass. n falls 1000 → 891 across the axis and the panel
-prints it. Its own within-rule ÷ between-rule spread is 0.89, the same story as F2's 0.95.
+prints it. Its own within-rule ÷ between-rule spread is 0.89, the same story as (b)'s 0.95.
 
 **Neither the six taxonomy members nor the bootstrap bands are drawn**, by request: the
 panels carry the four rule curves alone. This is a deliberate departure from
@@ -168,13 +172,14 @@ each panel names the file it lives in (`by_move.csv`, `rollout_by_move.csv`,
 `survival.csv`). The members' story survives as the printed spread, which is the number they
 were there to justify.
 
-Why this is worth having: F2 alone is a statement about a prefix distribution the model is
-never in once it starts playing. F3 says the by-rule picture survives self-conditioning,
-which was not obvious — F1's two arms diverge by 39% at the end of a game on exactly that
-distinction.
+Why this is worth having: (b) alone is a statement about a prefix distribution the model is
+never in once it starts playing. F2 says the by-rule picture survives self-conditioning,
+which was not obvious — the two survival arms behind (a) diverge by 39% at the end of a game
+on exactly that distinction.
 
-All three are PNG for reading here; `--camera-ready` writes vector PDFs and moves the
-titles into these captions.
+Both are PNG for reading here; `--camera-ready` writes vector PDFs and moves the figure
+titles into these captions. The panel letters and their titles stay in the graphic, since a
+panel gets read on its own.
 
 ## What this cannot claim
 
