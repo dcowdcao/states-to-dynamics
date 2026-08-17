@@ -24,7 +24,7 @@ from spade.figures.paper_style import (
 
 HERE = Path(__file__).resolve().parent
 FIGURES = HERE / "figures"
-EMBED = "embed"
+EMBED = "embed"         # the space column train_linear_probe.py writes for resid_pre block 0
 EMBED_X = -1.0          # the input space, left of the blocks and ruled off from them
 Y_LABEL = "board accuracy, held out (higher is better)"
 X_LABEL = "residual space (resid_post; layer 0 is the first block)"
@@ -57,16 +57,12 @@ def sweep_panel(ax, probes: pd.DataFrame, null: float | None) -> None:
     ax.set_ylabel(Y_LABEL)
 
 
-def rule_off_input(ax) -> None:
-    """§4.1: the input space is a tick of its own, separated from the network."""
-    ax.axvline(EMBED_X + 0.5, color=MUTED, lw=0.5, zorder=1)
-
-
 def layer_sweep(sweep: pd.DataFrame, null: float, meta: dict, camera_ready: bool) -> Path:
     fig, (full, zoom) = plt.subplots(1, 2, figsize=(9, 3.7))
 
     sweep_panel(full, sweep, null)
-    rule_off_input(full)
+    # FIGURE_GUIDELINES 4.1: the input space is a tick of its own, ruled off from the network.
+    full.axvline(EMBED_X + 0.5, color=MUTED, lw=0.5, zorder=1)
     full.set_ylim(0, 1.0)
     embed = sweep[sweep.space == EMBED].eval_acc.mean()
     full.annotate(f"embedding: {embed:.3f}", (EMBED_X, embed), textcoords="offset points",

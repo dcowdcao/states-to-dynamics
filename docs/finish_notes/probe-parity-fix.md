@@ -67,11 +67,13 @@ anything. Nothing consults the move record.
 
 `check_mover()` then asserts the mover named at position *i* equals the colour of the disc
 that move *i+1* actually places, read out of the state array, which no mover code path writes.
-This is not decoration: **it fails on the first try under `next_hand_color` alone.** The
-engine flips `next_hand_color` twice inside `umpire` on a forfeit, so the nominal next mover
-is not always the player who moves next, and the brief's "take `next_hand_color` per move"
-would still have been wrong at exactly the forfeit positions the bug is about. Index parity
-fails the same assertion at every skip.
+This is not decoration: **it caught the obvious fix.** Reading `next_hand_color` after each
+`umpire` fails this assertion, because the engine flips that field twice inside `umpire` on a
+forfeit — so the nominal next mover is not always the player who moves next, and the naive
+repair would have been wrong at exactly the forfeit positions the bug is about. It is also the
+convention `legality_probe.labels.disc_labels` uses, which is sound there only because those
+fit sets exclude forfeit positions outright. Index parity fails the same assertion at every
+skip.
 
 `ParityAudit` prints, and `metadata.json` records, the desync slot count (308/12,000), the
 mislabeled row count (53/10,000), the game indices, and whether any of them sit in the
@@ -134,7 +136,7 @@ alone; anything pointing `$SPADE_LINEAR_PROBE_ACTIVATIONS` at it gets the old la
 
 Only `board_seqs_id_small.npy` (6 MB), verbatim from ARENA_3.0, committed. It is the study's
 entire input and the repo's own rule is that a fresh clone must be able to run it; the largest
-file already tracked is a 8.9 MB CSV, so this is in-band. Deliberately **not** vendored:
+file already tracked is an 8.9 MB CSV, so this is in band. Deliberately **not** vendored:
 
 - `board_seqs_square_small.npy` — verified to be exactly `to_string()` of the id array on all
   100,000 × 60 entries, so it is the same data twice. Derived at load.
@@ -142,7 +144,9 @@ file already tracked is a 8.9 MB CSV, so this is in-band. Deliberately **not** v
   whitespace and one dead local, and both engines return identical desync counts on these
   games. Two engines in one tree is how conventions drift; the probe now uses the one every
   other study uses.
-- `solutions.py`, `tests.py`, both notebooks — nothing reads them, and one notebook is large.
+- `solutions.py`, `tests.py`, both notebooks — nothing imports them. `solutions.py:401-408` is
+  cited by line number as the provenance of the parity construction, which does not need the
+  file in the tree.
 
 ## Mechanics
 
@@ -186,7 +190,8 @@ markers. Sampling noise over games is not measured; a claim that needs it wants 
 over the 200 games, and that is a different figure.
 
 Colours and markers come from `paper_style.PROBE_STYLE["linear"]`, `REFERENCE` and `NULL`; no
-literals. Checked in grayscale (it is already black plus one gray) and at final width.
+literals. Checked in grayscale — it is already black plus one gray, so the conversion is a
+no-op — and legible at the 9-inch README width it is drawn at.
 
 ## Not done
 
