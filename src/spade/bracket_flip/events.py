@@ -26,7 +26,7 @@ import torch
 
 from spade.common.config import CTX_LEN
 from spade.common.study import study_dir
-from spade.othello.boards import flip_set, rays_touch, regular_moves, replay
+from spade.othello.boards import flip_set, next_mover, rays_touch, regular_moves, replay
 from spade.othello.games import T_MAX, T_MIN, stream_games  # imports force_ipv4() + karvonen path
 
 from circuits.othello_engine_utils import OthelloBoardState, stoi, to_string
@@ -62,12 +62,6 @@ def usable(tokens: list[int], skips: Counter) -> bool:
         skips["pass_token"] += 1
         return False
     return True
-
-
-def next_mover(board: OthelloBoardState) -> int:
-    """Color that actually moves next; the engine forfeits a nominal mover who cannot flip."""
-    nominal = board.next_hand_color
-    return nominal if regular_moves(board.state, nominal) else -nominal
 
 
 def candidates(tokens: list[int], skips: Counter) -> list[Candidate]:
@@ -190,7 +184,7 @@ def probe_labels(tokens: list[int]) -> tuple[np.ndarray, np.ndarray, np.ndarray]
         board.umpire(to_string(token))
         if t < PROBE_T_MIN:
             continue
-        mine = next_mover(board)
+        mine = next_mover(board.state, board.next_hand_color)
         state = board.state
         relative.append(np.where(state == 0, 0, np.where(state == mine, 2, 1)))
         absolute.append(np.where(state == 0, 0, np.where(state == 1, 1, 2)))

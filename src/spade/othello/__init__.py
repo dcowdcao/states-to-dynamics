@@ -5,7 +5,7 @@ them. In the source repo these modules lived under `rules/`, so every downstream
 imported from a sibling study; that is the coupling this package exists to remove.
 
   games.py     stream games from HF, collect legal prefixes, locate first illegal position
-  boards.py    replay, flip_set, regular_moves, rays_touch, tokens_of
+  boards.py    replay, flip_set, regular_moves, next_mover, rays_touch, tokens_of
   taxonomy.py  the 7-category legality taxonomy, mapped to rules R1-R3
 
 Wraps circuits.othello_engine_utils / othello_utils from external/Karvonen_Research.

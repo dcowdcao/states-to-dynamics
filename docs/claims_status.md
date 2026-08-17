@@ -161,9 +161,21 @@ itself carries the seed-42 qualifier under Narrowed.
 - **`peak_layer` in bracket flip is not one number**: 4 by the TPR probe, 5–6 by an
   independent linear probe. The apparent conflict with the causal depth result is not a
   conflict — board state resolves early, legality consequence late.
-- **The linear probe's committed board labels have 53 mislabeled rows in 10,000**, because
-  parity was taken from move index rather than engine replay and forfeits desync it. Any
-  new probe derives parity from replay.
+- **The linear probe's board labels had 53 mislabeled rows in 10,000, and are now rebuilt.**
+  The mover came from move-index parity rather than from engine replay, and a forfeit desyncs
+  the two: 53 rows in games 70, 75 and 146 named the wrong player. `analysis/linear_probe/`
+  now takes it from `spade.othello.boards.next_mover` and asserts it against the disc the next
+  move places, and every artifact under `activations/` has been regenerated
+  ([docs/finish_notes/probe-parity-fix.md](finish_notes/probe-parity-fix.md)). **The
+  probe's headline number changes: layer 5 is 0.9919 in the sweep and 0.9923 for the saved
+  500-epoch probe, against 0.9896 before.** All three bad games are in the positional training
+  half (rows 8000:10000 are games 160–199), so 0.9896 was measured against correct labels; the
+  gain arrives through the fit, is +0.0023 paired at layer 5, and is 25–70× the 3–8 × 10⁻⁵
+  spread over probe-initialisation seeds, so it is not seed noise. **Quote 0.9896 only for
+  results computed before the rebuild** — the bracket-flip TPR fits and depth reconciliation,
+  `rules/causal/unflip_edit`, `violation_divergence/probe_readout`, and every cached TPR probe
+  under `$SPADE_BRACKET_DIR/tpr_probes/`, whose `load()` does not check the labels fingerprint
+  its `train()` writes.
 - **`kl_peak_L5` is misnamed** — it is a logit quantity, not a layer-5 one.
 - **Manifold capture**: an empty support originally passed the small-support test
   vacuously and mislabeled SpaDE as capture; it is shattering. The headline regimes read
@@ -227,3 +239,8 @@ itself carries the seed-42 qualifier under Narrowed.
   loaded it: the geometry family, manifold capture, and the deployed viewer build.
 - Every coverage and reconstruction-F1 number from `results/main/` is good to ±0.014 only —
   the activation set behind those rows no longer exists (q14). VE and L0 are stable.
+- **The corrected linear-probe artifacts are in place but nothing downstream has been re-run**
+  against them. `analysis/linear_probe/activations/` now carries replay-derived labels and a
+  probe fit on them; `rules/causal/unflip_edit`, the four `bracket_flip` modules,
+  `violation_divergence/probe_readout/decode`, `run_eval` and `extract_activations` all still
+  quote numbers from the old ones.

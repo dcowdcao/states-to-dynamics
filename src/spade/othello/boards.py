@@ -71,6 +71,16 @@ def regular_moves(state: np.ndarray, color: int) -> set[int]:
         if state[sq // 8, sq % 8] == 0 and flips(state, sq, color)}
 
 
+def next_mover(state: np.ndarray, nominal: int) -> int:
+    """R4: the colour that actually moves next, skipping a nominal mover who cannot flip.
+
+    `nominal` is the engine's `next_hand_color`. Every mover-relative label needs this
+    rather than move-index parity, which a single skip puts out of phase for the rest of
+    the game.
+    """
+    return nominal if regular_moves(state, nominal) else -nominal
+
+
 def rays_touch(square: int, targets: set[int]) -> bool:
     """Does any target lie on one of `square`'s eight full rays?"""
     r, c = square // 8, square % 8
