@@ -237,11 +237,11 @@ resamples). A game's branches share `tokens[:t0]` and are not independent draws;
 rows would give intervals several times too tight. Every arm draws one branch per game at
 seed 42 rather than averaging a game's categories, which would give it 1/√k of its spread.
 
-`raw_detection_auroc.png` is a bar per arm of the paired AUROC at *t0* — one illegal branch
-against the same game's legal control, threshold-free, so a head's hit rate and its false
-alarms are one number. Each head's rightmost bar is the empirical legal-vs-legal null: the
-control scored against the second legal control the game carries, which is what 0.5 looks
-like here. Numbers in `detection_auroc_<space>.csv`.
+`raw_detection_auroc.png` is a bar per illegal arm of the paired AUROC at *t0* — one illegal
+branch against the same game's legal control, threshold-free, so a head's hit rate and its
+false alarms are one number. Its chance line is empirical rather than assumed: each head also
+scores that legal control against the second legal control the game carries, which lands at
+0.502, and the note carries both. Numbers in `detection_auroc_<space>.csv`.
 
 Everything else the study measures is a table: `localization_<space>.csv` and
 `localization_by_space.csv` (localization rate, rank of *t0*, paired AUROC, pick-a-position

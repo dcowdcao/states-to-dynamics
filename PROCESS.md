@@ -13,16 +13,16 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 bar is now `localize.detection` — the paired AUROC at *t0* of one arm against the same game's
 matched legal control — instead of an argmax hit rate.
 
-**Why the layout survives the metric change.** A rates figure needs a false-alarm bar beside
-the hit-rate bar or the hit rate means nothing, which is what the TNR bars were. AUROC is
-threshold-free and already paired, so that bar comes free; the slot it leaves goes to the
-empirical legal-vs-legal null (`control` scored against `control_legal_2`), which is the thing
-a reader cannot get from the analytic 0.5 line. Each head keeps its own null because each reads
-a different score.
+**Why six bars became four.** A rates figure needs a false-alarm bar beside the hit-rate bar
+or the hit rate means nothing, which is what the TNR bars were. AUROC is threshold-free and
+already paired, so both of those bars come free. The legal-vs-legal null (`control` scored
+against `control_legal_2`) briefly took the slot they left and was cut: drawn, it was two bars
+sitting on the chance line to say what the chance line says. It is still computed per head and
+still in the CSV — it is what makes that line empirical rather than assumed — and its value
+prints in the note (0.502 both heads, CI 0.491-0.512).
 
 The R1 leak is louder here than at the argmax: 0.892 against R2/R3's 0.999, with the 2-class
-head's pooled illegal arm at 0.960. Both null bars land at 0.502 (CI 0.491-0.512), which is the
-corpus saying the pairing smuggles in nothing on its own.
+head's pooled illegal arm at 0.960.
 
 Nothing was recomputed: `localize.detection` is the same function `localization_raw.csv`
 already reports, so the figure and that CSV agree by construction rather than by luck.

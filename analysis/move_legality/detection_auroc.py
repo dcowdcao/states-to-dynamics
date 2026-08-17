@@ -7,9 +7,9 @@ split by which rule the branch actually broke, so a rule the probe cannot catch 
 its own short bar rather than being averaged away.
 
 AUROC is threshold-free, so a head's hit rate and the false alarms it pays for it are one
-number rather than two bars, and each head carries an **empirical** null: its own legal
-control scored against the second legal control every game has, which is what 0.5 looks
-like on this corpus.
+number rather than two bars. The legal-vs-legal null -- a game's legal control against the
+second legal control it carries -- is still measured, since it is what makes the 0.5 line
+empirical rather than assumed, but it is a number under the panel and not a bar of its own.
 
 Usage: python analysis/move_legality/detection_auroc.py [--space raw] [--camera_ready]
 """
@@ -35,7 +35,7 @@ GAP = 0.8   # blank slot between the two heads
 
 ARM_STYLE = {
     "illegal": {**CLASS_STYLE["violation"], "label": "illegal,\nany rule"},
-    "control": {**NULL, "label": "legal vs\nlegal"},
+    "control": NULL,   # the legal-vs-legal null: measured, printed in the note, not a bar
     **{r: {**PROBE_CLASS_STYLE[r],
            "label": PROBE_CLASS_STYLE[r]["label"].replace(" ", "\n")} for r in RULES},
 }
@@ -56,7 +56,7 @@ def bar(head: str, score: torch.Tensor, arm: str, meta: dict, selection: dict) -
 
 
 def bars(space: str, meta: dict, selection: dict) -> list[dict]:
-    """Six bars: each head's illegal arms and the legal-vs-legal null it is read against."""
+    """Each head's illegal arms, plus the legal-vs-legal null the chance line stands for."""
     heads = [("2-class", localize.read(space, "p_illegal"), ["illegal"]),
              ("4-class", 1.0 - localize.read(space, "proba4")[..., 0], RULES)]
     return [bar(head, score, arm, meta, selection)
@@ -65,7 +65,15 @@ def bars(space: str, meta: dict, selection: dict) -> list[dict]:
 
 
 def draw(space: str, rows: list[dict], camera_ready: bool) -> Path:
+    """The illegal arms as bars; the legal-vs-legal null stays a number under them.
+
+    Drawn, the null was two bars at the chance line saying the same thing the line says. It
+    is still measured -- it is what licenses that line being read as empirical -- so it goes
+    in the note and in the CSV.
+    """
     fig, ax = plt.subplots(figsize=(5.5, 3.4))
+    null = {r["head"]: r for r in rows if r["arm"] == "control"}
+    rows = [r for r in rows if r["arm"] != "control"]
     x = np.array([i + (GAP if r["head"] == "4-class" else 0.0) for i, r in enumerate(rows)])
 
     split = next(i for i, r in enumerate(rows) if r["head"] == "4-class")
@@ -99,10 +107,11 @@ def draw(space: str, rows: list[dict], camera_ready: bool) -> Path:
     fig.text(0.005, -0.005,
              "AUROC at $t_0$ of an illegal branch against the same game's legal control, one "
              "pair per game: above 0.5\nthe head scores the illegal move above the legal one, "
-             "and AUROCs are never flipped, so a bar below 0.5\nis the finding. The null bar "
-             "scores that control against the second legal control the same game carries.\n"
-             "2-class head read as $P$(illegal), 4-class as $1-P$(legal); bars are 95% "
-             "percentile bootstrap CIs over\npaired games (1,000 resamples).",
+             "and AUROCs are never flipped, so a bar below 0.5\nis the finding. 2-class head "
+             "read as $P$(illegal), 4-class as $1-P$(legal); bars are 95% percentile\nbootstrap "
+             "CIs over paired games (1,000 resamples). The chance line is empirical: that same "
+             f"control\nagainst the second legal control the game carries scores "
+             f"{null['2-class']['auroc']:.3f} and {null['4-class']['auroc']:.3f}.",
              ha="left", va="top", fontsize=7, color=MUTED)
     rule_key(fig, RULES, y=-0.205)
     return save_figure(fig, FIGURES / f"{space}_detection_auroc", camera_ready)
