@@ -10,10 +10,12 @@ that recomputes inside its figure script has put its expensive half in the wrong
 
 - `spade_vs_baselines.md` — the headline comparison writeup. Its pre-2026-07 sections are
   about distance-SpaDE only; see `docs/claims_status.md`.
-- `linear_probe/` — the gold-standard board-state probe (~0.99 accuracy) reused as ground
-  truth by the rules, bracket-flip and violation-divergence studies. Its committed board
-  labels carry 53 mislabeled rows in 10,000, because parity was taken from move index
-  rather than engine replay; any new probe derives parity from replay.
+- `linear_probe/` — the gold-standard board-state probe (0.9919 at layer 5) reused as ground
+  truth by the rules, bracket-flip and violation-divergence studies. Its board labels used to
+  carry 53 mislabeled rows in 10,000, because the mover was taken from move index rather than
+  from engine replay; the labels and every artifact under `activations/` have been rebuilt
+  (`docs/finish_notes/probe-parity-fix.md`), and anything computed before that used the old
+  ones.
 - `geometry/` — 13 studies of SAE feature geometry; an older generation, built on a 7-SAE
   set. See `geometry/SUMMARY.md`, and read `docs/claims_status.md` before quoting it.
 - `rules_manifolds/`, `rules_causal/` — the rules-of-Othello program.
