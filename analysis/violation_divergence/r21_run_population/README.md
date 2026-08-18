@@ -115,8 +115,14 @@ and only SpaDE clears zero (+0.085 [+0.024, +0.148]). The sign is the opposite o
 prediction everywhere, but eight of nine intervals cover zero, so this field neither
 corroborates the account nor has the power to reject it — the effect is ~0.03 against a CI
 half-width of ~0.05, which wants ~3× the games (the t₀ = 20 pool holds 1696).
-`../fork_population` runs the same contrast in two other fields and they split: resolved
-negative in 8 of 9 spaces in the step-length norm, 0 of 9 in the displacement plane.
+
+The same contrast runs in two other fields on the same games, and the three answers are
+not the same kind of answer. `../step_length_fork` resolves it negative in 8 of 9 spaces
+(−0.061 [−0.088, −0.033] in raw layer 5): there the account survives. `../fork_population`
+returns +0.003 [−0.026, +0.033] on the displacement, a half-width of 0.030 against a
+step-length-sized gradient of 0.06 — powered to have seen it, so there the account is
+excluded rather than unsupported. This field is the one that cannot tell, and a reader
+should not count it with the displacement.
 
 **The two halves of R²¹ agree here.** On one game the 11 step-length and 10 turning-angle
 components disagreed sharply (0.34 vs 0.94 in TopK). Paired per game over 100, θ − d is
