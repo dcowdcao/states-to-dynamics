@@ -22,6 +22,8 @@ python analysis/violation_divergence/rule_curvature/make_figures.py # curvature 
 python analysis/violation_divergence/suffix_legality/measure.py     # the shared-suffix defect, tokens only
 python analysis/violation_divergence/r21_run_population/measure.py  # the R^21 run ratio over n games
 python analysis/violation_divergence/r21_run_population/make_figures.py
+python analysis/violation_divergence/fork_population/measure.py     # the fork over 100 games, --plane displacement|r21
+python analysis/violation_divergence/fork_population/make_figures.py
 ```
 
 `$DIR` = `$SPADE_DIVERGENCE_DIR` (default `/n/netscratch/ba_lab/Lab/$USER/spade_divergence`).
@@ -347,7 +349,12 @@ the 21-D ReStraV curvature descriptor instead.
 `game_trajectory/game_1235_fork_pca` adds the
 magnitude a projection cannot show, δ̂ against offset. These are n=1
 illustrations of the construction, not claim-supporting curves — every number above
-comes from the aggregates.
+comes from the aggregates. `fork_population/` is the claim-carrying twin of the
+first: the same nine forks and the same ratio over the first 100 games forking at
+*t0* = 20, and it does not reproduce that figure's ordering — R3 at 1.53× its legal
+control with R3 > R2 > R1 in all nine spaces on game 1235 becomes 1.02 (R2), 1.02
+(R3) and 0.91 (R1) over 100 games, under an empirical legal-vs-legal null of 1.04
+that no rule reaches.
 
 ## Known gaps
 

@@ -3,8 +3,10 @@
 `fork_panel` is one representation space: the branches as paths, with move index
 on the third axis. `rule_fork_panel` is the same panel with the six illegal
 categories collapsed onto the three rules they violate -- one mean per rule,
-over its members drawn faint. `board_panel` is the position they fork on, with
-each branch move on its square. All take their colour, marker and label from
+over its members drawn faint. `rule_fork_population_panel` is that panel over a
+population of source games: no member traces, and a confidence ellipse on the
+mean instead. `board_panel` is the position they fork on, with each branch move
+on its square. All take their colour, marker and label from
 `branch_style`, so a branch reads the same in either. Layout -- how many panels,
 where the legend goes -- belongs to the caller; these draw one axes each.
 """
@@ -12,9 +14,12 @@ where the legend goes -- belongs to the caller; these draw one axes each.
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import to_rgba
+from matplotlib.patches import Ellipse
 from matplotlib.ticker import FuncFormatter, MaxNLocator
+from mpl_toolkits.mplot3d.art3d import pathpatch_2d_to_3d
 
-from spade.figures.branch_style import MEMBER, branch_style, legend_proxy
+from spade.figures.branch_style import (
+    MEMBER, branch_style, ci_ellipse_proxy, legend_proxy)
 from spade.figures.othello_board import draw_board, square_xy
 from spade.figures.paper_style import DISC_EDGE, DISC_STYLE, INK, MUTED
 from spade.othello.taxonomy import LEGAL
@@ -25,6 +30,7 @@ CORNER = 0.30         # marker offset from the cell centre, which may hold a dis
 GHOST_R = 0.12        # would-be disc, in cells: half a real disc, in the far corner
 FLIP_RING = 0.38      # ring radius around a flipped disc, in cells
 PLANE_TICKS = 3       # intervals; symmetric about zero, so the reference always gets a tick
+CI_CHI2 = 5.991       # chi^2 with 2 df at 0.95: the ellipse is a CI of a 2-D mean
 
 
 def axis_labels(method: str, var: np.ndarray) -> tuple[str, str]:
@@ -46,15 +52,24 @@ def plane_displacement(coords: np.ndarray, pos: np.ndarray, t0: int,
     return np.linalg.norm(coords[:, post] - coords[ref, post], axis=-1).mean(axis=1)
 
 
-def _path(ax, seg: np.ndarray, z: np.ndarray, st: dict, label: str | None) -> None:
-    """One branch or one rule mean: the line, its sparse markers, its end marker."""
+def _path(ax, seg: np.ndarray, z: np.ndarray, st: dict, label: str | None,
+          open_end: bool = False) -> None:
+    """One branch or one rule mean: the line, its sparse markers, its end marker.
+
+    `open_end` shrinks the end marker and gives it a white face, for a panel that
+    draws a CI ellipse there: the ellipse lies flat in the plane and the camera
+    foreshortens it, so a filled end marker swallows it. The white face is opaque
+    and wider than the line's own markers, so the one under it does not show."""
     ax.plot(seg[:, 0], seg[:, 1], z, ls=st["ls"], color=st["color"], lw=st["lw"],
             marker=st["marker"], ms=3.5, markevery=3, markerfacecolor=st["mfc"],
             markeredgecolor=st["mec"], markeredgewidth=0.5, zorder=st["zorder"],
             label=label)
-    ax.plot([seg[-1, 0]], [seg[-1, 1]], [z[-1]], marker=st["marker"], ms=6,
-            color=st["color"], markerfacecolor=st["mfc"], markeredgecolor=st["mec"],
-            markeredgewidth=0.7, zorder=st["zorder"] + 1)
+    end = ({"ms": 5.5, "markerfacecolor": "white", "markeredgecolor": st["color"],
+            "markeredgewidth": 1.0} if open_end else
+           {"ms": 6, "markerfacecolor": st["mfc"], "markeredgecolor": st["mec"],
+            "markeredgewidth": 0.7})
+    ax.plot([seg[-1, 0]], [seg[-1, 1]], [z[-1]], marker=st["marker"],
+            color=st["color"], zorder=st["zorder"] + 1, **end)
 
 
 def _fork_axes(ax, coords: np.ndarray, pos: np.ndarray, t0: int, legend: bool,
@@ -122,6 +137,66 @@ def rule_fork_panel(ax, coords: np.ndarray, rows: list[dict], pos: np.ndarray,
         _path(ax, coords[members, k:].mean(axis=0), pos[k:], st, label)
     if legend:
         legend_proxy(ax)
+
+
+def _ci_ellipse(ax, points: np.ndarray, z: float, color: str) -> np.ndarray:
+    """The 95% confidence ellipse of the mean of `points` [n_games, 2], lying flat
+    at height `z`. Returns its bounding box, so the caller can hold it in the axes.
+
+    An interval on a 2-D mean has no preferred direction, so it is an ellipse and
+    never a bar: the covariance of the games' own positions, divided by n."""
+    values, vectors = np.linalg.eigh(np.cov(points.T) / len(points))
+    width, height = 2 * np.sqrt(CI_CHI2 * values[::-1])
+    patch = Ellipse(points.mean(0), width, height,
+                    angle=np.degrees(np.arctan2(vectors[1, -1], vectors[0, -1])),
+                    fill=False, edgecolor=color, lw=1.0, alpha=0.9, zorder=6)
+    ax.add_patch(patch)
+    pathpatch_2d_to_3d(patch, z=z, zdir="z")
+    radius = np.sqrt(CI_CHI2 * values.max())
+    return points.mean(0) + radius * np.array([[-1, -1], [1, 1]])
+
+
+def rule_fork_population_panel(ax, coords: np.ndarray, game_coords: np.ndarray,
+                               rows: list[dict], pos: np.ndarray, t0: int,
+                               legend: bool, zlabel: bool = True) -> None:
+    """`rule_fork_panel` over a population: one path per rule through the mean
+    field, with a 95% CI of that mean drawn flat at the end of each path.
+
+    One ellipse per path, at the end, and not one per drawn marker: at this n the
+    CI is about as wide as the fork is long, so a ring at every marker is a stack
+    of rings the paths disappear into.
+
+    `coords` [n_branches, T, 2] is the mean field and `game_coords`
+    [n_games, n_branches, T, 2] each game's own field in the same plane, which is
+    what the ellipse is taken over. No faint member traces: a member here is
+    itself a mean over games, so it would read as game-to-game spread, which is
+    exactly what the ellipse carries.
+    """
+    k, last = int(np.flatnonzero(pos == t0)[0]), len(pos) - 1
+    # The ellipses are the only patches here, and depth-sorting them against each
+    # other buys nothing while it overwrites the zorder that keeps them off their
+    # own end markers.
+    ax.computed_zorder = False
+    bounds = [coords[:, k:].reshape(-1, 2)]
+    for i, r in enumerate(rows):
+        if r["category"] != LEGAL:
+            continue
+        st = branch_style(r["category"], r["is_control"])
+        _path(ax, coords[i, k:], pos[k:], st, st["label"] if legend else None,
+              open_end=bool(r["is_control"]))
+        # The reference is 0 at every position by construction, so it has no CI.
+        if r["is_control"]:
+            bounds.append(_ci_ellipse(ax, game_coords[:, i, last], pos[last],
+                                      st["color"]))
+    for members in rule_rows(rows).values():
+        st = branch_style(rows[members[0]]["category"], 0, by_rule=True)
+        label = f"{st['label']} (mean of {len(members)})" if legend else None
+        _path(ax, coords[members, k:].mean(axis=0), pos[k:], st, label, open_end=True)
+        bounds.append(_ci_ellipse(ax, game_coords[:, members, last].mean(axis=1),
+                                  pos[last], st["color"]))
+    _fork_axes(ax, np.concatenate(bounds), pos, t0, legend, zlabel)
+    if legend:
+        ci_ellipse_proxy(ax)
 
 
 def mover_name(board) -> str:

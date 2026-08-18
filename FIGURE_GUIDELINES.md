@@ -318,12 +318,33 @@ conditions:
   the figure irreproducible and lets a favourable angle pass as a result.
 - **Pair it with a quantitative 2-D panel.** A 3-D projection shows shape, never
   magnitude; the companion panel carries the number the claim rests on, with the
-  usual uncertainty and n.
+  usual uncertainty and n. When that number is a ratio to a per-cell control, draw
+  it on a log ratio ladder rather than as bars from zero (§1.6): a ratio's null is
+  1, and two series that differ several-fold — a distance in the drawn plane and
+  the same distance in the full space — share one linear axis only by flattening
+  the smaller onto the null line.
 - **Sparse ticks on the plane axes, full ticks on the ordered one.** Three per
   plane axis per §4.6, symmetric about zero so the origin — which in a
   displacement plane *is* the reference — always gets one. Per-panel refits are
   not comparable across panels: say so in the legend title when facetting, and
   say it whether or not the ticks are there.
+- **A path that is a mean over items carries a flat confidence ellipse, not a
+  bar.** The estimator is a two-dimensional mean and has no preferred direction,
+  so a 1-D error bar is a choice of axis rather than a measurement: draw the
+  covariance of the items' projected positions ÷ n at χ²₂(0.95), lying flat in
+  the plane at that index. Draw **one per path, at its end**. At the n where an
+  ellipse is worth drawing it is often about as wide as the path is long, so a
+  ring at every marker is a stack the paths disappear into. Name it as a CI of
+  the mean in the legend — §4.6's 50% contour is a dispersion summary and the two
+  must never be read for each other — and give a series that is zero by
+  construction none at all.
+- **A mean of displacement *vectors* cancels, so print the share that survives.**
+  Averaging a displacement over items (games, categories) is not averaging their
+  distances: components that differ between items subtract, and the mean path is
+  shorter than every item's. Unannotated, a short mean fork reads as "nothing
+  moved", which is the opposite of what a mean of per-item distances reports. Put
+  ‖mean Δ‖ ÷ mean ‖Δ‖ on each panel and pair the projection with the
+  distance-based panel, so the two estimators are visibly two.
 - Sub-sample an oscillating index rather than drawing every step. A quantity
   whose frame alternates (here: a mover-relative board code flipping each ply)
   draws as a sawtooth that hides everything else; plot one phase and say which.

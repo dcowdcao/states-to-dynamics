@@ -6,6 +6,91 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The fork figure over 100 games, and what the mean does to it (2026-08-18)
+
+`analysis/violation_divergence/fork_population/` is `fork_and_board`'s population twin:
+the same nine 3-D forks and the same "how far does each rule run" panel, over the first
+100 branch-complete games forking at *t0* = 20 instead of over one selected game. This
+entry covers both halves: the sweep in `measure.py` and the figure.
+
+Decisions worth keeping:
+
+- **The board panel is deleted and the panels renumber.** Every game forks at one move
+  index and each has its own position there, so there is no board to draw and the
+  composition panel a population figure would otherwise carry (a *t0* histogram, n per
+  rule) is a spike and a constant. (a) is the grid, (b) is `fork_and_board`'s (c), and
+  the README cross-references that figure's (b) for what the branches are.
+- **(a) and (b) measure different things on purpose.** (a) is a mean over games of the
+  displacement *vector*, so games whose directions differ cancel; (b) is a mean of
+  per-game *distances*, which does not. Without the coherence number each cell prints
+  (‖mean D‖ ÷ mean ‖D‖) a reader takes the short fork in (a) for branches that barely
+  move, which is the opposite of what (b) reports. Same cancellation
+  `r21_run_population` documents one level down, over categories instead of games.
+  The printed number is the *rule mean's* coherence (`coherence_rule`), not the mean
+  of its member categories' (`coherence`): the drawn path cancels across categories
+  as well as across games, so the members' average is a different and larger number
+  than the path's. Both are in the npz; only one belongs next to the path.
+- **Uncertainty in a plane is an ellipse, not a bar.** The estimator is a 2-D mean, so
+  a 1-D error bar would be a choice of axis; `branch_panels._ci_ellipse` draws the
+  covariance of the 100 games' projected positions ÷ n at chi2_2(0.95), lifted to the
+  panel's *t* with `pathpatch_2d_to_3d`. Drawn at **every** marker it is a stack of
+  rings the paths vanish into — at this n the CI is about as wide as the fork is long —
+  so it is drawn once, at the end of each path. Both renders were compared.
+- **The sweep is space-outer and encodes every space twice.** The plane is not known
+  until every game has been seen, so one pass over a space's games gives the mean
+  field, the plane is fit on that, and a second pass projects every game into *that*
+  plane — which is what makes (a)'s ellipse and (b)'s in-plane ratio measure the
+  plane the panel draws. Holding the 100 fields between the two passes instead is
+  ~500 MB per space, and the login node caps a user at **8 GiB** across every process
+  the session owns
+  (`user.slice/user-*.slice/memory.max`); the held-field version was SIGKILLed four
+  times, always in the ninth space, at 1.4–2.4 GB RSS with the encoders resident.
+  `MALLOC_ARENA_MAX=2 OMP_NUM_THREADS=4` was needed even after the rewrite, to keep
+  glibc's per-thread arenas inside the cap. A rerun at a larger `--n_games` belongs
+  in Slurm; the login node is not where this sweep should be run again.
+- **`src/spade/violation_divergence/population.py`** holds the three things a
+  population sweep needs and a single-game figure does not: a fixed branch-row order
+  (`ROLES`), so a game is one slice of a `[G, B, …]` array and the roles are
+  constants rather than per-game lookups — `branches.pt` order is neither; the games
+  forking at one *t0*, so a mean over games is a mean over aligned positions; and
+  encoders built once, since `fork_plane.space_features` reloads the checkpoint on
+  every call. `r21_run_population/measure.py` still has its own copies of the first
+  two. Two callers, so they stay duplicated until a third asks for them.
+- **The finding is that the population contradicts the game the design figure
+  draws.** Game 1235 puts R3 at 1.53× its legal control in full raw layer 5 and
+  orders R3 > R2 > R1 in all nine spaces; over 100 games R2 and R3 sit on 1
+  (1.022 [0.996, 1.049], 1.017 [0.987, 1.047]) and R1 sits below it in every space
+  (0.909 [0.885, 0.934] in raw layer 5). The **empirical legal-vs-legal null is above
+  all three** — 1.042 [1.006, 1.078] — so no rule outruns a second legal move, and
+  the ordering the single-game figure invites is game-level noise. Leaving game 1235
+  out moves every displacement mean by ≤ 0.006, so it is not the argmax pulling the
+  population: it is that one game is one game.
+
+FIGURE_GUIDELINES 1.7 wants the within/between-rule spread ratio on the canvas, and
+the per-game median is the population's — `spread_mean`, the same statistic on the
+mean field, is the spread of three averaged trajectories. It goes in the legend band
+under (a), beside the coherence key, since that is where the reader meets the rule
+entries; the band's lines wrap, because `save_figure` crops tight and an over-wide
+line silently widens the canvas past the panel grid instead of being cut.
+
+`rule_fork_population_panel` is a sibling of `rule_fork_panel`, not a flag on it: the
+faint per-member traces come out at population n (a "member" here is itself a mean over
+games and would read as game-to-game spread), which is the same split commit 5b36969
+made in `rule_curvature`, and the two bodies have already drifted once.
+
+**(b) is a log ratio ladder, not `fork_and_board`'s bars.** Every rule is measured
+twice — in that cell's full space (filled marker, the plane-free number the claim rests
+on) and in the plane the cell above draws (open marker, alignment-weighted and
+in-sample) — and the two differ by 1.1–3.9× across the nine cells. On one linear axis
+from zero the in-plane series sets the scale and every full-space marker lands on the
+line at 1 where it cannot be read, so the panel moved onto `r21_run_population`'s ratio
+rungs, dense around 1 and sparse above it. Bars do not survive that: a bar asserts a
+distance from zero and the ladder's baseline is the control at 1. `SLOT_W` = 0.21, not
+`fork_and_board`'s 0.26: four slots per space, because the empirical null is
+`control_legal_2` (the legal control is the divisor, identically 1 with no variance),
+and at 0.26 the gap between two spaces' groups closes below the gap inside one.
+
+
 ## Recovering the spliced move with no counterfactual, across the nine spaces (2026-08-18)
 
 `analysis/violation_divergence/changepoint_localization/` -- one trajectory, no reference
@@ -92,6 +177,8 @@ magnitude claim wearing a geometry label, and the README says so. Second extensi
 population is the 575 games that study selected for its probe-holdout guard, predating
 `extend_branches`; the tree now holds 3,185 branch-complete games.
 
+
+
 ## divergence_by_space at the shared n = 100 (2026-08-18)
 
 `--n_games N` on both scripts draws the study's shared N-game population instead of the
@@ -121,6 +208,8 @@ bites (4.4x at n = 100 against 3.1x, CI half-width 0.59 against 0.11); on the pl
 CI is 0.05-0.09 and the claim reads the same.
 
 ---
+
+
 
 ## The R^21 run figure, over 100 games instead of one (2026-08-18)
 
