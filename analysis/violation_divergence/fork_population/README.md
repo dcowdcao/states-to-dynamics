@@ -17,9 +17,9 @@ member counts a composition panel would show are a spike and a constant. What th
 branches *are* is that figure's panel **(b)**; read it there, on the one game.
 
 ```
-python analysis/violation_divergence/fork_population/measure.py [--plane displacement|r21] [--n_games 100]
+python analysis/violation_divergence/fork_population/measure.py [--plane displacement|r21|d7] [--n_games 100]
 python analysis/violation_divergence/fork_population/make_figures.py \
-    [--plane displacement|r21] [--n_games 100] [--camera-ready]
+    [--plane displacement|r21|d7] [--n_games 100] [--camera-ready]
 ```
 
 `measure.py` writes `$SPADE_DIVERGENCE_DIR/fork_population/{plane}_n100.npz`.
@@ -32,6 +32,7 @@ median.
 |---|---|
 | `figures/fork_population_displacement` | PCA of `D(t) = z_b(t) − z_ref(t)` — the default |
 | `figures/fork_population_r21` | PCA of `Δφ(t) = φ(z_b(t)) − φ(z_ref(t))`, inside the 21-D ReStraV curvature descriptor |
+| `figures/fork_population_d7` | the same `Δφ(t)` cut to R²¹'s **7 raw step lengths** `d1…d7` — the descriptor's step-length half, without the 4 moments of *d* |
 
 Both planes are fit **once per space, on the population mean field**, and both are
 uncentred, so zero displacement is still the origin and the reference is still the
@@ -104,6 +105,20 @@ path no game takes. The drawn window is *r* = −4 … +24, two positions shorte
 the front than the displacement figure's, because a W = 8 trailing window needs
 context the study window does not carry. Everything else — the ellipse, the
 per-space refit and its disclaimer, (b)'s estimator, the null — reads as above.
+
+### `fork_population_d7`
+
+**The same 100 forks with (a)'s plane fit inside R²¹'s raw step-length block
+alone.** `curvature_plane.PLANE_COLUMNS` cuts Δφ to `d1…d7` and nothing else
+changes: φ per game over the W = 8 window, the difference inside the descriptor,
+the column scaling, the *r* = −4 … +24 drawn window, the per-space refit, the
+ellipse, (b)'s estimator and the null all read as the R²¹ figure above. The 7 are
+the **raw** step lengths, not `fork_r21.BLOCKS["d"]`'s 11, which also match
+`mean d`, `min d`, `max d` and `var d` — summaries of the same seven.
+
+It exists because `../r21_shared_basis` panel (b) reports that R²¹'s two halves
+disagree about the same branches, and reports it only as a scalar run ratio. This
+is the fork drawn in the half that moves.
 
 ## What it says
 
@@ -187,6 +202,44 @@ its space's null — R2 1.298 [1.205, 1.393] and R3 1.219 [1.128, 1.318] against
 inside its upper (1.133). One cell of nine, on an unpaired comparison, in the
 field where the skew is worst; it is a lead, not a finding.
 
+**The step-length block loses the one result the other two planes have, and
+gains one they do not.** Raw layer 5, per game in the column-scaled 7-D block:
+R1 **1.012** [0.925, 1.116] (median 0.925), R2 1.071 [0.992, 1.159] (1.009),
+R3 1.068 [0.967, 1.175] (0.971), null 1.086 [0.991, 1.182]. Paired on the same
+games — the only form this ordering may be read in — null − R1 = **+0.074**
+[−0.005, +0.146], null − R2 = +0.015 [−0.065, +0.095], null − R3 = +0.018
+[−0.063, +0.094]: **nothing is resolved in raw layer 5**. R1's deficit, which the
+displacement plane resolves in all nine spaces (null − R1 = +0.133 [+0.103,
++0.163] here) and which `../step_length_fork` resolves on the ‖Δz‖ ratio itself
+(0.936 [0.910, 0.961] at *r* = 0), does not survive the cut to `d1…d7`: over nine
+spaces null − R1 clears zero only in Standard (+0.087 [+0.002, +0.171]) and SpaDE
+(+0.100 [+0.004, +0.197]), both marginally. The per-game ratio is 3–4× noisier
+here than in the displacement plane (±0.09 against ±0.025 on the mean), which is
+most of why.
+
+What it gains is **CosineSpaDE**, and it is the largest separation anywhere in
+this study: R2 **1.564** [1.430, 1.705], R3 1.403 [1.264, 1.550] against a null
+of 1.086, paired null − R2 = **−0.478** [−0.614, −0.349] and null − R3 =
+**−0.317** [−0.457, −0.185]. The same paired contrasts in full R²¹ are −0.245
+[−0.335, −0.163] and −0.166 [−0.261, −0.081] — the block roughly doubles them —
+and in the displacement plane they are −0.020 [−0.053, +0.013] and −0.002
+[−0.039, +0.035], i.e. nothing. SpaDE moves the same way and stops short of
+resolving (null − R2 = −0.059 [−0.164, +0.052]). One dictionary family, in the
+field where the per-game skew is worst; it is the same lead the R²¹ figure
+flags, now larger and paired, and it still needs a held-out space before it is a
+finding.
+
+**Between rules, the block separates worse in seven spaces and far better in
+two.** Paired R2 − R1 per game, raw layer 5: **+0.059** [−0.017, +0.134] in the
+block, against +0.069 [+0.018, +0.122] in full R²¹ and +0.113 [+0.093, +0.133] in
+the displacement plane — the block is the only one of the three that does not
+resolve it. In CosineSpaDE it is +0.521 [+0.407, +0.640] against R²¹'s +0.261 and
+displacement's +0.132. **Do not read the spread ratio as agreeing with this**:
+within ÷ between-rule spread is *tighter* in the block (per-game median **0.856**
+[IQR 0.697–1.032] against R²¹'s 0.917 and displacement's 0.924), because that
+statistic is a geometry of the six categories in their own field and says nothing
+about the control they are divided by.
+
 ## Reading it honestly
 
 - **(a) averages displacement *vectors*, so it cancels, and each cell prints by how
@@ -252,12 +305,14 @@ field where the skew is worst; it is a lead, not a finding.
   trajectories, not the typical spread of a game's — so it must never be quoted as
   if it were the population's value. Both are in the npz (`spread_game`,
   `spread_mean`) and printed on every render. The R²¹ figure prints its own: median
-  0.917 [IQR 0.744–1.031], above 1 in 33%.
+  0.917 [IQR 0.744–1.031], above 1 in 33%; the `d1…d7` block's is 0.856 [IQR
+  0.697–1.032], above 1 in 30%.
 - **Quote the median beside the mean in R²¹.** Mean − median reaches 0.11 there
   (CosineSpaDE's null, mean 1.053 against median 0.947), against ≤ 0.02 anywhere
   in the displacement plane: the per-game ratio is mildly right-skewed in R²¹,
   where a game with a barely-bending control pulls its own ratio up. The CSV
-  carries both for every row.
+  carries both for every row. The `d1…d7` block is worse again: mean − median
+reaches 0.14 (CosineSpaDE R2, 1.564 against 1.428).
 - **Ratios, so only the within-cell contrast carries.** A plane's units are its
   space's own and they differ by ~800× across the grid, so (b) divides by the
   cell's own control and never draws a distance. That makes nine cells readable

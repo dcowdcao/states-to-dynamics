@@ -59,12 +59,20 @@ W = 8                    # smallest window filling all 21 coordinates; see the d
 # The two descriptor components the straightness study states its results in, and
 # the one fixed plane that is the same named pair in every cell of a grid.
 FIXED_AXES = ("mean d", "mean θ")
+# The descriptor columns a fork plane may be fit inside, by the --plane name that
+# selects them. `d7` is R^21's raw step-length block alone -- d1..d7, and not the
+# 11 columns fork_r21.BLOCKS["d"] takes, which fold in 4 moments of d.
+PLANE_COLUMNS = {"r21": slice(None), "d7": slice(N_RAW_D)}
 
 
 def names_of(k: int) -> list[str]:
-    """Column names of a k-wide descriptor: ReStraV's 21, or its 8 moments."""
-    return list(RESTRAV_FEATURE_NAMES if k == len(RESTRAV_FEATURE_NAMES)
-                else RESTRAV_FEATURE_NAMES[N_RAW_D + N_RAW_THETA:])
+    """Column names of a k-wide descriptor: ReStraV's 21, its 7 raw step lengths,
+    or the 8 moments those 21 end with."""
+    if k == len(RESTRAV_FEATURE_NAMES):
+        return list(RESTRAV_FEATURE_NAMES)
+    if k == N_RAW_D:
+        return list(RESTRAV_FEATURE_NAMES[:N_RAW_D])
+    return list(RESTRAV_FEATURE_NAMES[N_RAW_D + N_RAW_THETA:])
 
 
 def descriptor(Z: torch.Tensor) -> np.ndarray:

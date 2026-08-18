@@ -6,6 +6,47 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## A third fork plane: R^21's raw step-length block alone (2026-08-18)
+
+`--plane d7` on `fork_and_board` and `fork_population`, beside `displacement` and `r21`.
+The plane is the uncentred top-2 of the same `Δφ(t) = φ(z_b) − φ(z_ref)` cut to
+`RESTRAV_FEATURE_NAMES[:N_RAW_D]` — the 7 raw step lengths `d1…d7`. It is deliberately
+**not** `fork_r21.BLOCKS["d"]`, whose substring match also takes `mean/min/max/var d`
+and so counts the same seven twice. `curvature_plane.PLANE_COLUMNS` holds the two
+slices; the r21 path is otherwise untouched in both scripts, and `names_of` grew the
+7-wide case it would have answered with the moment names.
+
+Why: `r21_shared_basis`'s `run_from_reference` (b) has said since it was written that
+R^21's two halves disagree about the same branches, and has only ever said it as a
+scalar run ratio. Nobody had drawn the fork in the half that moves.
+
+**The block is not a cosmetic variation of R^21, and it is not the ‖Δz‖ step-length
+figure either.** Over the shared t0 = 20 population, raw layer 5, paired per game:
+null − R1 = +0.074 [−0.005, +0.146], null − R2 = +0.015, null − R3 = +0.018 — nothing
+resolved, where the displacement plane gives null − R1 = +0.133 [+0.103, +0.163] in all
+nine spaces and `step_length_fork` resolves R1 below its control on the ‖Δz‖ ratio in
+all nine. The R1 deficit is the study's one replicated result and **the d-block does not
+see it**; its per-game ratios are 3–4x noisier (±0.09 against ±0.025). What the block
+does see is CosineSpaDE: paired null − R2 = −0.478 [−0.614, −0.349], about twice full
+R^21's −0.245 and against nothing at all (−0.020) in the displacement plane. One
+dictionary family, so it is a lead, not a finding.
+
+Two numbers that look like they agree and do not. Within ÷ between-rule spread is
+*tighter* in the block (per-game median 0.856 against R^21's 0.917), while paired
+R2 − R1 fails to resolve there (+0.059 [−0.017, +0.134]) and resolves in both other
+planes. The spread ratio is a geometry of the six categories in their own field; it
+knows nothing about the control they are divided by. Do not quote one for the other.
+
+Verification: the eight `fork_and_board` and four `fork_population` outputs were
+re-rendered. All six PNGs byte-identical; the two `fork_population` PDFs byte-identical;
+the four `fork_and_board` PDFs differ from the committed copies by exactly 6 bytes, the
+`/CreationDate` string, because those were committed without `SOURCE_DATE_EPOCH`. Proved
+by rendering one of them from the stashed pre-change tree under `SOURCE_DATE_EPOCH=1`
+and getting the same md5 as the post-change render.
+
+---
+
+
 ## The step-length fork over 100 games, and what it costs the n = 1 reading (2026-08-18)
 
 `step_length_fork/measure.py` sweeps the same ratio `s_b(t) / s_ref(t)` over the study's

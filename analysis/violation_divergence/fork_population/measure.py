@@ -2,7 +2,7 @@
 
 `../fork_and_board` is this figure for a selected game: an illustration of the
 construction, n = 1, whose panels are cleaner than a typical fork's because the
-game is the argmax of a separation criterion. Same nine spaces, same two planes,
+game is the argmax of a separation criterion. Same nine spaces, same three planes,
 same ratio-to-the-legal-control -- taken over a population, so the trajectory a
 panel draws is a mean over games and the ratio under it carries an interval.
 
@@ -13,11 +13,13 @@ trajectory at all: every game then shares one `positions(20)`, so games align by
 array index and the drawn axis stays move index with the branch at t = 20.
 
 Everything nonlinear happens per game, before the mean: the SAE encode, the
-difference from that game's own reference, and -- for `--plane r21` -- phi over
-the W = 8 window, applied to the trajectory and differenced afterwards. phi of a
-mean over games would be the curvature of a path no game took, and phi of the
-displacement is undefined: D is identically zero over the shared prefix, where a
-zero-length step leaves theta undefined.
+difference from that game's own reference, and -- for the descriptor planes --
+phi over the W = 8 window, applied to the trajectory and differenced afterwards.
+phi of a mean over games would be the curvature of a path no game took, and phi
+of the displacement is undefined: D is identically zero over the shared prefix,
+where a zero-length step leaves theta undefined. `--plane d7` is `r21` with the
+descriptor cut to its 7 raw step-length columns, the half `../r21_shared_basis`
+finds disagreeing with the turning angles.
 
 The loop is space-outer because the plane is not known until every game has been
 seen: one pass over the space's games gives the mean field, the plane is fit on
@@ -60,7 +62,7 @@ games there would also average over which continuation was sampled.
       spread_game [S, G]           the same per game
 
 Usage: python analysis/violation_divergence/fork_population/measure.py
-       [--plane displacement|r21] [--n_games 100]
+       [--plane displacement|r21|d7] [--n_games 100]
 """
 
 import argparse
@@ -74,7 +76,8 @@ from spade.common.study import study_dir
 from spade.figures.branch_panels import plane_displacement
 from spade.othello.taxonomy import CATEGORIES
 from spade.violation_divergence.branches import FIGURE_GAME, games_at_t0
-from spade.violation_divergence.curvature_plane import W, fit_plane, windowed
+from spade.violation_divergence.curvature_plane import (
+    PLANE_COLUMNS, W, fit_plane, windowed)
 from spade.violation_divergence.fork_plane import positions, spaces
 from spade.violation_divergence.fork_r21 import top2
 from spade.violation_divergence.population import (
@@ -84,7 +87,7 @@ from spade.violation_divergence.rule_groups import rule_rows, spread_ratio
 T0 = 20                       # the one fork position the population is drawn from
 FULL = positions(T0, W - 1)   # 2, 4, ..., 44: the study window plus descriptor context
 N_CONTEXT = 5                 # FULL[N_CONTEXT:] is the study window itself
-DRAWN = {"displacement": FULL[N_CONTEXT:], "r21": FULL[W - 1:]}
+DRAWN = {"displacement": FULL[N_CONTEXT:], "r21": FULL[W - 1:], "d7": FULL[W - 1:]}
 CHUNK = 5                     # games per encode call
 COHERENCE_R = (0, 24)
 # `spread_ratio` and `rule_rows` read a branch's taxonomy off its row, and in
@@ -112,14 +115,15 @@ def fields(plane: str, acts: torch.Tensor, rows: torch.Tensor, enc):
 def field(plane: str, F: np.ndarray) -> np.ndarray:
     """[B, T, k]: one game's displacement from its own reference, over DRAWN[plane].
 
-    R^21 windows the trajectory and differences afterwards, so the shared prefix
-    collapses onto the origin instead of feeding phi a zero-length step.
+    A descriptor plane windows the trajectory and differences afterwards, so the
+    shared prefix collapses onto the origin instead of feeding phi a zero-length
+    step; `PLANE_COLUMNS` then keeps all 21 of it or only the raw step lengths.
     """
     if plane == "displacement":
         D = F[:, N_CONTEXT:]
         return D - D[REF]
     dphi = windowed(F, W)
-    return (dphi - dphi[REF])[:, W - 1:]
+    return (dphi - dphi[REF])[:, W - 1:, PLANE_COLUMNS[plane]]
 
 
 def population_plane(plane: str, M: np.ndarray):
@@ -127,9 +131,10 @@ def population_plane(plane: str, M: np.ndarray):
     the mean field, built as `fork_and_board.project` builds a cell's plane.
 
     Uncentred in both cases: zero displacement is a real point, and centring would
-    move the reference off the origin the panel draws it at. R^21 is column-scaled
-    first -- its components mix degrees with activation-scale lengths, so a raw
-    covariance reports units -- and `Plane.project` keeps an undefined row NaN.
+    move the reference off the origin the panel draws it at. A descriptor is
+    column-scaled first -- R^21 mixes degrees with activation-scale lengths, so a
+    raw covariance reports units, and the raw step lengths differ ~580x in scale
+    between raw layer 5 and SpaDE -- and `Plane.project` keeps an undefined row NaN.
     """
     flat = M.reshape(-1, M.shape[-1])
     if plane == "displacement":
@@ -217,7 +222,7 @@ def main():
     assert len(games) == args.n_games, f"only {len(pool)} games fork at t0 = {T0}"
     # At t0 = 20 the sampled geometry is fixed, so it is asserted and not discovered.
     assert len(FULL) == 22 and FULL[9] == T0 and (FULL[N_CONTEXT:] == positions(T0)).all()
-    assert [len(p) for p in DRAWN.values()] == [17, 15]
+    assert [len(p) for p in DRAWN.values()] == [17, 15, 15]
     pos = DRAWN[args.plane]
     post = pos >= T0
 

@@ -19,7 +19,7 @@ below is what a reader has to know before reading a bar off it.
 
 ```
 python analysis/violation_divergence/fork_and_board/make_figures.py \
-    [--game 1235] [--plane displacement|r21] [--embedding pca|isomap] \
+    [--game 1235] [--plane displacement|r21|d7] [--embedding pca|isomap] \
     [--variant spliced|rollout] [--camera-ready]
 ```
 
@@ -27,6 +27,7 @@ python analysis/violation_divergence/fork_and_board/make_figures.py \
 |---|---|---|
 | `game_1235_fork_and_board_displacement_pca` | PCA of `Δ(t) = z_b(t) − z_ref(t)` — the default | spliced |
 | `game_1235_fork_and_board_r21_pca` | PCA of `Δφ(t) = φ(z_b(t)) − φ(z_ref(t))`, inside the 21-D ReStraV curvature descriptor | spliced |
+| `game_1235_fork_and_board_d7_pca` | PCA of the same `Δφ(t)` cut to R²¹'s **7 raw step lengths** `d1…d7` | spliced |
 | `game_1235_fork_and_board_displacement_pca_rollout` | same displacement plane | rollout |
 | `game_1235_fork_and_board_r21_pca_rollout` | same R²¹ plane | rollout |
 
@@ -168,6 +169,38 @@ above 1 in 25%** over 60 games with *t0* ≥ 18
 displacement median 0.945. The two sweeps are not the same games — the R^21 one
 needs *t0* ≥ 18 so that a drawn window is branch-free — so the medians are not a
 paired comparison. What replicates is that the grouping is weak in both fields.
+
+### `game_1235_fork_and_board_d7_pca`
+
+**The same eight branches, with (a)'s plane fit inside R²¹'s raw step-length
+block alone.** φ, the W = 8 window, the difference taken inside the descriptor
+and the column scaling are the R²¹ figure's exactly; the only change is which
+columns survive — `d1…d7`, the 7 raw step lengths, and **not** the 11 columns
+`fork_r21.BLOCKS["d"]` selects, which fold in 4 moments of *d*. Panel (c)'s
+marker is that 7-D block, column-scaled, and its bar is the top-2 plane of it.
+Everything else — panel (b), the sampling, the 15 offsets a W = 8 window leaves,
+the view, n = 1, the selection of game 1235 — reads as the R²¹ figure above.
+
+**The reason to draw it is that the two halves of R²¹ disagree.**
+`../r21_shared_basis` panel (b) has that as a scalar: raw layer 5 runs 0.87 on
+the `d` columns against 1.04 on θ, TopK 0.34 against 0.94, CosineSpaDE 1.91
+against 1.31. This is the fork itself in the half that moves.
+
+**It is a different fork, not a redrawn one.** Full-block ranges over the nine
+cells (plane | full space): R1 **0.26–0.90 | 0.68–1.29**, R2 0.79–2.06 |
+0.75–2.20, R3 1.59–3.04 | 1.29–2.82. Against full R²¹'s 0.57–1.37 | 0.88–1.32,
+1.25–2.22 | 1.09–1.58, 2.24–3.94 | 1.69–2.47. Dropping the moments **lowers R3
+in seven of the nine cells** (the range's top rises only because CosineSpaDE
+moves the other way, 2.82 against 1.76) and widens R1 downward, below its control
+in four cells instead of three. The plane understates R1 in **all nine** cells,
+which no other spliced figure here does, and overstates R2 and R3 in eight.
+
+**The rules group better here than in either other plane, on this game.**
+Within ÷ between-rule mean pairwise distance on the column-scaled 7-D block, raw
+layer 5, *t* ≥ *t0*, is **0.753**, against 0.902 in full R²¹ and 0.885 in the
+displacement space. One game and three numbers, so it is a lead; the population
+version (`../fork_population/README.md`) reproduces the direction and is the one
+to quote.
 
 ### `game_1235_fork_and_board_displacement_pca_rollout`
 
@@ -335,6 +368,7 @@ The other three figures, as ranges over the nine cells (plane | full space):
 | figure | R1 | R2 | R3 |
 |---|---|---|---|
 | displacement, rollout | 0.79–0.95 \| 0.89–0.99 | 1.09–1.88 \| 0.96–1.12 | 1.21–2.96 \| 1.11–1.44 |
+| `d1…d7` block, spliced | 0.26–0.90 \| 0.68–1.29 | 0.79–2.06 \| 0.75–2.20 | 1.59–3.04 \| 1.29–2.82 |
 | R²¹, spliced | 0.57–1.37 \| 0.88–1.32 | 1.25–2.22 \| 1.09–1.58 | 2.24–3.94 \| 1.69–2.47 |
 | R²¹, rollout | 0.21–2.75 \| 0.62–1.76 | 0.55–7.18 \| 0.56–3.30 | 1.16–12.33 \| 1.06–5.06 |
 
@@ -535,9 +569,24 @@ time or in `spade.violation_divergence.test_curvature_plane`:
   those are branch-free**. The figure states this and the *z* axis starts where
   the descriptor does, not where the study window does.
 
-The `--embedding` choice belongs to the displacement plane; `--plane r21` fits
-its own uncentred PCA of the column-scaled Δφ and asserts that `--embedding` is
-left at `pca` rather than silently ignoring it.
+The `--embedding` choice belongs to the displacement plane; a descriptor plane
+fits its own uncentred PCA of the column-scaled Δφ and asserts that `--embedding`
+is left at `pca` rather than silently ignoring it.
+
+## The third plane: R^21's raw step lengths
+
+`--plane d7` is `--plane r21` with `curvature_plane.PLANE_COLUMNS` cutting Δφ to
+its first 7 columns, `d1…d7`. Everything above still holds — φ per branch, the
+difference inside the descriptor, the window's cost in offsets, the column
+scaling — because it is the same code path with a narrower slice.
+
+Two things the slice is not. It is **not** `fork_r21.BLOCKS["d"]`, which is 11
+columns because it also matches `mean d`, `min d`, `max d` and `var d`; those
+four are summaries of the same seven and would count the block twice. And the
+column scaling is **not** redundant just because the seven share a unit: the raw
+step length differs ~580× between raw layer 5 and SpaDE, and *within* one window
+`d1…d7` differ enough in variance that an unscaled top-2 would report whichever
+step happens to be longest.
 
 ## One trajectory per rule, and what that costs
 

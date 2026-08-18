@@ -1,7 +1,7 @@
 """Where the branches go over a population of games, not over one selected game.
 
 The population twin of `../fork_and_board`. Same nine representation spaces, same
-two planes, same third axis (move index t), but every path is the mean over 100
+three planes, same third axis (move index t), but every path is the mean over 100
 source games that all fork at t0 = 20, so the vertical axis and the star at t0
 mean what they meant there. (a) is that fork; (b) is `../fork_and_board`'s (c),
 how far each rule runs, now with an interval over games.
@@ -24,7 +24,7 @@ a percentile bootstrap over source games -- games, not branches, because a game'
 branches share a prefix and the control they are divided by.
 
 Usage: python analysis/violation_divergence/fork_population/make_figures.py
-       [--plane displacement|r21] [--n_games 100] [--camera-ready]
+       [--plane displacement|r21|d7] [--n_games 100] [--camera-ready]
 """
 
 import argparse
@@ -60,7 +60,8 @@ RATIO_TICKS = [0.5, 0.7, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 2, 3, 4, 6, 8]
 LEGEND_HEADROOM = 1.6      # a factor and not a margin: the axis is log
 ROW_GAP = 0.7              # clear air between the grid's axis labels and (b)'s title
 PLANE_NAME = {"displacement": "Displacement",
-              "r21": "R$^{21}$ Curvature & Displacement Space"}
+              "r21": "R$^{21}$ Curvature & Displacement Space",
+              "d7": "R$^{21}$ Raw Step-Length Block $d_1$–$d_7$"}
 BOOT, BOOT_SEED = 2000, 0
 CANCELLATION_NOTE = ("(a) averages displacement vectors, so directions that differ "
                      "between games cancel and each cell prints the surviving share; "

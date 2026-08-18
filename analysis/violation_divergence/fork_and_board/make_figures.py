@@ -29,12 +29,15 @@ since a plane holds only part of the displacement (27%+10% here) and holds
 different parts of different branches: in raw layer 5 the plane says R3 runs
 4.1x the control while the full 512-d space says 1.5x.
 
-Two planes, same panels. `displacement` embeds D(t) = z_b(t) - z_ref(t), the
+Three planes, same panels. `displacement` embeds D(t) = z_b(t) - z_ref(t), the
 better-validated default. `r21` embeds the curvature displacement
-Δφ(t) = φ(z_b(t)) - φ(z_ref(t)) inside ReStraV's 21-D descriptor space. φ is
-nonlinear, so it is applied to each member category separately and the rule mean
-is taken afterwards, in the plane; the projection is linear, so mean-then-project
-and project-then-mean agree, while phi-of-a-mean would be a different quantity.
+Δφ(t) = φ(z_b(t)) - φ(z_ref(t)) inside ReStraV's 21-D descriptor space, and `d7`
+embeds that same Δφ cut to the 7 raw step-length components d1..d7 -- the half
+`../r21_shared_basis` finds disagreeing with the turning angles, drawn as a fork
+rather than as one scalar run ratio. φ is nonlinear, so it is applied to each
+member category separately and the rule mean is taken afterwards, in the plane;
+the projection is linear, so mean-then-project and project-then-mean agree, while
+phi-of-a-mean would be a different quantity.
 
 `--variant rollout` draws the same eight branches out of the rollout branch set,
 where every branch -- the reference included -- samples its own continuation from
@@ -52,7 +55,7 @@ board's reading key, the R1/R2/R3 key, (c)'s estimator on (c)'s own axis, and on
 line saying the game was selected, without which the panels read as a result.
 
 Usage: python analysis/violation_divergence/fork_and_board/make_figures.py
-       [--game 1235] [--plane displacement|r21] [--embedding pca|isomap]
+       [--game 1235] [--plane displacement|r21|d7] [--embedding pca|isomap]
        [--variant spliced|rollout] [--camera-ready]
 """
 
@@ -75,7 +78,8 @@ from spade.figures.paper_style import GRID, INK, MUTED, NULL, apply_style, save_
 from spade.othello.boards import flip_set, replay
 from spade.violation_divergence.branches import (
     FIGURE_GAME, Game, complete_games, load_game, reference_row)
-from spade.violation_divergence.curvature_plane import W, fit_plane, windowed
+from spade.violation_divergence.curvature_plane import (
+    PLANE_COLUMNS, W, fit_plane, windowed)
 from spade.violation_divergence.fork_plane import (
     EMBEDDINGS, positions, space_features, spaces)
 from spade.violation_divergence.rule_groups import rule_rows, spread_ratio
@@ -88,9 +92,11 @@ METRIC_H = 2.8             # the (c) row; bars need far less height than the boa
 BAR_W = 0.26               # three rule bars inside a space's unit-wide group
 ROW_GAP = 0.7              # clear air between the grid's axis labels and (b)'s title
 # R^21 is 11 step-length components and 10 turning-angle ones, so it carries
-# displacement magnitude as well as curvature; the name says both.
+# displacement magnitude as well as curvature; the name says both, and `d7`'s says
+# which half of it is left.
 PLANE_NAME = {"displacement": "Displacement",
-              "r21": "R$^{21}$ Curvature & Displacement Space"}
+              "r21": "R$^{21}$ Curvature & Displacement Space",
+              "d7": "R$^{21}$ Raw Step-Length Block $d_1$–$d_7$"}
 METHOD_NAME = {"pca": "PCA", "isomap": "Isomap"}
 VARIANTS = {"spliced": "", "rollout": "rollout"}
 # Past r = +8 the rollout set's illegal and control δ̂ agree to within 0.5% and
@@ -129,14 +135,15 @@ class Projection:
 
 def project(plane: str, method: str, F: np.ndarray, ref: int, k: int,
             K: int) -> Projection:
-    """`k` indexes t0 in the sampled positions. The R^21 plane applies phi to each
-    branch on its own and differences inside R^21: phi(D) is undefined over the
-    shared prefix, where D is exactly zero, and phi of a mean of trajectories
-    would be the curvature of a path no branch takes. That is also why the K
-    rollouts are averaged after phi and never before it.
+    """`k` indexes t0 in the sampled positions. A descriptor plane applies phi to
+    each branch on its own and differences inside the descriptor: phi(D) is
+    undefined over the shared prefix, where D is exactly zero, and phi of a mean
+    of trajectories would be the curvature of a path no branch takes. That is also
+    why the K rollouts are averaged after phi and never before it. `d7` keeps the
+    same Δφ and only the raw step-length columns of it.
 
-    `space` is the projected-from quantity itself, column-scaled in R^21 exactly
-    as `fit_plane` scales it, so a distance in it is a distance in the space the
+    `space` is the projected-from quantity itself, column-scaled exactly as
+    `fit_plane` scales it, so a distance in it is a distance in the space the
     plane was fit in and not in raw descriptor units.
     """
     if plane == "displacement":
@@ -144,12 +151,12 @@ def project(plane: str, method: str, F: np.ndarray, ref: int, k: int,
         n, T, dim = D.shape
         coords, var, _ = EMBEDDINGS[method](D.reshape(-1, dim))
         return Projection(coords.reshape(n, T, 2), D, axis_labels(method, var), 0)
-    dphi = paired_mean(windowed(F, W), ref, K)[:, W - 1:]
+    dphi = paired_mean(windowed(F, W), ref, K)[:, W - 1:, PLANE_COLUMNS[plane]]
     branch_free = k - (W - 1)
     assert branch_free > 0, \
         f"only {k} sampled positions before t0: no branch-free w={W} window"
     assert np.nanmax(np.abs(dphi[:, :branch_free])) == 0, \
-        "the shared prefix does not collapse onto the origin in R^21"
+        f"the shared prefix does not collapse onto the origin in {plane}"
     flat = dphi.reshape(-1, dphi.shape[-1])
     p = fit_plane(flat, centred=False)
     return Projection(p.project(flat).reshape(dphi.shape[:2] + (2,)), dphi / p.scale,
@@ -176,11 +183,12 @@ def spread_field(plane: str, Z: np.ndarray, ref: int, post: np.ndarray,
     """What the within/between-rule spread ratio is measured on, in raw layer 5 at
     full width and never in a 2-D projection: the same quantity the panels embed.
 
-    Δφ is column-scaled first — its 21 components mix degrees with
-    activation-scale lengths, so a raw Euclidean distance is a distance in θ."""
+    Δφ is column-scaled first — R^21's components mix degrees with
+    activation-scale lengths, so a raw Euclidean distance is a distance in θ, and
+    the raw step lengths d1..d7 are unequal in variance among themselves."""
     if plane == "displacement":
         return paired_mean(Z, ref, K)[:, post]
-    dphi = paired_mean(windowed(Z, W), ref, K)
+    dphi = paired_mean(windowed(Z, W), ref, K)[..., PLANE_COLUMNS[plane]]
     sd = np.nanstd(dphi.reshape(-1, dphi.shape[-1]), axis=0)
     return (dphi / np.where(sd > 0, sd, 1))[:, post]
 
@@ -345,7 +353,7 @@ def main():
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()
     assert args.plane == "displacement" or args.embedding == "pca", \
-        "--plane r21 fits its own plane inside R^21; --embedding is the displacement one"
+        "a descriptor plane fits its own; --embedding is the displacement one"
 
     apply_style(args.camera_ready)
     device = select_device()
@@ -365,9 +373,9 @@ def main():
     keep = [i for i, r in enumerate(g.rows) if r["is_control"] != 2]
     g = replace(g, idx=g.idx[keep], rows=[g.rows[i] for i in keep])
 
-    # The R^21 window reads 14 plies back, so it needs prefix context the study
+    # A descriptor window reads 14 plies back, so it needs prefix context the study
     # window does not carry; the extra offsets are computed and never drawn.
-    pos = positions(g.t0, W - 1 if args.plane == "r21" else 0)
+    pos = positions(g.t0, 0 if args.plane == "displacement" else W - 1)
     if variant:
         pos = pos[pos - g.t0 <= ROLLOUT_RMAX]
     Z = acts[g.idx][:, pos, :].float().numpy()
