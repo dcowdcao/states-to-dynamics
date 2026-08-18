@@ -84,6 +84,17 @@ above (`empty_own_only` and `empty_detached`, the two empty-square categories) a
 (`occupied_opp` in three spaces). Nothing here orders a category against the control on a
 point estimate.
 
+**The one direction that survives is R1's, and it is not this figure's to claim.** Both
+R1 members run below the control in the curvature descriptor: `occupied_opp` 0.92–0.98,
+below in all nine spaces with the CI clearing 1 in three of them, and `occupied_own`
+0.96–1.01, below in eight with the CI clearing in none. On its own that is a direction and
+not a result. It is worth recording because it is the same direction two unrelated fields
+resolve on the same 100 games — `../fork_population` puts the paired null − R1 at +0.133
+[+0.103, +0.163] in the displacement plane and −0.060 [−0.081, −0.038] in the step-length
+norm, and R1 is the only rule that clears its null in either. Three fields agreeing that
+violations on an *occupied* square displace layer 5 less than a legal alternative is worth
+more than any one of them; nothing here resolves R2 or R3 against anything.
+
 **The two halves of R²¹ agree here.** On one game the 11 step-length and 10 turning-angle
 components disagreed sharply (0.34 vs 0.94 in TopK). Paired per game over 100, θ − d is
 −0.02…+0.06 against CIs of ±0.06–0.07 — not one space clears its own interval. The
