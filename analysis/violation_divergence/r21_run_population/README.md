@@ -78,9 +78,11 @@ The gap between the dark line and the faint ones in panel (b) is that incoherenc
 property of any branch. Read against the null this cuts both ways: the null is a single
 branch and carries no such cancellation, so `full R²¹ < control 2` (paired per game,
 −0.12…−0.24, CI ±0.05–0.07, below in all nine spaces) is a statement about the *centroid*
-of the six illegal categories, while the honest per-category statement is that an illegal
-move's curvature displacement runs about as far from the reference as a second legal
-move's, or slightly further.
+of the six illegal categories, while the honest per-category statement is that the six
+straddle the control: of the 54 space × category cells, 43 have a CI covering 1, 8 clear it
+above (`empty_own_only` and `empty_detached`, the two empty-square categories) and 3 below
+(`occupied_opp` in three spaces). Nothing here orders a category against the control on a
+point estimate.
 
 **The two halves of R²¹ agree here.** On one game the 11 step-length and 10 turning-angle
 components disagreed sharply (0.34 vs 0.94 in TopK). Paired per game over 100, θ − d is
