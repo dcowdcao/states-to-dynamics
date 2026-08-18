@@ -293,7 +293,12 @@ about the control they are divided by.
   `control_legal` is the null — a third legal move, measured exactly as the
   illegal branches are, which is what the second control exists for
   (`branches.py`) — and it carries its own bootstrap CI. The reference at 1 stays
-  as the by-construction divisor and is not an estimate.
+  as the by-construction divisor and is not an estimate. That the null lands a few
+  percent *above* 1 is a property of this population and not of this estimator:
+  `../r21_run_population` measures the same second control on the same 100 games in
+  full R²¹ and gets 1.04–1.10 across the nine spaces, against 1.042 [1.006, 1.078]
+  here. Two unrelated fields, one gap. On the old mixed-t₀ hundred it was 0.97–1.02.
+  What it is *not* is an ordering against the rules — see the paired contrasts above.
 - **The rule grouping is weak, and the per-game number is the one to quote.**
   Within-rule ÷ between-rule mean pairwise distance over these 100 games has median
   **0.924 [IQR 0.842–0.983], above 1 in 21%** (displacement, raw layer 5) — the
