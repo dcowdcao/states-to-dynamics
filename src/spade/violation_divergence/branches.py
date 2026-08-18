@@ -116,6 +116,19 @@ def complete_games(meta: dict) -> list[int]:
         if len(kind[meta["game_id"] == g].unique()) == n_types]
 
 
+def games_at_t0(meta: dict, t0: int, n: int | None = None) -> list[int]:
+    """The first `n` branch-complete games forking at `t0`, ascending by game id.
+
+    The population every n-game sweep in this study draws, so two figures at the
+    same n are drawn over the same games. No draw and no criterion beyond n; one
+    fixed t0 keeps a mean over games a mean over aligned positions.
+    """
+    at = dict(zip(meta["game_id"].tolist(), meta["t0"].tolist()))
+    games = [g for g in complete_games(meta) if at[g] == t0]
+    assert n is None or len(games) >= n, f"{len(games)} branch-complete games at t0 = {t0}"
+    return games[:n]
+
+
 def rules_present(categories) -> set[str]:
     """Which of R1-R3 the given branch categories cover."""
     return {RULE_OF[CATEGORIES[int(c)]] for c in categories if int(c) != LEGAL}
