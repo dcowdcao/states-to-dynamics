@@ -39,9 +39,11 @@ import torch
 from spade.common.device import select_device
 from spade.common.study import variant_dir
 from spade.othello.taxonomy import CATEGORIES
-from spade.violation_divergence.branches import complete_games, load_game, role
+from spade.violation_divergence.branches import (
+    complete_games, games_at_t0, load_game, role)
 from spade.violation_divergence.compute_divergence import sae_encoder
 from spade.violation_divergence.fork_plane import positions, spaces
+from spade.violation_divergence.rule_groups import spread_ratio
 
 VARIANTS = {"spliced": "", "rollout": "rollout"}
 # The eight branches every fork figure draws: control_legal_2 is the null *for*
@@ -52,6 +54,13 @@ CONTROL = "control_legal"
 # t0 in [10, 34] and the window in [-8, 24], so `positions` never clips: every
 # game contributes to every offset and n is constant across the x-axis.
 WINDOW = np.arange(-8, 25, 2)
+# The fork position the study's n-game sweeps share, so a figure drawn here and a
+# figure drawn elsewhere are drawn over the same games (docs/finish_notes/t0-20-population.md).
+T0_POPULATION = 20
+# ROLES as `rule_groups` reads them: it looks at the illegal rows only, but it
+# indexes the array this sweep builds, so the two orders have to be the same one.
+ROLE_ROWS = ([{"category": 0, "is_control": 0}, {"category": 0, "is_control": 1}]
+             + [{"category": i, "is_control": 0} for i in range(1, len(CATEGORIES))])
 
 
 def paired_mean(X: np.ndarray, ref: int, K: int) -> np.ndarray:
@@ -115,7 +124,9 @@ def game_rows(g, K: int) -> list[int]:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--variant", default="spliced", choices=list(VARIANTS))
-    ap.add_argument("--n_games", type=int, default=None, help="cap the sweep")
+    ap.add_argument("--n_games", type=int, default=None,
+                    help=f"the shared n-game population at t0 = {T0_POPULATION}; "
+                         "the whole branch-complete tree when omitted")
     args = ap.parse_args()
 
     device = select_device()
@@ -124,12 +135,14 @@ def main():
     # mmap: the rollout tensor is 4.2 GB and is read eight branches at a time.
     acts = torch.load(base / "acts" / "resid_post_5.pt", weights_only=True, mmap=True)
     K = int(meta["rollout"].max()) + 1 if "rollout" in meta else 1
-    games = complete_games(meta)[:args.n_games]
+    games = (games_at_t0(meta, T0_POPULATION, args.n_games) if args.n_games
+             else complete_games(meta))
     cells = encoders(device)
     ref = ROLES.index("reference")
 
     plane = np.full((len(cells), len(games), len(ROLES), len(WINDOW)), np.nan, np.float32)
     full = np.full_like(plane, np.nan)
+    spread = np.full((len(cells), len(games)), np.nan, np.float32)
     started = time.time()
     for gi, gid in enumerate(games):
         g = load_game(meta, gid)
@@ -138,7 +151,9 @@ def main():
         Z = acts[g.idx[game_rows(g, K)]][:, pos, :].float()
         for si, (_, encode) in enumerate(cells):
             F = Z.numpy() if encode is None else features(Z, encode)
-            plane[si, gi], full[si, gi] = distances(paired_mean(F, ref, K))
+            D = paired_mean(F, ref, K)
+            plane[si, gi], full[si, gi] = distances(D)
+            spread[si, gi] = spread_ratio(D, ROLE_ROWS)
         if gi % 100 == 0:
             print(f"{gi}/{len(games)} games, {time.time() - started:.0f}s", flush=True)
 
@@ -157,10 +172,13 @@ def main():
 
     out = base / "divergence_by_space"
     out.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(out / "curves.npz", space=[name for name, _ in cells],
+    # The n-game sweep is a different population, not a shorter run of the same one:
+    # it writes beside the whole-tree curves rather than over them.
+    name = f"curves_n{args.n_games}.npz" if args.n_games else "curves.npz"
+    np.savez_compressed(out / name, space=[name for name, _ in cells],
                         window=WINDOW.astype(np.int16), role=ROLES,
-                        game=np.array(games), plane=plane, full=full)
-    print(f"wrote {out / 'curves.npz'}: {len(games)} games, {len(cells)} spaces")
+                        game=np.array(games), plane=plane, full=full, spread=spread)
+    print(f"wrote {out / name}: {len(games)} games, {len(cells)} spaces")
 
 
 if __name__ == "__main__":

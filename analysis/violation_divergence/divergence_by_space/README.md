@@ -14,8 +14,8 @@ draws δ̂ = ‖Δ‖ / ‖z_ref‖ at layer 5 and nowhere else, on a raw activa
 fork panel is drawn in.
 
 ```
-python analysis/violation_divergence/divergence_by_space/measure.py       [--variant rollout]
-python analysis/violation_divergence/divergence_by_space/make_figures.py  [--variant rollout] [--camera-ready]
+python analysis/violation_divergence/divergence_by_space/measure.py       [--variant rollout] [--n_games 100]
+python analysis/violation_divergence/divergence_by_space/make_figures.py  [--variant rollout] [--n_games 100] [--camera-ready]
 ```
 
 `measure.py` writes `$SPADE_DIVERGENCE_DIR[/rollout]/divergence_by_space/curves.npz`
@@ -23,9 +23,16 @@ python analysis/violation_divergence/divergence_by_space/make_figures.py  [--var
 writes the figure plus `results/violation_divergence/divergence_by_space[_rollout].csv`,
 one row per (space, series, measured_in, r) with the mean and its 95% CI.
 
+`--n_games N` draws the study's **shared N-game population** instead of the whole tree:
+the first N branch-complete games forking at t₀ = 20 (`branches.games_at_t0`, 1696 exist),
+which is the same set every other N-game sweep here runs over. It is a separate artifact
+at every step — `curves_nN.npz`, `divergence_by_space_nN.png`, `..._nN.csv` — so it never
+overwrites the whole-tree figure. n = 100 takes ~2 min.
+
 ## The figures
 
 `figures/divergence_by_space.{png,pdf}` · `figures/divergence_by_space_rollout.{png,pdf}`
+· `figures/divergence_by_space_n100.png`
 
 **In the plane the fork panels draw, R2 and R3 run 6–24% further from the reference than
 a legal alternative does — and roughly half of that is the plane, not the branch.** One
@@ -49,6 +56,32 @@ carry the value they reach.
 is the in-plane curve's mean, the open marker is the full-space curve's mean, and the
 divisor is identical. Read the two together: (c) gives one number per rule per space for
 one illustrative game, this gives the whole trajectory of that number over 1553.
+
+## The n = 100 twin
+
+`figures/divergence_by_space_n100.png` is the same figure over the shared 100-game
+population, so it can be read beside the other n = 100 figures in this study — same games,
+same t₀ = 20, same event-locked axis. Mean over r ≥ 0 in the plane, against the
+whole-tree figure above:
+
+| space | R1 | R2 | R3 |
+|---|---|---|---|
+| raw layer 5 | 0.989 (0.993) | 1.157 (1.142) | 1.130 (1.122) |
+| CosineSpaDE | 1.009 (1.017) | 1.387 (1.236) | 1.305 (1.206) |
+| SpaDE | 1.008 (1.019) | 1.224 (1.213) | 1.174 (1.176) |
+| TopK | 0.983 (0.973) | 1.086 (1.064) | 1.097 (1.069) |
+
+Whole-tree value in brackets. Every cell reproduces to within 0.02 except CosineSpaDE,
+whose R2/R3 run 0.10–0.15 higher — that cell's r = 0 spike is the one place the population
+matters: it reaches 4.4× at n = 100 against 3.1× on the whole tree, and its CI half-width
+there is 0.59 against 0.11. Away from r = 0 the CI is 0.05–0.09, so the plateau where the
+claim lives carries the same reading at n = 100 as at n = 1553.
+
+The rule means hide the same amount of within-rule structure in both: the within- ÷
+between-rule spread of the displacements is a median 0.924 [IQR 0.842–0.983] over these
+100 games, above 1 in 21% of them, against 0.945 [0.872–1.020] over the whole tree. Unlike
+the whole-tree figure, which quotes `rule_groups`' published number, the twin computes that
+statistic per game inside the sweep and quotes the population it actually draws.
 
 ## Why the plane, and what the plane costs
 

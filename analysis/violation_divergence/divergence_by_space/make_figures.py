@@ -129,8 +129,10 @@ def style_of(name: str) -> dict:
     return st | {"label": f"{st['label']} (mean of {len(RULE_MEMBERS[name])})"}
 
 
-def draw_series(ax, w, mu, name: str, how: dict, offset: int) -> None:
+def draw_series(ax, w, mu, half, name: str, how: dict, offset: int) -> None:
     st = style_of(name)
+    ax.fill_between(w, mu - half, mu + half, color=st["color"], alpha=0.18, lw=0,
+                    zorder=st["zorder"] - 1)
     ax.plot(w, mu, color=st["color"], marker=st["marker"], ls=how["ls"], lw=how["lw"],
             ms=how["ms"], markevery=(offset % 3, 3), zorder=st["zorder"],
             markerfacecolor=st["color"] if how["fill"] else "white",
@@ -148,6 +150,16 @@ def event_axes(ax, w: np.ndarray, rollout: bool) -> None:
         ax.axvspan(SATURATED_R, w[-1] + 1, color=GRID, alpha=0.45, lw=0, zorder=0)
     ax.set_xlim(w[0] - 1, w[-1] + 1)
     ax.set_xticks(range(int(w[0]), int(w[-1]) + 1, 8))
+
+
+def spread_note(z) -> str:
+    """1.7's within- ÷ between-rule spread, measured on the population drawn here.
+    Raw layer 5, the reference cell, as `rule_groups` quotes it."""
+    r = z["spread"][0]
+    q1, med, q3 = np.percentile(r, [25, 50, 75])
+    return ("within- ÷ between-rule spread of the displacements a rule mean averages: "
+            f"median {med:.3f} [IQR {q1:.3f}–{q3:.3f}], raw layer 5 over the {len(r)} "
+            "games drawn (rule_groups)")
 
 
 def legend_marks(n_games: int) -> tuple[list, list]:
@@ -170,7 +182,7 @@ TITLE = {
 }
 
 
-def figure(z, variant: str, camera_ready: bool) -> Path:
+def figure(z, variant: str, suffix: str, camera_ready: bool) -> Path:
     w = z["window"]
     rollout = variant == "rollout"
     n_games = z["plane"].shape[1]
@@ -187,7 +199,7 @@ def figure(z, variant: str, camera_ready: bool) -> Path:
             # The members of a rule, faint behind their mean, in the plane: the
             # reader sees the spread the mean is taken over (1.7).
             for key, how in MEASURES.items():
-                draw_series(ax, w, mean_ci(curves[key][si, :, ci])[0], name, how, ci)
+                draw_series(ax, w, *mean_ci(curves[key][si, :, ci]), name, how, ci)
         ax.set_title(space, loc="left", fontsize=8)
         ax.set_ylim(-0.09, YMAX)
         off = curves["plane"][si].mean(0).max(0)
@@ -219,30 +231,37 @@ def figure(z, variant: str, camera_ready: bool) -> Path:
                                  style="italic", ha="left", va="bottom")
 
     fig.tight_layout(rect=(0, 0.12, 1, 0.97 if camera_ready else 0.94))
-    fig.legend(*legend_marks(n_games), ncol=3, fontsize=8, frameon=False,
-               loc="lower center", bbox_to_anchor=(0.5, 0.025))
+    legend = fig.legend(*legend_marks(n_games), ncol=3, fontsize=8, frameon=False,
+                        loc="lower center", bbox_to_anchor=(0.5, 0.025),
+                        title=f"mean over n = {n_games} source games, band = 95% CI")
+    legend.get_title().set_fontsize(8)
     if not camera_ready:
         fig.suptitle(TITLE[variant], fontsize=11, y=0.995)
-    fig.text(0.005, 0.0, SPREAD_RATIO, fontsize=7.5, color=MUTED, ha="left", va="top")
+    fig.text(0.005, 0.0, spread_note(z) if "spread" in z else SPREAD_RATIO, fontsize=7.5,
+             color=MUTED, ha="left", va="top")
     rule_key(fig, ["R1", "R2", "R3"], y=-0.022)
-    name = "divergence_by_space" + (f"_{variant}" if rollout else "")
+    name = "divergence_by_space" + (f"_{variant}" if rollout else "") + suffix
     return save_figure(fig, HERE / "figures" / name, camera_ready)
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--variant", default="spliced", choices=list(VARIANTS))
+    ap.add_argument("--n_games", type=int, default=None,
+                    help="draw measure.py's n-game population instead of the whole tree")
     ap.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = ap.parse_args()
     apply_style(args.camera_ready)
 
+    suffix = f"_n{args.n_games}" if args.n_games else ""
     base = variant_dir("divergence", variant=VARIANTS[args.variant])
-    z = dict(np.load(base / "divergence_by_space" / "curves.npz"))
+    z = dict(np.load(base / "divergence_by_space" / f"curves{suffix}.npz"))
     z["space"], z["role"] = list(z["space"]), list(z["role"])
 
     out = results_dir("violation_divergence")
     out.mkdir(parents=True, exist_ok=True)
-    csv = out / f"divergence_by_space{'_' + args.variant if args.variant != 'spliced' else ''}.csv"
+    csv = out / (f"divergence_by_space{'_' + args.variant if args.variant != 'spliced' else ''}"
+                 f"{suffix}.csv")
     df = table(z, args.variant)
     df.to_csv(csv, index=False, float_format="%.6g")
 
@@ -255,7 +274,7 @@ def main():
             f"{cell[(cell.series == rule) & (cell.measured_in == 'plane')].ratio.mean():5.2f}"
             f"|{cell[(cell.series == rule) & (cell.measured_in == 'full')].ratio.mean():5.2f}"
             for rule in RULE_MEMBERS))
-    print(f"wrote {figure(z, args.variant, args.camera_ready)} and {csv}")
+    print(f"wrote {figure(z, args.variant, suffix, args.camera_ready)} and {csv}")
 
 
 if __name__ == "__main__":

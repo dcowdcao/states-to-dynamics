@@ -6,6 +6,36 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## divergence_by_space at the shared n = 100 (2026-08-18)
+
+`--n_games N` on both scripts draws the study's shared N-game population instead of the
+whole tree: the first N branch-complete games forking at t0 = 20, now
+`branches.games_at_t0` so every n-game sweep in the study selects the same games rather
+than each script re-deriving "which games". Separate artifact at every step
+(`curves_nN.npz` -> `divergence_by_space_nN.png` -> `..._nN.csv`), so the whole-tree
+figure is never overwritten by a short run. n = 100 is ~2 min.
+
+Two things the twin forced, both of which the whole-tree figure needed anyway:
+
+- **The bands are now drawn.** The README has always said "bands are 95% CIs ... about
+  +-0.015 wide, hairline at this n", and the code computed the half-width and threw it
+  away. `draw_series` fills it, and the legend carries `mean over n = N source games,
+  band = 95% CI` -- the n statement FIGURE_GUIDELINES 1.2 wants and the figure did not
+  have. The whole-tree PNG was regenerated; its CSV is byte-identical.
+- **The 1.7 spread line is measured on the population drawn.** It was a hardcoded string
+  quoting `rule_groups` over the whole tree, which would have been simply wrong under the
+  twin. `measure.py` now calls `rule_groups.spread_ratio` per game on the same
+  displacement field it is already holding and stores `spread [S, G]`; the figure quotes
+  raw layer 5's median [IQR] over the games it drew. The whole-tree npz predates the field
+  and keeps the constant.
+
+The twin reproduces the whole-tree reading: every plane ratio over r >= 0 within 0.02
+except CosineSpaDE, whose R2/R3 run 0.10-0.15 higher. Its r = 0 spike is the one place n
+bites (4.4x at n = 100 against 3.1x, CI half-width 0.59 against 0.11); on the plateau the
+CI is 0.05-0.09 and the claim reads the same.
+
+---
+
 ## The R^21 run figure, over 100 games instead of one (2026-08-18)
 
 `analysis/violation_divergence/r21_run_population/` (`measure.py` + `make_figures.py`) is
