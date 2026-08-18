@@ -95,6 +95,29 @@ norm, and R1 is the only rule that clears its null in either. Three fields agree
 violations on an *occupied* square displace layer 5 less than a legal alternative is worth
 more than any one of them; nothing here resolves R2 or R3 against anything.
 
+**The board delta is the confound, and this field does not corroborate it.** R1's two
+categories are exactly the occupied-square violations, which are also the two whose board
+effect is a recolor or nothing at all — so the three fields may be agreeing about the
+branch move's board delta rather than about legality. The categorical half of that account
+(new disc against no new disc) is perfectly confounded with R1 against the rest and cannot
+be tested in this taxonomy. The graded half can: `occupied_own` changes the board not at
+all where `occupied_opp` recolors, so a board-delta account predicts `occupied_own` runs
+the *less* far of the two, and `occupied_own − occupied_opp` is negative.
+
+```
+python analysis/violation_divergence/r21_run_population/board_delta_contrast.py
+```
+
+Paired within game — the two share the prefix, the reference and the control divisor —
+over the same 100 games, 2000-draw percentile bootstrap: **positive in all nine spaces,
+resolved in one.** Raw layer 5 is +0.042 [−0.013, +0.098], the spread is +0.011 to +0.085,
+and only SpaDE clears zero (+0.085 [+0.024, +0.148]). The sign is the opposite of the
+prediction everywhere, but eight of nine intervals cover zero, so this field neither
+corroborates the account nor has the power to reject it — the effect is ~0.03 against a CI
+half-width of ~0.05, which wants ~3× the games (the t₀ = 20 pool holds 1696).
+`../fork_population` runs the same contrast in two other fields and they split: resolved
+negative in 8 of 9 spaces in the step-length norm, 0 of 9 in the displacement plane.
+
 **The two halves of R²¹ agree here.** On one game the 11 step-length and 10 turning-angle
 components disagreed sharply (0.34 vs 0.94 in TopK). Paired per game over 100, θ − d is
 −0.02…+0.06 against CIs of ±0.06–0.07 — not one space clears its own interval. The
