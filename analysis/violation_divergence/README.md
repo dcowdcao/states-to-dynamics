@@ -19,7 +19,8 @@ python analysis/violation_divergence/probe_readout/make_figures.py  # F7
 python analysis/violation_divergence/sae_spaces/make_figures.py     # F2, F4, F5
 python analysis/violation_divergence/fork_and_board/make_figures.py # the design, n=1
 python analysis/violation_divergence/rule_curvature/make_figures.py # curvature at the fork, --tree branches|rollout
-python analysis/violation_divergence/step_length_fork/make_figures.py # step length at the fork, ratio to the reference, n=1
+python analysis/violation_divergence/step_length_fork/measure.py    # the step length at the fork over 100 games
+python analysis/violation_divergence/step_length_fork/make_figures.py # step length at the fork, ratio to the reference; --n_games 100 for the twin
 python analysis/violation_divergence/suffix_legality/measure.py     # the shared-suffix defect, tokens only
 python analysis/violation_divergence/r21_run_population/measure.py  # the R^21 run ratio over n games
 python analysis/violation_divergence/r21_run_population/make_figures.py

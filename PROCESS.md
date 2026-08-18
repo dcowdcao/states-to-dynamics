@@ -6,6 +6,61 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The step-length fork over 100 games, and what it costs the n = 1 reading (2026-08-18)
+
+`step_length_fork/measure.py` sweeps the same ratio `s_b(t) / s_ref(t)` over the study's
+shared population -- the first 100 branch-complete games forking at t0 = 20 -- and
+`make_figures.py --n_games 100` draws it with a 95% percentile bootstrap CI over games
+(2000 resamples, seed 0, resampling games and not branches).
+
+**One script, not two.** The two figures share the quantity, the panel and the nine-cell
+grid; they differ in the reduction, the interval, and their notes. The drift went where
+it belongs: `branch_panels` grew `rule_ratio_population_panel` beside `rule_ratio_panel`,
+exactly as it already carries `rule_fork_population_panel` beside `rule_fork_panel`, and
+the ~35 lines of grid furniture became `panel_grid`, which both call. What is left in
+each figure body is which array and which notes. A sibling script would have duplicated
+the grid; a flag inside one `figure()` would have been eight `if population:` branches.
+The n = 1 CSV and PNG re-render byte-identical, and the PDF differs only in
+`/CreationDate` (use `SOURCE_DATE_EPOCH=1`).
+
+**Both legal controls are drawn.** Unlike `fork_population`, the control is not the
+divisor here -- the reference is -- so `control_legal` and `control_legal_2` are two
+draws of one null, measured exactly as the illegal branches are. Drawing both makes the
+null's own resolution visible: the c2 - c1 paired gap is +0.008 to +0.023 at r = 0 and
+is never resolved, which is the yardstick every rule contrast is read against. Averaging
+the two into one null curve was rejected under FIGURE_GUIDELINES 3 -- a null averaged
+over k candidates has ~1/sqrt(k) the spread of the signal.
+
+**What the population does to the n = 1 story.** The one game's headline -- *any*
+different token lengthens the step -- was that game. Over 100 games the legal control
+sits at 0.989-1.007 at r = 0 with every interval straddling 1, against 1.11-1.31 on game
+1235. R3's 1.53 in raw layer 5 becomes 1.076 [1.044, 1.108] and goes *below* 1 in the
+four gated/TopK spaces. The ordering R3 > R2 > R1 does not survive: R2 - R3 paired at
+r = 0 is +0.023 [+0.001, +0.047] in raw layer 5 -- R2 is the larger excursion -- and the
+population orders {R2, R3} > control > R1 with R2 and R3 indistinguishable. What does
+survive is **R1**: 0.890-0.957 at r = 0 with every interval clear of 1, and R1 - control
+resolved negative in all nine spaces (-0.032 to -0.117). That is the same rule and the
+same direction `fork_population` found to be its only resolved contrast on the
+displacement, off the same 100 games.
+
+**Do not carry the n = 1 band test across.** The one-game figure judged "past r = +4
+nothing leaves the control's own excursion band", where that band was +-0.18 to +-0.31 --
+one game's noise. Over 100 games the same band is +-0.016 to +-0.075, ten times narrower,
+so the two statements are not comparable and the population figure uses the paired
+contrast instead.
+
+Game 1235 is in the population as one ordinary member (42nd by id) and is an outlier in
+it -- R3 1.53 and control 1.23 against population means of 1.08 and 1.00 -- but dropping
+it moves every raw-layer-5 mean by <= 0.005. Being one game of 100 is the whole
+difference, not which game.
+
+Cost: 63 s for the sweep on the login node. The reduction is inside the loop -- a chunk
+of 5 games is encoded, turned into 16 step lengths and dropped -- so nothing larger than
+one chunk of features is ever resident, and the npz is 1 MB.
+
+---
+
+
 ## The step length at the fork, drawn on its own axis (2026-08-18)
 
 `analysis/violation_divergence/step_length_fork/` draws the literal step-length norm

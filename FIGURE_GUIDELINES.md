@@ -40,7 +40,12 @@ rewrite.
    reads a single condition as an average. Draw the members faint behind their
    mean, and report within-group ÷ between-group spread **on the figure**. Near
    1 the grouping is a label rather than a finding, and the figure says so
-   instead of letting three confident lines imply otherwise. When the group
+   instead of letting three confident lines imply otherwise. **When the drawn
+   mean is itself over a population of items, drop the member traces**: a member
+   there is another mean over the same items, so faint behind the group mean it
+   reads as item-to-item spread, which is what the interval already carries. The
+   spread ratio then goes on the figure as a median with IQR over items, not as
+   one number. When the group
    aggregate is a **sum** of its members rather than a mean — probability mass
    over a rule's categories, a count — the legend says `sum of 3`, not
    `mean of 3`: the two have different units and only one of them is bounded by
@@ -152,6 +157,15 @@ For anything aligned to an intervention at position `t0`:
   whether an excursion is large. The reference's raw scale per panel goes in
   the caption and the absolute values in the CSV, or the division has thrown
   data away. Name the contrast on the axis label, not only in prose.
+- **An ordering against the null is a paired contrast, not two point
+  estimates.** When the signal and the null are measured on the same items, what
+  the figure asserts is `signal − null` per item: the difference cancels the
+  shared prefix and the common divisor, and its interval can be much tighter *or*
+  much wider than either marginal one. Draw it, or print it in-panel with its
+  interval and the offset it is taken at — a fixed offset, since an argmax over
+  the window is a different and unstated statistic. Two error bars that happen
+  not to overlap are not a measured ordering; reading one off a panel is a
+  mistake this study has had to correct twice.
 - Overlay conditions on shared axes; never split them into panels when the
   point is the difference.
 - Standard layout when items are inspectable: per-item heatmap on top,

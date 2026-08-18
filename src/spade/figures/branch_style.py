@@ -22,6 +22,7 @@ CONTROL_LABEL = {1: "control: another legal move (null)",
 MEMBER = {"lw": 0.7, "alpha": 0.38, "zorder": 2}
 MEMBER_LABEL = "one category inside a rule (within-rule spread)"
 CI_ELLIPSE_LABEL = "95% CI of the mean over games, at each path's end"
+CI_BAND_LABEL = "95% percentile bootstrap CI of the mean over games"
 CONTOUR_LABEL = "50% Gaussian contour of {n} jackknife replicates (dispersion, not a CI)"
 
 
@@ -62,6 +63,12 @@ def legend_proxy(ax) -> None:
     ax.plot([], [], color=MUTED, label=MEMBER_LABEL, **MEMBER)
 
 
+def ci_band_proxy(ax) -> None:
+    """The population ratio panel's bands, as one legend entry. One grey patch:
+    every series' band is the same estimator and only its colour differs."""
+    ax.fill_between([], [], [], color=MUTED, alpha=0.25, lw=0, label=CI_BAND_LABEL)
+
+
 def ci_ellipse_proxy(ax) -> None:
     """The population fork's ellipses, as one legend entry. An open ring stands in
     for the ellipse: a zero-size patch added to a 3-D axes moves the panel's limits."""
@@ -81,6 +88,8 @@ def _rank(lab: str) -> int:
         return 1
     if lab.startswith("reference"):
         return 2
+    if lab == CI_BAND_LABEL:
+        return 86
     if lab == CI_ELLIPSE_LABEL:
         return 87
     if lab == MEMBER_LABEL:

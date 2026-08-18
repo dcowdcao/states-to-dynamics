@@ -6,8 +6,11 @@ categories collapsed onto the three rules they violate -- one mean per rule,
 over its members drawn faint. `rule_fork_population_panel` is that panel over a
 population of source games: no member traces, and a confidence ellipse on the
 mean instead. `rule_ratio_panel` is the 2-D event-locked form: one per-position
-quantity, already divided by the reference branch's own, one curve per rule.
-`board_panel` is the position they fork on, with each branch move on its square.
+quantity, already divided by the reference branch's own, one curve per rule, and
+`rule_ratio_population_panel` is that panel over a population: no member traces,
+a bootstrap band instead, and both legal controls drawn, since neither is the
+divisor there. `board_panel` is the position they fork on, with each branch move
+on its square.
 All take their colour, marker and label from `branch_style`, so a branch reads
 the same in either. Layout -- how many panels, where the legend goes -- belongs
 to the caller; these draw one axes each.
@@ -21,7 +24,7 @@ from matplotlib.ticker import FuncFormatter, MaxNLocator
 from mpl_toolkits.mplot3d.art3d import pathpatch_2d_to_3d
 
 from spade.figures.branch_style import (
-    MEMBER, branch_style, ci_ellipse_proxy, legend_proxy)
+    MEMBER, branch_style, ci_band_proxy, ci_ellipse_proxy, legend_proxy)
 from spade.figures.othello_board import draw_board, square_xy
 from spade.figures.paper_style import (
     DISC_EDGE, DISC_STYLE, INK, MUTED, PRE_EVENT_FACE)
@@ -211,18 +214,14 @@ def _ratio_line(ax, x: np.ndarray, y: np.ndarray, st: dict, offset: int,
             label=label)
 
 
-def rule_ratio_panel(ax, ratio: np.ndarray, rows: list[dict], pos: np.ndarray,
-                     t0: int, legend: bool) -> None:
-    """One curve per rule of a per-position quantity already divided by the
-    reference branch's own at the same position, so the reference *is* the line
-    at 1 and the legal control's curve is the empirical null.
+def _ratio_axes(ax, pos: np.ndarray, t0: int, legend: bool) -> None:
+    """The furniture every ratio panel shares: the shaded shared prefix, the
+    branch rule at t0, and the reference at 1.
 
-    `ratio` is [n_branches, len(pos)] and `pos` the board positions its columns
-    sit at. Event-locked at t0 (FIGURE_GUIDELINES 4.2): the branch is the dashed
-    rule, and the positions left of it -- where every branch is token-identical,
-    so the ratio is 1 by construction -- are shaded and drawn rather than cut
-    away, with a legend entry saying which. The caller asserts the 1.
-    """
+    Event-locked at t0 (FIGURE_GUIDELINES 4.2). The positions left of the branch
+    -- where every branch is token-identical, so the ratio is 1 by construction
+    -- are shaded and drawn rather than cut away, with a legend entry saying
+    which. The caller asserts the 1."""
     free = pos < t0
     ax.set_xlim(pos[0] - 1, pos[-1] + 1)
     ax.axvspan(pos[0] - 1, (pos[free][-1] + pos[~free][0]) / 2, color=PRE_EVENT_FACE,
@@ -235,6 +234,26 @@ def rule_ratio_panel(ax, ratio: np.ndarray, rows: list[dict], pos: np.ndarray,
     # black rule through the middle of one would read as the loudest series there.
     ax.axhline(1, color=st["color"], lw=1.3, zorder=1.5,
                label=f"{st['label']}, the line at 1" if legend else None)
+
+
+def ratio_series(rows: list[dict]) -> list[list[int]]:
+    """Member row indices per series of a population ratio panel: one per rule,
+    then each legal control. A rule is one series and not a mean drawn over its
+    members, so the caller can bootstrap exactly what is drawn."""
+    return list(rule_rows(rows).values()) + [[i] for i, r in enumerate(rows)
+                                             if r["is_control"]]
+
+
+def rule_ratio_panel(ax, ratio: np.ndarray, rows: list[dict], pos: np.ndarray,
+                     t0: int, legend: bool) -> None:
+    """One curve per rule of a per-position quantity already divided by the
+    reference branch's own at the same position, so the reference *is* the line
+    at 1 and the legal control's curve is the empirical null.
+
+    `ratio` is [n_branches, len(pos)] and `pos` the board positions its columns
+    sit at.
+    """
+    _ratio_axes(ax, pos, t0, legend)
     for i, r in enumerate(rows):
         if r["is_control"]:
             st = branch_style(r["category"], r["is_control"])
@@ -247,6 +266,32 @@ def rule_ratio_panel(ax, ratio: np.ndarray, rows: list[dict], pos: np.ndarray,
                     f"{st['label']} (mean of {len(members)})" if legend else None)
     if legend:
         legend_proxy(ax)
+
+
+def rule_ratio_population_panel(ax, mean: np.ndarray, lo: np.ndarray, hi: np.ndarray,
+                                rows: list[dict], pos: np.ndarray, t0: int,
+                                legend: bool) -> None:
+    """`rule_ratio_panel` over a population of source games: the mean over games
+    of each series' per-game ratio, inside the band the caller bootstrapped.
+
+    `mean`, `lo` and `hi` are [len(ratio_series(rows)), len(pos)], in that
+    function's order. No faint member traces: a member here is itself a mean over
+    games and would read as game-to-game spread, which is what the band carries.
+    Both legal controls are drawn, because neither is the divisor in this panel --
+    they are two draws of one null, and the gap between them is the size of a
+    difference that means nothing.
+    """
+    _ratio_axes(ax, pos, t0, legend)
+    for k, members in enumerate(ratio_series(rows)):
+        r = rows[members[0]]
+        st = branch_style(r["category"], r["is_control"], by_rule=True)
+        ax.fill_between(pos, lo[k], hi[k], color=st["color"], alpha=0.16, lw=0,
+                        zorder=st["zorder"] - 0.5)
+        label = (st["label"] if r["is_control"]
+                 else f"{st['label']} (mean of {len(members)})")
+        _ratio_line(ax, pos, mean[k], st, k % MARK_STEP, label if legend else None)
+    if legend:
+        ci_band_proxy(ax)
 
 
 def mover_name(board) -> str:

@@ -1,7 +1,7 @@
 # Step length at the fork
 
 The fork family draws **where** a branch goes. This draws **how far it moves per
-step** while it gets there. For each branch *b* of one source game, at the
+step** while it gets there. For each branch *b* of a source game, at the
 study's sampled positions,
 
 ```
@@ -17,15 +17,24 @@ angle θ and only θ; the R²¹ figures (`../fork_curvature_space`,
 `../r21_shared_basis`) carry step length as 7 of 21 components inside a
 descriptor and never on its own axis.
 
+Two figures, one quantity and one panel grid: **one selected game**, which is an
+illustration of the construction, and its **100-game population twin**, which is
+the one that carries an interval. The reduction and the interval are the whole
+difference between them, so they are one script.
+
 ```
+python analysis/violation_divergence/step_length_fork/measure.py [--n_games 100]
 python analysis/violation_divergence/step_length_fork/make_figures.py \
-    [--game 1235] [--camera-ready]
+    [--game 1235 | --n_games 100] [--camera-ready]
 ```
 
 | file | what it is |
 |---|---|
-| `figures/game_1235_step_length_fork.{png,pdf}` | the nine-space grid, spliced branches, layer 5 |
+| `figures/game_1235_step_length_fork.{png,pdf}` | the nine-space grid, one game, spliced branches, layer 5 |
+| `figures/n100_step_length_fork.{png,pdf}` | the same grid over 100 source games, with a bootstrap CI over games |
+| `$SPADE_DIVERGENCE_DIR/step_length_fork/n100.npz` | `measure.py`'s output: per space, game, branch and position, the absolute step length and the ratio |
 | `results/violation_divergence/step_length_fork.csv` | one row per (space, series, position): the **absolute** step length and the ratio, for the reference, the three rules, all six member categories and the control |
+| `results/violation_divergence/step_length_fork_n100.csv` | the same rows over the population: the mean with its bootstrap CI, the median, and the paired contrast against the legal control |
 
 Spliced branches only (`$SPADE_DIVERGENCE_DIR/branches`): every branch replays
 the source game's `tokens[t0+1:]`, so a difference at *r* > 0 descends from one
@@ -105,7 +114,7 @@ property of the game and the position, not of the branch. The fork's effect
 rides on top of it and is smaller than it. Nine panels of that cannot share an
 axis, and on separate axes the swing is what a reader sees.
 
-## The numbers
+## The numbers, on the one game
 
 Game 1235, layer 5, spliced branches, printed by `make_figures.py` on every
 render. `s_ref` is the reference branch's own absolute step length over the
@@ -148,23 +157,159 @@ Four things it says, in the order they matter:
    **R3 leaves the band in all nine spaces**, R2 in six and R1 in three. Read
    the first three offsets; treat the rest as the null's wobble drawn twice.
 
+## The population twin
+
+The first **100** of the **1696** branch-complete games forking at *t₀* = 20,
+ascending by game id (`branches.games_at_t0`) — the population every *n*-game
+sweep in this study draws, so this figure and `../fork_population` are over the
+same games. No game-level criterion enters it. Game 1235 is in it as one ordinary
+member, 42nd by id.
+
+Same quantity, same nine panels, same axis. What is different:
+
+- Each curve is the **mean over games of that game's own ratio**, the rule mean
+  taken over its member categories *inside* the game. The band is a **95%
+  percentile bootstrap CI over source games**, 2000 resamples, seed 0, resampling
+  **games and not branches** — a game's nine branches share a prefix and the
+  reference they are divided by.
+- **No faint member traces.** A member at this *n* is itself a mean over 100
+  games, so drawn faint it would read as game-to-game spread, which is exactly
+  what the band already carries.
+- **Both legal controls are drawn.** In this figure the control is not a divisor
+  (the reference is), so `control_legal` and `control_legal_2` are two draws of
+  one null — a different legal token at *t₀*, measured exactly as the illegal
+  branches are. Drawing both is the honest empirical null: the gap between the
+  two grey curves is the size of a difference that means nothing, and it is
+  never resolved (+0.008 to +0.023 at *r* = 0, every interval straddling 0).
+  Averaging them into one null curve was rejected — a null averaged over *k*
+  candidates has ~1/√*k* the spread of the signal it is read against
+  (FIGURE_GUIDELINES §3).
+- Each panel prints the **paired contrast** of its largest rule against
+  `control_legal`, at the fixed offset *r* = 0, on the same games. Two point
+  estimates side by side is what this study already had to correct once
+  (`../fork_population`).
+
+Raw layer 5, *r* = 0 and the window mean over *r* ≥ 0, with the paired contrast
+against the legal control:
+
+| series | at *r* = 0 | median | mean over *r* ≥ 0 | (series − control) at *r* = 0 |
+|---|---|---|---|---|
+| R1 placement | **0.936** [0.910, 0.961] | 0.916 | 0.986 [0.981, 0.992] | **−0.060** [−0.081, −0.038] |
+| R2 bracketing | **1.099** [1.068, 1.131] | 1.067 | 1.010 [1.004, 1.015] | **+0.104** [+0.077, +0.132] |
+| R3 turn | **1.076** [1.044, 1.108] | 1.035 | 1.008 [1.001, 1.015] | **+0.080** [+0.051, +0.111] |
+| `control_legal` (null) | 0.995 [0.967, 1.024] | 0.987 | 0.991 [0.984, 0.997] | — (the divisor) |
+| `control_legal_2` (null) | 1.016 [0.986, 1.046] | 0.991 | 0.990 [0.984, 0.997] | +0.021 [−0.004, +0.047] |
+
+### What survives, and what does not
+
+**1. A second legal move does *not* lengthen the step.** This is the largest
+correction. On game 1235 the control steps **1.11–1.31×** the reference at
+*r* = 0; over 100 games it steps **0.989–1.007×**, and its interval straddles 1
+in all nine spaces. The one-game figure's headline reading — *any* different
+token lengthens the step — was that game.
+
+**2. R1 shortens the step, and that is what replicates.** At *r* = 0, R1 is
+**0.890–0.957** with every interval clear of 1 (upper bounds ≤ 0.984) in all
+nine spaces, and paired against the control it is resolved negative in all nine,
+**−0.032 to −0.117**. The direction the one game gave (0.80–0.91) survives; the
+magnitude roughly halves. It is also the same rule, and the same direction, that
+`../fork_population` found to be the only resolved contrast on the displacement.
+
+**3. R3's 1.53× does not survive, and neither does R3 > R2 > R1.** R3 at *r* = 0
+is **1.076** in raw layer 5 against 1.526 on game 1235, and it sits *below* 1 in
+the four gated/TopK spaces (0.971–0.996, every interval straddling 1). Paired
+against the control it is resolved positive in five spaces (+0.072 to +0.304 in
+raw, PAnneal, Standard, SpaDE, CosineSpaDE), unresolved in three, and resolved
+*negative* in GatedAnneal (−0.030 [−0.057, −0.000]); R2 is resolved negative in
+GatedSAE (−0.034 [−0.063, −0.003]). The ordering fails differently: **R2 − R3**
+at *r* = 0 is **+0.023** [+0.001, +0.047] in raw layer 5 — R2, not R3, is the
+larger excursion — resolved in three of nine spaces and unresolved in the rest.
+What *is* resolved in all nine is R2, R3 > R1: R3 − R1 = +0.072 to +0.345,
+R2 − R1 = +0.057 to +0.414. So the population orders the rules as
+**{R2, R3} > control > R1**, with R2 and R3 indistinguishable from each other,
+and not as R3 > R2 > R1.
+
+**4. It decays as fast, off a much lower peak, and the window means are within
+5% of 1.** raw layer 5 R3 runs **1.076, 1.057, 1.012** at *r* = 0, 2, 4 (n = 1:
+1.53, 1.33, 1.35). Window means: R1 0.962–0.999, R2 0.972–1.052, R3 0.976–1.045,
+control 0.970–0.999 — every rule within 5% of 1 in every space, and paired
+against the control the window-mean gaps are ≤ +0.023 (+0.046 in CosineSpaDE).
+**Do not read the one game's "past *r* = +4 nothing leaves the control's band"
+against this figure**: the control's own excursion band is now ±0.016–0.075
+instead of ±0.18–0.31, because it is a mean over 100 games rather than one
+game's noise, and a band that narrows ten-fold is not the same band. Against the
+narrow one, 2–3 of the 3 × 10 rule-mean values past *r* = +4 leave it in raw
+layer 5, PAnneal, Standard and SpaDE, and none in the other five.
+
+**Game 1235 is not what drives the disagreement.** Its own *r* = 0 values in raw
+layer 5 are R1 0.862, R2 1.184, R3 1.526, control 1.232, all far outside the
+population's; dropping it from the 100 moves every raw-layer-5 mean by **≤
+0.005**. Being one game of 100 is the whole difference.
+
+**The rule grouping is weak here too, and by the same margin.** Within ÷
+between-rule spread of the drawn ratio over *t* ≥ *t₀*, per game: raw layer 5
+median **0.866** [IQR 0.728–1.021], above 1 in 29% of games; across the nine
+spaces the medians run 0.778 (CosineSpaDE) to 0.969 (GatedSAE). The one game's
+0.757 was near the good end of that distribution.
+
+**CosineSpaDE is again the loudest cell, and again for its own reason.** R2
+1.366 [1.318, 1.417] and R3 1.298 [1.249, 1.346] against a null of 0.994, the
+largest paired contrasts anywhere (+0.372 and +0.304). It is also the one cell
+where the effect is nearly per-game universal — R2 above 1 in **98%** of the 100
+games and R3 in 91%, against 72% and 62% in raw layer 5. Its absolute steps are
+~0.13 with a narrow spread, so a small absolute change is a large ratio; read it
+against its own control, as with every cell.
+
+## Caption for the population figure
+
+**A move that plays onto an occupied square takes a measurably *shorter* next
+step than a different legal move does; a bracketing or turn violation takes a
+slightly longer one in five of nine spaces; and a legal alternative itself does
+nothing.** Nine panels, one per representation space, raw layer 5 first; layer-5
+`resid_post`, 100 source games all forking at *t₀* = 20. y is each branch's step
+length divided by **that game's own reference branch's step length at the same
+position**, so the reference is the black line at 1 and the nine spaces share one
+axis. x is move index *t*, sampled every 2 plies at *t₀*'s parity, so one step
+spans 4 plies; the dashed rule is *t₀* and the shaded band left of it is the
+shared prefix, where the ratio is 1 by construction (asserted in all nine spaces,
+per game, on every sweep). Each curve is the mean over the 100 games of that
+game's own ratio, the rule mean taken over its 2, 3 or 1 member categories inside
+the game; **bands are 95% percentile bootstrap CIs of that mean over source
+games** (2000 resamples, seed 0, resampling games and not branches). The two grey
+curves are the two legal controls — two draws of one empirical null, since
+neither is a divisor here. Each panel prints the paired contrast of its largest
+rule against `control_legal` at *r* = 0, taken inside each game. Within ÷
+between-rule spread over *t* ≥ *t₀*, per game, raw layer 5: median 0.866 [IQR
+0.728–1.021]. The population is the first 100 of the 1696 branch-complete games
+forking at *t₀* = 20, ascending by game id, with no game-level criterion.
+
 ## Reading it honestly
 
-- **One game, no interval.** n = 1, and a selected game. Every number above is
-  a single measurement with no CI; the population twin is a separate change.
-  Nothing here licenses "an illegal move lengthens the step" as a claim about
-  OthelloGPT — it licenses "on this game it does, at the fork, for R3".
+- **One game, no interval — and the population disagrees with it.** Every number
+  in "The numbers, on the one game" is a single measurement with no CI, on a
+  selected game. Nothing there licenses "an illegal move lengthens the step" as a
+  claim about OthelloGPT — it licenses "on this game it does, at the fork, for
+  R3", and over 100 games it does not: R3's 1.53 becomes 1.08, the control's
+  1.23 becomes 1.00, and R2 overtakes R3. Read the population twin for anything
+  claim-shaped; read the one game for what the construction is.
 - **The control is the scale, not the line at 1.** The reference is 1 by
-  construction, so a curve above 1 means nothing on its own. The question the
-  panel answers is whether a rule leaves the *control's* own excursion band,
-  and the only rule that does so in all nine spaces is R3, at *r* ≤ +4.
+  construction, so a curve above 1 means nothing on its own. On the one game the
+  question is whether a rule leaves the *control's* own excursion band, and only
+  R3 does so in all nine spaces, at *r* ≤ +4. On the population that band test is
+  replaced by the paired contrast against the control on the same games, and the
+  rule resolved in all nine spaces is **R1**, downward.
 - **The rule grouping is weak.** Within ÷ between-rule spread is 0.70–0.90 on
-  this quantity — better than the 0.885 the displacement field gives on the same
-  game, which is one game and not evidence that step length groups the rules
-  better. R2's members disagree in sign at the fork. Read the faint traces.
-- **R3 is one branch.** `R3 turn (mean of 1)` is `opponent_only`, a single
-  branch of a single game. It is the largest curve in every panel and it is also
-  the least averaged one.
+  this quantity on game 1235 — better than the 0.885 the displacement field gives
+  on the same game, which is one game and not evidence that step length groups
+  the rules better. Over the population the per-game medians run 0.778–0.969 and
+  the statistic is above 1 in 19–43% of games, so the grouping is weak there too.
+  R2's members disagree in sign at the fork on the one game; read the faint
+  traces.
+- **R3 is one category.** `R3 turn (mean of 1)` is `opponent_only` — one branch
+  of one game on the single-game figure, one branch per game on the population
+  one. Either way it is the least averaged of the three, and on the one game it
+  is also the largest curve in every panel, which the population does not
+  reproduce.
 - **The nine panels share an axis because the quantity is a ratio, and for no
   other reason.** A tall curve in a cell says that dictionary's code moved
   further relative to its own reference, not that the dictionary separates
@@ -175,5 +320,7 @@ Four things it says, in the order they matter:
   `../rule_curvature` cannot be compared, subtracted or plotted together.
 - **CosineSpaDE is the loudest panel and the least trustworthy.** Its absolute
   steps are ~0.13 with a narrow spread, so a small absolute change is a large
-  ratio; its R3 reaches 1.74 and its control only 1.11. Read it against its own
-  control, as with every cell.
+  ratio; on the one game its R3 reaches 1.74 against a control of 1.11, and over
+  the population R2 reaches 1.37 against a control of 0.99. It is also the one
+  cell whose effect is nearly per-game universal (R2 above 1 in 98% of the 100
+  games). Read it against its own control, as with every cell.
