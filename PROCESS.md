@@ -14,14 +14,15 @@ branch, no knowledge that anything was spliced. Every other read-out of this tre
 left without it. CPU-only and under a minute: it reads the `d` that
 `curvature_discriminant/branch_geometry.py` already cached for all nine spaces.
 
-**Three findings.** Four dictionaries clear raw layer 5 (GatedAnneal 0.604 [0.578, 0.630]
-against raw's 0.557, Standard at 0.506 with 0.5 inside its CI), and the ordering reproduces
-`curvature_discriminant`'s *supervised* ordering from a completely unrelated statistic.
-Localization is the stronger half -- GatedAnneal hits the exact ply 0.332 of the time against
-a 0.020 chance level, with its legal-splice control at 0.038, so the detector does not fire
-at t0 when the move played there is legal. And the `theta` block -- curvature proper, the
-thing the descriptor is named for -- carries almost none of it (0.53-0.58), only in the
-*straighter* direction.
+**Three findings.** Four dictionaries clear raw layer 5 on the *paired difference* -- GatedAnneal
++0.055 [+0.030, +0.080], GatedSAE +0.043, BatchTopK +0.032, TopK +0.029, none spanning zero --
+while Standard and PAnneal sit significantly below it and the two sparsemax spaces are
+indistinguishable from it. The ordering reproduces `curvature_discriminant`'s *supervised*
+ordering from an unrelated statistic. Localization is the stronger half: GatedAnneal hits the
+exact ply 0.343 of the time against 1/34 uniform and 0.038 for its own legal-splice control, and
+all three false-alarm arms sit at chance in every space. And the `theta` block -- curvature
+proper, the thing the descriptor is named for -- carries almost none of it (0.53-0.58), only in
+the *straighter* direction, which is RECURVE's polarity and not the naive one.
 
 **The metric was chosen against three candidates and the two obvious ones lose.** Per-position
 standardization is the whole game: move index explains 81.3% of the variance of `d`, so a
@@ -44,18 +45,43 @@ equivalently Truong/Oudre/Vayatis's window-sliding discrepancy with a Mahalanobi
 its equal-width windows leave `argmax` unbiased in position, which CUSUM/GLR/E-divisive's
 `sqrt(c(n-c)/n)` factor does not. That property is why it is the primary and not CUSUM.
 
-**Two protocol corrections worth keeping.** The chance level for a hit rate is *not* `1/n_cand`:
-the argmax of an autocorrelated curve is not uniform and one game's candidates overlap in `m-1`
-steps, so the null is a circular-shift surrogate (roll each score curve, preserving its shape
-and destroying only the alignment to t0) -- it comes out 0.020-0.029 against the flat 0.029.
-And the window is selected on the *straightness* violation corpus, which shares no game with
-the divergence tree, so the reported AUROCs are not selection-inflated.
+**A circular-shift surrogate is useless as a null for any argmax hit rate, and the first pass
+shipped one.** `argmax(roll(s, k)) == (argmax(s) - k) mod n` *exactly*, so rolling a row does
+not preserve the autocorrelation it was supposed to preserve -- it just relocates the peak
+uniformly, returns ~1/n whether the curve is white noise or heavily smoothed, and comes out a
+deterministic function of the hit rate it is compared against (`corr = -0.973` across the nine
+spaces, and the better the detector the *lower* its own "null"). It inflated the headline from
+11.6x to 16.7x before it was caught. The correct nulls were already in the study: uniform
+`1/n_cand`, and the legal-splice control arm, which is measured at 0.021-0.045 everywhere. The
+surrogate is deleted. Worth checking anywhere else a permutation or shift null backs a
+localization rate.
+
+**Two more corrections from the same review.** The selection and report corpora are **not**
+disjoint -- 501 of the 573 scored games share their source legal game with a straightness
+violation, and the source game is what carries the idiosyncrasy the MOSUM cancels -- so three
+places that asserted disjointness, one of them a figure caption, now say what is actually true
+(the *splices* differ; the sweep is also scored on a vs-reference-shaped contrast because the
+straightness corpus has no legal-splice arm; the criterion's margin is 0.0074). And marginal
+CIs cannot carry a comparative claim: "four dictionaries clear raw" needed the paired
+difference on shared bootstrap draws, which is why `resamples()` is made once and handed to
+every space rather than each calling its own `boot_ci`.
+
+**`arms()` was a second copy of `localize.arms`.** Flagged by a peer session doing an unrelated
+DRY pass. `spade.move_legality.localize.arms`/`one_per_game` already own the seeded
+one-branch-per-game rule (pooling a rule's member categories gives it ~1/sqrt(3) of an item's
+real spread), they agree with the hand-rolled version on all three deterministic arms, and they
+hand back R1/R2/R3 for free -- so the rows are now column-comparable with
+`localization_by_space.csv`. Migrating changed which illegal branch each game draws, which
+moved every number inside its CI and swapped GatedSAE and BatchTopK in rank. Not a copy of that
+session's `population.py`: this study loads no checkpoints and its row-selection rule is
+different, so per the house rule they stay separate.
 
 **Fit corpus, and why it is not the obvious one.** The per-move-index profile is fit on
 straightness legal games minus `meta.held_out_legal`, i.e. 1,427 clean games disjoint from
 every scored one. Splitting the 575 divergence games in half instead would have halved the
 scored n for no gain; the two corpora are the same distribution to four decimals (z of the
-divergence reference branches under the straightness profile: mean -0.04, sd 1.01).
+divergence reference branches under the straightness profile: mean -0.04, sd 1.01), and the
+cross-pipeline `d` agrees to 8e-6 relative.
 
 **Open, and it is load-bearing: the norm-only baseline has not been run on this tree.** On the
 straightness corpus `-z(||z_t||)` alone reaches 0.808 AUROC in GatedAnneal, `d_t` regresses on

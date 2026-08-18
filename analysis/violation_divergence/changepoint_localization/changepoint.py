@@ -22,7 +22,6 @@ from spade.move_legality.probe import auroc as _auroc
 
 CAND_OFFSET = 2   # candidate move index c <-> step index c - CAND_OFFSET
 N_BOOT = 1000
-N_SHIFT = 20      # circular shifts per row for the autocorrelation-preserving chance level
 
 
 def profile(d_legal: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -67,30 +66,22 @@ def auroc(positive: np.ndarray, negative: np.ndarray) -> float:
     return _auroc(scores, mask)
 
 
-def boot_ci(statistic, n_games: int, seed: int = 0) -> tuple[float, float]:
-    """Percentile CI over resampled games. Games, never positions: the candidates of one
-    game overlap in m-1 steps, so they are nowhere near independent draws."""
+def resamples(n_games: int, seed: int = 0) -> list[np.ndarray]:
+    """Bootstrap draws over games, made once so two spaces can share them.
+
+    Games, never positions: one game's candidates overlap in m-1 steps, so they are nowhere
+    near independent draws. Sharing the draws is what makes a CI on a *difference* between
+    two spaces correct rather than the two marginal CIs a reader would have to eyeball.
+    """
     rng = np.random.default_rng(seed)
-    draws = [statistic(rng.integers(n_games, size=n_games)) for _ in range(N_BOOT)]
-    return float(np.quantile(draws, 0.025)), float(np.quantile(draws, 0.975))
+    return [rng.integers(n_games, size=n_games) for _ in range(N_BOOT)]
+
+
+def ci(statistic, draws: list[np.ndarray]) -> tuple[float, float]:
+    values = [statistic(i) for i in draws]
+    return float(np.quantile(values, 0.025)), float(np.quantile(values, 0.975))
 
 
 def located(s: np.ndarray, cand: np.ndarray) -> np.ndarray:
     """The move index each row's score peaks at."""
     return cand[s.argmax(1)] + CAND_OFFSET
-
-
-def shift_chance(s: np.ndarray, cand: np.ndarray, t0: np.ndarray, seed: int = 0) -> float:
-    """Hit rate under the score's own autocorrelation.
-
-    A flat 1/len(cand) is the chance level for a uniform argmax, and the argmax of an
-    autocorrelated curve is not uniform. Rolling each row keeps its shape and peak width
-    exactly and destroys only the alignment to t0, which is the null being tested.
-    """
-    rng = np.random.default_rng(seed)
-    hits = []
-    for _ in range(N_SHIFT):
-        offset = rng.integers(1, s.shape[1], (len(s), 1))
-        index = (np.arange(s.shape[1]) + offset) % s.shape[1]
-        hits.append(located(np.take_along_axis(s, index, 1), cand) == t0)
-    return float(np.mean(hits))

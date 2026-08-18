@@ -29,7 +29,9 @@ def draw(table: pd.DataFrame, camera_ready: bool) -> Path:
     table = table.sort_values("auroc_vs_control", ascending=False).reset_index(drop=True)
     fig, ax = plt.subplots(figsize=(5.5, 3.4))
 
-    ax.axhline(0.5, color=NULL["color"], ls=NULL["ls"], lw=1.2, zorder=1)
+    ax.axhspan(table.auroc_null.min(), table.auroc_null.max(), color=NULL["color"],
+               alpha=0.28, lw=0, zorder=1)
+    ax.axhline(0.5, color=NULL["color"], ls=NULL["ls"], lw=1.2, zorder=2)
     for x, row in table.iterrows():
         style = SPACE_STYLE[row.space]
         # SPACE_STYLE separates the two dictionaries of a family by line style, which a bar
@@ -50,8 +52,8 @@ def draw(table: pd.DataFrame, camera_ready: bool) -> Path:
                   rotation=30, ha="right", rotation_mode="anchor")
     ax.set_ylim(0, 1.05)
     ax.set_xlim(-0.7, len(table) + 0.55)
-    ax.set_ylabel("paired AUROC, illegal vs matched legal splice\n($\\uparrow$ better)")
-    ax.text(len(table) - 0.35, 0.5, "chance", color=NULL["color"], fontsize=7.5,
+    ax.set_ylabel("AUROC, illegal vs matched legal splice\n($\\uparrow$ better)")
+    ax.text(len(table) - 0.35, 0.5, "chance (empirical)", color=NULL["color"], fontsize=7.5,
             ha="left", va="center", bbox={"fc": "white", "ec": "none", "pad": 1.2})
     ax.text(0.0, 1.045, "hue = architecture family, hatch = its second dictionary; "
             "raw layer 5 is the reference space", fontsize=7, color=MUTED, va="top")
@@ -59,17 +61,23 @@ def draw(table: pd.DataFrame, camera_ready: bool) -> Path:
     ax.tick_params(axis="x", length=0)
 
     row = table.iloc[0]
+    span = "plies before and after" if row.statistic == "MOSUM" else "plies forward"
+    clears = table[table.auroc_minus_raw_lo > 0]
     fig.tight_layout()
     fig.text(0.005, -0.005,
-             f"Score: how much shorter than usual the step through the space is, standardized per "
-             f"move index against legal games,\nthen contrasted across each candidate move ({row.statistic}, "
-             f"m = {row.m:.0f} plies each side) and scanned blind over the whole game -- no\nknowledge "
-             f"that a move was spliced, and no counterfactual branch. The window was chosen on the "
-             f"disjoint\nstraightness corpus. One illegal branch per game at seed 42; whiskers are 95% "
-             f"percentile bootstrap CIs over\n{row.n_games:.0f} paired games (1,000 resamples). The "
-             f"chance line is empirical: the legal control scored against the second\nlegal control each "
-             f"game carries gives {table.auroc_null.min():.3f}-{table.auroc_null.max():.3f}. AUROCs are "
-             f"never flipped, so a bar at 0.5 is the finding.",
+             f"Score: how much shorter than usual the step through the space is, standardized "
+             f"per move index against legal games,\nthen contrasted across each candidate move "
+             f"({row.statistic}, m = {row.m:.0f} {span}) and scanned blind over the whole game -- "
+             f"no\nknowledge that a move was spliced, and no counterfactual branch. The window was "
+             f"chosen on the straightness\nviolation corpus, whose splices differ. Bars are the "
+             f"AUROC of the illegal branch's peak against the same game's\nlegal-splice branch, one "
+             f"illegal branch per game at seed 42; AUROCs are never flipped, so a bar at 0.5 is the "
+             f"finding.\nWhiskers are 95% percentile bootstrap CIs over {row.n_games:.0f} games "
+             f"(1,000 resamples); the {len(clears)} dictionaries above raw also\nclear it on the "
+             f"paired difference, which reuses the same resamples "
+             f"({clears.auroc_minus_raw.min():+.3f} to {clears.auroc_minus_raw.max():+.3f}, none "
+             f"spanning zero).\nThe gray band is the empirical null: each game's legal control "
+             f"scored against the second legal control it carries.",
              ha="left", va="top", fontsize=7, color=MUTED)
     return save_figure(fig, HERE / "figures" / "changepoint_auroc_by_space", camera_ready)
 
