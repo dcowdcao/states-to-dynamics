@@ -67,17 +67,19 @@ import torch
 
 from spade.common.device import select_device
 from spade.common.study import variant_dir
-from spade.figures.branch_panels import plane_displacement
 from spade.figures.paper_style import (
-    CATEGORY_STYLE, CEILING, GRID, INK, MUTED, NULL, OKABE_ITO, QUANTITY_STYLE,
+    CATEGORY_STYLE, FULL_STYLE, GRID, INK, MUTED, NULL, PLANE_STYLE, QUANTITY_STYLE,
     REFERENCE, apply_style, rule_key, sae_label, save_figure)
 from spade.othello.taxonomy import CATEGORIES
 from spade.saes.registry import seed42_entries
 from spade.spaces import EXCLUDED_SAE
-from spade.straightness.geometry import (
-    RESTRAV_FEATURE_NAMES, restrav_features, temporal_geometry)
+from spade.straightness.geometry import RESTRAV_FEATURE_NAMES
 from spade.violation_divergence.branches import complete_games
 from spade.violation_divergence.compute_divergence import sae_encoder
+from spade.violation_divergence.fork_plane import RAW_SPACE, positions, spaces
+from spade.violation_divergence.fork_r21 import (
+    BLOCKS, MEAN_D, MEAN_THETA, W, activation_plane, descriptors, displacement21,
+    fold_rollouts, named_basis, run_ratio, top2)
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 VARIANTS = {"spliced": "", "rollout": "rollout"}   # CLI name -> variant_dir() suffix
@@ -87,41 +89,11 @@ VARIANTS = {"spliced": "", "rollout": "rollout"}   # CLI name -> variant_dir() s
 ROLLOUT_CAVEAT = ("\nrollout: every anchor drawn is at $r\\geq+6$, where illegal and "
                   "control have already saturated — shape, not a separation.")
 
-W = 8                    # smallest window with a full 21-D descriptor (d[:, :7])
-STRIDE = 2               # one mover per curve; see the parent sub-study
 ELEV, AZIM = 18, -58     # same camera as the parent, so the two read together
-WINDOW = (-8, 24)        # the study's analysis window, r = t - t0
-FIRST_POS, LAST_POS = 1, 58   # position 0 is the attention sink
 ISOMAP_NEIGHBORS = 12
-RAW_SPACE = "raw layer 5 (reference space)"
-MEAN_D = RESTRAV_FEATURE_NAMES.index("mean d")
-MEAN_THETA = RESTRAV_FEATURE_NAMES.index("mean θ")
 CONTROL_LABEL = {1: "control: another legal move (null)",
                  2: "control 2: a third legal move (null)"}
 
-# Plane choices are this figure's series. Colors come from paper_style's palette;
-# the status-quo activation-space plane is what the R^21 planes are read against,
-# so it takes REFERENCE styling.
-PLANE_STYLE = {
-    "activation refit": {"color": REFERENCE["color"], "marker": REFERENCE["marker"],
-                         "ls": (0, (1, 1.4)),
-                         "label": "activation space, refit per space (status quo)"},
-    "refit":  {"color": OKABE_ITO[0], "marker": "s", "ls": "-",
-               "label": "$R^{21}$, plane refit per space"},
-    "shared": {"color": OKABE_ITO[1], "marker": "D", "ls": "-",
-               "label": "$R^{21}$, one shared fitted plane"},
-    "named":  {"color": OKABE_ITO[2], "marker": "^", "ls": "-",
-               "label": "$R^{21}$, fixed named axes (mean $d$, mean $\\theta$)"},
-}
-
-# The two halves of R^21, which disagree about how far an illegal branch runs.
-# No component name carries both letters, so the split is exact.
-BLOCKS = {q: [i for i, n in enumerate(RESTRAV_FEATURE_NAMES) if c in n]
-          for q, c in (("d", "d"), ("theta", "θ"))}
-# The unprojected space the three R^21 planes are shares of. Solid and heavy, so
-# it never reads as the dotted black activation plane it sits next to.
-FULL_STYLE = {"color": CEILING["color"], "marker": CEILING["marker"], "ls": "-",
-              "lw": 2.2, "label": "full $R^{21}$ (all 21 components, no plane)"}
 RUN_AXIS = ("run from the reference ÷ the control's\n(log, ↑ further than another "
             "legal move)")
 RUN_TICKS = [0.25, 0.5, 1, 2, 4, 8]    # a ratio axis, so doubling steps
@@ -149,8 +121,7 @@ def build_cache(path: Path, device: str, variant: str) -> None:
     game = complete_games(meta)[0]
     idx = (meta["game_id"] == game).nonzero().flatten()
     t0 = int(meta["t0"][idx[0]])
-    p = np.arange(max(FIRST_POS, t0 + WINDOW[0]), min(LAST_POS, t0 + WINDOW[1]) + 1)
-    pos = p[(p - t0) % STRIDE == 0]
+    pos = positions(t0)
     Z = acts[idx][:, pos, :].float()
 
     blobs = {"game": game, "t0": t0, "pos": pos, RAW_SPACE: Z.numpy(),
@@ -168,6 +139,10 @@ def build_cache(path: Path, device: str, variant: str) -> None:
     np.savez_compressed(path, **blobs)
 
 
+def space_names() -> list[str]:
+    return [name for name, _ in spaces()]
+
+
 def game_features(device: str, variant: str = "") -> dict:
     path = cache_path(variant)
     if not path.exists():
@@ -176,77 +151,10 @@ def game_features(device: str, variant: str = "") -> dict:
     return {k: z[k] for k in z.files}
 
 
-def space_names() -> list[str]:
-    return [RAW_SPACE] + [sae_label(e.config.replace("Trainer-othello", ""))
-                          for e in seed42_entries() if e.config not in EXCLUDED_SAE]
-
-
-# ---------------------------------------------------------------- R^21
-
-def descriptors(F: np.ndarray) -> np.ndarray:
-    """[n, T, width] -> [n, T-W+1, 21]; a point is the W samples ending at t."""
-    x = torch.from_numpy(F).unfold(1, W, 1).permute(0, 1, 3, 2).flatten(0, 1)
-    f = restrav_features(*temporal_geometry(x))
-    assert f.shape[1] == len(RESTRAV_FEATURE_NAMES), f"width {f.shape[1]}, need 21"
-    assert torch.isfinite(f).all(), "a zero-length step left an undefined angle"
-    return f.reshape(F.shape[0], -1, f.shape[1]).numpy()
-
-
-def fold_rollouts(A: np.ndarray, k: int) -> np.ndarray:
-    """Mean over each branch's K rollouts; rows are `source_row * K + rollout`.
-
-    Called on DESCRIPTORS, never on trajectories: phi is nonlinear, so a mean over
-    the four paths is the curvature of a fictitious path none of them took.
-    """
-    return A if k == 1 else A.reshape(len(A) // k, k, *A.shape[1:]).mean(1)
-
-
-def displacement21(F: np.ndarray, ref: int, k: int = 1) -> np.ndarray:
-    """[n, nw, 21] descriptor displacement from the reference, in per-space SDs.
-
-    The mean cancels in the difference, so z-scoring leaves the reference exactly
-    at the origin and only rescales each named component. The rollout mean is
-    taken here, between phi and the difference, so the SD is the SD of the
-    plotted object.
-    """
-    phi = fold_rollouts(descriptors(F), k)
-    sd = phi.reshape(-1, phi.shape[-1]).std(0)
-    assert (sd > 0).all(), f"constant component: {np.array(RESTRAV_FEATURE_NAMES)[sd == 0]}"
-    return (phi - phi[ref]) / sd
-
-
-def top2(X: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Uncentred top-2 plane (basis [2, k], variance ratios [2]).
-
-    Uncentred because zero displacement is a real point: centring would move the
-    reference off the origin it is drawn at.
-    """
-    _, s, vt = np.linalg.svd(X.reshape(-1, X.shape[-1]), full_matrices=False)
-    v = vt[:2]
-    sign = np.sign(v[np.arange(2), np.abs(v).argmax(1)])
-    return v * sign[:, None], (s ** 2 / (s ** 2).sum())[:2]
-
-
 def captured(X: np.ndarray, basis: np.ndarray) -> float:
     """Fraction of one space's descriptor variance an orthonormal plane keeps."""
     flat = X.reshape(-1, X.shape[-1])
     return float(((flat @ basis.T) ** 2).sum() / (flat ** 2).sum())
-
-
-def named_basis() -> np.ndarray:
-    return np.eye(len(RESTRAV_FEATURE_NAMES))[[MEAN_D, MEAN_THETA]]
-
-
-def activation_plane(F: np.ndarray, ref: int, k: int = 1) -> np.ndarray:
-    """The status-quo comparison: top-2 of the raw displacement, [n, T, 2].
-
-    Everything here is linear, so the rollout mean can be taken on the
-    trajectories; it is the same plane as folding after the projection.
-    """
-    F = fold_rollouts(F, k)
-    D = F - F[ref]
-    basis, _ = top2(D)
-    return D @ basis.T
 
 
 def isomap(X: np.ndarray, fitted=None):
@@ -265,6 +173,11 @@ def isomap(X: np.ndarray, fitted=None):
 
 # ---------------------------------------------------------------- score
 
+def run_args(meta: dict) -> dict:
+    """The three fields `fork_r21.run_ratio` reads, out of this figure's meta."""
+    return {k: meta[k] for k in ("ref", "anchors", "t0")}
+
+
 def separation(P: np.ndarray, ill: np.ndarray, ctl: np.ndarray) -> float:
     """Illegal-vs-control centroid distance in pooled within-group SDs.
 
@@ -282,19 +195,6 @@ def permutation_null(P: np.ndarray, branches: np.ndarray) -> np.ndarray:
     return np.array([separation(P, np.array([b for b in branches if b not in pair]),
                                 np.array(pair))
                      for pair in combinations(branches, 2)])
-
-
-def run_ratio(P: np.ndarray, rows: np.ndarray, ctl: int, meta: dict) -> float:
-    """How far `rows`' mean path runs from the reference over the drawn anchors,
-    divided by the control's run in the same field.
-
-    A ratio and never a distance: the field is z-scored per space and, for the
-    refit planes, fit per space too, so only "this branch against this space's own
-    legal control" carries from one space to the next.
-    """
-    run = plane_displacement(np.stack([P[meta["ref"]], P[rows].mean(0), P[ctl]]),
-                             meta["anchors"], meta["t0"], 0)
-    return float(run[1] / run[2])
 
 
 # ---------------------------------------------------------------- panels
@@ -478,9 +378,9 @@ def run_figure(coords: dict, X: dict, names: list[str], ill: np.ndarray,
     """
     x = np.arange(len(names))
     fig, (ax, bx) = plt.subplots(1, 2, figsize=(9.6, 3.6))
-    series = [(PLANE_STYLE[k], [run_ratio(coords[k][n], ill, c1, meta) for n in names])
+    series = [(PLANE_STYLE[k], [run_ratio(coords[k][n], ill, c1, **run_args(meta)) for n in names])
               for k in PLANE_STYLE]
-    series.append((FULL_STYLE, [run_ratio(X[n], ill, c1, meta) for n in names]))
+    series.append((FULL_STYLE, [run_ratio(X[n], ill, c1, **run_args(meta)) for n in names]))
     for st, y in series:
         ax.plot(x, y, color=st["color"], marker=st["marker"], ls=st["ls"], ms=5,
                 lw=st.get("lw", 1.6), markeredgecolor="white", markeredgewidth=0.5,
@@ -488,7 +388,7 @@ def run_figure(coords: dict, X: dict, names: list[str], ill: np.ndarray,
     ax.set_title("(a) how much of the run each candidate plane keeps",
                  loc="left", fontsize=9.5)
 
-    members = np.array([[run_ratio(X[n], np.array([i]), c1, meta) for n in names]
+    members = np.array([[run_ratio(X[n], np.array([i]), c1, **run_args(meta)) for n in names]
                         for i in ill])
     bx.plot(x, members.T, color=MUTED, lw=0.7, alpha=0.38, zorder=2)
     bx.plot([], [], color=MUTED, lw=0.7, alpha=0.38,
@@ -496,7 +396,7 @@ def run_figure(coords: dict, X: dict, names: list[str], ill: np.ndarray,
     for key, st in (("full", FULL_STYLE), ("d", QUANTITY_STYLE["d"]),
                     ("theta", QUANTITY_STYLE["theta"])):
         cols = slice(None) if key == "full" else BLOCKS[key]
-        y = [run_ratio(X[n][:, :, cols], ill, c1, meta) for n in names]
+        y = [run_ratio(X[n][:, :, cols], ill, c1, **run_args(meta)) for n in names]
         bx.plot(x, y, color=st["color"], marker=st["marker"], ls=st.get("ls", "-"),
                 ms=5, lw=st.get("lw", 1.6), markeredgecolor="white",
                 markeredgewidth=0.5, zorder=4, label=st["label"] if key == "full"
@@ -507,7 +407,7 @@ def run_figure(coords: dict, X: dict, names: list[str], ill: np.ndarray,
     for a in (ax, bx):
         a.axhline(1.0, color=NULL["color"], ls=NULL["ls"], lw=NULL["lw"], zorder=1,
                   label="the legal control itself (1 by construction)")
-        a.plot(x, [run_ratio(X[n], np.array([c2]), c1, meta) for n in names],
+        a.plot(x, [run_ratio(X[n], np.array([c2]), c1, **run_args(meta)) for n in names],
                color=NULL["color"], marker=NULL["marker"], ls="none", ms=5, zorder=3,
                label="a third legal move ÷ the control, full $R^{21}$ (empirical null)")
         a.set_yscale("log")
@@ -661,10 +561,10 @@ def main():
           + "".join(f"{p:>22}" for p in list(PLANE_STYLE)
                     + ["full 21-D", "11 d", "10 θ", "control 2, full 21-D"]))
     for name in names:
-        cells = [run_ratio(coords[p][name], ill, c1, meta) for p in PLANE_STYLE]
-        cells += [run_ratio(X[name][:, :, c], ill, c1, meta)
+        cells = [run_ratio(coords[p][name], ill, c1, **run_args(meta)) for p in PLANE_STYLE]
+        cells += [run_ratio(X[name][:, :, c], ill, c1, **run_args(meta))
                   for c in (slice(None), BLOCKS["d"], BLOCKS["theta"])]
-        cells.append(run_ratio(X[name], np.array([c2]), c1, meta))
+        cells.append(run_ratio(X[name], np.array([c2]), c1, **run_args(meta)))
         print(f"{name:34}" + "".join(f"{v:22.2f}" for v in cells))
     print(f"wrote {run_figure(coords, X, names, ill, c1, c2, meta, args.camera_ready, suffix, foot)}")
 

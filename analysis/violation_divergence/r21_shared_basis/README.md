@@ -17,8 +17,8 @@ python analysis/violation_divergence/r21_shared_basis/make_figures.py \
 
 The first run encodes game 0 through the eight seed-42 dictionaries and caches
 the result (3 MB, `$SPADE_DIVERGENCE_DIR/[rollout/]fork_r21/`); later runs are
-seconds. That encode belongs in `src/spade/violation_divergence/` under this
-repo's division of labour, and should move there if this study is kept.
+seconds. The descriptor and the four planes live in
+`src/spade/violation_divergence/fork_r21.py`, shared with the population sweep.
 
 `--variant rollout` draws the same game from the resampled-continuation copy of
 the study, where every branch **including the reference** samples its own K=4
@@ -152,6 +152,9 @@ full R^21 goes to 0.83–1.54 (above 1 in six of nine) and the activation plane 
   which is a different question from `separation_by_plane`'s **class gap**: a
   plane can move the illegal branches further out and separate them from the
   controls no better, and here it does exactly that.
+  `../r21_run_population` is that panel over 100 branch-complete games, with a mean
+  and a 95% CI, and it does not reproduce this figure's spread across spaces: read
+  the two together before quoting a number off this one.
 - Numbers and the verdict: `REPORT.md` at the repo root.
 
 ## The rollout variant, and where the mean is taken

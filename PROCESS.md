@@ -6,6 +6,47 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The R^21 run figure, over 100 games instead of one (2026-08-18)
+
+`analysis/violation_divergence/r21_run_population/` (`measure.py` + `make_figures.py`) is
+`r21_shared_basis`'s `run_from_reference` with a population behind it: same descriptor,
+same four candidate planes, same anchors, same ratio to the game's own legal control, but
+swept over the first 100 branch-complete games with a mean and a 95% CI. Everything --
+z-scoring, the per-space plane, the shared plane, the activation plane -- is refit **per
+game**, which is what keeps a game one independent item; a plane fit across games would
+make the interval a fiction.
+
+The R^21 core moved to `src/spade/violation_divergence/fork_r21.py` (the study README had
+flagged that it belonged there), and `PLANE_STYLE`/`FULL_STYLE` moved to `paper_style`, so
+both figures draw the same series in the same colours. The single-game script imports both
+and reproduces its old PNGs byte-identically -- that was the acceptance test for the move.
+
+Three things the population says that one game could not:
+
+- **The empirical null lands on 1** (a third legal move against the control, 0.97-1.02 in
+  all nine spaces). On one game it scattered 0.88-1.53, so the ratio had no calibration.
+- **The spread across spaces was game noise.** One game put the nine cells over 0.48-4.03;
+  100 games put every cell in 0.83-1.10. Nothing in that figure licensed a claim about
+  which dictionary separates a violation, and the panel-(b) title claiming the two halves
+  of R^21 disagree did not survive either (paired theta - d = -0.04..+0.11, CI +-0.06).
+- **Every plane inflates the run, the status-quo one most** (+0.19 paired against full
+  R^21, vs +0.13..+0.17 for the three R^21 planes). That *is* the single-game claim, now
+  with an interval.
+
+One estimator asymmetry is inherited and worth knowing before quoting `full R^21 < 1`: the
+illegal series is the run of the **mean displacement vector** over the six categories (the
+reduction the fork panels draw), so their incoherent parts cancel and the group mean is
+shorter than any member -- 0.83-0.89 against members at 0.93-1.17. The null is a single
+branch and carries no such cancellation. The figure says so in-panel and the README says
+it at length; the per-category reading is that an illegal move runs about as far as a
+second legal one.
+
+`--n_games` defaults to 100 so the committed figure is what a bare run reproduces. The tree
+holds 3185 branch-complete games and the sweep is ~1.6 s/game single-core, so the full
+population is ~80 minutes if the interval ever needs to be a third as wide.
+
+---
+
 ## The probe-head bar chart is AUROC, not TPR/TNR (2026-08-17)
 
 `analysis/move_legality/detection_rates.py` -> `detection_auroc.py`; the figure is

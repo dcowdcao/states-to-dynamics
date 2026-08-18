@@ -62,6 +62,26 @@ QUANTITY_STYLE = {
 }
 
 
+# The candidate planes a fork can be drawn in, for the R^21 studies that score
+# them against each other (r21_shared_basis, r21_run_population). The status-quo
+# activation-space plane is what the R^21 planes are read against, so it takes
+# REFERENCE styling; FULL_STYLE is the unprojected space the three R^21 planes
+# are shares of, solid and heavy so it never reads as the dotted black one.
+PLANE_STYLE = {
+    "activation refit": {"color": REFERENCE["color"], "marker": REFERENCE["marker"],
+                         "ls": (0, (1, 1.4)),
+                         "label": "activation space, refit per space (status quo)"},
+    "refit":  {"color": OKABE_ITO[0], "marker": "s", "ls": "-",
+               "label": "$R^{21}$, plane refit per space"},
+    "shared": {"color": OKABE_ITO[1], "marker": "D", "ls": "-",
+               "label": "$R^{21}$, one shared fitted plane"},
+    "named":  {"color": OKABE_ITO[2], "marker": "^", "ls": "-",
+               "label": "$R^{21}$, fixed named axes (mean $d$, mean $\\theta$)"},
+}
+FULL_STYLE = {"color": CEILING["color"], "marker": CEILING["marker"], "ls": "-",
+              "lw": 2.2, "label": "full $R^{21}$ (all 21 components, no plane)"}
+
+
 # Rules study (docs/othello_rules.md). Constraint rules R1-R3 and the six
 # illegal categories: hue = rule, lightness = detection depth within the rule,
 # marker = rule. A grayscale reader still recovers both groupings. legal is the
