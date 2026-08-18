@@ -127,7 +127,7 @@ CI is 0.05-0.09 and the claim reads the same.
 `analysis/violation_divergence/r21_run_population/` (`measure.py` + `make_figures.py`) is
 `r21_shared_basis`'s `run_from_reference` with a population behind it: same descriptor,
 same four candidate planes, same anchors, same ratio to the game's own legal control, but
-swept over the first 100 branch-complete games with a mean and a 95% CI. Everything --
+swept over the study's shared 100-game population with a mean and a 95% CI. Everything --
 z-scoring, the per-space plane, the shared plane, the activation plane -- is refit **per
 game**, which is what keeps a game one independent item; a plane fit across games would
 make the interval a fiction.
@@ -139,27 +139,35 @@ and reproduces its old PNGs byte-identically -- that was the acceptance test for
 
 Three things the population says that one game could not:
 
-- **The empirical null lands on 1** (a third legal move against the control, 0.97-1.02 in
-  all nine spaces). On one game it scattered 0.88-1.53, so the ratio had no calibration.
+- **The empirical null sits near 1** (a third legal move against the control, 1.04-1.10,
+  CI +-0.06..0.08, covering 1 in six of the nine cells). On one game it scattered
+  0.88-1.53, so the ratio had no calibration at all.
 - **The spread across spaces was game noise.** One game put the nine cells over 0.48-4.03;
-  100 games put every cell in 0.83-1.10. Nothing in that figure licensed a claim about
+  100 games put every cell in 0.84-1.21. Nothing in that figure licensed a claim about
   which dictionary separates a violation, and the panel-(b) title claiming the two halves
-  of R^21 disagree did not survive either (paired theta - d = -0.04..+0.11, CI +-0.06).
-- **Every plane inflates the run, the status-quo one most** (+0.19 paired against full
-  R^21, vs +0.13..+0.17 for the three R^21 planes). That *is* the single-game claim, now
+  of R^21 disagree did not survive either (paired theta - d = -0.02..+0.06, CI +-0.06..0.07,
+  not one space clearing its own interval).
+- **Every plane inflates the run, the status-quo one most** (+0.22 paired against full
+  R^21, vs +0.11..+0.17 for the three R^21 planes). That *is* the single-game claim, now
   with an interval.
 
 One estimator asymmetry is inherited and worth knowing before quoting `full R^21 < 1`: the
 illegal series is the run of the **mean displacement vector** over the six categories (the
 reduction the fork panels draw), so their incoherent parts cancel and the group mean is
-shorter than any member -- 0.83-0.89 against members at 0.93-1.17. The null is a single
+shorter than any member -- 0.84-0.93 against members at 0.92-1.33. The null is a single
 branch and carries no such cancellation. The figure says so in-panel and the README says
 it at length; the per-category reading is that an illegal move runs about as far as a
 second legal one.
 
-`--n_games` defaults to 100 so the committed figure is what a bare run reproduces. The tree
-holds 3185 branch-complete games and the sweep is ~1.6 s/game single-core, so the full
-population is ~80 minutes if the interval ever needs to be a third as wide.
+`--n_games` defaults to 100 so the committed figure is what a bare run reproduces.
+
+**Superseded the same day:** this first sweep took the first 100 branch-complete games at
+whatever t0 each was drawn at, which is not the population the study's other n-game figures
+use. It now calls `branches.games_at_t0(meta, POPULATION_T0, n)` -- the first 100 forking at
+t0 = 20 -- and the numbers above are the re-run's. Its `top2` also moved from an SVD of the
+[~150, up to 8192] field to an eigendecomposition of its Gram matrix: LAPACK's gesdd does
+not converge on the activation displacement of one of these games, and the 150 x 150
+symmetric problem carries the same plane (the single-game figure's stdout is unchanged).
 
 ---
 

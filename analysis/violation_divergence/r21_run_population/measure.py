@@ -1,5 +1,5 @@
-"""How far an illegal branch runs from the reference in R^21, over the first
-`--n_games` branch-complete source games.
+"""How far an illegal branch runs from the reference in R^21, over the study's
+shared `--n_games` population.
 
 `../r21_shared_basis/run_from_reference` is this quantity for one game, with no
 interval: 8 non-reference branch trajectories are all one game has. Same
@@ -17,7 +17,7 @@ rollout study found illegal and control already saturated.
 
     $DIR/r21_run_population/runs.npz
       space    [S]         fork_plane.spaces() order, raw layer 5 first
-      game     [G]         branch-complete source game ids
+      game     [G]         source game ids, the shared population at t0 = 20
       series   [P]         SERIES, in figure order
       ratio    [S, G, P]   run from the reference / the legal control's run
       category [6]         the illegal categories `member` is over
@@ -36,7 +36,7 @@ from spade.common.device import select_device
 from spade.common.study import study_dir
 from spade.figures.paper_style import PLANE_STYLE
 from spade.othello.taxonomy import CATEGORIES
-from spade.violation_divergence.branches import complete_games, role
+from spade.violation_divergence.branches import POPULATION_T0, games_at_t0, role
 from spade.violation_divergence.compute_divergence import sae_encoder
 from spade.violation_divergence.fork_plane import positions, spaces
 from spade.violation_divergence.fork_r21 import (
@@ -102,8 +102,8 @@ def game_ratios(Z: torch.Tensor, cells: list, t0: int, pos: np.ndarray):
 
 def main():
     ap = argparse.ArgumentParser()
-    # The figure's population. The tree holds 3185 branch-complete games; 100 already
-    # puts the CI at ~1/10 of the game-to-game spread, and the sweep is ~1.6 s/game.
+    # The study's shared population: 1696 branch-complete games fork at t0 = 20 and
+    # the first 100 are what every n-game figure here draws. ~1.6 s/game.
     ap.add_argument("--n_games", type=int, default=100, help="games to sweep")
     args = ap.parse_args()
 
@@ -112,7 +112,7 @@ def main():
     assert "rollout" not in meta, "spliced only: the rollout tree is one row per suffix"
     # mmap: the activation tensor is 2 GB and one game is nine of its rows.
     acts = torch.load(base / "acts" / "resid_post_5.pt", weights_only=True, mmap=True)
-    games = complete_games(meta)[:args.n_games]
+    games = games_at_t0(meta, POPULATION_T0, args.n_games)
     cells = encoders(select_device())
 
     ratio = np.full((len(cells), len(games), len(SERIES)), np.nan, np.float32)

@@ -116,6 +116,11 @@ def complete_games(meta: dict) -> list[int]:
         if len(kind[meta["game_id"] == g].unique()) == n_types]
 
 
+# The fork position every n-game sweep in this study draws from, so two figures at
+# the same n are over the same games (docs/finish_notes/t0-20-population.md).
+POPULATION_T0 = 20
+
+
 def games_at_t0(meta: dict, t0: int, n: int | None = None) -> list[int]:
     """The first `n` branch-complete games forking at `t0`, ascending by game id.
 

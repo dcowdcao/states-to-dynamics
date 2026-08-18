@@ -64,11 +64,20 @@ def top2(X: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
     Uncentred because zero displacement is a real point: centring would move the
     reference off the origin it is drawn at.
+
+    Through the Gram matrix, not an SVD of X: a field here is ~150 rows in up to
+    8192 columns, where LAPACK's gesdd does not always converge (it does not, on
+    the activation displacement of some games). X X^T is 150 x 150, symmetric, and
+    its top eigenvectors carry the same plane.
     """
-    _, s, vt = np.linalg.svd(X.reshape(-1, X.shape[-1]), full_matrices=False)
-    v = vt[:2]
+    X = X.reshape(-1, X.shape[-1])
+    G = X @ X.T
+    val, vec = np.linalg.eigh(G)
+    val = np.maximum(val[::-1][:2], 0)
+    assert (val > 0).all(), "the displacement field is rank-deficient in the plane"
+    v = (vec[:, ::-1][:, :2].T @ X) / np.sqrt(val)[:, None]
     sign = np.sign(v[np.arange(2), np.abs(v).argmax(1)])
-    return v * sign[:, None], (s ** 2 / (s ** 2).sum())[:2]
+    return v * sign[:, None], val / np.trace(G)
 
 
 def named_basis() -> np.ndarray:

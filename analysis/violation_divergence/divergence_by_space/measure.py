@@ -40,7 +40,7 @@ from spade.common.device import select_device
 from spade.common.study import variant_dir
 from spade.othello.taxonomy import CATEGORIES
 from spade.violation_divergence.branches import (
-    complete_games, games_at_t0, load_game, role)
+    POPULATION_T0, complete_games, games_at_t0, load_game, role)
 from spade.violation_divergence.compute_divergence import sae_encoder
 from spade.violation_divergence.fork_plane import positions, spaces
 from spade.violation_divergence.rule_groups import spread_ratio
@@ -54,9 +54,6 @@ CONTROL = "control_legal"
 # t0 in [10, 34] and the window in [-8, 24], so `positions` never clips: every
 # game contributes to every offset and n is constant across the x-axis.
 WINDOW = np.arange(-8, 25, 2)
-# The fork position the study's n-game sweeps share, so a figure drawn here and a
-# figure drawn elsewhere are drawn over the same games (docs/finish_notes/t0-20-population.md).
-T0_POPULATION = 20
 # ROLES as `rule_groups` reads them: it looks at the illegal rows only, but it
 # indexes the array this sweep builds, so the two orders have to be the same one.
 ROLE_ROWS = ([{"category": 0, "is_control": 0}, {"category": 0, "is_control": 1}]
@@ -125,7 +122,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--variant", default="spliced", choices=list(VARIANTS))
     ap.add_argument("--n_games", type=int, default=None,
-                    help=f"the shared n-game population at t0 = {T0_POPULATION}; "
+                    help=f"the shared n-game population at t0 = {POPULATION_T0}; "
                          "the whole branch-complete tree when omitted")
     args = ap.parse_args()
 
@@ -135,7 +132,7 @@ def main():
     # mmap: the rollout tensor is 4.2 GB and is read eight branches at a time.
     acts = torch.load(base / "acts" / "resid_post_5.pt", weights_only=True, mmap=True)
     K = int(meta["rollout"].max()) + 1 if "rollout" in meta else 1
-    games = (games_at_t0(meta, T0_POPULATION, args.n_games) if args.n_games
+    games = (games_at_t0(meta, POPULATION_T0, args.n_games) if args.n_games
              else complete_games(meta))
     cells = encoders(device)
     ref = ROLES.index("reference")

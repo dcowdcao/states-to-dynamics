@@ -145,8 +145,8 @@ def figure(z, camera_ready: bool) -> Path:
                      "of it survives the plane", fontsize=10.5)
     fig.tight_layout()
     fig.text(0.5, -0.30, "\n".join([
-        f"mean over n = {n_games} branch-complete source games; bars = 95% CI of that "
-        "mean, over games.",
+        f"mean over n = {n_games} branch-complete source games at $t_0$ = 20; bars = 95% "
+        "CI of that mean, over games.",
         "Every plane and the z-scoring are refit per game, so one game is one item. "
         "10 anchors $t-t_0$ = 6…24, W = 8.",
         spread_note(z),
