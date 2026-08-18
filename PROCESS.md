@@ -6,6 +6,116 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Probe geometry: board-state directions against rule-legality directions (2026-08-18)
+
+**Question:** the board-state probe and the two rule probes (legal/illegal, and
+legal/R1/R2/R3) both decode `blocks.5.hook_resid_post`, so their weights are
+comparable with no alignment step. Do they read the same directions? Ported from the frozen tree (`cosine-spade-gamma-sweep`); every number below was
+re-derived here and the PNG is byte-identical. Study in
+`src/spade/probe_geometry/`, `analysis/probe_geometry/`; everything is CPU and runs off
+committed probes plus cached activations, so there is no new extraction.
+
+**Contrasts, not class columns.** A k-way softmax is unchanged by adding one
+vector to every class weight, so a raw class column is not a direction. This is
+not pedantry here: the board probe's unidentified common component has norm 1.14
+against a contrast norm of 8.53, and re-drawing the gauge at that magnitude moves
+a raw column's cosine with the legality direction by sd 0.0098 — about 40% of the
+entire pooled effect. The gauge is also an *Adam* artifact; softmax-CE gradients
+sum to zero across classes, so plain SGD would have left it at its 0.131 init.
+Board contrasts are `colour` = mine − theirs and `occupancy` =
+½(mine + theirs) − empty, which together span everything a 3-way per-square head
+identifies. The rules probes standardize, so their direction is `W_c / scale`.
+
+**The pooled answer is near-tautological and was nearly shipped as a finding.**
+Pooled mean |cos| is 0.018–0.030. The committed rules probes are *square-agnostic*
+— one direction read off the residual wherever the candidate move was spliced in —
+while every board direction is *square-specific*. A global marginal cannot be a
+combination of per-square conjunctions, so near-orthogonality is close to forced.
+An independent verifier that never read `probes.py` produced this objection; it
+is the reason `square_rules_directions` exists.
+
+**Square-matched, the alignment is real.** Refit legality per candidate square:
+cos with the board read-out at its *own* square is +0.149 colour / +0.306
+occupancy (ridge, matched estimator: +0.174 / +0.359), against 0.017–0.026 at
+every other square. The matched-vs-other-square contrast is the right null — same
+rules direction, wrong square, everything else fixed. It survives the matched
+estimator, a board refit on the rules corpus (+0.177 / +0.362), per-square class
+balancing, every null, and attenuation correction for a per-square split-half
+reliability of only 0.525. **Projecting out the token-embedding subspace raises
+it**, so the confound this repo has been burned by before is not driving it.
+
+**Two narrowings that have to travel with the number.** (1) It is R1 only:
+legal-vs-R1 gives +0.180 / +0.387 with 97%/93% of squares positive, while
+legal-vs-R2 (+0.064 / +0.008) and legal-vs-R3 (+0.008 / +0.031) sit at the floor,
+and that is not sample size — R3 has more rows per square at the median. So the
+claim is "legality aligns with board read-out at its own square *for the square
+being occupied*", not for the bracket geometry. (2) Per-move-index centering
+leaves colour at +0.161 but drops occupancy to +0.077, so the occupancy half is
+largely move-index-mediated (disc count grows with t).
+
+**The honest headline is a subspace number, not a cosine.** 21.2% of each
+per-square legality direction lies in the 2-d board subspace at its own square,
+against a 0.39% isotropic null — but the *full* 124-direction board basis captures
+only 26.4% against a 24.2% chance level for any 124-dim subspace of 512. The
+board-relatedness is entirely local to the square; the other ~79% is not board
+read-out at all.
+
+**Gotchas worth keeping:**
+- *The colour/occupancy ordering is shrinkage-dependent.* occupancy/colour runs
+  0.344/0.142 at lambda 1, 0.333/0.152 at 10, 0.282/0.200 at 100 and 0.190/0.221
+  at 1000 — the two families swap. The sign, and the matched-vs-other-square
+  contrast, are the robust parts; the gap between the two board families is not.
+  The square arm's lambda is pinned at 10 (held-out 0.9252) rather than the grid
+  argmax of 100 (0.9269), so this is a live choice, not a rounding detail.
+- *Several intervals do not contain their point estimate, by construction.* The
+  point comes from the committed probes and the interval from ridge refits that
+  agree with them at only 0.75-0.87, so the intervals are width, not location.
+  The alternative is all-ridge tables; the committed probes were kept because
+  they are the probes that were actually trained.
+- *Do not read a results file without checking how it was produced.* A
+  `--n-games 200 --n-boot 4` smoke run left on disk was reviewed as if it were
+  the real output, and its matched occupancy of 0.107 was diagnosed as a
+  square-indexing bug that did not exist. `cosine_tables.check_square` is now a
+  tripwire that asserts the full-run value, but the general lesson is that a
+  partial run should not be able to overwrite the real artifact's filename.
+- *The isotropic null is the wrong floor for the pooled numbers.* Covariance-
+  matched, it is 0.084–0.110, so the pooled 0.013–0.017 is *more* orthogonal than
+  chance, and the pooled directions capture less of themselves in the board
+  subspace (0.09–0.13) than a random direction does (0.24).
+- *The committed 4-class probe barely finds `legal`* — test recall 0.232, with
+  71.9% of true-legal rows predicted R1. Every rules direction is `W_c − W_legal`,
+  so all three are anchored to that class, and `illegal·R1 = 0.923` is partly
+  confusion rather than shared content.
+- *The board probe's 8000/2000 split is already a game split* (rows are
+  game-major, the cut falls at game 160), so its eval set is game-disjoint but is
+  not an extra holdout.
+- *Board `colour` reproduces itself at only cos 0.67–0.92 across disjoint game
+  halves*, so per-square outliers and per-cell differences in the pooled table are
+  noise and should not be discussed.
+- *Memory, not compute, is the binding constraint on this box*: an 8 GB anon cap
+  is shared across concurrent agents, and the corpora are float32 for that reason
+  (directions stay float64; they agree to cos ≥ 0.999998).
+
+**It lands on the same suspicion as the R1-deficit entry above, from the other
+side.** That entry asks whether R1's distinctiveness across three fields is about
+the branch move's *board delta* rather than about legality, and notes the two are
+perfectly confounded inside this taxonomy. Here the legality read-out at a square
+aligns with that square's *occupancy* direction, for R1 and for nothing else —
+which is what "the probe is reading board state, not legality" looks like in
+direction space. Neither result separates the confound; they agree about where it
+is. Note this study was ported from the frozen tree, so its rules arm is the
+committed `move_legality` probes rather than the branch populations that entry uses.
+
+**Method.** Four agents in parallel — tables, figure, red team, and one verifier
+explicitly forbidden from reading `probes.py` so a bug there could not pass into
+the result twice. The verifier reproduced every number and produced the objection
+that inverted the headline, which is the argument for keeping that role blind.
+The integrator never delegated `probes.py`, `paper_style.py`,
+`FIGURE_GUIDELINES.md` or this file. `FIGURE_GUIDELINES` gained **4.10, direction
+geometry**, per its own instruction to add the rule with the figure type.
+
+---
+
 ## The R1 deficit may be about the board delta, not about legality (2026-08-18)
 
 Raised by the `r21_run_population` author in the round that produced 8e3481a, against the

@@ -1,0 +1,51 @@
+{
+  "resampling_unit": "game",
+  "n_boot": 200,
+  "seed": 0,
+  "n_games": {
+    "board": 200,
+    "rules": 800,
+    "pairs": 4000
+  },
+  "n_rows": {
+    "board": 10000,
+    "rules": 176262,
+    "pairs": 28189
+  },
+  "n_rules_squares": 60,
+  "lambda": {
+    "board": 1.0,
+    "rules": 1.0,
+    "rules_square": 10.0,
+    "pairs": 1.0
+  },
+  "lambda_grid": [
+    1.0,
+    10.0,
+    100.0,
+    1000.0,
+    10000.0,
+    100000.0
+  ],
+  "split": {
+    "board": "games 0..159 of 200 \u2014 the committed probe's own row cut, game-disjoint but the same 200 games",
+    "rules": "fit_set/split.pt, train=0 test=2",
+    "pairs": "random 80/20 over prefixes, seed 0"
+  },
+  "committed_vs_ridge_median_cos": {
+    "colour": 0.8372544649375935,
+    "occupancy": 0.8299774072426878,
+    "rules2": 0.8717726594713159,
+    "rules4": 0.7470383408478612
+  },
+  "square_arm": "ridge only: there is no committed per-square rules probe",
+  "ridge_fit_rows": "all games of each corpus; the committed rules probes saw 480",
+  "null": {
+    "shuffle_refits": 100,
+    "random_vectors": 1000,
+    "square_matched": "same rules direction at the other squares",
+    "analytic_random_abs_cos": 0.03526184897173477
+  },
+  "colour_colour_offdiag_mean_cos": 0.011748366554860236,
+  "runtime_s": 1563.1
+}

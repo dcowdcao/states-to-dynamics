@@ -217,6 +217,44 @@ def role_key(fig, roles: list[str], y: float = -0.005) -> None:
              va="top", fontsize=7.5, color=MUTED, linespacing=1.5)
 
 
+# Probe-geometry study: the direction families whose cosines and PCA are drawn.
+# Every entry is a gauge-invariant class contrast, so "legal" and the board's
+# three classes are the origin these are measured from, not plotted directions.
+# The 2-class illegal axis is the reference the 4-class R1/R2/R3 split is judged
+# against, so it takes REFERENCE's black; the board's two contrasts take the
+# hues the rules taxonomy leaves free.
+DIRECTION_STYLE = {
+    "illegal":   {"color": REFERENCE["color"], "marker": "o",
+                  "label": "illegal $-$ legal (2-class, reference)"},
+    "R1":        {"color": RULE_STYLE["R1 placement"]["color"], "marker": "s",
+                  "label": "R1 $-$ legal"},
+    "R2":        {"color": RULE_STYLE["R2 bracketing"]["color"], "marker": "^",
+                  "label": "R2 $-$ legal"},
+    "R3":        {"color": RULE_STYLE["R3 turn"]["color"], "marker": "D",
+                  "label": "R3 $-$ legal"},
+    "rules_square": {"color": "#56B4E9", "marker": "*",
+                     "label": "illegal $-$ legal (per square)"},
+    "colour":    {"color": "#CC79A7", "marker": "P", "label": "board colour (per square)"},
+    "occupancy": {"color": "#E69F00", "marker": "X", "label": "board occupancy (per square)"},
+}
+
+# One line per board contrast, for the key printed under a probe-geometry
+# figure. The rules half of that key comes from RULE_TEXT.
+CONTRAST_TEXT = {
+    "colour": "board colour — $\\ell_{\\rm mine}-\\ell_{\\rm theirs}$ at one square: which player's disc sits there.",
+    "occupancy": "board occupancy — $\\frac{1}{2}(\\ell_{\\rm mine}+\\ell_{\\rm theirs})-\\ell_{\\rm empty}$ at one square: whether a disc sits there.",
+    "rules_square": "per-square legality — illegal $-$ legal, refit on the rows where that square was the candidate move; the committed rules probes pool over all squares.",
+}
+
+
+def contrast_key(owner, contrasts: list[str], rules: list[str],
+                 y: float = -0.005, x: float = 0.005) -> None:
+    """Board contrasts then rule definitions, one block. See rule_key() for `owner`."""
+    lines = [CONTRAST_TEXT[c] for c in contrasts] + [RULE_TEXT[r] for r in rules]
+    owner.text(x, y, "\n".join(lines), ha="left", va="top", fontsize=7.5,
+               color=MUTED, linespacing=1.5)
+
+
 # Probe family and label basis: two dimensions that cross in the depth sweep.
 # The linear probe is the capacity reference, so it takes REFERENCE's black; the
 # basis rides on line style and marker rather than spending a second hue.

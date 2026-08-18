@@ -405,6 +405,43 @@ conditions:
   files cannot check it. Panel them side by side under one key; each panel still
   states its own side to move, because a panel gets read on its own.
 
+### 4.10 Direction geometry (unit vectors: similarity matrices, PCA of directions)
+
+When the objects plotted are probe *directions* rather than a sample of
+activations, the failure mode is that a near-zero cosine reads as a finding when
+it is what unrelated vectors in a high-dimensional space do by default.
+
+- **Only contrasts are directions.** A k-way softmax head is unchanged by adding
+  one vector to every class weight, so a raw class column is not a point in
+  activation space and its cosine with anything is a property of the fit. Plot
+  differences of class weights, and name the contrast in the legend.
+- **Put the random-direction null on the same axes.** Unit vectors in d
+  dimensions meet at E|cos| = sqrt(2/(pi d)) — 0.035 at d = 512. Prefer the
+  empirical version (the same number of sampled vectors, or the probe refit on
+  shuffled labels) per §3; without it every 0.05 cell invites over-reading.
+- **Say what an uninformative cosine does not rule out.** Two directions can be
+  near-orthogonal while one quantity is an exact nonlinear function of the
+  other. The panel bounds *linear* alignment and nothing else, and the caption
+  has to say so.
+- **A similarity matrix is symmetric: draw one triangle**, order rows from the
+  taxonomy constant rather than by clustering (so the same matrix is comparable
+  across spaces), and follow §4.4 — diverging map centered at zero, symmetric
+  limits, both poles named. Annotate the cells when the matrix is small enough
+  to carry numbers: a heatmap is colour-only encoding, and grayscale sends +0.6
+  and −0.6 to the same ink.
+- **Uncertainty on a direction is a refit, not a resample of the cells.** The
+  cells are deterministic given the weights, so bootstrap the probe's training
+  **games** and refit. When the point estimate comes from a committed probe and
+  the interval from a cheaper estimator, report the agreement between the two.
+- **PCA of unit vectors is uncentred** — the zero vector is a real point (§4.8)
+  and the mean direction is itself a result. Per-component variance ratios as in
+  §4.6. A joint fit is dominated by whichever family has the most members (64
+  squares against 3 rule contrasts), so when the question is "does B lie in A's
+  subspace", fit on A and project B in.
+- **Pair the scatter with the projection it is a picture of.** A 2-D loading
+  plot cannot show that a direction keeps 4% of its mass in the plane; the
+  companion panel is the captured-fraction curve against the same null.
+
 ## 5. Captions and panel labels
 
 - **The caption's first sentence is the claim, not a description.** "Curvature
