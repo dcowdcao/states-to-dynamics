@@ -200,6 +200,15 @@ For anything aligned to an intervention at position `t0`:
   reader cannot judge 0.52 vs 0.50.
 - Full ROC curves belong in the appendix; AUROC numbers in tables; AUROC-vs-x
   in the main text when the claim is about how it varies.
+- **A bar cannot carry a line style, so translate it to a hatch.** `SPACE_STYLE`
+  separates the two dictionaries of an architecture family by dash pattern; drawn
+  as bars that dimension vanishes and a family reads as one duplicated colour.
+  Hatch the variant, keep the hue for the family, and print the mapping as a
+  one-line in-figure key -- the same information, and it survives grayscale.
+- **Sort the bars when the ordering is the claim**, rather than holding a fixed
+  table order. The reference class keeps its reference styling wherever it lands,
+  so the reader can count how many conditions clear it; that is the whole point of
+  sorting, and pinning the reference to the first slot hides it.
 
 ### 4.6 Embedding scatter (PCA / Isomap)
 

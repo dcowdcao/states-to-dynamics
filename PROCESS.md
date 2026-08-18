@@ -6,6 +6,66 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Recovering the spliced move with no counterfactual, across the nine spaces (2026-08-18)
+
+`analysis/violation_divergence/changepoint_localization/` -- one trajectory, no reference
+branch, no knowledge that anything was spliced. Every other read-out of this tree scores
+`phi_branch(t) - phi_ref(t)`, which is an oracle a detector does not have; this asks what is
+left without it. CPU-only and under a minute: it reads the `d` that
+`curvature_discriminant/branch_geometry.py` already cached for all nine spaces.
+
+**Three findings.** Four dictionaries clear raw layer 5 (GatedAnneal 0.604 [0.578, 0.630]
+against raw's 0.557, Standard at 0.506 with 0.5 inside its CI), and the ordering reproduces
+`curvature_discriminant`'s *supervised* ordering from a completely unrelated statistic.
+Localization is the stronger half -- GatedAnneal hits the exact ply 0.332 of the time against
+a 0.020 chance level, with its legal-splice control at 0.038, so the detector does not fire
+at t0 when the move played there is legal. And the `theta` block -- curvature proper, the
+thing the descriptor is named for -- carries almost none of it (0.53-0.58), only in the
+*straighter* direction.
+
+**The metric was chosen against three candidates and the two obvious ones lose.** Per-position
+standardization is the whole game: move index explains 81.3% of the variance of `d`, so a
+pooled Gaussian scores 0.034 hit / 0.461 AUROC, i.e. chance, against 0.283 / 0.673 for the
+profile baseline. It is what replaces the missing paired reference, and it absorbs the
+mover-relative parity sawtooth for free (parity is a function of the move index), which is why
+the scan runs at every ply rather than stride 2. **A Mahalanobis over the full 21-D descriptor
+is the wrong object**: it scores 0.109 against 0.283 for one signed coordinate, because a
+quadratic form is two-sided by construction and every two-sided form fires *harder* on real
+human championship games -- legal in every position -- than on the violations (0.694-0.706 vs
+0.616). One-sided puts championship at 0.376, the opposite tail. The sign is the finding, not
+a detail. Structurally, `mean d` is an exact linear function of the seven step lengths, so the
+21x21 covariance has rank <= 19 at any sample size and effective rank ~13.
+
+**Paired beats unpaired for localization, unpaired beats paired for detection**, and the reason
+is one line: with `phi_t = mu_t + b_game + eps_t` the unpaired form scores `b + eps` against
+`Sigma_b + Sigma_eps` while the two-window contrast scores `eps_R - eps_L` and the game-level
+term cancels. It is the MOSUM statistic (Eichinger & Kirch, *Bernoulli* 24(1), 2018) --
+equivalently Truong/Oudre/Vayatis's window-sliding discrepancy with a Mahalanobis cost -- and
+its equal-width windows leave `argmax` unbiased in position, which CUSUM/GLR/E-divisive's
+`sqrt(c(n-c)/n)` factor does not. That property is why it is the primary and not CUSUM.
+
+**Two protocol corrections worth keeping.** The chance level for a hit rate is *not* `1/n_cand`:
+the argmax of an autocorrelated curve is not uniform and one game's candidates overlap in `m-1`
+steps, so the null is a circular-shift surrogate (roll each score curve, preserving its shape
+and destroying only the alignment to t0) -- it comes out 0.020-0.029 against the flat 0.029.
+And the window is selected on the *straightness* violation corpus, which shares no game with
+the divergence tree, so the reported AUROCs are not selection-inflated.
+
+**Fit corpus, and why it is not the obvious one.** The per-move-index profile is fit on
+straightness legal games minus `meta.held_out_legal`, i.e. 1,427 clean games disjoint from
+every scored one. Splitting the 575 divergence games in half instead would have halved the
+scored n for no gain; the two corpora are the same distribution to four decimals (z of the
+divergence reference branches under the straightness profile: mean -0.04, sd 1.01).
+
+**Open, and it is load-bearing: the norm-only baseline has not been run on this tree.** On the
+straightness corpus `-z(||z_t||)` alone reaches 0.808 AUROC in GatedAnneal, `d_t` regresses on
+`(||z_t||, ||z_{t+1}||)` at R^2 0.87-0.88, and partialling the norm out drops GatedAnneal from
+0.587 to 0.173 while raw layer 5 *improves*. `curvature_discriminant`'s npz carries `d` and
+`theta` but not `norm`, so this needs one GPU encode pass. Until it runs, the study is a
+magnitude claim wearing a geometry label, and the README says so. Second extension: the
+population is the 575 games that study selected for its probe-holdout guard, predating
+`extend_branches`; the tree now holds 3,185 branch-complete games.
+
 ## The R^21 run figure, over 100 games instead of one (2026-08-18)
 
 `analysis/violation_divergence/r21_run_population/` (`measure.py` + `make_figures.py`) is
