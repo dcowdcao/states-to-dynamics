@@ -298,6 +298,21 @@ forking at *t₀* = 20, ascending by game id, with no game-level criterion.
   R3 does so in all nine spaces, at *r* ≤ +4. On the population that band test is
   replaced by the paired contrast against the control on the same games, and the
   rule resolved in all nine spaces is **R1**, downward.
+- **R1 is the occupied-square rule, so "shorter step" may be about the branch's
+  board delta and not about legality.** Its two members are the only categories that
+  place no new disc — `occupied_own` changes nothing, `occupied_opp` recolors (78.6%,
+  `../README.md`) — while every R2 and R3 category plays onto an empty square. That
+  categorical split is perfectly confounded with R1-vs-rest and nothing in this
+  taxonomy separates it. The *graded* part is testable inside R1, and it is there:
+  paired per game at *r* = 0, `occupied_own` − `occupied_opp` is **−0.061** [−0.088,
+  −0.033] in raw layer 5 and resolved negative in eight of nine spaces (−0.038 to
+  −0.077; CosineSpaDE's −0.018 [−0.056, +0.022] is the exception). The category that
+  leaves the board untouched steps shortest, which is what the board-delta account
+  predicts, so on this quantity that account survives. Separating the categorical half
+  needs a branch this taxonomy lacks — an illegal move onto an empty square breaking
+  nothing else, or a legal one that recolors. Until then R1's shortened step is a
+  direction with an unresolved alternative explanation, and a figure that upgrades it
+  to a claim has to rule that alternative out first.
 - **The rule grouping is weak.** Within ÷ between-rule spread is 0.70–0.90 on
   this quantity on game 1235 — better than the 0.885 the displacement field gives
   on the same game, which is one game and not evidence that step length groups

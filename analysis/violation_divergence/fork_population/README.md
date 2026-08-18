@@ -265,6 +265,21 @@ about the control they are divided by.
   of the construction, was selected as the argmax of its illegal branches' mutual
   separation, and its numbers were never the study's. Quote this one. Do not
   reconcile the two by picking whichever is convenient.
+- **R1 is the occupied-square rule, so "runs less far" may be about the branch's
+  board delta and not about legality.** Its two members are the only categories that
+  place no new disc — `occupied_own` changes nothing, `occupied_opp` recolors (78.6%,
+  `../README.md`) — while every R2 and R3 category plays onto an empty square. That
+  categorical split is perfectly confounded with R1-vs-rest and nothing in this
+  taxonomy separates it. The *graded* part is testable inside R1, and here it fails:
+  if board delta drove the deficit, `occupied_own` would run shorter than
+  `occupied_opp`, and paired per game in the full space it does not — +0.003
+  [−0.026, +0.033] in raw layer 5, −0.004 to +0.015 with every interval covering zero
+  in all nine spaces. The displacement deficit is not graded by board delta, which
+  weakens that reading without killing it: both members are still "no new disc".
+  Separating the categorical half needs a branch this taxonomy lacks — an illegal move
+  onto an empty square breaking nothing else, or a legal one that recolors. Until then
+  R1's deficit is a direction with an unresolved alternative explanation, and a figure
+  that upgrades it to a claim has to rule that alternative out first.
 - **The plane is fit once per space, on the population mean field.** The PC
   variance ratios printed on (a)'s axes are shares of the *mean field's* variance —
   74% and 13% in raw layer 5, against 38% and 13% for one game. Averaging deletes

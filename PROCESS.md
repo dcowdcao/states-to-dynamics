@@ -6,6 +6,52 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The R1 deficit may be about the board delta, not about legality (2026-08-18)
+
+Raised by the `r21_run_population` author in the round that produced 8e3481a, against the
+one result that replicates across three fields: R1 placement violations move and step
+*less* than a second legal move. `fork_population` gives paired null - R1 = +0.133 [+0.103,
++0.163] on the displacement, `step_length_fork` gives R1 - control = -0.060 [-0.081, -0.038]
+at r = 0 and resolved negative in all nine spaces, and `r21_run_population` puts
+`occupied_opp` at 0.92-0.98 of its control in all nine spaces of the curvature descriptor.
+
+R1's two members, `occupied_own` and `occupied_opp`, are exactly the occupied-square
+categories -- the only branches whose move places no new disc. Every R2 and R3 category
+plays onto an empty square. So the three fields may be agreeing about the branch move's
+**board delta** rather than about legality, and inside this taxonomy that categorical split
+is perfectly confounded with R1-vs-rest: no contrast in the data separates it.
+
+**What partially separates it is a test inside R1.** `occupied_own` implies no board change
+at all; `occupied_opp` implies a recolor (78.6%, `analysis/violation_divergence/README.md`).
+If board delta drives the effect, `occupied_own` is the more extreme of the two. Paired
+`occupied_own - occupied_opp` per game over the same 100 games, 2000-draw percentile
+bootstrap, seed 0:
+
+- **Step length at r = 0** -- resolved negative in **8 of 9** spaces: raw layer 5 -0.0606
+  [-0.0880, -0.0334], the rest from GatedAnneal -0.0765 to SpaDE -0.0381 [-0.0611, -0.0154];
+  CosineSpaDE -0.0180 [-0.0557, +0.0216] is the exception.
+- **Displacement, ratio to the control over r >= 0** -- resolved in **0 of 9**: raw layer 5
+  +0.0030 [-0.0260, +0.0333], every other space between -0.0037 and +0.0150 with every
+  interval covering zero.
+
+So the two fields split. The step-length effect is graded by board delta and the account
+survives there; the displacement effect is not, which weakens the account without killing
+it -- both R1 categories are still "no new disc".
+
+Settling the categorical half needs a branch the taxonomy does not have: an illegal move
+that places a disc on an empty square and breaks nothing else, or a legal move that
+recolors. Until one exists, R1's deficit is a direction with an unresolved alternative
+explanation, and any figure upgrading it to a claim has to rule the alternative out first.
+Docs only for now -- each sub-study README's "Reading it honestly" carries the confound with
+its own field's number and no implication about the other's.
+
+Arrays: `$SPADE_DIVERGENCE_DIR/step_length_fork/n100.npz` (`ratio [S, G, B, T]`, roles in
+`role`, t0 index off `pos`) and `$SPADE_DIVERGENCE_DIR/fork_population/displacement_n100.npz`
+(`game_space [S, G, B]`).
+
+---
+
+
 ## A third fork plane: R^21's raw step-length block alone (2026-08-18)
 
 `--plane d7` on `fork_and_board` and `fork_population`, beside `displacement` and `r21`.
