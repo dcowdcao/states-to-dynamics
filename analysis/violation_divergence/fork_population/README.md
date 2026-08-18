@@ -117,13 +117,22 @@ population plane, mean over the 100 games with a 95% percentile bootstrap CI:
 | R3 turn | **1.017** [0.987, 1.047] | 1.030 | 2.112 |
 | null (a third legal move) | **1.042** [1.006, 1.078] | 1.044 | 1.216 |
 
-**No rule outruns a legal alternative, and the empirical null outruns all three.**
-R2 and R3 sit on 1 with their intervals straddling it; R1 sits below, its interval
-clear of 1, and it is below 1 in all nine spaces (0.903–0.927, every upper bound
-≤ 0.954) — an occupied-square violation moves the layer-5 activation *less* far
-from the reference than a second legal move does. The null is above all three in
-eight of the nine spaces; the one exception is CosineSpaDE's R2, 1.059
-[1.030, 1.089] against its own null's 1.040 [1.004, 1.073], intervals overlapping.
+**No rule outruns a legal alternative, and only R1 runs measurably less far than
+one.** R2 and R3 sit on 1 with their intervals straddling it; R1 sits below, its
+interval clear of 1, and it is below 1 in all nine spaces (0.903–0.927, every upper
+bound ≤ 0.954) — an occupied-square violation moves the layer-5 activation *less*
+far from the reference than a second legal move does.
+
+**The null's margin over R2 and R3 is not a measured ordering.** Its point estimate
+sits above all three, but the contrast has to be read paired, on the same games,
+where the shared prefix and the common divisor cancel: null − R1 = **+0.133**
+[+0.103, +0.163], null − R2 = +0.021 [−0.011, +0.052], null − R3 = +0.025
+[−0.011, +0.060]. Only the R1 gap is resolved, and it is the one that replicates —
++0.104 [+0.096, +0.111] over all 1696 branch-complete games at *t*₀ = 20, and
++0.112 [+0.106, +0.117] over all 3185 branch-complete games. On that full 1696-game
+pool the null falls *below* R2 and R3 (1.012 against 1.018 and 1.019), which is
+inside this sample's interval and is why the ordering must not be read off the
+point estimates. n = 100 gives ±0.03 on a gap of ±0.005.
 
 **This is not what the selected game says.** `../fork_and_board` puts R3 at 1.53×
 its legal control in the full 512-d space of raw layer 5 and orders R3 > R2 > R1

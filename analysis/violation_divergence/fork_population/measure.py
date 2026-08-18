@@ -73,12 +73,12 @@ from spade.common.device import select_device
 from spade.common.study import study_dir
 from spade.figures.branch_panels import plane_displacement
 from spade.othello.taxonomy import CATEGORIES
-from spade.violation_divergence.branches import FIGURE_GAME
+from spade.violation_divergence.branches import FIGURE_GAME, games_at_t0
 from spade.violation_divergence.curvature_plane import W, fit_plane, windowed
 from spade.violation_divergence.fork_plane import positions, spaces
 from spade.violation_divergence.fork_r21 import top2
 from spade.violation_divergence.population import (
-    C1, C2, REF, ROLES, at_t0, encode, encoders, rows_at)
+    C1, C2, REF, ROLES, encode, encoders, rows_at)
 from spade.violation_divergence.rule_groups import rule_rows, spread_ratio
 
 T0 = 20                       # the one fork position the population is drawn from
@@ -212,7 +212,7 @@ def main():
     base = study_dir("divergence")
     meta = torch.load(base / "branches" / "branches.pt", weights_only=True)
     assert "rollout" not in meta, "spliced only: the rollout tree is K rows per branch"
-    pool = at_t0(meta, T0)
+    pool = games_at_t0(meta, T0)
     games = pool[:args.n_games]
     assert len(games) == args.n_games, f"only {len(pool)} games fork at t0 = {T0}"
     # At t0 = 20 the sampled geometry is fixed, so it is asserted and not discovered.

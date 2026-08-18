@@ -353,7 +353,7 @@ comes from the aggregates. `fork_population/` is the claim-carrying twin of the
 first: the same nine forks and the same ratio over the first 100 games forking at
 *t0* = 20, and it does not reproduce that figure's ordering — R3 at 1.53× its legal
 control with R3 > R2 > R1 in all nine spaces on game 1235 becomes 1.02 (R2), 1.02
-(R3) and 0.91 (R1) over 100 games, under an empirical legal-vs-legal null of 1.04
+(R3) and 0.91 (R1) over 100 games, against an empirical legal-vs-legal null of 1.04, whose margin is resolved only over R1
 that no rule reaches.
 
 ## Known gaps

@@ -60,9 +60,12 @@ Decisions worth keeping:
   draws.** Game 1235 puts R3 at 1.53× its legal control in full raw layer 5 and
   orders R3 > R2 > R1 in all nine spaces; over 100 games R2 and R3 sit on 1
   (1.022 [0.996, 1.049], 1.017 [0.987, 1.047]) and R1 sits below it in every space
-  (0.909 [0.885, 0.934] in raw layer 5). The **empirical legal-vs-legal null is above
-  all three** — 1.042 [1.006, 1.078] — so no rule outruns a second legal move, and
-  the ordering the single-game figure invites is game-level noise. Leaving game 1235
+  (0.909 [0.885, 0.934] in raw layer 5). No rule outruns the empirical
+  legal-vs-legal null (1.042 [1.006, 1.078]), but only the R1 gap is resolved:
+  paired on the same games, null − R1 = +0.133 [+0.103, +0.163] against +0.021
+  [−0.011, +0.052] for R2 and +0.025 [−0.011, +0.060] for R3, and on the whole
+  1696-game pool the null falls below R2 and R3. The ordering the single-game figure
+  invites is game-level noise, and so is the null's margin over R2 and R3. Leaving game 1235
   out moves every displacement mean by ≤ 0.006, so it is not the argmax pulling the
   population: it is that one game is one game.
 
