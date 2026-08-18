@@ -313,6 +313,22 @@ forking at *t₀* = 20, ascending by game id, with no game-level criterion.
   nothing else, or a legal one that recolors. Until then R1's shortened step is a
   direction with an unresolved alternative explanation, and a figure that upgrades it
   to a claim has to rule that alternative out first.
+- **The delta grades this quantity and not the other two, and that is a reading, not
+  a result.** The same paired within-R1 contrast run in the other two fields over the
+  same 100 games gives +0.003 [−0.026, +0.033] on the displacement (`../fork_population`,
+  resolved in none of nine) and +0.042 [−0.013, +0.098] in full R²¹
+  (`../r21_run_population/board_delta_contrast.py`, resolved in one of nine, and in the
+  *opposite* sign). The three do not disagree so much as differ in what they can say.
+  The displacement contrast is on a comparable scale with a comparable interval
+  (half-width 0.030 against this one's 0.027), so it has the power to see a −0.06
+  gradient and does not: on that quantity the account is excluded, not merely
+  unsupported. The R²¹ contrast is not — an effect near 0.03 against a half-width near
+  0.05 cannot be resolved either way, and closing it wants roughly 3x the games, which
+  the 1696-game *t*₀ = 20 pool would afford. What is left is that a step length at
+  *r* = 0 is close to a direct read of how much the residual stream had to change
+  across the branch token, which is where a board-delta account should bite; the two
+  shape-flavoured fields are measuring something the delta does not set. That is a
+  story the numbers permit, not one they establish.
 - **The rule grouping is weak.** Within ÷ between-rule spread is 0.70–0.90 on
   this quantity on game 1235 — better than the 0.885 the displacement field gives
   on the same game, which is one game and not evidence that step length groups
