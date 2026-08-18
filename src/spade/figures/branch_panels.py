@@ -1,14 +1,16 @@
-"""The two panels the violation-divergence figures draw a branch set in.
+"""The panels the violation-divergence figures draw a branch set in.
 
 `fork_panel` is one representation space: the branches as paths, with move index
 on the third axis. `rule_fork_panel` is the same panel with the six illegal
 categories collapsed onto the three rules they violate -- one mean per rule,
 over its members drawn faint. `rule_fork_population_panel` is that panel over a
 population of source games: no member traces, and a confidence ellipse on the
-mean instead. `board_panel` is the position they fork on, with each branch move
-on its square. All take their colour, marker and label from
-`branch_style`, so a branch reads the same in either. Layout -- how many panels,
-where the legend goes -- belongs to the caller; these draw one axes each.
+mean instead. `rule_ratio_panel` is the 2-D event-locked form: one per-position
+quantity, already divided by the reference branch's own, one curve per rule.
+`board_panel` is the position they fork on, with each branch move on its square.
+All take their colour, marker and label from `branch_style`, so a branch reads
+the same in either. Layout -- how many panels, where the legend goes -- belongs
+to the caller; these draw one axes each.
 """
 
 import matplotlib.pyplot as plt
@@ -21,7 +23,8 @@ from mpl_toolkits.mplot3d.art3d import pathpatch_2d_to_3d
 from spade.figures.branch_style import (
     MEMBER, branch_style, ci_ellipse_proxy, legend_proxy)
 from spade.figures.othello_board import draw_board, square_xy
-from spade.figures.paper_style import DISC_EDGE, DISC_STYLE, INK, MUTED
+from spade.figures.paper_style import (
+    DISC_EDGE, DISC_STYLE, INK, MUTED, PRE_EVENT_FACE)
 from spade.othello.taxonomy import LEGAL
 from spade.violation_divergence.rule_groups import rule_rows
 
@@ -31,6 +34,9 @@ GHOST_R = 0.12        # would-be disc, in cells: half a real disc, in the far co
 FLIP_RING = 0.38      # ring radius around a flipped disc, in cells
 PLANE_TICKS = 3       # intervals; symmetric about zero, so the reference always gets a tick
 CI_CHI2 = 5.991       # chi^2 with 2 df at 0.95: the ellipse is a CI of a 2-D mean
+# Four curves of one hue family in a ratio panel: markers every third sampled
+# position, staggered, are what tells them apart with the colour gone.
+MARK_STEP = 3
 
 
 def axis_labels(method: str, var: np.ndarray) -> tuple[str, str]:
@@ -197,6 +203,50 @@ def rule_fork_population_panel(ax, coords: np.ndarray, game_coords: np.ndarray,
     _fork_axes(ax, np.concatenate(bounds), pos, t0, legend, zlabel)
     if legend:
         ci_ellipse_proxy(ax)
+def _ratio_line(ax, x: np.ndarray, y: np.ndarray, st: dict, offset: int,
+                label: str | None) -> None:
+    ax.plot(x, y, ls=st["ls"], color=st["color"], lw=st["lw"], marker=st["marker"],
+            ms=4, markevery=(offset, MARK_STEP), markerfacecolor=st["mfc"],
+            markeredgecolor=st["mec"], markeredgewidth=0.5, zorder=st["zorder"],
+            label=label)
+
+
+def rule_ratio_panel(ax, ratio: np.ndarray, rows: list[dict], pos: np.ndarray,
+                     t0: int, legend: bool) -> None:
+    """One curve per rule of a per-position quantity already divided by the
+    reference branch's own at the same position, so the reference *is* the line
+    at 1 and the legal control's curve is the empirical null.
+
+    `ratio` is [n_branches, len(pos)] and `pos` the board positions its columns
+    sit at. Event-locked at t0 (FIGURE_GUIDELINES 4.2): the branch is the dashed
+    rule, and the positions left of it -- where every branch is token-identical,
+    so the ratio is 1 by construction -- are shaded and drawn rather than cut
+    away, with a legend entry saying which. The caller asserts the 1.
+    """
+    free = pos < t0
+    ax.set_xlim(pos[0] - 1, pos[-1] + 1)
+    ax.axvspan(pos[0] - 1, (pos[free][-1] + pos[~free][0]) / 2, color=PRE_EVENT_FACE,
+               lw=0, zorder=0,
+               label="shared prefix: branches identical, ratio = 1 by construction"
+                     if legend else None)
+    ax.axvline(t0, color=MUTED, lw=1.2, ls=(0, (4, 3)), zorder=1)
+    st = branch_style(LEGAL, 0)
+    # Flat and thinner than REFERENCE's weight: it spans every panel, and a 2.4 pt
+    # black rule through the middle of one would read as the loudest series there.
+    ax.axhline(1, color=st["color"], lw=1.3, zorder=1.5,
+               label=f"{st['label']}, the line at 1" if legend else None)
+    for i, r in enumerate(rows):
+        if r["is_control"]:
+            st = branch_style(r["category"], r["is_control"])
+            _ratio_line(ax, pos, ratio[i], st, 0, st["label"] if legend else None)
+    for j, members in enumerate(rule_rows(rows).values()):
+        st = branch_style(rows[members[0]]["category"], 0, by_rule=True)
+        for i in members:
+            ax.plot(pos, ratio[i], color=st["color"], **MEMBER)
+        _ratio_line(ax, pos, ratio[members].mean(axis=0), st, (j + 1) % MARK_STEP,
+                    f"{st['label']} (mean of {len(members)})" if legend else None)
+    if legend:
+        legend_proxy(ax)
 
 
 def mover_name(board) -> str:

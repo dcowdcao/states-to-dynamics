@@ -6,6 +6,43 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The step length at the fork, drawn on its own axis (2026-08-18)
+
+`analysis/violation_divergence/step_length_fork/` draws the literal step-length norm
+`s_b(t) = ||z_b(t) - z_b(t-2)||` per branch, in the nine spaces, event-locked at t0.
+Nothing drew it before: `rule_curvature` is the turning angle only, and the R^21 figures
+carry step length as 7 of 21 components inside a descriptor.
+
+**The panels draw the paired ratio `s_b(t) / s_ref(t)`, not the length.** The nine spaces
+differ ~580x in absolute step length (raw layer 5 18.6, SpaDE 0.032), so a raw length is
+not a quantity nine panels share; and drawn absolutely (checked, from the CSV, before
+committing) every branch tracks the same per-position swing -- trough at t ~ 24, peak at
+t ~ 38, ~2x deep in raw -- which is the game, not the branch. The within-game division
+cancels both. The absolute lengths stay in `results/violation_divergence/step_length_fork.csv`
+beside every ratio and the per-space scale is in the sub-study README.
+
+What it shows, on game 1235 (n = 1, selected): the step at the fork is longer for a turn
+violation (R3 1.25-1.74x the reference, in all nine spaces) and *shorter* for an
+occupied-square one (R1 0.80-0.91x, in all nine), and it decays -- from r = +6 on nothing
+leaves the legal control's own excursion band (+-0.18 to +-0.31 by space) except one
+offset in two of the nine panels. **A second legal move does most of it too** (control
+1.11-1.31x at r = 0): only R3 exceeds the control, by 1.04-1.57x. So the figure's honest
+reading is "the first two steps after a branch differ, and only the turn violation differs
+from what a legal alternative already does".
+
+`branch_panels.rule_ratio_panel` is the panel, beside the fork panels rather than in the
+script, because the 100-game population twin is a separate change that reuses it. The
+prefix ratio is asserted `== 1` exactly, in all nine spaces, on every render -- it holds,
+which is also the cheapest check that the rows are branch-aligned.
+
+The sampling convention is on the figure, not only in the README: positions are
+`fork_plane.positions` at STRIDE 2, so a step spans 4 plies, and `../rule_curvature`'s
+per-ply convention reads 29.2 against 18.9 on the same legal corpus. Same trap as the
+theta one; same sentence.
+
+---
+
+
 ## The fork figure over 100 games, and what the mean does to it (2026-08-18)
 
 `analysis/violation_divergence/fork_population/` is `fork_and_board`'s population twin:
@@ -211,7 +248,6 @@ bites (4.4x at n = 100 against 3.1x, CI half-width 0.59 against 0.11); on the pl
 CI is 0.05-0.09 and the claim reads the same.
 
 ---
-
 
 
 ## The R^21 run figure, over 100 games instead of one (2026-08-18)

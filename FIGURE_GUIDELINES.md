@@ -141,6 +141,17 @@ For anything aligned to an intervention at position `t0`:
   segment with no annotation reads as a smoothing artifact or a late effect;
   annotated, it is proof the alignment and matching are correct.
 - Annotate the extremum with its value and offset.
+- **A quantity whose scale differs across panels goes on the axis as a paired
+  ratio to the reference, never raw.** Divide by the reference item's value at
+  the *same* position of the *same* item, so the division cancels the shared
+  per-position trend and not merely the units — an unpaired normalization
+  leaves that trend on every curve, where it is read as the response. The
+  reference is then 1 by construction and the panel says so; the line at 1 is
+  the reference class, styled as one and named in the legend, never a bare
+  chance line; the null is the control's *own* ratio, which is what says
+  whether an excursion is large. The reference's raw scale per panel goes in
+  the caption and the absolute values in the CSV, or the division has thrown
+  data away. Name the contrast on the axis label, not only in prose.
 - Overlay conditions on shared axes; never split them into panels when the
   point is the difference.
 - Standard layout when items are inspectable: per-item heatmap on top,
