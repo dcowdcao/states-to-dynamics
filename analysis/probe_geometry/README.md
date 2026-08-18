@@ -16,15 +16,18 @@ a raw class column is not a point in activation space — only class contrasts
 are. The board probe's unidentified common component has norm ≈ 1.1 against a
 contrast norm of ≈ 8.5, so this is load-bearing rather than pedantic.
 
-| family | contrast | n | source |
+| type | contrast | n | source |
 |---|---|---|---|
-| `colour` | mine − theirs, at one square | 64 | `analysis/linear_probe/activations/linear_probe.pt`, 200 ARENA games |
-| `occupancy` | ½(mine + theirs) − empty, at one square | 60 | same |
-| `rules4` | R1, R2, R3, each − legal | 3 | move-legality `raw_4class.pt`, 800 games |
-| `rules2` | illegal − legal | 1 | move-legality `raw_2class.pt`, 800 games |
-| `rules_square` | illegal − legal, refit on one candidate square | 60 | move-legality fit set, 800 games |
+| board colour | mine − theirs, at one square | 64 | `linear_probe.pt`, 200 ARENA games |
+| board position | ½(mine + theirs) − empty, at one square | 60 | same |
+| legal, R1, R2, R3 | each class − the mean of the four | 60 each | 4-class rule probe refit on one candidate square |
+| illegal | illegal − legal | 60 | 2-class rule probe refit on one candidate square |
 
-`colour` and `occupancy` span everything a 3-way per-square head identifies, so
+Each is one point per board square in the figure; the arrow of the same colour is
+the committed probe's own direction, drawn from the same origin. The board probe
+has no pooled direction, so its arrow is the mean of its per-square points.
+
+The colour and position contrasts span everything a 3-way per-square head identifies, so
 there is no third board axis to have missed. The four centre squares are never
 empty (R7), so occupancy has no support there.
 
@@ -48,7 +51,7 @@ direction, which holds everything else fixed.
 - `src/probe_geometry/probes.py` — corpora, committed probes, contrasts, the
   closed-form ridge re-fit the bootstrap runs on.
 - `src/probe_geometry/cosine_tables.py` — every cosine table.
-- `src/probe_geometry/embed_directions.py` — PCA coordinates and the
-  board-subspace capture curve.
+- `src/probe_geometry/embed_directions.py` — PCA coordinates, the arrows, and
+  the cosine matrix between types.
 - `src/probe_geometry/robustness.py` — the red-team battery.
 - `make_figures.py` — draws `results/`, recomputes nothing.

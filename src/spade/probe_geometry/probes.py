@@ -229,3 +229,28 @@ def square_rules_directions(rules: dict, rows: np.ndarray, lam: float) -> list[D
         w = ridge_weights(rules["acts"][at], one_hot(rule[square == q], 2), lam).T
         out.append(Direction("rules_square", f"illegal@{square_name(q)}", unit(w[1] - w[0]), q))
     return out
+
+
+def square_rule_class_directions(rules: dict, rows: np.ndarray, lam: float) -> list[Direction]:
+    """Per candidate square, the 4-class rule probe's classes as deviations from their mean.
+
+    Deviations from the class mean sum to zero, so each one is gauge-invariant on
+    its own — which is what lets `legal` be drawn as a direction rather than only
+    as the thing the other three are measured against.
+    """
+    square, rule = rules["square"][rows], rules["rule"][rows]
+    out = []
+    for q in np.unique(square):
+        at = rows[square == q]
+        w = ridge_weights(rules["acts"][at], one_hot(rule[square == q], 4), lam).T
+        for i, name in enumerate(RULE_CLASSES):
+            out.append(Direction(name, f"{name}@{square_name(q)}", unit(w[i] - w.mean(0)), q))
+    return out
+
+
+def committed_rule_class_directions() -> list[Direction]:
+    """The same four contrasts off the committed 4-class probe, plus pooled illegal."""
+    w4, w2 = rules_probe(4)["weight"], rules_probe(2)["weight"]
+    return [Direction(name, name, unit(w4[i] - w4.mean(0)))
+        for i, name in enumerate(RULE_CLASSES)] + \
+        [Direction("illegal", "illegal", unit(w2[1] - w2[0]))]

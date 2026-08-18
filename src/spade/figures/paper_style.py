@@ -224,26 +224,22 @@ def role_key(fig, roles: list[str], y: float = -0.005) -> None:
 # against, so it takes REFERENCE's black; the board's two contrasts take the
 # hues the rules taxonomy leaves free.
 DIRECTION_STYLE = {
-    "illegal":   {"color": REFERENCE["color"], "marker": "o",
-                  "label": "illegal $-$ legal (2-class, reference)"},
-    "R1":        {"color": RULE_STYLE["R1 placement"]["color"], "marker": "s",
-                  "label": "R1 $-$ legal"},
-    "R2":        {"color": RULE_STYLE["R2 bracketing"]["color"], "marker": "^",
-                  "label": "R2 $-$ legal"},
-    "R3":        {"color": RULE_STYLE["R3 turn"]["color"], "marker": "D",
-                  "label": "R3 $-$ legal"},
-    "rules_square": {"color": "#56B4E9", "marker": "*",
-                     "label": "illegal $-$ legal (per square)"},
-    "colour":    {"color": "#CC79A7", "marker": "P", "label": "board colour (per square)"},
-    "occupancy": {"color": "#E69F00", "marker": "X", "label": "board occupancy (per square)"},
+    "legal":     {"color": REFERENCE["color"], "marker": "o", "label": "legal (reference)"},
+    "illegal":   {"color": "#56B4E9", "marker": "*", "label": "illegal"},
+    "R1":        {"color": RULE_STYLE["R1 placement"]["color"], "marker": "s", "label": "R1"},
+    "R2":        {"color": RULE_STYLE["R2 bracketing"]["color"], "marker": "^", "label": "R2"},
+    "R3":        {"color": RULE_STYLE["R3 turn"]["color"], "marker": "D", "label": "R3"},
+    "colour":    {"color": "#CC79A7", "marker": "P", "label": "board colour"},
+    "occupancy": {"color": "#E69F00", "marker": "X", "label": "board position"},
 }
+DIRECTION_ORDER = ("legal", "illegal", "R1", "R2", "R3", "colour", "occupancy")
 
 # One line per board contrast, for the key printed under a probe-geometry
 # figure. The rules half of that key comes from RULE_TEXT.
 CONTRAST_TEXT = {
     "colour": "board colour — $\\ell_{\\rm mine}-\\ell_{\\rm theirs}$ at one square: which player's disc sits there.",
-    "occupancy": "board occupancy — $\\frac{1}{2}(\\ell_{\\rm mine}+\\ell_{\\rm theirs})-\\ell_{\\rm empty}$ at one square: whether a disc sits there.",
-    "rules_square": "per-square legality — illegal $-$ legal, refit on the rows where that square was the candidate move; the committed rules probes pool over all squares.",
+    "occupancy": "board position — $\\frac{1}{2}(\\ell_{\\rm mine}+\\ell_{\\rm theirs})-\\ell_{\\rm empty}$ at one square: whether a disc sits there.",
+    "rules": "legal, R1, R2 and R3 — one 4-class rule probe per candidate square, each class against the mean of the four; illegal is the 2-class probe's illegal $-$ legal.",
 }
 
 
