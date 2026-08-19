@@ -23,15 +23,20 @@ import pandas as pd
 from matplotlib import pyplot as plt
 
 from spade.figures.paper_style import (
-    MUTED, NULL, REFERENCE_SPACE, SPACE_STYLE, apply_style, save_figure)
+    INK, MUTED, NULL, REFERENCE_SPACE, SPACE_STYLE, apply_style, save_figure)
 
 HERE = Path(__file__).resolve().parent
 BAR_WIDTH = 0.72
 FALSE_ALARM = ["hit_control", "hit_control2", "hit_reference"]
 
 
+def panel_letter(ax, i: int) -> None:
+    ax.text(0.0, 1.02, f"({chr(97 + i)})", va="bottom", transform=ax.transAxes,
+            color=INK, fontsize=9)
+
+
 def panel(ax, table: pd.DataFrame, value: str, ylabel: str, chance: float,
-          band: tuple[float, float], letter: str, top: float, chance_label: str) -> None:
+          band: tuple[float, float], index: int, top: float, chance_label: str) -> None:
     ax.axhspan(*band, color=NULL["color"], alpha=0.28, lw=0, zorder=1)
     ax.axhline(chance, color=NULL["color"], ls=NULL["ls"], lw=1.2, zorder=2)
     for x, row in table.iterrows():
@@ -56,8 +61,7 @@ def panel(ax, table: pd.DataFrame, value: str, ylabel: str, chance: float,
     ax.set_ylabel(ylabel)
     ax.text(len(table) - 0.35, chance, chance_label, color=NULL["color"], fontsize=6.8,
             ha="left", va="center", bbox={"fc": "white", "ec": "none", "pad": 1.2})
-    ax.text(-0.055, 1.0, letter, transform=ax.transAxes, fontsize=10, fontweight="bold",
-            ha="right", va="bottom")
+    panel_letter(ax, index)
     ax.grid(axis="x", visible=False)
     ax.tick_params(axis="x", length=0)
 
@@ -70,11 +74,11 @@ def draw(table: pd.DataFrame, camera_ready: bool) -> Path:
 
     panel(axes[0], table, "auroc_vs_control",
           "AUROC, illegal vs matched legal splice\n($\\uparrow$ better)",
-          0.5, (table.auroc_null.min(), table.auroc_null.max()), "(a)", 1.05,
+          0.5, (table.auroc_null.min(), table.auroc_null.max()), 0, 1.05,
           "chance (empirical)")
     panel(axes[1], table, "hit_illegal",
           "localization: argmax lands on $t_0$\n($\\uparrow$ better)",
-          row.chance_uniform, (alarms.values.min(), alarms.values.max()), "(b)", 0.50,
+          row.chance_uniform, (alarms.values.min(), alarms.values.max()), 1, 0.50,
           "chance")
 
     fig.tight_layout(rect=(0, 0, 1, 0.94))
