@@ -9,6 +9,9 @@ Sorted by (a), because the ordering is the claim; raw layer 5 keeps reference st
 it lands, so the reader can see how many dictionaries clear it, and keeping one order across
 both panels is what makes the two rankings comparable.
 
+No note under the axes: the estimator, n, seed and null semantics are the caption, and the
+caption is the paragraph under "Results" in README.md. This figure is not standalone.
+
 Usage: python analysis/violation_divergence/changepoint_localization/make_figures.py
            [--camera-ready]
 """
@@ -74,29 +77,9 @@ def draw(table: pd.DataFrame, camera_ready: bool) -> Path:
           row.chance_uniform, (alarms.values.min(), alarms.values.max()), "(b)", 0.50,
           "chance")
 
-    span = "plies before and after" if row.statistic == "MOSUM" else "plies forward"
-    clears = table[table.auroc_minus_raw_lo > 0]
     fig.tight_layout(rect=(0, 0, 1, 0.94))
     fig.text(0.005, 0.985, "hue = architecture family, hatch = its second dictionary; "
              "raw layer 5 is the reference space", fontsize=7, color=MUTED, va="top")
-    fig.text(0.005, -0.005,
-             f"Score: how much shorter than usual the step through the space is, standardized per "
-             f"move index against legal games, then contrasted across each\ncandidate move "
-             f"({row.statistic}, m = {row.m:.0f} {span}) and scanned blind over the whole game -- no "
-             f"knowledge that a move was spliced, and no counterfactual\nbranch. The window was chosen "
-             f"on the straightness violation corpus, whose splices differ. One illegal branch per game "
-             f"at seed 42; whiskers are\n95% percentile bootstrap CIs over {row.n_games:.0f} games "
-             f"(1,000 resamples). (a) AUROC of the illegal branch's peak against the same game's "
-             f"legal-splice branch;\nAUROCs are never flipped, so a bar at 0.5 is the finding, and the "
-             f"{len(clears)} dictionaries above raw also clear it on the paired difference "
-             f"({clears.auroc_minus_raw.min():+.3f}\nto {clears.auroc_minus_raw.max():+.3f}, none "
-             f"spanning zero). (b) exact-match rate over a {1 / row.chance_uniform:.0f}-candidate scan; "
-             f"within one ply it is {table.hit_illegal_within_1.max():.3f} at best and "
-             f"{table.loc[table.space == REFERENCE_SPACE, 'hit_illegal_within_1'].iloc[0]:.3f}\nfor raw, "
-             f"whose argmax lands on $t_0$ and $t_0+1$ equally often. Gray bands are empirical nulls: "
-             f"(a) each game's legal control against the second legal\ncontrol it carries, (b) the same "
-             f"two arms and the untouched reference game, none of which contain an illegal move.",
-             ha="left", va="top", fontsize=6.6, color=MUTED)
     return save_figure(fig, HERE / "figures" / "changepoint_by_space", camera_ready)
 
 

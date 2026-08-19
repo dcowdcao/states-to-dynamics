@@ -85,6 +85,20 @@ one sort order, so a space is the same column in both: (a) does the score know t
 contains an illegal move, (b) does its argmax say which ply. They separate the spaces very
 differently -- (a) spans 0.51-0.62, (b) spans 0.04-0.34 -- which is the point of drawing both.
 
+**Caption.** The figure carries no note under its axes, so this paragraph is its caption and
+it is not standalone without it. Both panels: nine representation spaces, one illegal branch
+per source game drawn at seed 42, n = 575 branch-complete games, whiskers 95% percentile
+bootstrap CIs over games (1,000 resamples, shared draws across spaces). Score is the
+per-move-index standardized step-length drop contrasted across each candidate move (MOSUM,
+m = 4 plies each side) and scanned blind over the whole game -- 34 candidates, no knowledge
+that a move was spliced, no counterfactual branch; the window was chosen on the straightness
+violation corpus. (a) AUROC of the illegal branch's peak against the same game's legal-splice
+branch, never flipped, so a bar at 0.5 is the finding. (b) exact-match rate of the argmax
+against t0. Gray bands are empirical nulls: in (a) each game's legal control scored against
+the second legal control it carries, in (b) those two arms and the untouched reference game,
+none of which contain an illegal move. Hue is the architecture family, hatch its second
+dictionary, and raw layer 5 keeps reference styling wherever it sorts.
+
 | space | AUROC vs legal splice | vs raw | vs clean game | hit@t0 | within ±1 |
 |---|---|---|---|---|---|
 | GatedAnneal | **0.616** [0.591, 0.640] | **+0.055** [+0.030, +0.080] | 0.811 | **0.343** | 0.485 |
