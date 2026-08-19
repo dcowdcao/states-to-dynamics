@@ -16,8 +16,7 @@ import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
 
 from spade.figures.paper_style import (
-    DIRECTION_ORDER, DIRECTION_STYLE, GRID, INK, MUTED,
-    apply_style, contrast_key, save_figure)
+    DIRECTION_ORDER, DIRECTION_STYLE, GRID, INK, apply_style, save_figure)
 
 RESULTS = Path(__file__).resolve().parent / "results"
 FIGURES = Path(__file__).resolve().parent / "figures"
@@ -97,7 +96,6 @@ def figure(camera_ready: bool) -> Path:
     cosine_panel(fig, axes[1], gram)
     for ax, letter in zip(axes, "ab"):
         panel_letter(ax, letter)
-    contrast_key(fig, ["colour", "occupancy", "rules"], [], y=-0.03)
     fig.tight_layout()
     return save_figure(fig, FIGURES / "fig1_direction_geometry", camera_ready)
 

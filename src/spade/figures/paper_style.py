@@ -234,23 +234,6 @@ DIRECTION_STYLE = {
 }
 DIRECTION_ORDER = ("legal", "illegal", "R1", "R2", "R3", "colour", "occupancy")
 
-# One line per board contrast, for the key printed under a probe-geometry
-# figure. The rules half of that key comes from RULE_TEXT.
-CONTRAST_TEXT = {
-    "colour": "board colour — $\\ell_{\\rm mine}-\\ell_{\\rm theirs}$ at one square: which player's disc sits there.",
-    "occupancy": "board position — $\\frac{1}{2}(\\ell_{\\rm mine}+\\ell_{\\rm theirs})-\\ell_{\\rm empty}$ at one square: whether a disc sits there.",
-    "rules": "legal, R1, R2 and R3 — one 4-class rule probe per candidate square, each class against the mean of the four; illegal is the 2-class probe's illegal $-$ legal.",
-}
-
-
-def contrast_key(owner, contrasts: list[str], rules: list[str],
-                 y: float = -0.005, x: float = 0.005) -> None:
-    """Board contrasts then rule definitions, one block. See rule_key() for `owner`."""
-    lines = [CONTRAST_TEXT[c] for c in contrasts] + [RULE_TEXT[r] for r in rules]
-    owner.text(x, y, "\n".join(lines), ha="left", va="top", fontsize=7.5,
-               color=MUTED, linespacing=1.5)
-
-
 # Probe family and label basis: two dimensions that cross in the depth sweep.
 # The linear probe is the capacity reference, so it takes REFERENCE's black; the
 # basis rides on line style and marker rather than spending a second hue.
