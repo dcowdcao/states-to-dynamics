@@ -6,6 +6,55 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The population fork loses everything but the fork (2026-08-19)
+
+Three cuts to `analysis/violation_divergence/fork_population/`, in one day and at the
+user's direction, ending with a figure that is nine 3-D cells, a legend, and each
+cell's coherence number. Nothing else is on the canvas.
+
+**The 95% CI ellipses.** One per rule path, flat in the plane at the path's end. They
+do not survive being looked at: the camera is fixed at `elev = 18`, so an in-plane
+ellipse foreshortens into a lens, and in the R²¹ plane the orientation turns it into a
+full ring — four overlapping rings sitting on the trajectories at the last drawn move.
+Under it is a real fact, which is why the drawing was defensible and the *reading* was
+not: at n = 100 the interval on the 2-D mean is about as wide as the whole fork is
+long, so the mean direction is barely resolved. That fact is now a sentence and a
+number in the study README instead of a shape on the canvas. Deleted with it:
+`_ci_ellipse`, `CI_CHI2`, `ci_ellipse_proxy`, `CI_ELLIPSE_LABEL` and its `_rank`
+branch, `_path`'s `open_end`, the `computed_zorder` override, and
+`rule_fork_population_panel`'s `game_coords` parameter. `_path` is byte-identical to
+its pre-ellipse form, so `fork_panel` and `rule_fork_panel` draw what they always drew
+— checked by rendering `fork_and_board`'s ten outputs from both revisions: identical
+PDF content streams, identical PNGs.
+
+**Panel (b), the metric row.** With the ellipse gone the figure had one panel carrying
+shape and one carrying magnitude, and the two disagree by construction — (a)'s vector
+mean throws away ~80% of each game (`coherence`), (b)'s mean of per-game distances
+throws away nothing. Cut to the grid alone; `metric_panel`, `cell_series` and the
+ladder constants went with it. `table()` and the CSV stay untouched: the numbers are
+the study's record and the panel was only ever a picture of them.
+
+**The muted note block under the legend.** The spread ratio, the coherence definition,
+the population disclosure, the cancellation note and the R1/R2/R3 key — the same sweep
+the `gray/gray-parent` entry below made over the parent figures, on the last study that
+still had one. Same keep test there and here: a line stays only if a FIGURE_GUIDELINES
+section needs it *on the canvas*.
+
+**Two guidelines this figure no longer satisfies on its own face, both deliberate.**
+§4.8 wants a 3-D projection paired with a quantitative panel; the pairing is now the
+README's table and the CSV, and §4.8 was amended to allow a table under two conditions
+(the projection says it carries no magnitude; the caption says where the numbers are).
+§1.7's spread ratio and §5's "shorthand earns a key" are **not** satisfied — `R1`,
+`R2`, `R3` and `coherence` are shorthand and nothing on the canvas defines them. The
+key is in the README and nowhere else. This is a real gap, not a solved one; it was not
+patched by editing §5, and it is the thing to look at first if the figure ever ships
+outside the repo.
+
+The earlier ellipse entry below records the decision to draw it and is history now, not
+current state. It is left as written; this is a log.
+
+---
+
 ## Probe geometry: board-state directions against rule-legality directions (2026-08-18)
 
 **Question:** the board-state probe and the two rule probes (legal/illegal, and

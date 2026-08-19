@@ -341,28 +341,39 @@ conditions:
   transform the rest, and record that in the docstring.
 - **Fix and state the viewing angle** (`elev`, `azim`). An unstated camera makes
   the figure irreproducible and lets a favourable angle pass as a result.
-- **Pair it with a quantitative 2-D panel.** A 3-D projection shows shape, never
-  magnitude; the companion panel carries the number the claim rests on, with the
-  usual uncertainty and n. When that number is a ratio to a per-cell control, draw
-  it on a log ratio ladder rather than as bars from zero (§1.6): a ratio's null is
-  1, and two series that differ several-fold — a distance in the drawn plane and
-  the same distance in the full space — share one linear axis only by flattening
-  the smaller onto the null line.
+- **Pair it with a quantitative companion.** A 3-D projection shows shape, never
+  magnitude; the companion carries the number the claim rests on, with the usual
+  uncertainty and n. A 2-D panel beside it is the default, and when that number is
+  a ratio to a per-cell control, draw the panel on a log ratio ladder rather than
+  as bars from zero (§1.6): a ratio's null is 1, and two series that differ
+  several-fold — a distance in the drawn plane and the same distance in the full
+  space — share one linear axis only by flattening the smaller onto the null line.
+  A **table** — in the caption, or in the study README the caption points at — is
+  allowed instead, and is the better answer when the panel would be a second
+  estimator the reader is invited to compare with the projection by eye and cannot
+  (`fork_population`: the projection's paths cancel to 20% of a game's
+  displacement, the companion's numbers cancel nothing, and no shared axis makes
+  the two commensurable). Two conditions if you take the table: the projection must
+  say on its own face that it carries no magnitude, and the caption must name where
+  the numbers are. Dropping the companion is never allowed.
 - **Sparse ticks on the plane axes, full ticks on the ordered one.** Three per
   plane axis per §4.6, symmetric about zero so the origin — which in a
   displacement plane *is* the reference — always gets one. Per-panel refits are
   not comparable across panels: say so in the legend title when facetting, and
   say it whether or not the ticks are there.
-- **A path that is a mean over items carries a flat confidence ellipse, not a
-  bar.** The estimator is a two-dimensional mean and has no preferred direction,
-  so a 1-D error bar is a choice of axis rather than a measurement: draw the
-  covariance of the items' projected positions ÷ n at χ²₂(0.95), lying flat in
-  the plane at that index. Draw **one per path, at its end**. At the n where an
-  ellipse is worth drawing it is often about as wide as the path is long, so a
-  ring at every marker is a stack the paths disappear into. Name it as a CI of
-  the mean in the legend — §4.6's 50% contour is a dispersion summary and the two
-  must never be read for each other — and give a series that is zero by
-  construction none at all.
+- **Do not put the interval on a path that is a mean over items; put it in the
+  companion.** If you draw one at all it is an *ellipse* and never a 1-D bar — the
+  estimator is a two-dimensional mean and has no preferred direction, so a bar is
+  a choice of axis rather than a measurement (covariance of the items' projected
+  positions ÷ n at χ²₂(0.95), flat in the plane, one per path at its end, named in
+  the legend as a CI of the mean, and none at all on a series that is zero by
+  construction). But under a fixed 3-D camera that ellipse lies flat in the plane
+  and foreshortens into an unreadable lens, and at the n where it is worth drawing
+  it is about as wide as the path is long, so the ellipses stack and occlude the
+  paths they belong to. That is not a tuning problem. Say in numbers, in the
+  caption, that the mean direction is unresolved, and let the companion carry the
+  interval. §4.6's 50% dispersion contour is a different object and the two must
+  never be read for each other.
 - **A mean of displacement *vectors* cancels, so print the share that survives.**
   Averaging a displacement over items (games, categories) is not averaging their
   distances: components that differ between items subtract, and the mean path is

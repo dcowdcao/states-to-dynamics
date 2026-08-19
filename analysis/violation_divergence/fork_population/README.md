@@ -1,14 +1,42 @@
 # The fork over a population
 
 `../fork_and_board` draws one game's branches in nine representation spaces. That
-game is an argmax, its *n* is 1, and neither of its panels carries an interval.
-This is the same fork over **100 source games that all fork at *t0* = 20**, with
-the estimator's uncertainty on both panels.
+game is an argmax and its *n* is 1. This is the same fork over **100 source games
+that all fork at *t0* = 20**: that figure's (a) with every path a mean over games,
+nine cells, and nothing else.
 
-Panel **(a)** is that figure's (a) with every path a mean over games. Panel **(b)**
-is its **(c)** — how far each rule runs from the reference, in the plane its cell
-draws and in that cell's full space, as a multiple of the same cell's legal
-control — with a bootstrap CI over games.
+**The figure is the shape of the construction and nothing more.** It carries no
+magnitude, no interval, and no prose beyond its title, its legend and each cell's
+coherence number (`PROCESS.md` 2026-08-19 for why each of those went). Everything
+that used to be printed on the canvas is in this file, and **this file is not
+optional reading** — a reader who takes the figure on its own will read a short
+mean fork as "the branches barely move", which is the one conclusion the study
+does not support.
+
+What that means for two of the guidelines the figure used to satisfy on its own
+face. **§4.8** asks a 3-D projection to be paired with a quantitative companion
+carrying the number, its uncertainty and its n: that companion is now a table —
+*What it says* below, and every row of
+`results/violation_divergence/fork_population_{plane}.csv`, which is **how far each
+rule runs from the reference, in the plane its cell draws and in that cell's full
+space, as a multiple of the same cell's legal control, with a 95% percentile
+bootstrap CI over 100 source games**. **§5** asks the figure's shorthand to earn a
+key; `R1`/`R2`/`R3` and `coherence` are shorthand and their key is now here and
+nowhere else:
+
+| rule | members | what the branch does |
+|---|---|---|
+| **R1 placement** (2) | `occupied_own`, `occupied_opp` | square holds the mover's disc · square holds the opponent's disc |
+| **R2 bracketing** (3) | `empty_detached`, `empty_own_only`, `empty_no_bracket` | empty, touches no discs · empty, touches only the mover's discs · empty, touches opponent discs, no line closes |
+| **R3 turn** (1) | `opponent_only` | flips only for the opponent (turn confusion) |
+
+**coherence**, printed over each cell, is ‖mean over games of *D*‖ ÷ mean over
+games of ‖*D*‖ for the rule path that cell draws: the share of one game's
+displacement that survives the mean, 0 when all of it cancels.
+
+A key in a README is not what §5 asks for — it wants the key where the shorthand
+is. This is a known gap and not a fix; §1.7's spread ratio, below, is the other
+one. Both are the price of a canvas with nothing on it but the figure.
 
 **There is no board here.** Every game forks at move 20 and every one has a
 different position there, so the board `../fork_and_board` panels beside its fork
@@ -28,7 +56,7 @@ python analysis/violation_divergence/fork_population/make_figures.py \
 series, plane | full space) with the mean over games, its bootstrap CI and the
 median.
 
-| file | plane (a) is drawn in |
+| file | plane it is drawn in |
 |---|---|
 | `figures/fork_population_displacement` | PCA of `D(t) = z_b(t) − z_ref(t)` — the default |
 | `figures/fork_population_r21` | PCA of `Δφ(t) = φ(z_b(t)) − φ(z_ref(t))`, inside the 21-D ReStraV curvature descriptor |
@@ -40,79 +68,79 @@ vertical line through it.
 
 ## The population
 
-The first 100 of the branch-complete games forking at *t0* = 20, ascending by game
-id. The tree was extended so that 2000 games fork at that one position
-(`docs/finish_notes/t0-20-population.md`), of which **1696** carry all nine branch
-types. **No game-level criterion enters this figure** — not a differentiation
-argmax, not a cleanliness filter, not a legality one. Game 1235, the argmax
+**Not stated on the figure** — the canvas carries no selection disclosure, so it is
+stated here and only here. The first 100 of the branch-complete games forking at
+*t0* = 20, ascending by game id. The tree was extended so that 2000 games fork at
+that one position (`docs/finish_notes/t0-20-population.md`), of which **1696**
+carry all nine branch types. **No game-level criterion enters this figure** — not
+a differentiation argmax, not a cleanliness filter, not a legality one. Game 1235, the argmax
 `../fork_and_board` draws, is in it as one ordinary member of 100, 42nd by game id;
 it is not excluded for being the game the single-game figure was built on.
 `--n_games` cuts the prefix, so a smaller run may drop it, and the disclosure line
 under the figure names it only when it is in.
 
-One *t0* for every game is what lets the panels keep the axes they had: alignment
+One *t0* for every game is what lets the panel keep the axes it had: alignment
 across games is by array index, the vertical axis is still move index *t*, and the
 star is still at *t* = 20 rather than at a relative offset. It costs generality —
-this is the fork at move 20 and nowhere else — and buys panels that can be read
+this is the fork at move 20 and nowhere else — and buys a panel that can be read
 against the single-game figure position for position.
 
 ## Captions
 
 The figures carry only what cannot be looked up while looking at them; everything
 else a reader needs in order not to over-read them is here (FIGURE_GUIDELINES §2,
-§5). Inside, in full: the panel titles and letters, the space names, the axis
-labels, one legend for (a) and one for (b), the three muted lines under (a)'s
-legend — the within ÷ between-rule spread ratio, the definition of coherence, and
-what the camera does to an ellipse lying flat in the plane — each cell's coherence
-number, (b)'s estimator on its own axis, the two-line disclosure naming the
-population and the cancellation, and the R1/R2/R3 key.
+§5) — and this figure keeps almost nothing inside. Inside, in full: the title, the
+nine space names, the axis labels, one legend, and each cell's coherence number.
+That is all. There is no panel letter, because with one panel there is nothing to
+enumerate; there is no note block under the legend, because every line of it was
+the caption pasted onto the canvas and the canvas is not where a caption belongs
+(the same sweep `PROCESS.md`'s `gray/gray-parent` entry made over the parent
+figures). The four facts that block used to carry live above and below: the
+within ÷ between-rule spread ratio and the coherence definition, the population
+disclosure in *The population*, and the cancellation warning in *Reading it
+honestly*.
 
 ### `fork_population_displacement`
 
-**Where 100 forks go on average, and how far they run.** Panel **(a)**: one 3-D
-fork per space, raw layer 5 first. The plane embeds the across-game mean of
-`D(t) = z_b(t) − z_ref(t)` by uncentred PCA and move index *t* is the third axis;
-positions are sampled every 2 plies at *t0*'s parity; view fixed at
-`elev = 18, azim = −58`. One path per rule is the mean of its member categories,
-taken in the plane after projection — the projection is linear, so that is exactly
-the projection of the mean displacement. **The ellipse at the end of each path is
-a 95% confidence interval of that mean over the 100 games**, lying flat in the
-plane at that *t*: the covariance of the 100 games' own projected positions
-divided by *n*, at χ²₂(0.95) = 5.991. It is an ellipse and not a bar because the
-estimator is a two-dimensional mean and has no preferred direction. The reference
-has none — it is 0 at every position by construction — and the legal control's is
-drawn in the null styling. **The plane is refit per space**, so the axes are arb.
-units, the three ticks per plane axis are a within-panel scale bar, and cells are
-not comparable across the grid in position or magnitude, only in the *shape* of
-the fork. Panel **(b)**: per cell and per rule, the mean over the 13 drawn offsets
+**Where 100 forks go on average.** One 3-D fork per space, raw layer 5 first. The
+plane embeds the across-game mean of `D(t) = z_b(t) − z_ref(t)` by uncentred PCA
+and move index *t* is the third axis; positions are sampled every 2 plies at
+*t0*'s parity; view fixed at `elev = 18, azim = −58`. One path per rule is the
+mean of its member categories, taken in the plane after projection — the
+projection is linear, so that is exactly the projection of the mean displacement.
+**Nothing drawn is an interval and nothing drawn is a magnitude.** **The plane is
+refit per space**, so the axes are arb. units, the three ticks per plane axis are
+a within-panel scale bar, and cells are not comparable across the grid in position
+or magnitude, only in the *shape* of the fork.
+
+The measurement the figure used to carry as a second panel, unchanged, in the CSV
+and in *What it says*: per cell and per rule, the mean over the 13 drawn offsets
 *r* = 0, 2, …, 24 of each game's own distance from its own reference, divided by
 that game's own legal control, then averaged over the 100 games — a mean of
-per-game ratios, whose median is in the CSV. Every rule is measured twice, in the
-plane the cell above draws and in that cell's full space, and both carry a 95%
-percentile bootstrap CI over source games (2000 resamples, seed 0); the panel's
-own legend says which mark is which, on a log ratio ladder whose baseline is the
-control at 1. A rule's member categories are drawn beside it, in the plane, each
-its own mean over games and not an interval. The gray series is `control_legal_2`
-scored against `control_legal` exactly as the illegal branches are — the empirical
-null — and the reference at 1 is the divisor itself.
+per-game ratios, whose median is in the CSV beside it. Every rule is measured
+twice, in the plane its cell draws (`where = plane`) and in that cell's full space
+(`where = full space`, the plane-free number the claim rests on), and both carry a
+95% percentile bootstrap CI over source games (2000 resamples, seed 0). The null is
+`control_legal_2` scored against `control_legal` exactly as the illegal branches
+are; `control_legal` itself is the divisor and is identically 1.
 
 ### `fork_population_r21`
 
-**The same 100 forks with (a)'s plane taken inside the 21-D ReStraV curvature
+**The same 100 forks with the plane taken inside the 21-D ReStraV curvature
 descriptor.** φ is applied per game and the difference from that game's reference
 is taken inside R²¹, before the mean over games: φ of a mean is the curvature of a
 path no game takes. The drawn window is *r* = −4 … +24, two positions shorter at
 the front than the displacement figure's, because a W = 8 trailing window needs
-context the study window does not carry. Everything else — the ellipse, the
-per-space refit and its disclaimer, (b)'s estimator, the null — reads as above.
+context the study window does not carry. Everything else — the per-space refit and
+its disclaimer, the CSV's estimator, the null — reads as above.
 
 ### `fork_population_d7`
 
-**The same 100 forks with (a)'s plane fit inside R²¹'s raw step-length block
+**The same 100 forks with the plane fit inside R²¹'s raw step-length block
 alone.** `curvature_plane.PLANE_COLUMNS` cuts Δφ to `d1…d7` and nothing else
 changes: φ per game over the W = 8 window, the difference inside the descriptor,
 the column scaling, the *r* = −4 … +24 drawn window, the per-space refit, the
-ellipse, (b)'s estimator and the null all read as the R²¹ figure above. The 7 are
+CSV's estimator and the null all read as the R²¹ figure above. The 7 are
 the **raw** step lengths, not `fork_r21.BLOCKS["d"]`'s 11, which also match
 `mean d`, `min d`, `max d` and `var d` — summaries of the same seven.
 
@@ -160,7 +188,7 @@ game of 100 is.
 
 **The plane and the space disagree several-fold, and the plane is in-sample.**
 Across the nine cells the in-plane number is 1.1–3.9× the full-space one (1.0–1.5×
-in R²¹) — the range (b)'s x label carries, and the reason its axis is a log ladder.
+in R²¹) — the gap between the CSV's two `where` rows for the same series.
 The same per-game distance measured in the population plane reads R1 1.225,
 R2 2.916, R3 2.112 against a null of 1.216. The plane is the uncentred top-2 of
 these same 100 games' mean field — the direction the illegal branches share — so
@@ -189,7 +217,7 @@ which is what it should do. The illegal branches do not: `empty_detached` and
 occupied-square categories keep least. By
 *r* = +24 that is gone — every branch, the control included, sits at 0.17–0.23 and
 they lie on one common drift ray (pairwise cosine ≈ 0.93, illegal-to-control
-included), so late in the window the paths in (a) are one shared drift and not six
+included), so late in the window the drawn paths are one shared drift and not six
 directions. The rule-mean coherences the figure prints at *t* = 44 are R1 0.18,
 R2 0.22, R3 0.19.
 
@@ -242,28 +270,30 @@ about the control they are divided by.
 
 ## Reading it honestly
 
-- **(a) averages displacement *vectors*, so it cancels, and each cell prints by how
-  much.** `coherence` is ‖mean over games of *D*‖ ÷ mean over games of ‖*D*‖, taken
-  on the rule mean each path draws (`coherence_rule` in the npz, not the per-branch
-  `coherence`): a rule mean cancels across its member categories too, so the
-  members' own coherences average to a different and larger number. In raw layer 5
+- **The drawn paths average displacement *vectors*, so they cancel, and each cell
+  prints by how much.** `coherence` is ‖mean over games of *D*‖ ÷ mean over games of
+  ‖*D*‖, taken on the rule mean each path draws (`coherence_rule` in the npz, not
+  the per-branch `coherence`): a rule mean cancels across its member categories
+  too, so the members' own coherences average to a different and larger number. In raw layer 5
   the drawn paths keep 0.20 (R1), 0.58 (R2) and 0.42 (R3) of a game's displacement
-  at *r* = 0 and 0.18–0.22 by *r* = +24, so the length of a path in (a) is **not**
+  at *r* = 0 and 0.18–0.22 by *r* = +24, so the length of a drawn path is **not**
   how far a branch travels. That is the same estimator the fork panels have always
   used for a rule mean — it is why `../r21_run_population`'s full-R²¹ series sits
   below every one of its members — applied one level up, to games instead of
   categories.
-- **(b) averages per-game distances, which cancels nothing**, and it is the panel
-  the "how far" question is answered from. The two panels therefore disagree by
-  construction: (a) draws R1's path out of a mean that has thrown away 80% of each
-  game, (b) measures R1 on every game intact and puts it at 0.909 of its
-  control. The coherence number is the bridge between them, and the gap is not a
-  plotting error.
-- **(b) is the same measurement as the single-game figure's (c), on a population,
-  and it disagrees with it.** 1.53× and R3 > R2 > R1 on game 1235; 1.02, 1.02 and
-  0.91 with no ordering over 100 games. The single-game figure is an illustration
-  of the construction, was selected as the argmax of its illegal branches' mutual
-  separation, and its numbers were never the study's. Quote this one. Do not
+- **The CSV averages per-game distances, which cancels nothing**, and that is where
+  the "how far" question is answered. It disagrees with the figure by construction:
+  the figure draws R1's path out of a mean that has thrown away 80% of each game,
+  the CSV measures R1 on every game intact and puts it at 0.909 of its control. The
+  coherence number printed over each cell is the bridge between them, and the gap
+  is not a plotting error. This is why the figure is not allowed to be read for
+  magnitude — a reader who takes a path's length for a distance reads the study
+  backwards.
+- **The CSV is the same measurement as the single-game figure's (c), on a
+  population, and it disagrees with it.** 1.53× and R3 > R2 > R1 on game 1235;
+  1.02, 1.02 and 0.91 with no ordering over 100 games. The single-game figure is an
+  illustration of the construction, was selected as the argmax of its illegal
+  branches' mutual separation, and its numbers were never the study's. Quote this one. Do not
   reconcile the two by picking whichever is convenient.
 - **R1 is the occupied-square rule, so "runs less far" may be about the branch's
   board delta and not about legality.** Its two members are the only categories that
@@ -281,23 +311,32 @@ about the control they are divided by.
   R1's deficit is a direction with an unresolved alternative explanation, and a figure
   that upgrades it to a claim has to rule that alternative out first.
 - **The plane is fit once per space, on the population mean field.** The PC
-  variance ratios printed on (a)'s axes are shares of the *mean field's* variance —
+  variance ratios printed on the panel axes are shares of the *mean field's* variance —
   74% and 13% in raw layer 5, against 38% and 13% for one game. Averaging deletes
   the per-game dimensions, so a high ratio here says the mean field is
   low-dimensional, not that the plane holds much of any game's displacement, and
   the two figures' variance ratios are **not comparable**.
-- **Neither interval covers the plane.** Each cell's plane is fit on the mean field
-  of the *same* 100 games the ellipse and (b)'s bootstrap are then taken over, so
-  both are conditional on that fit. A different draw of 100 games would move the
-  axes as well as the points on them, and nothing here bounds by how much. The
-  in-plane series in (b) is in-sample and alignment-weighted for the same reason;
-  the full-space series is the one to quote.
-- **At this n the CI is about as wide as the fork is long, so (a)'s mean direction
-  is barely resolved.** That is why the ellipse is drawn once per path rather than
-  at every marker — at every marker the paths disappear into the stack of rings —
-  and it is the most important caveat about the panel: read (a) for the shape of
-  the construction and the ordering of the ellipses, and (b) for magnitude. Two
-  rule paths whose ellipses overlap are not two measured directions.
+- **The interval does not cover the plane.** Each cell's plane is fit on the mean
+  field of the *same* 100 games the bootstrap is then taken over, so the interval is
+  conditional on that fit. A different draw of 100 games would move the axes as well
+  as the points on them, and nothing here bounds by how much. The CSV's `plane` rows
+  are in-sample and alignment-weighted for the same reason; the `full space` rows
+  are the ones to quote.
+- **The mean direction is barely resolved, and the figure does not show it.** At
+  n = 100 the 95% interval on the 2-D mean at the end of a path is about as wide as
+  the whole fork is long, so the drawn direction is not a measured direction, and
+  two rule paths that end apart on the canvas are not two measured directions
+  either. That interval used to be drawn, as a flat confidence ellipse at each
+  path's end, and it was removed because it did not survive being looked at: lying
+  flat in the plane under this figure's fixed camera it foreshortens into a lens,
+  and at the width n gives it the ellipses stack and sit on top of the trajectories
+  they belong to — worst in the R²¹ plane, where they read as four overlapping
+  rings. **The uncertainty did not go away with the drawing.** It is the sentence
+  above, and per cell it is the **coherence** number printed over each panel:
+  0.15–0.35 at *r* = +24 in the R²¹ plane, i.e. 65–85% of one game's displacement
+  cancels against the others' before the path is drawn. **Read the figure for the
+  shape of the construction, never for a direction; take magnitude and its interval
+  from the table above and the CSV.**
 - **The bootstrap resamples source games, never branches.** A game's nine branches
   share a prefix and are divided by that game's own control, so they are not
   independent items; resampling them would give an interval several times too
@@ -316,17 +355,18 @@ about the control they are divided by.
   What it is *not* is an ordering against the rules — see the paired contrasts above.
 - **The rule grouping is weak, and the per-game number is the one to quote.**
   Within-rule ÷ between-rule mean pairwise distance over these 100 games has median
-  **0.924 [IQR 0.842–0.983], above 1 in 21%** (displacement, raw layer 5) — the
-  number printed under (a)'s legend, and consistent with `rule_groups`' 0.945 over
-  1550 games. Near 1 means a rule's members travel barely closer to each other than
-  to another rule's, so the three drawn means are a labelling of the six categories
-  and not a measured structure. The same statistic **on the mean field** is
+  **0.924 [IQR 0.842–0.983], above 1 in 21%** (displacement, raw layer 5),
+  consistent with `rule_groups`' 0.945 over 1550 games. FIGURE_GUIDELINES §1.7 wants
+  this ratio on the canvas; it is not there any more, so it is here, and `main()`
+  prints it on every run. Near 1 means a rule's members travel barely closer to
+  each other than to another rule's, so the three drawn means are a labelling of
+  the six categories and not a measured structure. The same statistic **on the mean field** is
   **0.672**, and it is a different quantity — the spread of three averaged
   trajectories, not the typical spread of a game's — so it must never be quoted as
   if it were the population's value. Both are in the npz (`spread_game`,
-  `spread_mean`) and printed on every render. The R²¹ figure prints its own: median
-  0.917 [IQR 0.744–1.031], above 1 in 33%; the `d1…d7` block's is 0.856 [IQR
-  0.697–1.032], above 1 in 30%.
+  `spread_mean`) and printed on every run. The R²¹ plane's own is median 0.917
+  [IQR 0.744–1.031], above 1 in 33%; the `d1…d7` block's is 0.856
+  [IQR 0.697–1.032], above 1 in 30%.
 - **Quote the median beside the mean in R²¹.** Mean − median reaches 0.11 there
   (CosineSpaDE's null, mean 1.053 against median 0.947), against ≤ 0.02 anywhere
   in the displacement plane: the per-game ratio is mildly right-skewed in R²¹,
@@ -334,8 +374,8 @@ about the control they are divided by.
   carries both for every row. The `d1…d7` block is worse again: mean − median
 reaches 0.14 (CosineSpaDE R2, 1.564 against 1.428).
 - **Ratios, so only the within-cell contrast carries.** A plane's units are its
-  space's own and they differ by ~800× across the grid, so (b) divides by the
-  cell's own control and never draws a distance. That makes nine cells readable
+  space's own and they differ by ~800× across the grid, so the CSV divides by the
+  cell's own control and never reports a distance. That makes nine cells readable
   side by side; it does not make them nine measurements of the same thing.
 - **Spliced branches only.** Every branch replays the source game's `tokens[t0+1:]`,
   the asymmetry `../fork_and_board`'s rollout variant exists to remove. No rollout
