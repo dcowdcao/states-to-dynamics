@@ -60,11 +60,17 @@ def pca_panel(ax, points: pd.DataFrame, arrows: pd.DataFrame, ratio: pd.DataFram
 
 
 def cosine_panel(fig, ax, gram: pd.DataFrame) -> None:
+    """Lower triangle only: cos is symmetric, so the other half is the same numbers."""
     labels = [DIRECTION_STYLE[f]["label"].replace(" (reference)", "") for f in gram.index]
-    im = ax.imshow(gram.to_numpy(), cmap=DIVERGING, vmin=-1, vmax=1)
+    shown = gram.to_numpy().astype(float)
+    shown[np.triu_indices_from(shown, k=1)] = np.nan
+    cmap = plt.get_cmap(DIVERGING).copy()
+    cmap.set_bad("white")
+
+    im = ax.imshow(shown, cmap=cmap, vmin=-1, vmax=1)
     for i in range(len(gram)):
-        for j in range(len(gram)):
-            v = gram.iat[i, j]
+        for j in range(i + 1):
+            v = shown[i, j]
             ax.text(j, i, f"{v:+.2f}".replace("+1.00", "1.00"), ha="center", va="center",
                     fontsize=6.8, color="white" if abs(v) > 0.55 else INK)
     ax.set_xticks(range(len(gram)), labels, rotation=45, ha="right", fontsize=7.5)
