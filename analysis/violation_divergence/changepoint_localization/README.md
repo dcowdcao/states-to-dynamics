@@ -80,7 +80,10 @@ raw layer 5.
 
 ## Results
 
-`figures/changepoint_auroc_by_space.png`, `results/changepoint_localization.csv`.
+`figures/changepoint_by_space.png`, `results/changepoint_localization.csv`. Two panels over
+one sort order, so a space is the same column in both: (a) does the score know the game
+contains an illegal move, (b) does its argmax say which ply. They separate the spaces very
+differently -- (a) spans 0.51-0.62, (b) spans 0.04-0.34 -- which is the point of drawing both.
 
 | space | AUROC vs legal splice | vs raw | vs clean game | hit@t0 | within ±1 |
 |---|---|---|---|---|---|
