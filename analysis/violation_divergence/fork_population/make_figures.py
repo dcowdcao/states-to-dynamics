@@ -17,11 +17,12 @@ short; each cell prints the surviving share (`coherence`). (b) averages per-game
 *distances*, which cancels nothing. A reader who sees only (a) concludes the
 branches barely move, and (b) is the correction.
 
-The uncertainty in (a) is a confidence ellipse of the mean, drawn flat in the
-plane at the end of each path: the estimator is a 2-D mean and has no preferred
-direction, so a 1-D bar would be a choice of axis and not a measurement. (b)'s is
-a percentile bootstrap over source games -- games, not branches, because a game's
-branches share a prefix and the control they are divided by.
+All the uncertainty is in (b): a percentile bootstrap over source games -- games,
+not branches, because a game's branches share a prefix and the control they are
+divided by. (a) carries none. At this n an interval on its 2-D mean is about as
+wide as the fork is long, and lying flat in the plane under a fixed camera it
+draws as a lens the paths disappear into; the fact it was there to show -- that
+the mean direction is barely resolved -- is a number in the README instead.
 
 Usage: python analysis/violation_divergence/fork_population/make_figures.py
        [--plane displacement|r21|d7] [--n_games 100] [--camera-ready]
@@ -46,7 +47,7 @@ from spade.violation_divergence.rule_groups import rule_rows
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 NCOL = 3
 CELL_W, CELL_H = 3.7, 3.5  # one fork cell, as in ../fork_and_board
-LEGEND_H = 1.25            # a full-width band: one legend, then the three notes (a) needs
+LEGEND_H = 1.25            # a full-width band: one legend, then the two notes (a) needs
 METRIC_H = 3.6             # the (b) row; the ladder needs the legend off its data
 # Four rule slots in a space's unit-wide group, not ../fork_and_board's three: at
 # its 0.26 the group is wider than the unit and the gap between groups closes below
@@ -69,9 +70,6 @@ CANCELLATION_NOTE = ("(a) averages displacement vectors, so directions that diff
 COHERENCE_DEF = ("coherence, per rule = ‖mean over games of D‖ ÷ mean over games of ‖D‖ "
                  "for the path (a) draws: the share of one game's displacement that "
                  "survives (0 = all of it cancels)")
-ELLIPSE_NOTE = ("the ellipses lie flat in the plane, so this camera foreshortens them "
-                "and a round one draws as a lens: read them for whether two paths' ends "
-                "separate, and (b) for how far anything ran")
 
 
 def rows_of(z) -> list[dict]:
@@ -257,16 +255,14 @@ def figure(z, draws: np.ndarray, plane: str, camera_ready: bool) -> Path:
     head.patch.set_visible(False)
     head.set_title("(a) where the branches go: the fork in each representation space, "
                    "one path per rule\n"
-                   f"mean over n = {n_games} games, all forking at $t_0$ = {t0}; "
-                   "95% CI of that mean at the end of each path",
+                   f"mean over n = {n_games} games, all forking at $t_0$ = {t0}",
                    loc="left", fontsize=11, pad=18)
 
     cells = []
     for j, name in enumerate(names):
         ax = fig.add_subplot(grid[j // NCOL, j % NCOL], projection="3d")
-        rule_fork_population_panel(ax, z["coords"][j][drawn], z["game_coords"][j][:, drawn],
-                                   [rows[i] for i in drawn], pos, t0,
-                                   legend=(j == 0), zlabel=(j % NCOL == 0))
+        rule_fork_population_panel(ax, z["coords"][j][drawn], [rows[i] for i in drawn],
+                                   pos, t0, legend=(j == 0), zlabel=(j % NCOL == 0))
         labels = axis_labels("pca", z["var"][j])
         ax.set_xlabel(labels[0], labelpad=-2, fontsize=8)
         ax.set_ylabel(labels[1], labelpad=-2, fontsize=8)
@@ -285,7 +281,7 @@ def figure(z, draws: np.ndarray, plane: str, camera_ready: bool) -> Path:
     # Both lines wrap: save_figure crops tight, so a line wider than the canvas
     # widens the canvas past the panel grid instead of being cut.
     y = below(band, leg, 0.10)
-    for note in (spread_note(z), COHERENCE_DEF, ELLIPSE_NOTE):
+    for note in (spread_note(z), COHERENCE_DEF):
         y = below(band, band.text(0.5, y, note, ha="center", va="top", fontsize=7.5,
                                   color=MUTED, linespacing=1.5, wrap=True), 0.10)
 
@@ -343,8 +339,8 @@ def main():
     z = dict(np.load(npz))
     assert len(z["game"]) == args.n_games, f"{npz.name} holds {len(z['game'])} games"
     assert np.allclose(z["game_coords"].mean(axis=1), z["coords"], atol=1e-5), \
-        "game_coords does not average to the drawn path: the ellipse would not be " \
-        "centred on the mean it is a CI of (a per-game refit plane would do this)"
+        "game_coords does not average to the drawn path: (b)'s in-plane series would " \
+        "not be measured in the plane (a) draws (a per-game refit plane would do this)"
     draws = np.random.default_rng(BOOT_SEED).integers(args.n_games,
                                                       size=(BOOT, args.n_games))
 

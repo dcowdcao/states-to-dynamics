@@ -21,7 +21,6 @@ CONTROL_LABEL = {1: "control: another legal move (null)",
 # is visible rather than asserted. No hue of its own: a member takes its rule's.
 MEMBER = {"lw": 0.7, "alpha": 0.38, "zorder": 2}
 MEMBER_LABEL = "one category inside a rule (within-rule spread)"
-CI_ELLIPSE_LABEL = "95% CI of the mean over games, at each path's end"
 CI_BAND_LABEL = "95% percentile bootstrap CI of the mean over games"
 CONTOUR_LABEL = "50% Gaussian contour of {n} jackknife replicates (dispersion, not a CI)"
 
@@ -69,13 +68,6 @@ def ci_band_proxy(ax) -> None:
     ax.fill_between([], [], [], color=MUTED, alpha=0.25, lw=0, label=CI_BAND_LABEL)
 
 
-def ci_ellipse_proxy(ax) -> None:
-    """The population fork's ellipses, as one legend entry. An open ring stands in
-    for the ellipse: a zero-size patch added to a 3-D axes moves the panel's limits."""
-    ax.plot([], [], ls="none", marker="o", ms=6, markerfacecolor="none",
-            markeredgecolor=MUTED, markeredgewidth=0.7, label=CI_ELLIPSE_LABEL)
-
-
 # Series first (taxonomy order, then rule order), then the panel's furniture,
 # then the nulls -- FIGURE_GUIDELINES 3 wants the reference first and nulls last.
 _SERIES = [CATEGORY_STYLE[c]["label"] for c in CATEGORIES[1:]] + list(RULE_STYLE)[1:]
@@ -90,8 +82,6 @@ def _rank(lab: str) -> int:
         return 2
     if lab == CI_BAND_LABEL:
         return 86
-    if lab == CI_ELLIPSE_LABEL:
-        return 87
     if lab == MEMBER_LABEL:
         return 88
     if lab.startswith(CONTOUR_LABEL[:24]):
