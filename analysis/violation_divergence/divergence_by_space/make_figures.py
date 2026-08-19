@@ -43,7 +43,7 @@ from spade.common.paths import results_dir
 from spade.common.study import variant_dir
 from spade.figures.branch_style import branch_style
 from spade.figures.paper_style import (
-    GRID, INK, MUTED, NULL, apply_style, rule_key, save_figure)
+    GRID, INK, MUTED, NULL, apply_style, save_figure)
 from spade.othello.taxonomy import CATEGORIES, LEGAL, RULE_MEMBERS
 
 HERE = Path(__file__).resolve().parent
@@ -59,11 +59,6 @@ MEASURES = {"plane": PLANE}
 # Drawn: the plane only. Tabulated: both, because the gap between them is how
 # much of a branch's run the fork panel actually shows, and the README quotes it.
 TABLE_MEASURES = ("plane", "full")
-# Measured on the full displacement field of this same population by
-# `spade.violation_divergence.rule_groups`; a mean over a group owes the reader
-# the spread it hides (FIGURE_GUIDELINES 1.7).
-SPREAD_RATIO = "within- ÷ between-rule spread of the displacements a rule mean " \
-               "averages: median 0.945 [IQR 0.872–1.020] (rule_groups)"
 SATURATED_R = 8  # rollout: from here the illegal/control ratio is within 0.5% of 1
 # One shared y-axis is the whole point of dividing by the control, and the r = 0
 # spike in the two SpaDE codes is ~3x the next panel's. Capping at 2 keeps the
@@ -154,7 +149,8 @@ def event_axes(ax, w: np.ndarray, rollout: bool) -> None:
 
 def spread_note(z) -> str:
     """1.7's within- ÷ between-rule spread, measured on the population drawn here.
-    Raw layer 5, the reference cell, as `rule_groups` quotes it."""
+    Raw layer 5, the reference cell, as `rule_groups` quotes it. Printed rather
+    than drawn: the figure carries no footer text, and the README quotes it."""
     r = z["spread"][0]
     q1, med, q3 = np.percentile(r, [25, 50, 75])
     return ("within- ÷ between-rule spread of the displacements a rule mean averages: "
@@ -189,15 +185,12 @@ def figure(z, variant: str, suffix: str, camera_ready: bool) -> Path:
     curves = {key: ratios(z, key) for key in MEASURES}
     nrow = int(np.ceil(len(z["space"]) / NCOL))
 
-    members = normalised(z, "plane")
     fig, axes = plt.subplots(nrow, NCOL, figsize=(CELL_W * NCOL, CELL_H * nrow),
                              sharex=True, sharey=True)
     for si, space in enumerate(z["space"]):
         ax = axes.flat[si]
         event_axes(ax, w, rollout)
         for ci, (name, rows) in enumerate(series_rows(z).items()):
-            # The members of a rule, faint behind their mean, in the plane: the
-            # reader sees the spread the mean is taken over (1.7).
             for key, how in MEASURES.items():
                 draw_series(ax, w, *mean_ci(curves[key][si, :, ci]), name, how, ci)
         ax.set_title(space, loc="left", fontsize=8)
@@ -237,9 +230,6 @@ def figure(z, variant: str, suffix: str, camera_ready: bool) -> Path:
     legend.get_title().set_fontsize(8)
     if not camera_ready:
         fig.suptitle(TITLE[variant], fontsize=11, y=0.995)
-    fig.text(0.005, 0.0, spread_note(z) if "spread" in z else SPREAD_RATIO, fontsize=7.5,
-             color=MUTED, ha="left", va="top")
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.022)
     name = "divergence_by_space" + (f"_{variant}" if rollout else "") + suffix
     return save_figure(fig, HERE / "figures" / name, camera_ready)
 
@@ -274,6 +264,8 @@ def main():
             f"{cell[(cell.series == rule) & (cell.measured_in == 'plane')].ratio.mean():5.2f}"
             f"|{cell[(cell.series == rule) & (cell.measured_in == 'full')].ratio.mean():5.2f}"
             for rule in RULE_MEMBERS))
+    if "spread" in z:
+        print(spread_note(z))
     print(f"wrote {figure(z, args.variant, suffix, args.camera_ready)} and {csv}")
 
 

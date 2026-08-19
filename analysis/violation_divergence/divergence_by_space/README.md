@@ -44,7 +44,7 @@ each branch's distance from the reference branch, **in the same 2-D PCA plane it
 panel is drawn in** (solid, filled markers), with the same distance in that cell's full
 space underneath (dotted, open markers); both divided by the same cell's own legal
 control, so the null sits at 1 on average over r ≥ 0. One curve per constraint rule, the
-mean over its member categories (n = 2, 3, 1) with the members drawn faint behind it;
+mean over its member categories (n = 2, 3, 1), with the count in the legend entry;
 `control_legal` is the null, in gray. Bands are 95% CIs of the mean over **n = 1553
 branch-complete source games** — one game is one item, so no clustering correction — and
 are about ±0.015 wide, hairline at this n. t₀ round-robins over [10, 34] and the window
@@ -79,9 +79,9 @@ claim lives carries the same reading at n = 100 as at n = 1553.
 
 The rule means hide the same amount of within-rule structure in both: the within- ÷
 between-rule spread of the displacements is a median 0.924 [IQR 0.842–0.983] over these
-100 games, above 1 in 21% of them, against 0.945 [0.872–1.020] over the whole tree. Unlike
-the whole-tree figure, which quotes `rule_groups`' published number, the twin computes that
-statistic per game inside the sweep and quotes the population it actually draws.
+100 games, above 1 in 21% of them, against 0.945 [0.872–1.020] over the whole tree. The twin's sweep computes that
+statistic per game rather than quoting `rule_groups`' whole-tree number, and
+`make_figures.py` prints it for the population drawn.
 
 ## Why the plane, and what the plane costs
 
@@ -206,8 +206,9 @@ vector-vs-scalar K reduction above, not a difference in the model's behaviour at
 - **The rule means hide a weak grouping.** `rule_groups` measures within- ÷ between-rule
   spread of the displacements at 0.945 [IQR 0.872–1.020] on this same population and
   field, i.e. a rule's members travel barely closer to each other than to another rule's.
-  The figure carries that number and draws the members faint; three confident lines
-  should not be read as three coherent classes.
+  Three confident lines should not be read as three coherent classes. That number lives
+  here and not on the figure, which carries no footer text: a deliberate departure from
+  FIGURE_GUIDELINES 1.7, which asks for it in-panel.
 - **Seed 42 only**, like the rest of the study.
 - **The rollout K reduction is the fork figures' and not F1's**, and the difference is
   unmeasured. See "The rollout variant" above.

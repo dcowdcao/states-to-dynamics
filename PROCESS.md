@@ -520,6 +520,22 @@ population is the 575 games that study selected for its probe-holdout guard, pre
 
 
 
+## divergence_by_space drops its footer text (2026-08-19)
+
+The four gray lines under the legend -- the `rule_groups` spread ratio and the R1/R2/R3
+key -- are gone from all three renders. Asked for; recorded because it is a **deliberate
+departure from FIGURE_GUIDELINES 1.7**, which asks for the within- / between-group spread
+on the figure. It now lives in README.md, and `make_figures.py` prints it for whatever
+population it drew, so it is still one command away and still measured on the games drawn.
+The rule definitions were already in the study README.
+
+Two pieces of rot went with it. `figure()` computed `members = normalised(z, "plane")`,
+never drew it, and carried a comment claiming the members were drawn faint behind their
+mean -- the README repeated the claim. Neither was true; the variable and both sentences
+are gone. If the members should be drawn, that is a change to make on purpose.
+
+---
+
 ## divergence_by_space at the shared n = 100 (2026-08-18)
 
 `--n_games N` on both scripts draws the study's shared N-game population instead of the
