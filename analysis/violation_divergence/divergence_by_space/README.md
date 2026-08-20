@@ -33,7 +33,9 @@ overwrites the whole-tree figure. n = 100 takes ~2 min.
 
 `figures/divergence_by_space.{png,pdf}` · `figures/divergence_by_space_rollout.{png,pdf}`
 · `figures/divergence_by_space_n100.png` ·
-`figures/divergence_by_space_r21_n100.{png,pdf}`
+`figures/divergence_by_space_r21_n100.{png,pdf}` ·
+`figures/divergence_by_space_rollout_n100.{png,pdf}` ·
+`figures/divergence_by_space_r21_rollout_n100.{png,pdf}`
 
 **In the plane the fork panels draw, R2 and R3 run 6–24% further from the reference than
 a legal alternative does — and roughly half of that is the plane, not the branch.** One
@@ -263,9 +265,10 @@ vector-vs-scalar K reduction above, not a difference in the model's behaviour at
   Three confident lines should not be read as three coherent classes. That number lives
   here and not on the figure, which carries no footer text: a deliberate departure from
   FIGURE_GUIDELINES 1.7, which asks for it in-panel.
-- **`--plane r21` is n = 100 and spliced only.** The whole tree would need t₀ ≥ 18 for a
-  branch-free window to exist at all (`curvature_plane.usable`), and the rollout tree's
-  K = 4 rows are averaged after φ, which is right but untested here.
+- **`--plane r21` is n = 100 in both trees.** The whole tree would need t₀ ≥ 18 for a
+  branch-free window to exist at all (`curvature_plane.usable`); the shared t₀ = 20
+  population sidesteps that. On the rollout tree the K = 4 rows are averaged after φ,
+  never before, and `measure.py` asserts Δφ collapses on both branch-free offsets.
 - **Seed 42 only**, like the rest of the study.
 - **The rollout K reduction is the fork figures' and not F1's**, and the difference is
   unmeasured. See "The rollout variant" above.

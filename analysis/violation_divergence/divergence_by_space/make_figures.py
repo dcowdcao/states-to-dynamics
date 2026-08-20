@@ -185,6 +185,8 @@ TITLE = {
                                  "the distance, in every space",
     ("r21", "spliced"): "How far the branches run with the reference subtracted in "
                         "R$^{21}$ curvature space, not in the representation",
+    ("r21", "rollout"): "With a sampled suffix, R$^{21}$'s trailing window puts the "
+                        "separation where the comparison has already saturated",
 }
 
 

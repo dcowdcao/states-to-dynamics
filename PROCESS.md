@@ -3549,6 +3549,51 @@ Rendering a worktree needs two things that are gitignored and so absent from a f
 `checkpoints/*/trainer_*/ae.pt` (symlink from `/n/home10/dcao/spade_sae/checkpoints/`) and
 `analysis/rules_manifolds/embeddings/`.
 
+## The n = 100 rollout twins of divergence_by_space (2026-08-20)
+
+`divergence_by_space` now has rollout twins of both n = 100 planes —
+`divergence_by_space_rollout_n100` and `divergence_by_space_r21_rollout_n100`, over the
+same 100 games at t₀ = 20 as the spliced pair, so the four figures are directly
+comparable. Only one thing was missing to make them: `make_figures.TITLE` had no
+`("r21", "rollout")` key. `measure.py`'s rollout path needed nothing — `paired_mean`
+reduces the K = 4 rollouts after the SAE encode and after φ, pairing each rollout against
+the reference drawn from its own stream, and both R²¹ distances were already taken in the
+column-scaled field.
+
+**The spliced conclusions survive the resampled suffix, and get larger, not smaller.** The
+ordering R2 > R3 > R1 > control holds in every cell of both planes. Raw layer 5 in the
+plane, mean over r ≥ 0, spliced → rollout: displacement R2 1.157 → 1.224, R3 1.130 →
+1.161, R1 0.989 → 1.035; R²¹ R2 1.228 → 1.425, R3 1.204 → 1.262, R1 1.040 → 1.150. In the
+full space the rollout moves R2/R3 from "CI touching 1" to just clear of it (displacement
+R2 1.022 [0.979, 1.065] → 1.047 [1.027, 1.067]). The one spliced finding that does **not**
+survive is R1: illegal placement sits 8–10% below the control in the spliced displacement
+figure (0.909) and 2% below it in the rollout (0.977).
+
+This is narrower than, not contrary to, the whole-tree rollout claim in
+`divergence_by_space/README.md` ("the branch move stops setting the distance"), which is
+about full-space ratios pooled over the nine cells and over the whole window, most of
+which is the saturated region.
+
+Two things worth keeping:
+
+- **R²¹'s peak lands inside the saturation shade.** φ's W = 8 trailing window does not fill
+  with the branch move until r = +12, which is where every cell peaks — but the rollout
+  convention shades r ≥ 8 as not-evidence. So the R²¹ rollout figure puts its whole
+  separation (mean over r ≥ 8 is 1.537 on R2 against 1.172 over r ∈ [0, 8)) in the region
+  the figure itself disclaims. `SATURATED_R = 8` was measured on δ̂, not on a descriptor
+  that smears one ply over seven; the two are not the same axis and the figure does not
+  say so.
+- **The two whole-tree PDFs do not re-render byte-identically**, and it is not a data
+  change: `divergence_by_space.pdf` and `divergence_by_space_rollout.pdf` were committed
+  without `SOURCE_DATE_EPOCH`, so they carry a wall-clock `/CreationDate`. Every byte
+  before that field matches; the newer `_r21_n100.pdf` (built with it) is exact. Every PNG
+  and every CSV re-renders exactly.
+- **The sweep does not fit on a login node while other agents are resident.** The rollout
+  act tensor is 8.35 GB and the r21 pass runs ~9 minutes; under the shared 8 GiB cgroup
+  cap it was OOM-killed three times at only 1.6 GB RSS, because the mmap's page cache is
+  counted too. It needs the cgroup's `anon` below ~6.3 GB to survive, or a batch job.
+
+
 ## Step length at the fork, on the rollout branch set (2026-08-20)
 
 `analysis/violation_divergence/step_length_fork` grew `--variant {spliced,rollout}` on both
@@ -3592,3 +3637,5 @@ figure is read against.
 CosineSpaDE — the whole-user cgroup is ~8 GB and two sibling rollout sweeps were running.
 `CHUNK` is now divided by K, so a chunk holds the same feature block on either tree; the
 run then takes 234 s for 100 games x 9 spaces.
+
+
