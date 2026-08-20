@@ -3232,3 +3232,41 @@ CSV moves from n = 2000 to n = 2003 per category. The committed artifacts predat
 `extend_branches`. No number the READMEs quote changes past the fourth decimal
 (`ratio_illegal_control_L5` 0.9797 -> 0.9798 spliced, 1.0016 unchanged on the rollout
 tree), but the diff on the CSVs is larger than the diff on the figure text.
+
+## The board read-out moves to the canonical probe
+
+`probe_readout/decode.py` now calls `spade.probes.load.board(5)`. The `--probe` flag is
+gone: it existed only because `analysis/linear_probe/activations/linear_probe.pt` was
+gitignored, and the canonical probe reads `$SPADE_PROBES_DIR` from any worktree.
+
+**The control that makes the diff readable.** The committed CSVs were stale twice over —
+old probe *and* a 2000-game `branches.pt` that `extend_branches` later rebuilt at 3923.
+So the old probe was re-run on the current branch set first, and the two effects
+separate cleanly: the branch-set doubling moves nothing (reference decode accuracy at
+*r* = 0 0.9946 → 0.9954, `empty_detached` `p_mover_colour_r0` 0.8298 → 0.8278, recolor
+excess +0.660 → +0.660, median persistence 16 → 17 plies), and the probe swap moves
+everything (0.9954 → 0.9996, 0.828 → 0.994, +0.660 → +0.752, 17 → 24 plies). The
+control CSVs are not committed; the run is
+`/n/netscratch/ba_lab/Lab/dcao/na_readout_logs/control_decode.sbatch`.
+
+The retired ARENA probe was accurate enough to say a disc was *there* and not accurate
+enough to say what *colour* it was: every `p_disc` number moves by <0.02 while every
+`p_mover_colour` number moves by up to 0.17. That is why `occupied_opp`'s recolor margin
+and the empty-square colour reads shift and the headline "the disc is written and it
+stays" does not.
+
+`r` = 0 is byte-identical between the spliced and rollout trees — the rollout copies
+`tokens[:t0+1]` — so every contract key at `r` = 0 matches to the last digit across the
+two variants. That is a construction check, not a coincidence.
+
+## `analysis/linear_probe/` is a historical record, not a live study
+
+Left pointed at its own ARENA sweep rather than repointed at
+`$SPADE_PROBES_DIR/probes/board_layer_sweep.csv`. The canonical sweep is single-seed
+(42) and carries only `layer, best_epoch, epochs_run, val_accuracy, test_accuracy` — no
+embedding-space row, no majority-class null, and the canonical corpus holds no embedding
+activations to compute one from. Drawing it on `layer_sweep_accuracy`'s axes would
+delete the ±1 SD seed bars (§1.2), the input anchor (§4.1) and the null (§3): a
+redesign, not a repoint. `train_linear_probe.py` stays because it also writes the ARENA
+activation cache `spade.rules.causal.unflip_edit` and four `bracket_flip` modules read.
+The README and both scripts now say so at the top.

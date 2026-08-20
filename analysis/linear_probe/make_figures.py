@@ -1,5 +1,9 @@
 """The layer-sweep figure: where in OthelloGPT's residual stream the board is linearly read.
 
+Historical, and drawn from this study's own ARENA sweep. The canonical sweep
+(`$SPADE_PROBES_DIR/probes/board_layer_sweep.csv`) is single-seed and carries no
+embedding row and no null, so it cannot be drawn on these axes; README.md says why.
+
 Drawing only; everything comes from results/layer_sweep.csv.
 
 Two panels because two things are being claimed and they need different scales. (a) is

@@ -1,10 +1,15 @@
-"""Train the gold-standard linear board-state probe on OthelloGPT residual activations.
+"""Historical: the ARENA-corpus probe fit, superseded by `spade.probes.train`.
+
+Kept because it also writes the ARENA activation cache the bracket-flip, rules and
+geometry code still reads. Its probe is not the project's board probe any more --
+`spade.probes.load.board(5)` is -- and its 200/500-epoch budgets have no convergence
+criterion, which is what `spade.probes.train` exists to fix. See README.md.
 
 Extracts resid_post from the Li et al. OthelloGPT (the model Karvonen's SAEs were trained
 on) across 200 ARENA games, sweeps the embedding space and all 8 layers with quick probes
 over several initialisation seeds, then trains the full probe on the best layer.
-`linear_probe.pt` of shape [512, 8, 8, 3] is reused as ground truth across the geometry
-studies.
+`linear_probe.pt` of shape [512, 8, 8, 3] was the ground truth the geometry studies used
+before the port.
 
 Labels are mover-relative ({empty, theirs, mine}), and the mover is the player who actually
 moves next (`spade.othello.boards.next_mover`), never move-index parity: Othello skips a

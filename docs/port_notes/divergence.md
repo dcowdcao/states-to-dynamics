@@ -94,11 +94,6 @@ now.
 
 ## Things ported as-is that a reader should question
 
-- `probe_readout/decode.py` defaults `--probe` to
-  `repo_root()/analysis/linear_probe/activations/linear_probe.pt`, which is gitignored
-  and absent from this worktree. The path logic is unchanged; **the script cannot run
-  here** until that 220 MB directory is copied by hand (MIGRATION, "Things git will not
-  move for you").
 - `analysis/violation_divergence/make_figures.py`'s docstring still advertises F1 as
   "event-locked delta-hat and M2's cosines". The two cosine panels were deleted; the
   code comment inside `f1_divergence_layer5` says so and the docstring was never

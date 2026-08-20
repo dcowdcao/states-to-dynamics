@@ -27,7 +27,7 @@ import pandas as pd
 
 from spade.common.paths import results_dir
 from spade.figures.paper_style import (
-    CATEGORY_STYLE, GRID, INK, MUTED, NULL, REFERENCE, apply_style, rule_key, save_figure)
+    CATEGORY_STYLE, GRID, INK, MUTED, NULL, REFERENCE, apply_style, save_figure)
 from spade.violation_divergence.divergence import WINDOW
 
 RESULTS = results_dir("violation_divergence")
@@ -54,8 +54,6 @@ def curve(ax, df: pd.DataFrame, style: dict, label: str, offset: int = 0, **kw) 
 def event_axes(ax, ylabel: str, letter: str, title: str, ylim=(-0.03, 1.05)) -> None:
     ax.axvspan(WINDOW[0], 0, color=GRID, alpha=0.45, zorder=0)
     ax.axvline(0, color=MUTED, ls=(0, (4, 3)), lw=0.8, zorder=1)
-    ax.text(0.04, 0.5, "shared prefix — branches coincide by construction",
-            transform=ax.transAxes, fontsize=7, color=MUTED, va="center", ha="center", rotation=90)
     ax.set_xlabel("position relative to the branch move, $r = s - t_0$")
     ax.set_ylabel(ylabel)
     ax.set_xlim(WINDOW[0], WINDOW[-1])
@@ -74,7 +72,7 @@ def curve_legend(ax, **kw) -> None:
               alignment="left", **kw)
 
 
-def occupancy_panel(ax, square: pd.DataFrame, notes: bool) -> None:
+def occupancy_panel(ax, square: pd.DataFrame, in_panel_legend: bool) -> None:
     p = square[square.metric == "p_disc"]
     illegal = p[p.role == "illegal"]
     for i, category in enumerate(EMPTY_SQUARE_CATEGORIES):
@@ -90,16 +88,11 @@ def occupancy_panel(ax, square: pd.DataFrame, notes: bool) -> None:
     curve(ax, pooled[pooled.role == "control"], NULL,
           "control_legal branch, same square (coincides)", offset=3,
           ls=NULL["ls"], lw=NULL["lw"], zorder=4)
-    if not notes:
-        return
-    ax.annotate("nothing played here — both anchors rise\nonly as the shared suffix "
-                "fills the square",
-                xy=(20, 0.55), xytext=(0.5, 0.33), fontsize=7, color=MUTED, va="bottom",
-                arrowprops={"arrowstyle": "-", "color": MUTED, "lw": 0.6})
-    curve_legend(ax, loc="center left", bbox_to_anchor=(0.28, 0.62))
+    if in_panel_legend:
+        curve_legend(ax, loc="center left", bbox_to_anchor=(0.28, 0.62))
 
 
-def recolor_panel(ax, square: pd.DataFrame, notes: bool) -> None:
+def recolor_panel(ax, square: pd.DataFrame, in_panel_legend: bool) -> None:
     p = square[square.metric == "p_mover_colour"]
     for i, category in enumerate(OCCUPIED_CATEGORIES):
         short = CATEGORY_STYLE[category]["label"].removeprefix("R1 ")
@@ -109,18 +102,8 @@ def recolor_panel(ax, square: pd.DataFrame, notes: bool) -> None:
         curve(ax, p[(p.category == category) & (p.role == "reference")],
               CATEGORY_STYLE[category], f"{short}, reference branch",
               offset=i + 3, ls=(0, (1, 1.4)), lw=1.3, zorder=3)
-    if not notes:
-        return
-    gap = p[(p.category == "occupied_opp") & (p.r == 0)].set_index("role")["mean"]
-    ax.annotate("", xy=(0.7, gap["illegal"]), xytext=(0.7, gap["reference"]),
-                arrowprops={"arrowstyle": "<->", "color": MUTED, "lw": 0.8})
-    ax.annotate(f"recolor: {gap['illegal'] - gap['reference']:+.2f} at $r$ = 0 against "
-                "the\nreference branch on the same square",
-                xy=(1.2, gap.mean()), xytext=(24, 0.24), fontsize=7, color=MUTED,
-                ha="right", va="top", arrowprops={"arrowstyle": "-", "color": MUTED, "lw": 0.6})
-    ax.text(24, 0.99, "no-op: occupied (own) tracks\nits own reference anchor", fontsize=7,
-            color=MUTED, ha="right", va="top")
-    curve_legend(ax, loc="lower left", bbox_to_anchor=(0.02, 0.30))
+    if in_panel_legend:
+        curve_legend(ax, loc="lower left", bbox_to_anchor=(0.02, 0.30))
 
 
 def main():
@@ -149,18 +132,13 @@ def main():
 
     fig.tight_layout()
     if not spliced:
-        # The in-panel legends and annotations are placed against the spliced
-        # curves; here the anchors move, so both legends go under the figure.
+        # The in-panel legends are placed against the spliced curves; here the
+        # anchors move, so both legends go under the figure.
         for i, ax in enumerate(axes):
             handles, labels = ax.get_legend_handles_labels()
             fig.legend(handles, labels, loc="upper left", fontsize=7,
                        bbox_to_anchor=(0.04 + 0.5 * i, -0.02), title=ESTIMATOR["rollout"],
                        title_fontsize=7, alignment="left")
-        fig.text(0.5, -0.36, "the sampled reference's board ends at its first illegal "
-                 "move: 1.1% of window positions have no board and are dropped, so n "
-                 "falls with $r$.",
-                 ha="center", va="top", fontsize=7.5, color=MUTED, style="italic")
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.01 if spliced else -0.42)
     print(save_figure(fig, FIGURES / figure, camera_ready=args.camera_ready))
 
 
