@@ -1,11 +1,7 @@
-"""Step 5: fit the legality probe in each space, read it out over the branch window, write
-the two CSVs the figures consume.
+"""Step 5: read the fitted legality probes out over the branch window and write readout.csv.
 
-Four probes per space on one held-out split. `legality` is the study's 4-way target;
-`board` is the 3-class occupancy `bracket_flip/sae_arm.py` fits, kept because reproducing
-that arm is this pipeline's cross-check; `legality_wrong_player` (the same labels computed
-for the player who just moved) and `legality_shuffled` are the two floors that show the
-*level* of a legality read-out is not a result.
+The probes come from `fit_probes`, which fits and saves them; nothing is fitted here. Each
+space is read out with its own `legality` probe, the 4-way target.
 
 The read-out scores every branch of a game against ONE target: the reference game's labels
 at t0 + r, in the reference game's own mover frame. After an illegal move whose turn it is
@@ -32,61 +28,31 @@ import argparse
 import json
 from collections import Counter
 from dataclasses import dataclass
-from functools import lru_cache
 
 import numpy as np
 import pandas as pd
 import torch
 
-from spade.bracket_flip import tpr_probe
 from spade.common.device import select_device
 from spade.common.paths import repo_root
 from spade.common.study import study_dir
 from spade.legality_probe import probe as legality_probe
 from spade.legality_probe import spaces
-from spade.legality_probe.fit_set import N_TRAIN
-from spade.legality_probe.labels import (
-    LABEL_OF_CATEGORY, STARTING_SQUARES, board_labels, disc_labels, opponent_labels)
+from spade.legality_probe.bootstrap import (
+    boot_ci, by_game, ci, f1_of, per_game, resample, tally)
+from spade.legality_probe.labels import LABEL_OF_CATEGORY, STARTING_SQUARES, board_labels
 from spade.othello.taxonomy import CATEGORIES, LEGAL, RULE_MEMBERS, RULE_OF, classify_all
+from spade.probes.tpr import TPR
 from spade.violation_divergence.branches import role
 from spade.violation_divergence.divergence import WINDOW
 
 from circuits.othello_engine_utils import OthelloBoardState, to_string
 
-N_BOOT = 1000
 R0 = WINDOW.index(0)
-BOARD_CLASSES = ("empty", "theirs", "mine")
 EMPTY_CATEGORIES = ["empty_detached", "empty_own_only", "empty_no_bracket", "opponent_only"]
 NON_START = np.array(sorted(set(range(64)) - set(STARTING_SQUARES)))
 SMOKE_GAMES = 50
-FIT_COLUMNS = ["space", "d_space", "target", "n_classes", "filler_dim",
-               "metric", "class", "value", "lo", "hi", "n"]
 READOUT_COLUMNS = ["space", "category", "rule", "role", "r", "metric", "mean", "lo", "hi", "n"]
-
-
-# ---------------------------------------------------------------- bootstrap over games
-
-@lru_cache(maxsize=None)
-def resample_counts(n: int, seed: int = 0) -> np.ndarray:
-    """One bootstrap design per sample size, shared by every space and every metric -- which
-    is what makes `excess_macro_f1` and `macro_f1_minus_raw` paired rather than a difference
-    of two independent intervals."""
-    rng = np.random.default_rng(seed)
-    return rng.multinomial(n, np.full(n, 1 / n), size=N_BOOT).astype(np.float32)
-
-
-def boot_ci(values: np.ndarray) -> tuple[np.ndarray, ...]:
-    """Mean and percentile 95% CI over source games (axis 0), per column.
-
-    Resampling as multinomial row counts rather than an index array: the same draw, but a
-    [N_BOOT, n] @ [n, k] matmul instead of an [N_BOOT, n, k] gather.
-    """
-    valid = np.isfinite(values).astype(np.float32)
-    counts = resample_counts(len(values))
-    with np.errstate(invalid="ignore", divide="ignore"):
-        draws = (counts @ np.nan_to_num(values).astype(np.float32)) / (counts @ valid)
-        mean = np.nansum(values, axis=0) / valid.sum(0)
-        return (mean, *np.nanpercentile(draws, [2.5, 97.5], axis=0))
 
 
 def series(values: np.ndarray, **keys) -> list[dict]:
@@ -95,153 +61,6 @@ def series(values: np.ndarray, **keys) -> list[dict]:
     return [{**keys, "r": r, "mean": mean[j], "lo": lo[j], "hi": hi[j],
              "n": int(np.isfinite(values[:, j]).sum())}
             for j, r in enumerate(WINDOW)]
-
-
-def resample(counts: np.ndarray) -> np.ndarray:
-    """[N_BOOT, ...] re-pooled (tp, fp, fn) totals. F1 is a ratio of sums, so a resample
-    re-pools the counts instead of averaging a per-game statistic."""
-    draws = resample_counts(len(counts))
-    return (draws @ counts.reshape(len(counts), -1).astype(np.float32)
-            ).reshape(N_BOOT, *counts.shape[1:])
-
-
-def f1_of(counts: np.ndarray) -> np.ndarray:
-    """Per-class F1 from [..., 3, C] of (tp, fp, fn); an absent class scores 0, which is
-    upstream's `macro_f1_score` definition and `probe.macro_f1`'s."""
-    tp, fp, fn = counts[..., 0, :], counts[..., 1, :], counts[..., 2, :]
-    denominator = 2 * tp + fp + fn
-    return np.where(denominator > 0, 2 * tp / np.where(denominator > 0, denominator, 1), 0.0)
-
-
-def recall_of(counts: np.ndarray) -> np.ndarray:
-    tp, fn = counts[..., 0, :], counts[..., 2, :]
-    return np.where(tp + fn > 0, tp / np.where(tp + fn > 0, tp + fn, 1), 0.0)
-
-
-def accuracy_of(counts: np.ndarray) -> np.ndarray:
-    """Every square carries exactly one class, so the true totals are tp + fn."""
-    tp, fn = counts[..., 0, :], counts[..., 2, :]
-    return tp.sum(-1) / (tp + fn).sum(-1)
-
-
-def tally(preds: np.ndarray, truth: np.ndarray, n_classes: int) -> np.ndarray:
-    """(tp, fp, fn) per class over the squares axis: [..., 64] -> [..., 3, n_classes]."""
-    out = np.empty((*preds.shape[:-1], 3, n_classes), dtype=np.int32)
-    for c in range(n_classes):
-        predicted, actual = preds == c, truth == c
-        out[..., 0, c] = (predicted & actual).sum(-1)
-        out[..., 1, c] = (predicted & ~actual).sum(-1)
-        out[..., 2, c] = (~predicted & actual).sum(-1)
-    return out
-
-
-def by_game(values: np.ndarray, game: np.ndarray, n_games: int) -> np.ndarray:
-    """Sum each game's rows. `game` is non-decreasing -- rows are grouped by game and no
-    span splits one -- so this is a segmented reduction, not a scatter."""
-    assert (np.diff(game) >= 0).all(), "rows are not grouped by game"
-    present, start = np.unique(game, return_index=True)
-    out = np.zeros((n_games, *values.shape[1:]), dtype=values.dtype)
-    out[present] = np.add.reduceat(values, start, axis=0)
-    return out
-
-
-def per_game(values: np.ndarray, game: np.ndarray, n_games: int) -> np.ndarray:
-    """Mean over each game's rows, NaN for games with none -- the bootstrap's unit."""
-    total = by_game(values.astype(np.float64), game, n_games)
-    count = by_game(np.ones((len(values), 1)), game, n_games)
-    with np.errstate(invalid="ignore"):
-        return np.where(count > 0, total / count, np.nan)
-
-
-def ci(draws: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    lo, hi = np.percentile(draws, [2.5, 97.5], axis=0)
-    return lo, hi
-
-
-# ---------------------------------------------------------------- the four probe targets
-
-@dataclass(frozen=True)
-class Target:
-    labels: torch.Tensor  # [n, 64] class indices, train rows first
-    classes: tuple[str, ...]
-    filler_dim: int
-
-
-def targets() -> tuple[dict[str, Target], np.ndarray]:
-    """The four fit-set targets and each row's source game.
-
-    `board` and `legality_wrong_player` are derived here by replaying the saved tokens;
-    the fit set stores only the mover-frame legality labels.
-    """
-    d = study_dir("legality") / "fit_set"
-    tokens = torch.load(d / "tokens.pt", weights_only=True).long()
-    legality = torch.load(d / "labels.pt", weights_only=True).long()
-    position = torch.load(d / "position.pt", weights_only=True).long()
-    game = torch.load(d / "game_id.pt", weights_only=True).long().numpy()
-
-    board = np.empty((len(position), 64), dtype=np.int8)
-    wrong = np.empty_like(board)
-    for i, (g, p) in enumerate(zip(game, position.tolist())):
-        state = OthelloBoardState()
-        state.update(to_string(tokens[g, : p + 1].tolist()))
-        board[i], wrong[i] = disc_labels(state), opponent_labels(state)
-
-    permutation = torch.randperm(N_TRAIN, generator=torch.Generator().manual_seed(0))
-    classes, filler = legality_probe.CLASSES, legality_probe.FILLER_DIM
-    return {
-        "legality": Target(legality, classes, filler),
-        "board": Target(torch.from_numpy(board).long(), BOARD_CLASSES, tpr_probe.FILLER_DIM),
-        "legality_wrong_player": Target(torch.from_numpy(wrong).long(), classes, filler),
-        "legality_shuffled": Target(
-            torch.cat([legality[permutation], legality[N_TRAIN:]]), classes, filler),
-    }, game
-
-
-def decode_argmax(probe: legality_probe.LegalityProbe, acts: torch.Tensor,
-                  device: str) -> np.ndarray:
-    return torch.cat([probe.decode(acts[i:i + legality_probe.EVAL_BATCH].to(device)).argmax(-1).cpu()
-        for i in range(0, len(acts), legality_probe.EVAL_BATCH)]).numpy().astype(np.int8)
-
-
-def fit_rows(space: str, name: str, target: Target, code: torch.Tensor, game: np.ndarray,
-             device: str) -> tuple[legality_probe.LegalityProbe, list[dict]]:
-    probe = legality_probe.fit(code[:N_TRAIN].float(), target.labels[:N_TRAIN],
-                               filler_dim=target.filler_dim, classes=target.classes,
-                               device=device)
-    held, truth = code[N_TRAIN:].float(), target.labels[N_TRAIN:]
-    scores = legality_probe.macro_f1(probe, held, truth)
-
-    n_classes = len(target.classes)
-    _, eval_game = np.unique(game[N_TRAIN:], return_inverse=True)
-    n_games = int(eval_game.max()) + 1
-    preds, truth = decode_argmax(probe, held, device), truth.numpy()
-    counts = by_game(tally(preds, truth, n_classes), eval_game, n_games)
-    pooled, boot = counts.sum(0), resample(counts)
-    assert abs(f1_of(pooled).mean() - scores.macro_f1) < 1e-6, "counts disagree with probe.macro_f1"
-    assert abs(accuracy_of(pooled) - scores.accuracy) < 1e-5, "counts disagree with the accuracy"
-
-    keys = {"space": space, "d_space": code.shape[-1], "target": name,
-            "n_classes": n_classes, "filler_dim": target.filler_dim, "n": n_games}
-    rows = [{**keys, "metric": "macro_f1", "class": "", "value": f1_of(pooled).mean(),
-             **dict(zip(("lo", "hi"), ci(f1_of(boot).mean(-1))))},
-            {**keys, "metric": "accuracy", "class": "", "value": accuracy_of(pooled),
-             **dict(zip(("lo", "hi"), ci(accuracy_of(boot))))}]
-    for metric, statistic in (("per_class_f1", f1_of), ("per_class_recall", recall_of)):
-        point, draws = statistic(pooled), statistic(boot)
-        rows += [{**keys, "metric": metric, "class": c, "value": point[i],
-                  **dict(zip(("lo", "hi"), ci(draws[:, i])))}
-                 for i, c in enumerate(target.classes)]
-    if "R1" in target.classes:
-        # 4 of 64 squares are the starting squares: R1 by construction, and readable off the
-        # role embedding alone. Same metrics over the 60 squares a move can be played on.
-        i = target.classes.index("R1")
-        open_counts = by_game(tally(preds[..., NON_START], truth[..., NON_START], n_classes),
-                              eval_game, n_games)
-        open_pooled, open_boot = open_counts.sum(0), resample(open_counts)
-        rows += [{**keys, "metric": metric, "class": "R1_no_start", "value": statistic(open_pooled)[i],
-                  **dict(zip(("lo", "hi"), ci(statistic(open_boot)[:, i])))}
-                 for metric, statistic in (("per_class_f1", f1_of), ("per_class_recall", recall_of))]
-    return probe, rows
 
 
 # ---------------------------------------------------------------- the branch window
@@ -321,12 +140,12 @@ def window(meta: dict, skips: Counter) -> Window:
 
 
 def decode_window(name: str, entry, branch: torch.Tensor, game_id: torch.Tensor,
-                  probe: legality_probe.LegalityProbe, device: str) -> np.ndarray:
+                  probe: TPR, device: str) -> np.ndarray:
     """[rows, 33, 64] int8 argmax, one `spans` batch at a time so the [rows, 33, d] code
     never exists whole, with the prefix check section C depends on."""
     preds = np.empty((len(branch), len(WINDOW), 64), dtype=np.int8)
     for rows, code in spaces.stream_branch(name, entry, branch, game_id, device):
-        span = probe.decode(code.to(device).float()).argmax(-1).to(torch.int8).cpu()
+        span = probe(code.to(device).float()).argmax(-1).to(torch.int8).cpu()
         assert spaces.prefix_bitwise(span, game_id[rows]), \
             f"{name}: branches of a game do not decode identically before t0"
         preds[rows] = span.numpy()
@@ -421,7 +240,6 @@ def main() -> None:
     device = select_device()
     latents = study_dir("legality") / "latents"
     fingerprint = spaces.fingerprint(spaces.probe_acts())
-    target, fit_game = targets()
 
     meta = torch.load(study_dir("divergence") / "branches" / "branches.pt", weights_only=True)
     branch, game_id = spaces.branch_window()
@@ -442,50 +260,37 @@ def main() -> None:
         chosen = [s for s in chosen if s[0] in keep]
     assert chosen[0][0] == "raw", "raw runs first: every other space is scored against it"
 
-    fit, readout, raw_preds, baseline = [], [], None, Baseline({}, {})
+    readout, raw_preds, baseline = [], None, Baseline({}, {})
     for name, entry in chosen:
         row = json.loads((latents / f"row_{name}.json").read_text())
         assert row["probe_fingerprint"] == fingerprint, (
             f"{latents}/probe_{name}.pt encodes probe set {row['probe_fingerprint']}, not the "
             f"current {fingerprint}; re-run spade.legality_probe.spaces rather than mixing the two")
-        code = torch.load(latents / f"probe_{name}.pt", map_location="cpu", weights_only=True)
+        probe = legality_probe.load(name, "legality").to(device)
+        card = legality_probe.card(name, "legality")
+        assert card["probe_fingerprint"] == fingerprint, (
+            f"{legality_probe.path(name, 'legality')} was fit on probe set "
+            f"{card['probe_fingerprint']}, not the current {fingerprint}; re-run "
+            "spade.legality_probe.fit_probes")
 
-        probes = {}
-        for arm, spec in target.items():
-            probes[arm], rows = fit_rows(name, arm, spec, code, fit_game, device)
-            fit += rows
-            print(f"{name:28} {arm:22} macro_f1 {rows[0]['value']:.4f}  "
-                  f"acc {rows[1]['value']:.4f}", flush=True)
-        del code
-
-        preds = decode_window(name, entry, branch, game_id, probes["legality"], device)
+        preds = decode_window(name, entry, branch, game_id, probe, device)
         raw_preds = preds if raw_preds is None else raw_preds
         rows, mine = readout_rows(name, preds, raw_preds, w, baseline)
         baseline = mine if name == "raw" else baseline
         readout += rows
-        print(f"{name:28} read out over {len(branch)} branches", flush=True)
+        print(f"{name:28} test macro_f1 {card['test_macro_f1']:.4f}, "
+              f"read out over {len(branch)} branches", flush=True)
 
-    fit = pd.DataFrame(fit)[FIT_COLUMNS]
     readout = pd.DataFrame(readout)[READOUT_COLUMNS]
     out = study_dir("legality") / "smoke" if args.smoke \
         else repo_root() / "analysis" / "legality_probe" / "results"
     out.mkdir(parents=True, exist_ok=True)
-    fit.to_csv(out / "probe_fit.csv", index=False)
     readout.to_csv(out / "readout.csv", index=False)
-    print(f"wrote {out}/probe_fit.csv ({len(fit)} rows), {out}/readout.csv ({len(readout)} rows)")
-    report(fit, readout)
+    print(f"wrote {out}/readout.csv ({len(readout)} rows)")
+    report(readout)
 
 
-def report(fit: pd.DataFrame, readout: pd.DataFrame) -> None:
-    macro = fit[(fit.metric == "macro_f1")].pivot(index="space", columns="target", values="value")
-    print("\nheld-out macro-F1 by arm\n", macro.to_string())
-
-    arm = pd.read_csv(repo_root() / "analysis" / "bracket_flip" / "results" / "sae_arm.csv")
-    board = fit[(fit.target == "board") & (fit.metric == "accuracy")].set_index("space")["value"]
-    cross = arm.set_index("space")[["acc_rel_L5"]].join(board.rename("board_accuracy"), how="inner")
-    cross["delta"] = cross["board_accuracy"] - cross["acc_rel_L5"]
-    print("\nboard arm vs analysis/bracket_flip/results/sae_arm.csv\n", cross.to_string())
-
+def report(readout: pd.DataFrame) -> None:
     reference = readout[(readout.role == "reference") & (readout.metric == "macro_f1")
                         & (readout.space == "raw")]
     assert reference["mean"].min() > 0.7, \
