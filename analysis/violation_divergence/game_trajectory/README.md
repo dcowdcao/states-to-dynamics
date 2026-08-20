@@ -125,11 +125,10 @@ which it does not.
 The figure carries no prose. What a reader needs in order not to over-read it is
 here (FIGURE_GUIDELINES §2, §5); what stays inside the figure is the apparatus
 that cannot be looked up while looking at it — panel titles and letters, axis
-labels, the legend, the in-panel "0 by construction" annotation (§4.2), the
-R1/R2/R3 key naming each rule's member categories (§5), (c)'s estimator and drawn
-window on (c)'s own x axis, and **one line saying game 1235 was selected**, which
-is the one fact whose absence changes how the panels read. The rollout variant's
-thirteen-line caveat used to sit inside the δ̂ panel's pre-branch band; it is in
+labels, the legend, and (c)'s estimator and drawn window on (c)'s own x axis.
+**That game 1235 was selected** is the one fact whose absence changes how the
+panels read, and it is the paragraph below. The rollout variant's thirteen-line
+caveat used to sit inside the δ̂ panel's pre-branch band; it is in
 *[The rollout variant](#the-rollout-variant)* below and nowhere else.
 
 ### `game_1235_fork_pca`
@@ -162,8 +161,8 @@ branch-complete games, of the mutual separation of its six illegal displacement
 trajectories, scored in raw layer 5 in the full 512-dimensional space and never in
 an SAE space or a 2-D projection (`../game_selection`). Population median 0.705;
 this game 1.080. A reader who does not know the game was chosen will over-read the
-panels, so the figure carries this as one line under the legend, drawn only for
-the default game.
+panels, so read the figure with this paragraph beside it: it is nowhere in the
+graphic.
 
 **n = 1: an illustration of the design, not a claim.** The per-position wobble in
 (b) is real variation in this game, not noise the aggregate figures smoothed away.

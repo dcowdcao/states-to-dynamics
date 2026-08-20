@@ -49,8 +49,7 @@ from spade.common.config import CTX_LEN
 from spade.common.paths import results_dir
 from spade.common.study import variant_dir
 from spade.figures.paper_style import (
-    CATEGORY_STYLE, GRID, INK, MUTED, NULL, REFERENCE, apply_style, rule_key,
-    save_figure)
+    CATEGORY_STYLE, GRID, INK, MUTED, NULL, REFERENCE, apply_style, save_figure)
 from spade.othello.boards import regular_moves, replay, tokens_of
 from spade.violation_divergence.branches import role
 from spade.violation_divergence.compute_divergence import group_key, pairs
@@ -326,12 +325,10 @@ def panel_letter(ax, i: int) -> None:
             color=INK, fontsize=9)
 
 
-def pre_event(ax, note: str, y: float) -> None:
-    """The r < 0 baseline window: shaded, named, and said to be zero by construction."""
+def pre_event(ax) -> None:
+    """The r < 0 baseline window, shaded, with the branch move at 0."""
     ax.axvspan(WINDOW[0], 0, color=GRID, alpha=0.45, lw=0, zorder=0)
     ax.axvline(0, color=MUTED, lw=0.9, ls=(0, (4, 3)), zorder=1)
-    ax.text(WINDOW[0] + 0.4, y, f"$r<0$: {note}", transform=ax.get_xaxis_transform(),
-            va="top", ha="left", fontsize=7.5, color=MUTED)
 
 
 def curve(ax, c: pd.DataFrame, style: dict, label: str) -> None:
@@ -391,10 +388,8 @@ def legal_panel(ax, curve_data: pd.DataFrame, control_own_board: float, k: int,
     reference = curve_data[curve_data.branch == "reference"].reset_index(drop=True)
     baseline = float(reference.legal_mass_mean[PRE].mean())
     ax.axhline(baseline, color=MUTED, lw=0.8, ls=(0, (1, 2)), zorder=1)
-    ax.plot(reference.r, reference.legal_chance, color=MUTED, lw=0.8, ls=(0, (1, 2)), zorder=1)
-    ax.text(WINDOW[0] + 0.4, float(reference.legal_chance.iloc[0]) + 0.04,
-            f"uniform over the {SQUARES} squares (chance)", va="bottom", ha="left",
-            fontsize=7.5, color=MUTED)
+    ax.plot(reference.r, reference.legal_chance, color=MUTED, lw=0.8, ls=(0, (1, 2)),
+            zorder=1, label=f"uniform over the {SQUARES} squares (chance)")
     pooled = curve_data[curve_data.branch == "illegal_pooled"].reset_index(drop=True)
     low = int(pooled.legal_mass_mean.where(pooled.r >= 0).idxmin())
     control = curve_data[curve_data.branch == "control_legal"].reset_index(drop=True)
@@ -422,24 +417,16 @@ F6_TITLE = {
 }
 
 
-def f6(curve_data: pd.DataFrame, control_own_board: float, odd_r_parity: float,
-       variant: str, k: int, left_legal: float, camera_ready: bool) -> None:
+def f6(curve_data: pd.DataFrame, control_own_board: float, variant: str, k: int,
+       left_legal: float, camera_ready: bool) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(11.0, 5.2))
     kl_panel(axes[0], curve_data, k, variant)
     legal_panel(axes[1], curve_data, control_own_board, k, variant)
-    for i, (ax, note, y) in enumerate(zip(axes, ("zero by construction",
-                                                "identical by construction"), (0.965, 0.88))):
-        pre_event(ax, note, y)
+    for i, ax in enumerate(axes):
+        pre_event(ax)
         panel_letter(ax, i)
         ax.set_xlabel("move offset $r = s - t_0$ (plies since the branch move)")
         ax.set_xlim(WINDOW[0], WINDOW[-1] + 0.4)
-    # The sawtooth is structure, not noise, so §4.2 wants it named on the panel.
-    axes[0].text(0.02, 0.17, "the sawtooth is turn parity, not noise: at odd $r$ the "
-                 f"branch's\ncolour moves again ({odd_r_parity:.1%} of window positions)"
-                 if variant == "spliced" else
-                 "no sawtooth: the branches no longer share a suffix, so turn\n"
-                 f"parity is not aligned ({odd_r_parity:.1%} at odd $r$)",
-                 transform=axes[0].transAxes, ha="left", va="top", fontsize=7.5, color=MUTED)
     handles, labels = axes[1].get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 0.04), ncol=4,
                fontsize=8, title_fontsize=8,
@@ -454,7 +441,6 @@ def f6(curve_data: pd.DataFrame, control_own_board: float, odd_r_parity: float,
     if not camera_ready:
         fig.suptitle(F6_TITLE[variant], y=1.0)
     fig.tight_layout()
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.17)
     save_figure(fig, FIGURES / stem("f6_behavioral_divergence", variant), camera_ready)
 
 
@@ -503,9 +489,8 @@ def main() -> None:
                       float_format="%.6g")
     table.to_csv(RESULTS / f"{stem('behavioral_summary', variant)}.csv", index=False,
                  float_format="%.6g")
-    f6(curve_data, extra["legal_mass_control_own_board_r0"],
-       extra["same_mover_as_branch_odd_r"], variant, k, left_legal_frac,
-       args.camera_ready)
+    f6(curve_data, extra["legal_mass_control_own_board_r0"], variant, k,
+       left_legal_frac, args.camera_ready)
     print(table[table.branch.isin(["illegal_pooled", "control_legal", "reference", "all"])]
           .to_string(index=False))
 

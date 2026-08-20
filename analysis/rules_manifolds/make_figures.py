@@ -19,13 +19,12 @@ import numpy as np
 
 from spade.figures.embedding_panels import class_cloud, continuous_cloud
 from spade.figures.paper_style import (
-    CATEGORY_STYLE, INK, RULE_STYLE, apply_style, rule_key, save_figure)
+    CATEGORY_STYLE, INK, RULE_STYLE, apply_style, save_figure)
 from spade.othello.taxonomy import CATEGORIES
 
 HERE = Path(__file__).resolve().parent
 EMB = HERE / "embeddings"
-VIEWS = {"combined": ["R1", "R2", "R3"], "r1_placement": ["R1"],
-         "r2_bracketing": ["R2"], "r3_turn": ["R3"], "r5_flips": ["R5"]}
+VIEWS = ["combined", "r1_placement", "r2_bracketing", "r3_turn", "r5_flips"]
 
 RULES = list(RULE_STYLE)
 RULE_OF_CATEGORY = np.array([0, 1, 1, 2, 2, 2, 3])  # legal, R1, R1, R2, R2, R2, R3
@@ -101,7 +100,6 @@ def render(space: str, view: str, variant: str, arrays, labels, evr,
     if not camera_ready:
         fig.suptitle(f"{space} — {view} ({variant})", y=0.995)
     fig.tight_layout()
-    rule_key(fig, VIEWS[view])
     stem = HERE / "figures" / view / (space if variant == "centered" else f"{space}_raw")
     save_figure(fig, stem, camera_ready, dpi=PNG_DPI)
 

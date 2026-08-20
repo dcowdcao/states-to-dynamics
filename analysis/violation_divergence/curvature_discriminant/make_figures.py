@@ -59,7 +59,7 @@ import numpy as np
 
 from spade.figures.paper_style import (
     CATEGORY_STYLE, GRID, INK, MUTED, NULL, REFERENCE, RULE_STYLE, apply_style,
-    rule_key, sae_label, save_figure)
+    sae_label, save_figure)
 from spade.othello.taxonomy import CATEGORIES
 
 from curvature_axis import fit_axis, residual_plane, spaces, transported_auroc
@@ -203,15 +203,9 @@ def auroc_panel(ax, curves: dict[str, np.ndarray], ylabel: str, title: str,
     median = np.median([v for k, v in curves.items() if k != "resid_post_5"], axis=0)
     ax.set_ylim(*ylim)
     ax.axvspan(0.5, OFFSETS[-1], color=GRID, alpha=0.7, lw=0, zorder=0)
-    ax.text(1.2, ylim[0] + 0.02, "axis not calibrated here", fontsize=7,
-            color=MUTED, va="bottom")
     if null is None:
-        ax.axhline(0.5, color=MUTED, lw=0.9, ls=(0, (4, 3)), zorder=1)
-        ax.text(OFFSETS[-1], 0.505, "chance", fontsize=7, color=MUTED,
-                ha="right", va="bottom")
+        ax.axhline(0.5, color=MUTED, lw=0.9, ls=(0, (4, 3)), zorder=1, label="chance")
     else:
-        # No in-panel label: this panel's legend carries the null, the chance
-        # panel's does not (§3 wants one or the other, not both).
         ax.axhspan(*null, color=NULL["color"], alpha=0.45, lw=0, zorder=1,
                    label="within-game label-permutation null (95%)")
     ax.axvline(0, color=MUTED, lw=1.2, ls=(0, (4, 3)), zorder=1)
@@ -231,6 +225,7 @@ def auroc_panel(ax, curves: dict[str, np.ndarray], ylabel: str, title: str,
     handles, labels = ax.get_legend_handles_labels()
     pick = [i for i, l in enumerate(labels)
         if ("null" in l or "random" in l) == null_legend]
+    pick.sort(key=lambda i: labels[i] == "chance")  # the chance line last (§3)
     if legend and pick:
         ax.legend([handles[i] for i in pick], [labels[i] for i in pick],
                   fontsize=6.6, loc="upper right", framealpha=0.92,
@@ -245,7 +240,8 @@ def landing_panel(ax, landing: dict, space_labels: list[str], rho: float) -> Non
     """
     y = np.arange(len(space_labels))
     names = list(GROUP_STYLE)
-    ax.axvline(0, color=REFERENCE["color"], lw=1.4, zorder=1)
+    ax.axvline(0, color=REFERENCE["color"], lw=1.4, zorder=1,
+               label="reference = 0 by construction")
     for j, name in enumerate(names):
         st, off = GROUP_STYLE[name], (2.0 - j) * 0.17
         m, lo, hi = landing[name]
@@ -256,10 +252,6 @@ def landing_panel(ax, landing: dict, space_labels: list[str], rho: float) -> Non
     ax.set_ylim(len(y) - 0.5, -1.05)
     lo, hi = ax.get_xlim()
     ax.set_xlim(lo, hi + 0.60 * (hi - lo))  # room for the legend, clear of the data
-    # The band above the first space belongs to this line; the legend used to sit
-    # in it and clip the line's tail, so it moved to the corner the data leaves free.
-    ax.text(0, -0.9, " reference = 0 by construction", fontsize=7, color=MUTED,
-            va="center")
     ax.set_xlabel("probe log-odds, branch $-$ reference, at $r=0$"
                   "   ($\\rightarrow$ more violation-like)")
     ax.set_title("(l) where the branches the probe never saw land\n"
@@ -389,7 +381,6 @@ def figure(res: dict, m: dict, game: int, camera_ready: bool, n_roll: int = 1,
                      "Resampling every branch's future changes nothing at $r=0$: the "
                      "trailing window there never saw the suffix",
                      fontsize=12, y=0.996)
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.082)
     return save_figure(fig, FIG_DIR / f"space_fork_grid_discriminant{suffix}", camera_ready)
 
 

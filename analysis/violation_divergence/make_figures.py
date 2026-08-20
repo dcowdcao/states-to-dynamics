@@ -23,7 +23,7 @@ and upward. Both columns are in depth_sweep.csv.
 samples its own continuation from OthelloGPT instead of replaying the source
 game's, and writes `*_rollout` names beside the spliced ones. That tree holds
 K = 4 rollouts per source branch; `reduce_k` averages them, so a branch is one
-item in every n and every interval. The rollout figures carry their own caveat:
+item in every n and every interval. The rollout tree carries its own caveat:
 with a sampled suffix both classes drift for reasons the branch move did not
 cause, and the plateau saturates near the unrelated-activation ceiling, where a
 ratio of 1 means nothing.
@@ -42,9 +42,8 @@ import pandas as pd
 from spade.common.paths import results_dir
 from spade.common.study import variant_dir
 from spade.figures.paper_style import (
-    CATEGORY_STYLE, GRID, INK, MUTED, NULL, apply_style, rule_key, save_figure)
+    CATEGORY_STYLE, GRID, INK, MUTED, NULL, apply_style, save_figure)
 from spade.othello.taxonomy import CATEGORIES
-from spade.violation_divergence.rollout_branches import K_ROLLOUTS
 
 HERE = Path(__file__).resolve().parent
 SPACES = ["token_embed"] + [f"resid_post_{i}" for i in range(8)]
@@ -318,14 +317,6 @@ F1_TITLE = {
     "rollout": "Once every branch samples its own future, illegal and legal displace "
                "layer 5 alike",
 }
-# The §1.2 line: what the estimator is, over what, and where the interval lives.
-# Everything else these notes used to carry is in the README.
-F1_NOTE = {
-    "spliced": "mean over source games; n in the legend, 95% CIs in divergence_curves.csv",
-    "rollout": f"mean over source branches, K={K_ROLLOUTS} rollouts averaged per branch; "
-               "n in the legend, 95% CIs in divergence_curves_rollout.csv",
-}
-
 
 def f1_divergence_layer5(variant: str, camera_ready: bool) -> None:
     z = load(HEADLINE, variant)
@@ -356,18 +347,11 @@ def f1_divergence_layer5(variant: str, camera_ready: bool) -> None:
                         xy=(0.3, peak), xytext=(4.0, peak + 0.02),
                         fontsize=8, color=INK,
                         arrowprops=dict(arrowstyle="->", color=MUTED, lw=0.9))
-    axes[0][0].text(-4.2, 0.62, "$\\hat\\delta \\equiv 0$\nby construction\n(shared prefix)",
-                    fontsize=7.5, color=MUTED, style="italic", ha="center", va="center")
     if rollout:
         saturated_band(axes[0][0], w)
         axes[0][0].axhline(UNRELATED_CEILING, color=NULL["color"], lw=0.9,
-                           ls=(0, (1, 2)), zorder=1)
-        axes[0][0].text(w[0] + 0.3, UNRELATED_CEILING + 0.015, "unrelated activations: "
-                        "two games' rollouts at the same position", fontsize=7,
-                        color=MUTED, ha="left", va="bottom")
-        axes[0][0].text(SATURATED_R + 0.4, 0.44,
-                        f"$r \\geq {SATURATED_R}$: saturated,\nnot evidence on legality",
-                        fontsize=7.5, color=MUTED, style="italic", ha="left", va="bottom")
+                           ls=(0, (1, 2)), zorder=1,
+                           label="unrelated-activation ceiling")
     axes[0][0].set_ylim(-0.03, 1.45 if rollout else 0.95)
     legend_order(axes[0][0], fontsize=7, loc="lower right", ncol=2, columnspacing=0.8)
 
@@ -378,15 +362,11 @@ def f1_divergence_layer5(variant: str, camera_ready: bool) -> None:
     if rollout:
         saturated_band(axes[0][1], w)
     axes[0][1].set_ylim(-0.155, 0.115)
-    axes[0][1].text(-8, -0.152, "above 0: the violation displaces further than a legal move",
-                    fontsize=7.5, color=MUTED, style="italic", ha="left", va="bottom")
 
     if not camera_ready:
         fig.suptitle(F1_TITLE[variant], fontsize=11, y=1.0)
-    fig.text(0.5, 0.95, F1_NOTE[variant],
-             fontsize=8, color=MUTED, style="italic", ha="center", va="top")
-    fig.tight_layout(rect=(0, 0, 1, 0.93))
-    rule_key(fig, ["R1", "R2", "R3"])
+    # 0.95 is where the removed estimator note ended; the band above it is the suptitle's.
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
     save_figure(fig, HERE / "figures" / named("divergence_layer5", variant), camera_ready)
 
 
@@ -410,13 +390,6 @@ F3_TITLE = {
     "rollout": "A sampled suffix moves the token embedding too, so no layer is reading "
                "against a silent input",
 }
-F3_NOTE = {
-    "spliced": "error bars: 95% CI of the mean over source games (b: normal approximation "
-               "on a proportion); n in the legend",
-    "rollout": f"error bars: 95% CI of the mean over source branches, K={K_ROLLOUTS} "
-               "rollouts averaged per branch (b: normal approximation); n in the legend",
-}
-
 
 def f3_depth_sweep(depth: pd.DataFrame, variant: str, camera_ready: bool) -> None:
     at = depth.set_index(["space", "role"])
@@ -457,10 +430,7 @@ def f3_depth_sweep(depth: pd.DataFrame, variant: str, camera_ready: bool) -> Non
 
     if not camera_ready:
         fig.suptitle(F3_TITLE[variant], fontsize=11, y=1.0)
-    fig.text(0.5, 0.95, F3_NOTE[variant],
-             fontsize=8, color=MUTED, style="italic", ha="center", va="top")
-    fig.tight_layout(rect=(0, 0, 1, 0.93))
-    rule_key(fig, ["R1", "R2", "R3"])
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
     save_figure(fig, HERE / "figures" / named("depth_sweep", variant), camera_ready)
 
 

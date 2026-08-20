@@ -17,21 +17,19 @@ model wrote, (b)'s games handed to it -- and that is what each panel title says.
 
 F2 is (b) exactly, drawn by the same function, and differs only in where the legal prefix
 came from. It is conditional on survival -- a rollout leaves the table at its first illegal
-move -- so its n falls along the move axis and the panel prints it. (b) conditions on a legal
-prefix too, which is what makes the pair comparable; neither is P(illegal at ply t)
-unconditionally.
+move -- so its n falls along the move axis. (b) conditions on a legal prefix too, which is
+what makes the pair comparable; neither is P(illegal at ply t) unconditionally.
 
 The rule series are **sums** over their taxonomy categories, not means, so the legend says
-`sum of 3` (FIGURE_GUIDELINES 1.7), and the within-rule ÷ between-rule spread is printed,
-because a spread near 1 would mean the three rules are a label and not a finding. Each panel
-prints the spread of its own source, never the other's.
+`sum of 3` (FIGURE_GUIDELINES 1.7). The estimator, the falling n and each source's
+within-rule / between-rule spread are in README.md's "Figure notes"; `overall.csv` carries
+the spread itself.
 
 Usage: python analysis/generation_legality/make_figures.py [--results DIR] [--camera-ready]
 """
 
 import argparse
 from pathlib import Path
-from textwrap import fill
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -39,17 +37,13 @@ import pandas as pd
 from matplotlib.ticker import FuncFormatter
 
 from spade.figures.paper_style import (
-    GENERATION_STYLE, MUTED, RULE_STYLE, apply_style, rule_key, save_figure)
+    GENERATION_STYLE, RULE_STYLE, apply_style, save_figure)
 from spade.othello.taxonomy import RULE_MEMBERS
 
 HERE = Path(__file__).resolve().parent
 FIGURES = HERE / "figures"
 RULES = {rule.split()[0]: (rule, members) for rule, members in RULE_MEMBERS.items()}
 MARKS = 8          # markers per curve; the move axis has 56 points
-NOTE = {"fontsize": 7.5, "color": MUTED}
-NOTE_CHAR = 0.053  # inches per note character at 7.5 pt, net of the mathtext a wrap overcounts
-NOTE_Y = -0.22     # axes fraction: under the x label, never over the curves
-KEY_PAD = 0.03     # figure fraction between the deepest note and the rule key
 SIZE = (6.4, 4.4)  # one panel, drawn at the width a two-column figure is printed at
 PAIR = (9.4, 4.4)  # two panels side by side (FIGURE_GUIDELINES 2)
 
@@ -80,32 +74,6 @@ def move_series(by_move: pd.DataFrame, metric: str) -> pd.DataFrame:
     return by_move[by_move.metric == metric].sort_values("t")
 
 
-def panel_note(ax, text: str) -> None:
-    """The estimator, its n and where its interval lives, under the panel that owes them.
-
-    One logical line per input line, wrapped to this panel's own width -- a panel of the pair
-    is a third of the canvas, and a note has to be read against its panel and not the other.
-    """
-    wrap = int(ax.get_position().width * ax.figure.get_figwidth() / NOTE_CHAR)
-    ax.text(0, NOTE_Y, "\n".join(fill(line, wrap, break_on_hyphens=False)
-                                 for line in text.splitlines()),
-            transform=ax.transAxes, ha="left", va="top", linespacing=1.5, **NOTE)
-
-
-def key_under(fig, panels: list) -> None:
-    """The R1-R3 key under the panels, below the deepest note and left-aligned on the first.
-
-    The notes are axes children, so `tight_layout` has already lifted the axes to make room
-    for them and where they end is only knowable after a draw. One line per rule needs the
-    whole canvas, which is why this is figure text and not a third note.
-    """
-    fig.canvas.draw()
-    inverse = fig.transFigure.inverted()
-    bottom = min(inverse.transform(text.get_window_extent())[0][1]
-                 for panel in panels for text in panel.texts)
-    rule_key(fig, ["R1", "R2", "R3"], x=panels[0].get_position().x0, y=bottom - KEY_PAD)
-
-
 def survival_panel(ax, survival: pd.DataFrame) -> float:
     """Cumulative: by move t, what fraction of generated games have gone illegal?
 
@@ -126,9 +94,6 @@ def survival_panel(ax, survival: pd.DataFrame) -> float:
     ax.set_ylim(0, 1.2 * float(end.value))  # headroom for the endpoint label
     ax.set_xlim(left=0)
     ax.legend(loc="upper left", fontsize=8)
-    panel_note(ax, "cumulative, so the curve can only rise.\n"
-               f"$n$ = {int(rows.n_games.iloc[0])} whole games at $T$ = 1.0, judged by the "
-               "engine.\n95% bootstrap CIs are in results/survival.csv, not drawn.")
     return float(end.value)
 
 
@@ -138,7 +103,6 @@ def rules_panel(ax, tables: dict[str, pd.DataFrame], source: str) -> None:
     `source` picks the prefix distribution and nothing else: "by_move" is the teacher-forced
     corpus scan, "rollout_by_move" the model's own generated games.
     """
-    rollout = source == "rollout_by_move"
     by_move = tables[source]
 
     total = move_series(by_move, "p_illegal")
@@ -158,19 +122,6 @@ def rules_panel(ax, tables: dict[str, pd.DataFrame], source: str) -> None:
     # does not sit on, and four entries do not fit beside the curves in half a canvas.
     ax.legend(loc="lower right", fontsize=8)
 
-    spread_key = ("rollout_mass_within_over_between" if rollout
-                  else "rule_mass_within_over_between")
-    spread = float(tables["overall"].set_index("metric").value[spread_key])
-    n_note = (f"the games still legal at each $t$, $n$ falling {int(total.n_games.iloc[0])} "
-              f"$\\rightarrow$ {int(total.n_games.iloc[-1])}: a rollout leaves the table at "
-              "its first illegal move, so $n$ falls along the axis"
-              if rollout else f"$n$ = {int(total.n_games.iloc[0])} corpus games")
-    panel_note(ax, f"per move, not cumulative; means over {n_note}. 95% bootstrap CIs are in "
-               f"results/{source}.csv, not drawn.\n"
-               f"within-rule ÷ between-rule spread = {spread:.2f} (SD of log$_{{10}}$ share "
-               "over the 6 taxonomy categories): it is R2 that drives it, and R3 has a single "
-               "member, so on this axis R2 is closer to a label than a class.")
-
 
 def legality_figure(tables: dict[str, pd.DataFrame], camera_ready: bool) -> Path:
     """Does the model play illegal moves at all, and which rule do the ones it plays break?"""
@@ -186,7 +137,6 @@ def legality_figure(tables: dict[str, pd.DataFrame], camera_ready: bool) -> Path
                      "not spread evenly — R3 (turn) dominates from the midgame on, R1 "
                      "(placement) is suppressed", fontsize=10)
     fig.tight_layout()
-    key_under(fig, [left, right])
     return save_figure(fig, FIGURES / "generation_legality", camera_ready)
 
 
@@ -198,7 +148,6 @@ def rollout_figure(tables: dict[str, pd.DataFrame], camera_ready: bool) -> Path:
     if not camera_ready:
         ax.set_title(ROLLOUT_TITLE, fontsize=10)
     fig.tight_layout()
-    key_under(fig, [ax])
     return save_figure(fig, FIGURES / "generation_legality_by_rule_rollout", camera_ready)
 
 

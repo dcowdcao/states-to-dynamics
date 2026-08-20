@@ -29,10 +29,9 @@ drawn to ROLLOUT_RMAX and not to the study window's r = 24; README.md has the
 numbers.
 
 The figure carries no prose. Its caption -- the fixed camera, how the rollout
-variant reduces over K, where its window stops -- lives in README.md
-(FIGURE_GUIDELINES 2, 5). What stays inside is what a reader cannot look up while
-looking at it: (b)'s "0 by construction" band, the R1/R2/R3 key, (c)'s estimator
-on (c)'s own axis, and one line saying the game was selected.
+variant reduces over K, where its window stops, and that game 1235 is selected
+rather than typical -- lives in README.md (FIGURE_GUIDELINES 2, 5). What stays
+inside is (c)'s estimator on (c)'s own axis.
 
 Usage: python analysis/violation_divergence/game_trajectory/make_figures.py
        [--game 1235] [--n_games 1] [--embedding pca|isomap]
@@ -51,7 +50,7 @@ from matplotlib.patches import Patch
 from spade.common.study import variant_dir
 from spade.figures.branch_panels import axis_labels, fork_panel, plane_displacement
 from spade.figures.branch_style import (
-    below, branch_style, legend_order, ordered_legend, rule_member_key)
+    branch_style, legend_order, ordered_legend)
 from spade.figures.paper_style import GRID, INK, MUTED, NULL, apply_style, save_figure
 from spade.violation_divergence.branches import (
     FIGURE_GAME, Game, complete_games, load_game, reference_row)
@@ -62,12 +61,6 @@ VARIANTS = {"spliced": "", "rollout": "rollout"}
 # Past r = +8 the rollout set's illegal and control δ̂ agree to within 0.5% and
 # cross over by r = +13, so the extra offsets draw separation that is not there.
 ROLLOUT_RMAX = 8
-# The default game is the argmax of a differentiation criterion over 1550 games, so
-# its panels are cleaner than a typical fork's and a reader who does not know that
-# reads a selected game as a result. One line; the rest is in README.md.
-SELECTION_NOTE = (f"game {FIGURE_GAME} is selected, not typical: the argmax over 1550 "
-                  f"branch-complete games of its illegal branches' mutual separation "
-                  f"(README)")
 
 
 def paired_mean(X: np.ndarray, ref: int, K: int) -> np.ndarray:
@@ -163,8 +156,6 @@ def marginal_panel(ax, dh: np.ndarray, rows: list[dict], pos: np.ndarray,
         ax.plot(r, dh[i], ls=st["ls"], color=st["color"], lw=st["lw"],
                 marker=st["marker"], ms=3.5, markevery=3, markerfacecolor=st["mfc"],
                 markeredgecolor=st["mec"], markeredgewidth=0.5, zorder=st["zorder"])
-    ax.text(r[0] + 0.4, ax.get_ylim()[1] * 0.93, "0 by construction\n(shared prefix)",
-            fontsize=7, color=MUTED, va="top")
     ax.set_xlabel("position relative to the branch, $t-t_0$")
     ax.set_ylabel(r"$\hat{\delta}=\|\Delta\|\,/\,\|z_{\mathrm{ref}}\|$")
 
@@ -199,20 +190,12 @@ def fork_figure(g: Game, Z: np.ndarray, pos: np.ndarray, method: str, variant: s
     axc.set_title("(c) how far each branch runs,\nin the plane and in the space",
                   loc="left", fontsize=10)
 
-    leg = ordered_legend(fig, ax3, 4, loc="lower center", bbox_to_anchor=(0.5, -0.10))
+    ordered_legend(fig, ax3, 4, loc="lower center", bbox_to_anchor=(0.5, -0.10))
     if not camera_ready:
         fig.suptitle(f"Game {g.game}: one prefix, {n} futures, forking at $t_0$={g.t0} "
                      f"(layer 5, positions {pos[0]}–{pos[-1]})"
                      + (f", {variant} branches" if variant else ""), fontsize=11)
     fig.tight_layout()
-    # The muted band under the legend, in reading order: the selection disclosure,
-    # then the key naming what R1/R2/R3 average. Each hangs off the last, since
-    # both heights depend on where the line above them wrapped.
-    y = below(fig, leg)
-    if g.game == FIGURE_GAME:
-        y = below(fig, fig.text(0.005, y, SELECTION_NOTE, ha="left", va="top",
-                                fontsize=7.5, color=MUTED), 0.004)
-    rule_member_key(fig, y=y)
     suffix = f"_{variant}" if variant else ""
     return save_figure(fig, FIG_DIR / f"game_{g.game}_fork_{method}{suffix}", camera_ready)
 

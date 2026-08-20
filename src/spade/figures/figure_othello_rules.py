@@ -25,14 +25,13 @@ Usage: python -m spade.figures.figure_othello_rules [--camera_ready]
 import argparse
 from collections import Counter
 from pathlib import Path
-from textwrap import fill
 
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
 
 from spade.common.paths import repo_root
 from spade.figures.othello_board import draw_board, mark_square, square_xy
-from spade.figures.paper_style import INK, MUTED, RULE_STYLE, apply_style, rule_key, save_figure
+from spade.figures.paper_style import INK, MUTED, RULE_STYLE, apply_style, save_figure
 from spade.othello.boards import rays, replay
 from spade.othello.games import collect_legal, stream_games
 from spade.othello.taxonomy import CATEGORIES, LEGAL, classify
@@ -42,7 +41,6 @@ from circuits.othello_engine_utils import to_string
 FIGURES = repo_root() / "figures" / "othello_rules"
 SEED = 42
 FIGURE_SIZE = (8.0, 4.4)
-NOTE_WRAP = 62     # characters that fit under one panel at 7.5 pt
 FLIP_RING = 0.36   # outside the disc, so the ring reads on a black one and a white one alike
 
 TITLE = "Move legality at one position: a legal move, and one illegal move per rule"
@@ -87,12 +85,6 @@ def mover_note(ax, mover: int) -> None:
             fontsize=8.5, color=INK, ha="left", va="bottom", zorder=6)
 
 
-def panel_note(ax, text: str) -> None:
-    """What the overlay means, under its own panel and wrapped to the panel's width."""
-    ax.text(0, -0.17, fill(text, NOTE_WRAP), transform=ax.transAxes, ha="left", va="top",
-            fontsize=7.5, color=MUTED, linespacing=1.5)
-
-
 def legal_panel(ax, board, mover: int, played: int) -> None:
     draw_board(ax, board.state.flatten())
 
@@ -110,9 +102,6 @@ def legal_panel(ax, board, mover: int, played: int) -> None:
 
     mover_note(ax, mover)
     ax.set_title("(a) the legal move", loc="left")
-    panel_note(ax, f"{name(played)} is legal: it brackets in {len(brackets)} directions. Lines "
-                   f"run to the mover's own disc that closes each bracket; the {len(flipped)} "
-                   f"ringed discs are the ones it flips.")
 
 
 def illegal_panel(ax, board, mover: int) -> None:
@@ -131,19 +120,13 @@ def illegal_panel(ax, board, mover: int) -> None:
     theirs = next(r for r in rays(board.state, ILLEGAL["R3 turn"], -mover) if r.closed)
     ray_line(ax, ILLEGAL["R3 turn"], theirs.terminator, RULE_STYLE["R3 turn"]["color"])
 
-    # No legend: each square is named on the board and the rule key spells the names out, so
-    # a legend would be a third copy of one fact (FIGURE_GUIDELINES 5).
+    # No legend: each square is named on the board and carries its rule's colour and marker.
     for rule, square in ILLEGAL.items():
         mark_square(ax, square, RULE_STYLE[rule], label=rule.split()[0],
                     below=square == ILLEGAL["R3 turn"])
 
     mover_note(ax, mover)
     ax.set_title("(b) one illegal move per rule", loc="left")
-    panel_note(ax, f"R1's square is already occupied. R2's dashed line is the opponent run out "
-                   f"of {name(ILLEGAL['R2 bracketing'])}; the x is the empty square where it "
-                   f"fails to close. R3's line is the bracket "
-                   f"{name(ILLEGAL['R3 turn'])} does make -- for the opponent, who is not to "
-                   f"move.")
 
 
 def rules_figure(board, mover: int, played: int, camera_ready: bool) -> Path:
@@ -153,9 +136,6 @@ def rules_figure(board, mover: int, played: int, camera_ready: bool) -> Path:
     if not camera_ready:
         fig.suptitle(TITLE)
     fig.tight_layout()
-    # Under the whole figure, below both panel notes: the key covers both panels, and the
-    # notes hang off the axes, so its offset clears four wrapped lines of them.
-    rule_key(fig, ["R1", "R2", "R3"], x=left.get_position().x0, y=-0.125)
     return save_figure(fig, FIGURES / "rules_legal_and_illegal", camera_ready)
 
 
