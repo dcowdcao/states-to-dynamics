@@ -6,6 +6,70 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Bracket flip and the un-flip edit move onto the canonical probes (2026-08-20)
+
+Branch `probes/na-port`. `src/spade/bracket_flip/tpr_probe.py` was the last duplicate
+TPR recipe in the tree -- 120 fixed epochs, wd 2.0, 8,000 rows, no stopping criterion --
+and `probe_space`, `act_geometry`, `tpr_intervene`, `robustness` and `sae_arm` all read
+it. They now read `spade.probes.load`. `rules/causal/unflip_edit.py`, which reached past
+it for the committed ARENA linear probe, does too.
+
+**What stayed local, and why.** Three arms have no canonical counterpart: the
+absolute-colour basis and layer -1 in `probe_space` (the canonical corpus stores neither),
+`robustness`'s seed x weight-decay x rank sweep (fitting many probes *is* the experiment),
+and `sae_arm`'s d=8192 latent codes. All four now fit under `probes.train.fit` -- split by
+game, early stop on validation -- so what is shared is the protocol even where the
+artifact cannot be. `redteam.py` still loads the retired fits by raw path, inlined now
+that `tpr_probe.path` is gone; it is an audit of what shipped and must not follow the
+study.
+
+**`--corpus arena` is gone from `act_geometry` and `tpr_intervene`.** Its whole point was
+to unconfound probe class from training corpus by offering a second corpus; the canonical
+probe settles that by construction, and its TPR half was `tpr_probe.load`, which no longer
+exists. `CORPORA`/`PRIMARY_CORPUS` and the `_arena.csv` suffixing went with it.
+
+**`mu` is calibrated on the canonical corpus's TEST games.** It is the target the linear
+edit drives the activation to, so it has to be measured where the probe was fit and on a
+split that fit never saw. `unflip_edit.probe_directions` and `tpr_intervene.mine_direction`
+both take `game_split(n_games, card(LAYER)["seed"])[2]`.
+
+**Two conclusions changed.** (1) `SAE_ARM.md`'s "SpaDE and CosineSpaDE collapse
+board-state decodability" is retracted: the old recipe was under-fitting an
+8,192-dimensional code, and CosineSpaDE refits to 0.941 against 0.734, mid-pack. (Its
+distance-SpaDE half cannot be rechecked here -- `spade.spaces.EXCLUDED_SAE` drops that
+checkpoint project-wide, which is also why `sae_arm.csv` went from nine rows to eight.)
+(2) README finding 3 loses half its claim: at matched step length the TPR edit used to
+beat the linear one on both effect and collateral (+2.380 vs +2.035); on the canonical
+probe it is +3.120 vs +3.376, so it is the cleaner lever (3.4x less collateral) and not
+the stronger one.
+
+**Fig 2(b) is now under-scaled and was left that way.** The canonical binding map is ~10x
+larger, so `pinv(M)` returns a ~10x shorter step: scales 1-16 span `||d||/||h||`
+0.003-0.049 against the old 0.031-0.488 and reach a 12% flip rate instead of saturating.
+The panel is a correct drawing of a sweep that no longer covers the interesting range.
+Fixing it needs a different `--scales`, which is a change to the experiment, not to the
+figure, so the README says so and the panel stands.
+
+**Probe-independence check.** `pair_patch.csv` and `forfeit_patch.csv` re-ran
+byte-identical, which is what says the rewiring touched only what reads a probe. All three
+local-fit caches (`probe_space/`, `robustness/`, `sae_arm/`) were deleted and refit from
+scratch in this worktree; every committed CSV came back bit-identical to the cached run,
+so the protocol is deterministic and the cache was not carrying stale weights.
+
+**Known and not fixed:** the canonical probe has seen most of this study's data. Same
+Karvonen stream, same seed 42, so most of the 240 probe-set eval games and most event
+games are inside its training split, and the relative-arm accuracies in `m1_basis.csv` are
+not held out. `acc_*_relative_canonical_test` is, and the README now says to quote that.
+`results/depth_reconciliation.csv` still has no writer and its numbers predate all of
+this.
+
+`legality_probe` imported this module's constants and the vendored classes through it.
+It now takes the classes from `spade.probes.tpr` and keeps `SEED/WEIGHT_DECAY/EPOCHS/
+BATCH_SIZE` locally, because `analysis/legality_probe/` was fit under the old values and
+tracking `probes.tpr`'s re-selected ones would silently invalidate that study.
+
+---
+
 ## The population fork loses everything but the fork (2026-08-19)
 
 Three cuts to `analysis/violation_divergence/fork_population/`, in one day and at the

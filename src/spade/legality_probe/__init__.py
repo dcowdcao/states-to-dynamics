@@ -1,6 +1,6 @@
 """Legality probe: is a square's *legality* bound to the square, and does an SAE keep it?
 
-The bilinear tensor-product probe of `spade.bracket_flip.tpr_probe`, refit with the filler
+The bilinear tensor-product probe of `spade.probes.tpr`, refit with the filler
 alphabet widened from the 3 board classes to 4 legality classes — legal plus the three
 constraint rules of `spade.othello.taxonomy.RULE_MEMBERS` — then fit independently in each
 of 9 layer-5 representation spaces and read out over the violation-divergence branch set.

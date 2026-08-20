@@ -16,37 +16,37 @@ Three conventions meet here and all three are load-bearing.
 3. Events are the independent unit (one per game), squares within an event are
    not, so every interval here is a cluster bootstrap over events.
 
+The mover-relative read-out is the canonical probe, `spade.probes.load`. The
+absolute basis and the layer -1 input space have no canonical corpus behind them,
+so they are fit here, on this study's probe set, under `spade.probes.train`'s
+protocol -- split by game, early stop on validation accuracy, best-validation
+weights kept.
+
 Usage: python -m spade.bracket_flip.probe_space
 """
 
 import argparse
 from dataclasses import dataclass
 from functools import lru_cache
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn.functional as F
 from torch import Tensor
 
-from spade.bracket_flip.tpr_probe import (
-    CLASSES,
-    N_TRAIN,
-    SEED,
-    TensorProductBoardProbe,
-    TPRProbe,
-    _fit,
-)
 from spade.common.config import MODEL_NAME
+from spade.common.device import select_device
 from spade.common.paths import add_karvonen_to_path, repo_root
 from spade.common.study import study_dir
+from spade.probes import load as probes
+from spade.probes.tpr import TPR
+from spade.probes.train import CLASSES, Board, fit
 
 add_karvonen_to_path()
 
 from circuits.othello_engine_utils import to_string
 
-EMPTY, THEIRS, MINE = 0, 1, 2  # index into tpr_probe.CLASSES
+EMPTY, THEIRS, MINE = 0, 1, 2  # index into CLASSES
 BLACK, WHITE = 1, 2  # index into the absolute probe's classes (probe/manifest.json)
 CONDITIONS = ("before", "after", "control")
 
@@ -68,7 +68,10 @@ LAYERS = (INPUT_LAYER, *BLOCKS)
 BASES = ("relative", "absolute")
 MAIN_LAYER = 5
 N_BOOT = 2000
-LINEAR_EPOCHS, LINEAR_LR = 200, 1e-2  # the layer sweep of analysis/linear_probe/train_linear_probe.py
+SEED = 42               # the canonical protocol's seed, and this study's data seed
+N_TRAIN = 8000          # rows 0:8000 = games 0-159; games 160-399 are the eval half
+VAL_GAMES = 0.15        # carved out of the training half, by game, to stop on
+BATCH = 512             # 6.8k fitting rows, so the canonical 8192 would be one step per epoch
 
 CACHE = study_dir("bracket") / "probe_space"
 RESULTS = repo_root() / "analysis" / "bracket_flip" / "results"
@@ -151,56 +154,59 @@ def probe_labels(basis: str) -> Tensor:
 
 # ---------------------------------------------------------------- probes
 
-def path(kind: str, layer: int, basis: str) -> Path:
-    """Where a fit on this study's probe set lives; `kind` is "tpr" or "linear"."""
-    return CACHE / f"{kind}_{basis}_layer{layer}.pt"
+def fit_split(seed: int = SEED) -> tuple[np.ndarray, np.ndarray]:
+    """Fitting and early-stopping row indices, split BY GAME inside the training
+    half. The eval half (games 160-399) is never touched here."""
+    games = torch.load(study_dir("bracket") / "probe" / "game_id.pt",
+                       weights_only=True).numpy()[:N_TRAIN]
+    ids = np.unique(games)
+    order = np.random.default_rng(seed).permutation(len(ids))
+    held = np.isin(games, ids[order[int((1 - VAL_GAMES) * len(ids)):]])
+    return np.flatnonzero(~held), np.flatnonzero(held)
 
 
-def tpr(layer: int, basis: str) -> TPRProbe:
-    """TPR fit on this study's probe set.
+def local(arm_class, layer: int, basis: str) -> torch.nn.Module:
+    """One arm fit on this study's probe set under `spade.probes.train`'s protocol.
 
-    Cached apart from tpr_probe.train()'s path, which holds A1's committed-set
-    fits that the other wave-2 agents load.
+    Only the arms the canonical corpus cannot supply come through here: the
+    absolute-colour basis, and layer -1, which is the input space rather than a
+    block output. Cached under $SPADE_BRACKET_DIR, never a canonical path.
     """
-    cached = path("tpr", layer, basis)
-    if cached.exists():
-        artifact = torch.load(cached, weights_only=True)
-        module = TensorProductBoardProbe(**artifact["shape"])
-        module.load_state_dict(artifact["probe_state_dict"])
-        return TPRProbe(module.requires_grad_(False), layer)
+    kind = arm_class.__name__.lower()
+    path = CACHE / f"{kind}_{basis}_layer{layer}.pt"
+    acts = probe_acts(layer)
+    arm = arm_class(acts.shape[-1], SEED)
+    if path.exists():
+        arm.load_state_dict(torch.load(path, weights_only=True))
+        return arm.requires_grad_(False)
 
-    acts = probe_acts(layer)[:N_TRAIN]
+    tr, va = fit_split()
+    y = probe_labels(basis).reshape(-1, 64)
+    print(f"fitting {kind} {basis} layer {layer}: {len(tr)} rows, {len(va)} held to stop on",
+          flush=True)
     with torch.enable_grad():
-        module = _fit(acts, probe_labels(basis)[:N_TRAIN], SEED)
-    cached.parent.mkdir(parents=True, exist_ok=True)
-    torch.save({"probe_state_dict": module.state_dict(),
-                "shape": {"d_model": acts.shape[-1],
-                          "role_dim": module.role_embeddings.shape[-1],
-                          "filler_dim": module.filler_embeddings.shape[-1]}}, cached)
-    return TPRProbe(module.requires_grad_(False), layer)
+        fit(arm, acts[tr], y[tr], acts[va], y[va], select_device(), BATCH)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(arm.state_dict(), path)
+    return arm.cpu().requires_grad_(False)
 
 
-def linear(layer: int, basis: str) -> Tensor:
-    """[512, 8, 8, 3] probe: the capacity reference for the TPR, same split and recipe
-    as the layer sweep in analysis/linear_probe/train_linear_probe.py."""
-    cached = path("linear", layer, basis)
-    if cached.exists():
-        return torch.load(cached, weights_only=True)
+def tpr(layer: int, basis: str) -> torch.nn.Module:
+    """The bilinear read-out: one probe per type, so the mover-relative blocks are
+    the canonical artifact and nothing here refits them."""
+    if basis == "relative" and layer != INPUT_LAYER:
+        return probes.tpr(layer)
+    return local(TPR, layer, basis)
 
-    acts, labels = probe_acts(layer)[:N_TRAIN], probe_labels(basis)[:N_TRAIN]
-    torch.manual_seed(SEED)
-    probe = (torch.randn(acts.shape[-1], 8, 8, 3) * 0.01).requires_grad_(True)
-    optimizer = torch.optim.Adam([probe], lr=LINEAR_LR)
-    with torch.enable_grad():
-        for _epoch in range(LINEAR_EPOCHS):
-            F.cross_entropy(torch.einsum("nd,drcl->nrcl", acts, probe).reshape(-1, 3),
-                            labels.reshape(-1)).backward()
-            optimizer.step()
-            optimizer.zero_grad()
-    probe = probe.detach()
-    cached.parent.mkdir(parents=True, exist_ok=True)
-    torch.save(probe, cached)
-    return probe
+
+def board(layer: int, basis: str) -> torch.nn.Module:
+    """The per-square linear read-out, the capacity reference for the TPR."""
+    if basis == "relative" and layer != INPUT_LAYER:
+        weight = probes.board(layer, flat=True)
+        arm = Board(weight.shape[0], SEED)
+        arm.weight.data = weight
+        return arm.requires_grad_(False)
+    return local(Board, layer, basis)
 
 
 def occupancy_ceiling(labels: Tensor) -> float:
@@ -212,19 +218,29 @@ def occupancy_ceiling(labels: Tensor) -> float:
 
 
 def accuracies(layer: int) -> dict:
-    """Held-out board-state accuracy over rows N_TRAIN: (games 160-399), all 64 squares."""
+    """Board-state accuracy over rows N_TRAIN: (games 160-399), all 64 squares.
+
+    The relative arms are the canonical probes, whose corpus is the same Karvonen
+    stream this study samples, so most of these 240 games are in their training
+    split and their number here is not held out. `*_canonical_test` is, and is the
+    one to quote; the study-set column exists so relative and absolute are read off
+    one population.
+    """
     acts = probe_acts(layer)[N_TRAIN:]
     out = {"layer": layer, "n_train": N_TRAIN, "n_eval": acts.shape[0]}
     for basis in BASES:
         labels = probe_labels(basis)[N_TRAIN:].reshape(-1, 64)
-        out[f"acc_tpr_{basis}"] = round(
-            (tpr(layer, basis).decode(acts).argmax(-1) == labels).float().mean().item(), 4)
-        out[f"acc_linear_{basis}"] = round(
-            (torch.einsum("nd,drcl->nrcl", acts, linear(layer, basis)).reshape(-1, 64, 3)
-             .argmax(-1) == labels).float().mean().item(), 4)
+        for name, arm in (("tpr", tpr(layer, basis)), ("linear", board(layer, basis))):
+            out[f"acc_{name}_{basis}"] = round(
+                (arm(acts).argmax(-1) == labels).float().mean().item(), 4)
         # A digit finer than the accuracies: the absolute basis sits 0.004 points
         # under its ceiling, which four decimals cannot show.
         out[f"ceiling_{basis}"] = round(occupancy_ceiling(labels), 5)
+    if layer != INPUT_LAYER:
+        out["acc_tpr_relative_canonical_test"] = round(
+            probes.card(layer, "tpr")["test_accuracy"], 4)
+        out["acc_linear_relative_canonical_test"] = round(
+            probes.card(layer)["test_accuracy"], 4)
     return out
 
 
@@ -250,7 +266,7 @@ def decode(layer: int, ev: pd.DataFrame, acts: dict[str, Tensor],
            input_acts: dict[str, Tensor], basis: str = "relative") -> Decode:
     probe = tpr(layer, basis)
     source = input_acts if layer == INPUT_LAYER else {c: a[:, layer] for c, a in acts.items()}
-    return Decode(layer, {c: probe.decode(h).numpy() for c, h in source.items()},
+    return Decode(layer, {c: probe(h).numpy() for c, h in source.items()},
                   role_codes(ev), ev.square_s.to_numpy())
 
 

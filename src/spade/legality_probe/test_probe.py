@@ -12,21 +12,23 @@ from spade.legality_probe.probe import (
     CLASSES,
     FILLER_DIM,
     LegalityProbe,
+    TensorProductBoardProbe,
+    build_square_selection_mask,
+    compute_tpr_probe_loss,
     fit,
     filler_classes,
     load,
     macro_f1,
     save,
     train_tpr_probe,
-    tpr_probe,
 )
 
 
 def test_filler_alphabet_widens_only_inside_the_context():
-    outside = tpr_probe.TensorProductBoardProbe(d_model=8, role_dim=4, filler_dim=FILLER_DIM)
+    outside = TensorProductBoardProbe(d_model=8, role_dim=4, filler_dim=FILLER_DIM)
     assert outside.filler_embeddings.shape[0] == 3, "upstream's default is no longer 3"
     with filler_classes(len(CLASSES)):
-        inside = tpr_probe.TensorProductBoardProbe(
+        inside = TensorProductBoardProbe(
             d_model=8, role_dim=4, filler_dim=FILLER_DIM, use_bias=True)
         assert inside.filler_embeddings.shape == (4, FILLER_DIM), inside.filler_embeddings.shape
         assert inside.bias.shape == (8, 8, 4), inside.bias.shape
@@ -37,14 +39,14 @@ def test_loss_scales_with_the_alphabet():
     torch.manual_seed(0)
     logits = torch.randn(5, 1, 8, 8, 4)
     targets = torch.nn.functional.one_hot(torch.randint(0, 4, (5, 8, 8)), 4).float().unsqueeze(1)
-    mask = tpr_probe.build_square_selection_mask(exclude_center_squares=False, device="cpu")
+    mask = build_square_selection_mask(exclude_center_squares=False, device="cpu")
     correct = (logits.log_softmax(-1) * targets).sum(-1).mean(0)  # [1, 8, 8]
 
     with filler_classes(4):
-        loss = tpr_probe.compute_tpr_probe_loss(logits, targets, square_mask=mask)
+        loss = compute_tpr_probe_loss(logits, targets, square_mask=mask)
     assert torch.allclose(loss, -4 * correct.reshape(1, 64).mean(0).sum()), loss
     with filler_classes(3):
-        stale = tpr_probe.compute_tpr_probe_loss(logits, targets, square_mask=mask)
+        stale = compute_tpr_probe_loss(logits, targets, square_mask=mask)
     assert torch.allclose(stale, loss * 3 / 4), (stale, loss)
 
 
@@ -71,7 +73,7 @@ def test_planted_signal_is_recovered():
 
 def test_save_is_keyed_by_space():
     with filler_classes(len(CLASSES)):
-        modules = [tpr_probe.TensorProductBoardProbe(d_model=16, role_dim=4, filler_dim=FILLER_DIM)
+        modules = [TensorProductBoardProbe(d_model=16, role_dim=4, filler_dim=FILLER_DIM)
             for _ in range(2)]
     spaces = ("raw", "TopKTrainer-othello")
 

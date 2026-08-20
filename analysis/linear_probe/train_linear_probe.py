@@ -231,7 +231,7 @@ def main() -> None:
     board_states = labels[:, TURN_START:TURN_END].reshape(-1, 8, 8)
     move_indices = t.arange(TURN_START, TURN_END).repeat(NUM_GAMES)
     # Row = game * n_turns + (turn - TURN_START), shared by every artifact here and paired by
-    # row index with no key downstream (bracket_flip.tpr_probe), so the layout is a contract:
+    # row index with no key downstream (bracket_flip), so the layout is a contract:
     # check it through the documented formula rather than through the reshape that built it.
     assert board_states.shape == (NUM_GAMES * n_turns, 8, 8)
     assert layers.shape == (model.cfg.n_layers, NUM_GAMES * n_turns, D_MODEL)

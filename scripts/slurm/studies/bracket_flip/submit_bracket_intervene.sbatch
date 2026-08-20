@@ -19,9 +19,6 @@ export HF_USE_SOFTFILELOCK=1
 cd "${SPADE_REPO:?}"
 mkdir -p logs/bracket_flip
 
-# Read only by `--corpus arena`: analysis/linear_probe/activations/ is gitignored, so a
-# worktree has to be told which checkout carries it (PROBE_REPORT.md 6.9).
-export SPADE_LINEAR_PROBE_ACTIVATIONS="${SPADE_LINEAR_PROBE_ACTIVATIONS:-${SPADE_REPO}/analysis/linear_probe/activations}"
 BRACKET_DIR="${SPADE_BRACKET_DIR:-/n/netscratch/ba_lab/Lab/$USER/spade_bracket}"
 
 [ -f "$BRACKET_DIR/events/events.csv" ] || {

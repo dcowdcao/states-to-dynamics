@@ -6,8 +6,8 @@ whether the model uses it.
 
   events.py          step 1: mine single-flip events + the probe training set
   extract_acts.py    step 2: 8-layer resid_post for before / after / matched control
-  tpr_probe.py       the TPR probe wrapper (d_r=52, d_f=2) over the vendored implementation
-  probe_space.py     read-out measurements
+  probe_space.py     read-out measurements; the canonical probes, plus the arms
+                     (absolute basis, layer -1) the canonical corpus cannot supply
   act_geometry.py    raw layer-5 flip geometry
   geometry_tables.py the flip-geometry tables, for make_figures.py to draw
   sae_arm.py         the same read-out fit in each SAE latent space

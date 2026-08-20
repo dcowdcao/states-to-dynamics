@@ -2,15 +2,19 @@
 
 Refits the TPR over seed, weight decay and role dimension, and recomputes the
 five headline numbers of analysis/bracket_flip/reports/RESULTS_A3.md at every
-setting. Probes cache under $SPADE_BRACKET_DIR/robustness/, never the study's
-committed paths.
+setting.
+
+Many probes is the point here, so this is the one place in the study that fits its
+own TPRs rather than loading `spade.probes.load`'s. What it borrows is the
+*protocol*: `spade.probes.train.fit`, split by game, early stop on validation
+accuracy. Probes cache under $SPADE_BRACKET_DIR/robustness/, never a canonical path.
 
 Everything reported is gauge-invariant -- accuracies, decoded classes,
 proportions. Filler coordinates swing across seeds at constant accuracy
 (analysis/bracket_flip/reports/PROBE_REPORT.md 4), so resampling them would
 measure nothing.
 
-Usage: sbatch scripts/slurm/studies/bracket_flip/submit_bracket_robustness.sh
+Usage: sbatch scripts/slurm/studies/bracket_flip/submit_bracket_robustness.sbatch
 """
 
 import argparse
@@ -23,14 +27,18 @@ import torch
 from torch import Tensor
 
 from spade.bracket_flip.probe_space import (
+    BATCH,
     EMPTY,
     MAIN_LAYER,
     MINE,
+    N_TRAIN,
     RESULTS,
     ROLE_CODE,
+    SEED,
     THEIRS,
     event_acts,
     events,
+    fit_split,
     occupancy_ceiling,
     owner,
     probe_acts,
@@ -38,29 +46,13 @@ from spade.bracket_flip.probe_space import (
     role_codes,
     swapped,
 )
-from spade.bracket_flip.tpr_probe import (
-    BATCH_SIZE,
-    BETAS,
-    CLASSES,
-    EPOCHS,
-    FILLER_DIM,
-    LR,
-    N_TRAIN,
-    ROLE_DIM,
-    SEED,
-    WEIGHT_DECAY,
-    TensorProductBoardProbe,
-    TPRProbe,
-    build_square_selection_mask,
-    compute_tpr_probe_loss,
-    seed_all,
-    solve_residual_delta_for_binding_delta,
-)
 from spade.common.device import select_device
 from spade.common.study import study_dir
+from spade.probes.tpr import ROLE_DIM, WEIGHT_DECAY, TPR, solve_residual_delta_for_binding_delta
+from spade.probes.train import CLASSES, fit
 
-SEEDS = (1111, 7, 2026, 4242, 31337, 90210)  # 1111 is A3's, 7 and 2026 are PROBE_REPORT.md 3's
-WEIGHT_DECAYS = (1e-2, 0.5, 1.0, 2.0, 4.0)  # 1e-2 upstream's, 2.0 A1's retune
+SEEDS = (42, 7, 2026, 4242, 31337, 90210)  # 42 is the canonical protocol's
+WEIGHT_DECAYS = (1e-4, 1e-3, 1e-2, 0.5, 2.0)  # 1e-3 the canonical argmax, 2.0 the old fit's
 ROLE_DIMS = (16, 32, 52, 64)  # 16 upstream's default, 52 the design's, 64 one role per square
 BLOCKS = tuple(range(8))
 
@@ -84,60 +76,37 @@ class Fit:
                 f"_wd{self.weight_decay:g}_r{self.role_dim}")
 
 
-def _train(acts: Tensor, labels: Tensor, fit: Fit) -> TensorProductBoardProbe:
-    """tpr_probe._fit with the three swept knobs exposed. Init and batch order are
-    drawn on the CPU whatever the compute device, so seed 1111 stays A1's fit."""
-    seed_all(fit.seed)
-    probe = TensorProductBoardProbe(
-        d_model=acts.shape[-1], role_dim=fit.role_dim, filler_dim=FILLER_DIM).to(acts.device)
-    optimizer = torch.optim.AdamW(
-        probe.parameters(), lr=LR, betas=BETAS, weight_decay=fit.weight_decay)
-    one_hot = torch.nn.functional.one_hot(labels, len(CLASSES)).float().unsqueeze(1)
-    square_mask = build_square_selection_mask(
-        exclude_center_squares=False, device=acts.device)
-
-    with torch.enable_grad():
-        for _epoch in range(EPOCHS):
-            order = torch.randperm(acts.shape[0]).to(acts.device)
-            for batch in order.split(BATCH_SIZE):
-                loss = compute_tpr_probe_loss(
-                    probe(acts[batch].unsqueeze(1)), one_hot[batch], square_mask=square_mask)
-                optimizer.zero_grad(set_to_none=True)
-                loss.backward()
-                optimizer.step()
-    return probe.requires_grad_(False)
-
-
-def tpr(fit: Fit, device: str) -> TPRProbe:
-    path = CACHE / f"{fit.key}.pt"
+def tpr(setting: Fit, device: str) -> TPR:
+    """One TPR at one setting of the three swept knobs, under the shared protocol."""
+    path = CACHE / f"{setting.key}.pt"
+    acts = probe_acts(setting.layer)
+    arm = TPR(acts.shape[-1], setting.seed, setting.weight_decay, setting.role_dim)
     if path.exists():
-        artifact = torch.load(path, weights_only=True, map_location=device)
-        module = TensorProductBoardProbe(**artifact["shape"])
-        module.load_state_dict(artifact["probe_state_dict"])
-        return TPRProbe(module.to(device).requires_grad_(False), fit.layer)
+        arm.load_state_dict(torch.load(path, weights_only=True))
+        return arm.to(device).requires_grad_(False)
 
     started = time.time()
-    acts = probe_acts(fit.layer)[:N_TRAIN].to(device)
-    module = _train(acts, probe_labels(fit.basis)[:N_TRAIN].to(device), fit)
+    tr, va = fit_split()
+    y = probe_labels(setting.basis).reshape(-1, 64)
+    with torch.enable_grad():
+        fit(arm, acts[tr], y[tr], acts[va], y[va], device, BATCH)
     path.parent.mkdir(parents=True, exist_ok=True)
-    torch.save({"probe_state_dict": module.state_dict(),
-                "shape": {"d_model": acts.shape[-1], "role_dim": fit.role_dim,
-                          "filler_dim": FILLER_DIM}}, path)
-    print(f"fit {fit.key} in {time.time() - started:.0f}s", flush=True)
-    return TPRProbe(module.requires_grad_(False), fit.layer)
+    torch.save(arm.state_dict(), path)
+    print(f"fit {setting.key} in {time.time() - started:.0f}s", flush=True)
+    return arm.to(device).requires_grad_(False)
 
 
-def predictions(probe: TPRProbe, layer: int, device: str) -> Tensor:
+def predictions(probe: TPR, layer: int, device: str) -> Tensor:
     """[n_eval, 64] decoded class on the held-out rows."""
-    return probe.decode(probe_acts(layer)[N_TRAIN:].to(device)).argmax(-1)
+    return probe(probe_acts(layer)[N_TRAIN:].to(device)).argmax(-1)
 
 
-def accuracy(probe: TPRProbe, layer: int, basis: str, device: str) -> float:
+def accuracy(probe: TPR, layer: int, basis: str, device: str) -> float:
     labels = probe_labels(basis)[N_TRAIN:].reshape(-1, 64).to(device)
     return (predictions(probe, layer, device) == labels).float().mean().item()
 
 
-def occupancy_split(probe: TPRProbe, basis: str, device: str) -> dict:
+def occupancy_split(probe: TPR, basis: str, device: str) -> dict:
     """Layer-5 accuracy against the occupancy-only ceiling: call empty/occupied
     perfectly, then always answer the majority colour. A3 claims acc_abs sits exactly
     there, so the same decomposition on the relative probe is the contrast that reads it."""
@@ -161,12 +130,12 @@ def occupancy_split(probe: TPRProbe, basis: str, device: str) -> dict:
     }
 
 
-def readout(probe: TPRProbe, layer: int, ev: pd.DataFrame,
+def readout(probe: TPR, layer: int, ev: pd.DataFrame,
             acts: dict[str, Tensor], device: str) -> dict:
     """M1's proportions at one layer: point estimates only, since the sweep's own
     spread replaces A3's bootstrap as the uncertainty."""
     codes, square_s = role_codes(ev), ev.square_s.to_numpy()
-    pred = {c: probe.decode(acts[c][:, layer].to(device)).argmax(-1).cpu().numpy()
+    pred = {c: probe(acts[c][:, layer].to(device)).argmax(-1).cpu().numpy()
             for c in ("before", "after")}
     s = {c: p[np.arange(len(square_s)), square_s] for c, p in pred.items()}
     unflipped = np.isin(codes, [ROLE_CODE["unflipped_own"], ROLE_CODE["unflipped_opp"]])
@@ -192,34 +161,34 @@ def headline(seed: int, weight_decay: float, role_dim: int, ev: pd.DataFrame,
 
 # ---------------------------------------------------------------- rank collateral
 
-def role_overlap(probe: TPRProbe) -> dict:
+def role_overlap(probe: TPR) -> dict:
     """Off-diagonal |cos| of the role Gram: 64 roles in d_r < 64 dimensions cannot be
     orthogonal, and PROBE_REPORT.md 5 shows this alone predicts an edit's collateral."""
-    roles = probe.module.role_embeddings.reshape(64, -1)
+    roles = probe.roles
     cos = (roles @ roles.T) / torch.outer(roles.norm(dim=-1), roles.norm(dim=-1))
     off = cos[~torch.eye(64, dtype=torch.bool, device=cos.device)].abs()
     return {"role_cos_mean": off.mean().item(), "role_cos_max": off.max().item()}
 
 
-def collateral(probe: TPRProbe, layer: int, device: str) -> dict:
+def collateral(probe: TPR, layer: int, device: str) -> dict:
     """Squares other than s whose decoded class changes under a theirs->mine edit at s.
 
     One square per activation, so the trials stay independent; fixed scale 8, which
     flips every event at r=52, so ranks are compared where the edit always lands.
     """
     acts = probe_acts(layer)[N_TRAIN:N_TRAIN + N_EDITS].to(device)
-    roles = probe.module.role_embeddings.reshape(64, -1)
+    roles = probe.roles
     delta_filler = probe.fillers[MINE] - probe.fillers[THEIRS]
     rng = np.random.default_rng(SEED)
 
     changed, flipped = [], []
     for h in acts:
-        pred = probe.decode(h).argmax(-1)
+        pred = probe(h).argmax(-1)
         candidates = torch.nonzero(pred == THEIRS).flatten()
         square = int(candidates[rng.integers(len(candidates))])
         step = solve_residual_delta_for_binding_delta(
             probe.module.binding_map, torch.outer(roles[square], delta_filler))
-        after = probe.decode(h + EDIT_SCALE * step).argmax(-1)
+        after = probe(h + EDIT_SCALE * step).argmax(-1)
         differs = after != pred
         changed.append(int(differs.sum()) - int(differs[square]))
         flipped.append(bool(after[square] == MINE))

@@ -224,7 +224,8 @@ than captioned.
 
 ```
 external/tpr_othello/              vendored at pinned commit cc90cea
-src/spade/bracket_flip/{tpr_probe,events,extract_acts,geometry}.py
+src/spade/bracket_flip/{events,extract_acts,probe_space,geometry_tables}.py
+src/spade/probes/                  the canonical probes both arms read
 analysis/bracket_flip/{make_figures.py,figures/,results/,README.md}
 scripts/slurm/studies/bracket_flip/
 ```
@@ -237,13 +238,13 @@ small enough to read as text.
 ## Interfaces the agents must honor
 
 ```python
-# spade.bracket_flip.tpr_probe
-train(layer: int, seed: int) -> TPRProbe        # fits on our activations
-load(layer: int) -> TPRProbe
-TPRProbe.decode(h) -> Tensor        # [..., 64, 3] logits over {empty, theirs, mine}
-TPRProbe.roles                      # [64, d_r]
-TPRProbe.fillers                    # [3, d_f]
-TPRProbe.edit_direction(square, from_c, to_c) -> Tensor   # [512], via pinv(M)
+# spade.probes.load  -- the canonical probes; nothing in this study refits them
+board(layer: int) -> Tensor         # [512, 8, 8, 3] over {empty, theirs, mine}
+tpr(layer: int) -> TPR
+TPR(h) -> Tensor                    # [..., 64, 3] logits over the same classes
+TPR.roles                           # [64, d_r]
+TPR.fillers                         # [3, d_f]
+TPR.edit_direction(square, from_c, to_c) -> Tensor        # [512], via pinv(M)
 
 # spade.bracket_flip.events  -> one row per event
 # game_id, t, mover, move, square_s, flip_set, control_move, control_squares
@@ -304,9 +305,10 @@ Two waves of worktree-isolated agents, each merged only after review.
 
 **Wave 1 — foundation, parallel, disjoint files.**
 - **A1 probe**: vendor `external/tpr_othello` at a pinned commit, read their
-  trainer, implement `tpr_probe.py`, validate against the *already committed*
+  trainer, implement the TPR arm, validate against the *already committed*
   `analysis/linear_probe/activations/` set so it is unblocked immediately, and
-  report the learned filler geometry.
+  report the learned filler geometry. (Superseded: the arm now lives in
+  `spade.probes.tpr` and is fit by `spade.probes.train` on the shared corpus.)
 - **A2 data**: everything that touches the model — `events.py`,
   `extract_acts.py`, the SLURM script. Mines events, extracts their
   activations, and builds a fresh probe-training set carrying **both** label

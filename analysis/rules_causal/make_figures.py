@@ -18,7 +18,7 @@ from matplotlib.patches import Patch
 
 from spade.figures.paper_style import (
     COMPONENT_STYLE, GRID, INK, MUTED, NULL, POPULATION_STYLE, REFERENCE,
-    apply_style, rule_key, save_figure)
+    apply_style, save_figure)
 
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE / "results"
@@ -88,7 +88,6 @@ def unflip_figure(camera_ready: bool) -> None:
         fig.suptitle("R5 un-flip edit: reverting one square along its board-state "
                      "probe direction", y=0.998)
     fig.tight_layout()
-    rule_key(fig, ["R5"])
     save_figure(fig, HERE / "unflip_edit", camera_ready)
 
 
@@ -125,7 +124,6 @@ def pair_patch_figure(camera_ready: bool) -> None:
     if not camera_ready:
         ax.set_title("R5 pair patching: where flip consequences are written")
     fig.tight_layout()
-    rule_key(fig, ["R5"])
     save_figure(fig, HERE / "pair_patch", camera_ready)
 
 
@@ -176,7 +174,6 @@ def forfeit_figure(camera_ready: bool) -> None:
         fig.suptitle("R4 forfeit: behaviorally solved, computed in the mid-late MLPs",
                      y=1.0)
     fig.tight_layout()
-    rule_key(fig, ["R4"])
     save_figure(fig, HERE / "forfeit", camera_ready)
 
 

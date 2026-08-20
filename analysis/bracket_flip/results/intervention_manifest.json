@@ -20,7 +20,6 @@
   "settled_min_age": 10,
   "n_bootstrap": 1000,
   "seed": 7,
-  "probe_corpus": "karvonen",
-  "tpr_probe": "/n/netscratch/ba_lab/Lab/dcao/spade_bracket/probe_space/tpr_relative_layer5.pt",
-  "linear_probe": "/n/netscratch/ba_lab/Lab/dcao/spade_bracket/probe_space/linear_relative_layer5.pt"
+  "board_probe": "/n/netscratch/ba_lab/Lab/dcao/spade_probes/probes/board_layer5.pt",
+  "tpr_probe": "/n/netscratch/ba_lab/Lab/dcao/spade_probes/probes/tpr_layer5.pt"
 }

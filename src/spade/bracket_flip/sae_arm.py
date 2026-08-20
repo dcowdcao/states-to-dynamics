@@ -1,15 +1,15 @@
 """Does the bracketing-flip signature survive an SAE bottleneck? (descriptive).
 
-Fits the bilinear TPR of `tpr_probe` on each space's *latent* code rather than the
+Fits the canonical bilinear TPR on each space's *latent* code rather than the
 raw layer-5 residual, then re-reads the flip through it. Nine spaces: `raw`
 (standardized residual, d=512) plus the eight seed-42 baseline SAE families from
 `spade.spaces.representative_spaces()` (d=8192). No causal edits — every number
 here is a read-out.
 
-The fit path is `tpr_probe`'s, unchanged in behaviour: `fit_latent` mirrors the
-committed `_fit` (same r=52, f=2, wd, epochs, seed) but infers the input dimension
-from the latent code and keeps the probe on the encode device, so an 8192-wide
-code trains without touching `tpr_probe`'s 512 default.
+The canonical corpus does not cover SAE latents, so the probes are fit here. What
+is shared is the protocol: `spade.probes.tpr.TPR` at r=52, f=2, trained by
+`spade.probes.train.fit` — split by game, early stop on validation accuracy — with
+the input dimension read off the code rather than the residual's 512.
 
 Three families of number per space, in rising order of accuracy-robustness:
   1. `acc_rel_L5`   — board decode, held-out 12k positions. Fully accuracy.
@@ -30,18 +30,19 @@ import json
 import numpy as np
 import pandas as pd
 import torch
-from torch.nn.functional import one_hot
 
 from spade.bracket_flip import act_geometry as ag
-from spade.bracket_flip import tpr_probe
+from spade.bracket_flip.probe_space import BATCH, N_TRAIN, SEED, fit_split
 from spade.common.device import select_device
 from spade.common.config import LAYER
 from spade.common.paths import repo_root
 from spade.common.study import study_dir
 from spade.multiseed.aggregate_seeds import BASELINE_CONFIGS
+from spade.probes.tpr import TPR
+from spade.probes.train import CLASSES, fit
 from spade.spaces import batched_apply, load_space, representative_spaces
 
-THEIRS, MINE = tpr_probe.CLASSES.index("theirs"), tpr_probe.CLASSES.index("mine")
+THEIRS, MINE = CLASSES.index("theirs"), CLASSES.index("mine")
 KEEP = {"raw", *BASELINE_CONFIGS}  # raw + the 8 *Trainer-othello baselines; skip the controls and the SpaDE-lam sweep
 
 
@@ -66,34 +67,24 @@ def events() -> tuple[pd.DataFrame, dict, np.ndarray, np.ndarray]:
     return table, raw, codes, (table["control_kind"] == "strict").to_numpy()
 
 
-def fit_latent(acts: torch.Tensor, labels: torch.Tensor, device: str) -> tpr_probe.TPRProbe:
-    """`tpr_probe._fit` with the input dim inferred from the code and the probe on `device`."""
-    tpr_probe.seed_all(tpr_probe.SEED)
-    acts = acts.to(device)  # batched_apply returns on CPU; the batch indices below live on device
-    module = tpr_probe.TensorProductBoardProbe(
-        d_model=acts.shape[-1], role_dim=tpr_probe.ROLE_DIM, filler_dim=tpr_probe.FILLER_DIM).to(device)
-    optimizer = torch.optim.AdamW(module.parameters(), lr=tpr_probe.LR,
-                                  betas=tpr_probe.BETAS, weight_decay=tpr_probe.WEIGHT_DECAY)
-    targets = one_hot(labels.to(device), len(tpr_probe.CLASSES)).float().unsqueeze(1)
-    mask = tpr_probe.build_square_selection_mask(exclude_center_squares=False, device=device)
-    for _epoch in range(tpr_probe.EPOCHS):
-        for batch in torch.randperm(acts.shape[0], device=device).split(tpr_probe.BATCH_SIZE):
-            loss = tpr_probe.compute_tpr_probe_loss(
-                module(acts[batch].unsqueeze(1)), targets[batch], square_mask=mask)
-            optimizer.zero_grad(set_to_none=True)
-            loss.backward()
-            optimizer.step()
-    return tpr_probe.TPRProbe(module.requires_grad_(False).to("cpu"), LAYER)
+def fit_latent(code: torch.Tensor, labels: torch.Tensor, device: str) -> TPR:
+    """The canonical TPR arm and protocol, with the input dim read off the code."""
+    tr, va = fit_split()
+    y = labels.reshape(-1, 64)
+    arm = TPR(code.shape[-1], SEED)
+    with torch.enable_grad():
+        fit(arm, code[tr], y[tr], code[va], y[va], device, BATCH)
+    return arm.cpu().requires_grad_(False)
 
 
-def retain_directions(probe: tpr_probe.TPRProbe) -> np.ndarray:
+def retain_directions(probe: TPR) -> np.ndarray:
     """[64, d] unit rows: the mine->theirs edit direction, one per square (act_geometry's TPR null)."""
     rows = np.stack([probe.edit_direction(q, MINE, THEIRS).numpy() for q in range(64)])
     return rows / np.linalg.norm(rows, axis=1, keepdims=True)
 
 
-def decode_class(probe: tpr_probe.TPRProbe, code: torch.Tensor, square_s: np.ndarray) -> np.ndarray:
-    return probe.decode(code).argmax(-1).numpy()[np.arange(len(square_s)), square_s]
+def decode_class(probe: TPR, code: torch.Tensor, square_s: np.ndarray) -> np.ndarray:
+    return probe(code).argmax(-1).numpy()[np.arange(len(square_s)), square_s]
 
 
 def measure(name: str, entry, device: str) -> dict:
@@ -101,10 +92,9 @@ def measure(name: str, entry, device: str) -> dict:
     latent = {c: batched_apply(encode, raw[c], device) for c in ("before", "after", "control")}
 
     acts, labels = PROBE
-    train_code = batched_apply(encode, acts[:tpr_probe.N_TRAIN], device)
-    probe = fit_latent(train_code, labels[:tpr_probe.N_TRAIN], device)
-    z = batched_apply(encode, acts[tpr_probe.N_TRAIN:], device)
-    acc = tpr_probe.accuracy(probe, z, labels[tpr_probe.N_TRAIN:])
+    probe = fit_latent(batched_apply(encode, acts[:N_TRAIN], device), labels[:N_TRAIN], device)
+    z = batched_apply(encode, acts[N_TRAIN:], device)
+    acc = (probe(z).argmax(-1) == labels[N_TRAIN:].reshape(-1, 64)).float().mean().item()
 
     ss = TABLE["square_s"].to_numpy()
     before = decode_class(probe, latent["before"], ss)

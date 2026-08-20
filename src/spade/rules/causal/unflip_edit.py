@@ -12,9 +12,10 @@ Populations compared at matched edit magnitude:
   placed   — the disc m itself just placed          (theirs -> empty edit)
   random   — random direction, magnitude matched to the flipped edit
 
-Edit magnitudes are calibrated from the probe training set: the edit moves the
-activation's projection onto the class-difference direction to the target
-class's mean projection (times --beta overshoot).
+Edit magnitudes are calibrated on the canonical probe corpus's test games -- the
+split the probe never saw: the edit moves the activation's projection onto the
+class-difference direction to the target class's mean projection there (times
+--beta overshoot).
 
 Usage: python -m spade.rules.causal.unflip_edit [--n_items 2000] [--betas 1,2]
 """
@@ -25,19 +26,20 @@ from random import Random
 import pandas as pd
 import torch
 
-from spade.common.config import HOOK_POINT, MODEL_NAME
+from spade.common.config import HOOK_POINT, LAYER, MODEL_NAME
 from spade.common.device import select_device
 from spade.common.net import force_ipv4
 from spade.common.paths import repo_root
 from spade.common.study import study_dir
 from spade.othello.boards import flip_set, regular_moves, replay, tokens_of
 from spade.othello.taxonomy import LEGAL
+from spade.probes import load as probes
+from spade.probes.train import activations, corpus, game_split, rows as game_rows
 
 force_ipv4()
 
 from circuits.othello_engine_utils import to_string
 
-PROBE_DIR = "analysis/linear_probe/activations"
 EMPTY, THEIRS, MINE = 0, 1, 2
 SETTLED_MIN_AGE = 10
 BATCH_SIZE = 128
@@ -46,17 +48,20 @@ BATCH_SIZE = 128
 def probe_directions(device: str) -> tuple[torch.Tensor, torch.Tensor]:
     """Per-square unit direction and per-(square, class) mean projection onto it.
     Returns (dhat [64, 2, 512], mu [64, 2, 3]) where dim 1 indexes the edit
-    transition family: 0 = mine-vs-theirs, 1 = empty-vs-theirs."""
-    base = repo_root() / PROBE_DIR
-    probe = torch.load(base / "linear_probe.pt", map_location="cpu",
-                       weights_only=False).float()  # [512, 8, 8, 3]
-    probe = probe.reshape(512, 64, 3).permute(1, 2, 0)  # [64, 3, 512]
+    transition family: 0 = mine-vs-theirs, 1 = empty-vs-theirs.
+
+    The probe is the canonical board probe (`spade.probes.load`). mu is the target
+    the edit drives the activation to, so it is measured on the split that probe
+    never trained on -- its own corpus's test games.
+    """
+    probe = probes.board(LAYER, flat=True).permute(1, 2, 0)  # [64, 3, 512]
     dhat = torch.stack([probe[:, MINE] - probe[:, THEIRS],
                         probe[:, EMPTY] - probe[:, THEIRS]], dim=1)
     dhat = dhat / dhat.norm(dim=-1, keepdim=True)
 
-    acts = torch.load(base / "primary_layer_activations.pt", weights_only=True).float()
-    labels = torch.load(base / "board_states.pt", weights_only=True).reshape(len(acts), 64)
+    y, games, n_games = corpus()
+    held = game_rows(games, game_split(n_games, probes.card(LAYER)["seed"])[2])
+    acts, labels = activations(LAYER)[held].float(), y[held]
     proj = torch.einsum("nd,sfd->nsf", acts, dhat)  # [N, 64, 2]
     mu = torch.stack([torch.stack([proj[labels[:, s] == cls, s, f].mean()
         for cls in (EMPTY, THEIRS, MINE)])

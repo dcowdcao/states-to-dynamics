@@ -1,9 +1,10 @@
 """Layer-5 activation geometry of a bracketing flip (M3, M4 of docs/bracket_flip_design.md).
 
 Everything here reads raw `resid_post`. The predicted flip direction comes from
-either probe family, and both are fit on the study's own Karvonen probe set --
-the corpus the events themselves are mined from, labelled by engine replay. The
-older ARENA fits stay reachable through `corpus="arena"` as the off-corpus control.
+either probe family, and both are the canonical probes of `spade.probes.load` --
+one corpus and one protocol, so probe class is never confounded with the fit. The
+TPR is imported only when asked for, so the linear result reproduces without the
+vendored fork on sys.path.
 
 The flip is the *absence* of a perspective swap, so the direction a square is
 scored against is its **retain** direction: the residual step that keeps its
@@ -19,9 +20,9 @@ import pandas as pd
 import torch
 from scipy.signal import fftconvolve
 
-from spade.common.config import D_MODEL, LAYER
-from spade.common.paths import linear_probe_activations
+from spade.common.config import LAYER
 from spade.common.study import study_dir
+from spade.probes import load as probes
 
 CLASSES = ("empty", "theirs", "mine")
 # `control_squares` codes, read on the board before m
@@ -29,10 +30,6 @@ CLASSES = ("empty", "theirs", "mine")
 CODE = {"empty": 0, "placed": 1, "flipped": 2, "unflipped_own": 3, "unflipped_opp": 4}
 NULL_CODES = (CODE["unflipped_own"], CODE["unflipped_opp"])
 SOURCES = ("tpr", "linear")
-CORPORA = ("karvonen", "arena")
-PRIMARY_CORPUS = "karvonen"
-
-ARENA_LINEAR_PROBE = linear_probe_activations() / "linear_probe.pt"
 
 
 @dataclass(frozen=True)
@@ -72,36 +69,20 @@ def load(layer: int = LAYER) -> Events:
     return Events(table=table, codes=codes, **acts)
 
 
-def retain_directions(source: str, layer: int = LAYER,
-                      corpus: str = PRIMARY_CORPUS) -> np.ndarray:
+def retain_directions(source: str, layer: int = LAYER) -> np.ndarray:
     """[64, d_model] unit rows: keep square q 'theirs' where the swap would make it 'mine'.
 
     A square that is 'mine' before the move takes the negative of its row — both
     probes are linear in the filler contrast, so one matrix covers both signs.
-
-    `corpus` picks the fit both sources come from, so probe class is never confounded
-    with training corpus: "karvonen" is the study's own 400-game engine-labelled probe
-    set, "arena" the committed 200-game `t % 2`-labelled one, whose linear probe exists
-    only at the primary layer.
     """
-    if corpus not in CORPORA:
-        raise ValueError(f"unknown corpus {corpus!r}, expected one of {CORPORA}")
-    # Deferred: both probe modules put the vendored TPR fork on sys.path at import.
-    from spade.bracket_flip import probe_space, tpr_probe
-
     if source == "linear":
-        if corpus == "arena":
-            assert layer == LAYER, "the arena set commits one linear probe, at the primary layer"
-            weights = torch.load(ARENA_LINEAR_PROBE, map_location="cpu", weights_only=True)
-        else:
-            weights = probe_space.linear(layer, "relative")
-        w = weights.reshape(D_MODEL, 64, len(CLASSES)).double().numpy()
+        w = probes.board(layer, flat=True).double().numpy()
         rows = (w[:, :, CLASSES.index("theirs")] - w[:, :, CLASSES.index("mine")]).T
     elif source == "tpr":
-        probe = tpr_probe.load(layer) if corpus == "arena" else probe_space.tpr(layer, "relative")
-        rows = np.stack([probe.edit_direction(q, CLASSES.index("mine"),
-                                              CLASSES.index("theirs")).numpy()
-                         for q in range(64)]).astype(np.float64)
+        # Deferred: probes.tpr puts the vendored TPR fork on sys.path at import.
+        rows = np.stack([probes.tpr(layer).edit_direction(
+            q, CLASSES.index("mine"), CLASSES.index("theirs")).numpy()
+            for q in range(64)]).astype(np.float64)
     else:
         raise ValueError(f"unknown direction source {source!r}, expected one of {SOURCES}")
     return rows / np.linalg.norm(rows, axis=1, keepdims=True)

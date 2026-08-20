@@ -39,7 +39,7 @@ def main():
             preds = predict(probe, code[N_TRAIN:], device)
             rows.append({"space": space, "loop": "redteam", "seed": seed,
                          "macro_f1": float(f1_of(tally(preds, truth, 4).sum(0)).mean())})
-        for seed in (shipped.tpr_probe.SEED, 0, 1, 2):
+        for seed in (shipped.SEED, 0, 1, 2):
             fitted = shipped.fit(code[:N_TRAIN], labels[:N_TRAIN], seed=seed, device=device)
             rows.append({"space": space, "loop": "shipped", "seed": seed,
                          "macro_f1": shipped.macro_f1(fitted, code[N_TRAIN:],

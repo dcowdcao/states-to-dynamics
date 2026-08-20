@@ -97,10 +97,11 @@ games is *not* measured; a claim that needs it wants a resample over the 200 gam
 ## Downstream
 
 `activations/{linear_probe,board_states,primary_layer_activations,all_layer_activations,
-move_indices}.pt` are read by `spade.rules.causal.unflip_edit`, four `spade.bracket_flip`
-modules (`tpr_probe`, `tpr_intervene`, `sae_arm`, `act_geometry`, plus `redteam`) and
-`analysis/violation_divergence/probe_readout/decode.py`; `probe_metadata.json`'s
-`layer_accuracies` is the capacity reference in `bracket_flip.tpr_probe`. Everything is paired
+move_indices}.pt` are read by `spade.bracket_flip.redteam` and
+`analysis/violation_divergence/probe_readout/decode.py`. The bracket-flip study and
+`spade.rules.causal.unflip_edit` moved onto `spade.probes.load` (PROCESS.md, 2026-08-20)
+and no longer read this set; `redteam` still does, deliberately, because it audits what
+shipped. Everything is paired
 **by row index with no key**, so the row set and order above are a contract, and
 `train_linear_probe.py` asserts them. Anything computed before this fix used the old labels —
 `docs/finish_notes/probe-parity-fix.md` lists what.

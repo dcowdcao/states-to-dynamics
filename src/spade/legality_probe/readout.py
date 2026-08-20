@@ -38,7 +38,6 @@ import numpy as np
 import pandas as pd
 import torch
 
-from spade.bracket_flip import tpr_probe
 from spade.common.device import select_device
 from spade.common.paths import repo_root
 from spade.common.study import study_dir
@@ -48,6 +47,7 @@ from spade.legality_probe.fit_set import N_TRAIN
 from spade.legality_probe.labels import (
     LABEL_OF_CATEGORY, STARTING_SQUARES, board_labels, disc_labels, opponent_labels)
 from spade.othello.taxonomy import CATEGORIES, LEGAL, RULE_MEMBERS, RULE_OF, classify_all
+from spade.probes.tpr import FILLER_DIM as BOARD_FILLER_DIM
 from spade.violation_divergence.branches import role
 from spade.violation_divergence.divergence import WINDOW
 
@@ -190,7 +190,7 @@ def targets() -> tuple[dict[str, Target], np.ndarray]:
     classes, filler = legality_probe.CLASSES, legality_probe.FILLER_DIM
     return {
         "legality": Target(legality, classes, filler),
-        "board": Target(torch.from_numpy(board).long(), BOARD_CLASSES, tpr_probe.FILLER_DIM),
+        "board": Target(torch.from_numpy(board).long(), BOARD_CLASSES, BOARD_FILLER_DIM),
         "legality_wrong_player": Target(torch.from_numpy(wrong).long(), classes, filler),
         "legality_shuffled": Target(
             torch.cat([legality[permutation], legality[N_TRAIN:]]), classes, filler),

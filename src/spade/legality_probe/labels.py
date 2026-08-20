@@ -5,7 +5,7 @@
 Two index conventions meet here and only one is right for the probe.
 `taxonomy.classify_all` returns the 60 vocab squares in TOKEN order (entry i is
 token i+1); the probe reads 64 squares in ROW-MAJOR board order, square = row*8 + col,
-matching `tpr_probe.TPRProbe.roles`. This module is that scatter plus the collapse from
+matching the TPR probe's role order. This module is that scatter plus the collapse from
 7 categories to 3 rules, and nothing else — the rules themselves stay in
 `spade.othello.taxonomy`.
 
@@ -14,7 +14,7 @@ R1 placement, because that is what `classify` returns for them: they always hold
 disc, so the same rule that makes any occupied square illegal makes them illegal.
 Labelling all 64 squares uniformly is what
 `build_square_selection_mask(exclude_center_squares=False)` — the choice already
-committed in `bracket_flip/tpr_probe.py` — expects.
+of `spade.probes.tpr` — expects.
 """
 
 import copy
@@ -47,7 +47,7 @@ def board_labels(board: OthelloBoardState, categories: list[int]) -> np.ndarray:
 
 
 def disc_labels(board: OthelloBoardState) -> np.ndarray:
-    """[64] int8 over {0 empty, 1 theirs, 2 mine}, row-major: `bracket_flip.tpr_probe`'s
+    """[64] int8 over {0 empty, 1 theirs, 2 mine}, row-major: the board probe's
     3-class board target, which the fit set does not store.
 
     Class 2 is the player TO MOVE, never the one who just moved. The mover comes from

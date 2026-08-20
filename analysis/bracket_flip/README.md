@@ -11,16 +11,23 @@ activations: `logit(s, c) = r_sᵀ M(h) f_c` at `d_r=52, d_f=2`, 56,582
 parameters — 57.6% of the linear probe's, matching the paper's 57.5%.
 
 **Which fit every number here comes from.** Both probe families — this TPR and the
-linear reference it is measured against — are fit on the study's own probe set:
-400 games of `adamkarvonen/othello_45MB_games`, 20,000 positions, labels from
-engine replay, the corpus the events themselves are mined from
-(`probe_space.tpr` / `probe_space.linear`, cached under `$SPADE_BRACKET_DIR/probe_space/`).
-The earlier ARENA fits — 200 games, 10,000 positions, labels from `t % 2`, which
-DATA_REPORT shows mislabelled on 53 rows — are the off-corpus control, reachable at
-`act_geometry.retain_directions(..., corpus="arena")` and
-`tpr_intervene --corpus arena`; the latter writes `*_arena.csv` so the primary
-results survive the run. Moving both families together is what keeps Fig 2's
-headline a comparison of probe class rather than of training corpus.
+linear reference it is measured against — are the project's canonical probes,
+`spade.probes.load`: 20,000 games of `adamkarvonen/othello_45MB_games`, 812k
+training rows split by game, labels from engine replay, stopped on a validation
+plateau. One corpus and one protocol for both, so Fig 2's head-to-head is a
+comparison of probe class and of nothing else. Two arms have no canonical
+counterpart and are still fit here, on the study's own 400-game probe set but
+under the same protocol (`probe_space.local`, cached under
+`$SPADE_BRACKET_DIR/probe_space/`): the absolute-colour basis, and layer −1,
+which is the input space rather than a block output.
+
+**The relative accuracies in `m1_basis.csv` are not held out.** The canonical
+probes are fit on the same Karvonen stream at the same seed this study samples,
+so most of the 240 eval games are inside their training split. The held-out
+number is `acc_*_relative_canonical_test` (TPR 0.9920, linear 0.9937 at layer 5),
+and that is the one to quote; the study-set column exists so the relative and
+absolute arms are read off one population. The absolute arm is fit here and its
+0.7315 *is* held out.
 
 ## What this study does and does not show
 
@@ -28,11 +35,13 @@ headline a comparison of probe class rather than of training corpus.
 square whose class does not change." That sentence is a true description of the
 board in a mover-relative basis, and it is **not evidence about the model** — a
 perfect board oracle reproduces it by definition. Two agents killed it
-independently. `p_s_unchanged_rel` = 0.988 is the probe's accuracy at *s*
-squared (0.995² = 0.9900 against 0.9900 observed) and tracks `acc_rel_L5` at
-Pearson 0.9988 across probe ranks (0.692 at `d_r=16`, 0.9985 at 64). The
-event-level version is also false: *s* is the *uniquely* unchanged disc in only
-0.625 of events, because decode noise leaves 0.71 other discs unchanged.
+independently. `p_s_unchanged_rel` = 0.998 tracks the probe's accuracy: it moves
+with `acc_rel_L5` at Pearson 0.9997 across probe ranks (0.683 at `d_r=16`, 0.9945
+at 64), which is what a decode-noise quantity does and not what a finding does.
+The canonical probe is accurate enough that the event-level version is now nearly
+true — *s* is the *uniquely* unchanged disc in 0.822 of events, against 0.625
+under the retired 8,000-row fit — and that is the point: the proportion is a
+property of the read-out, so improving the read-out moves it.
 
 What the flip framing is good for is stating the *basis*, not proving anything
 in it. Fig 1 is drawn that way: the arrow field in the native basis is the
@@ -41,33 +50,33 @@ frame, and what carries a claim is the second probe drawn beside it.
 **Three findings that survive.**
 
 1. **The model represents board state mover-relatively, and barely represents
-   absolute colour at all.** An absolute-label TPR reaches 0.7349 — 0.004 points
+   absolute colour at all.** An absolute-label TPR reaches 0.7315 — 0.003 points
    *below* the label-only occupancy ceiling of 0.73494, i.e. below never looking
-   at colour. The relative probe clears its own occupancy ceiling by +23.1
-   points. Capacity does not rescue it from `d_r` 16 to 64, and the committed
-   linear probe collapses identically, so this is the model's basis, not the
-   probe's rank.
+   at colour. The relative probe clears its own occupancy ceiling by +24.2
+   points. Capacity does not rescue it from `d_r` 16 to 64, and the linear probe
+   collapses identically (0.7371 absolute against 0.9954 relative), so this is
+   the model's basis, not the probe's rank.
 2. **The flip has a specific direction in activation space.** Against the
    matched non-flipping move at the same prefix, position and next mover, the
    displacement aligns with the predicted flip direction at median cos
-   **+0.188 (TPR) / +0.205 (linear)** against an unflipped-disc null at ≈0
-   (median −0.003, sd 0.058 for a single drawn disc), positive in 1596/1596
-   strict events under both, and the two directions agree at cos 0.833. This is
+   **+0.183 (TPR) / +0.238 (linear)** against an unflipped-disc null at ≈0
+   (median −0.003, sd 0.061 for a single drawn disc), positive in 1596/1596
+   strict events under both, and the two directions agree at cos 0.835. This is
    not decode arithmetic: it is a claim about where the representation moves.
-   A5's independent re-derivation reported 0.173/0.184 off the ARENA fits
-   (`reports/VERDICT.md` §7f is the corpus objection those numbers predate).
-3. **That direction is causally used, and the TPR is the better lever even
-   though the linear direction is the better-aligned one.** Editing layer-5
-   residual along it moves next-move probability mass onto the counterfactual
-   board's legal set by **+2.380 nats [2.299, 2.454]** at matched step length
-   (`‖δ‖/‖h‖` = 0.144), against **+0.190** for a magnitude-matched random
-   direction and **+2.035 [1.970, 2.104]** for the linear fit's direction at
-   that same length, with less collateral on both counts (0.123 vs 0.141
-   squares, out-of-family decoder). The ordering in (2) inverts here: being
-   aligned with where the representation moves is not the same property as
-   being the handle that moves it. It is a move and not damage: log-mass on the
-   whole legal set stays inside ±0.07 nats over both sweeps, and from
-   `‖δ‖/‖h‖ ≈ 0.07` up the real board's legal-only squares shed mass while the
+   `reports/VERDICT.md` §7f and A5's re-derivation predate the canonical probe
+   and quote the ARENA-fit values.
+3. **That direction is causally used, and the TPR is the cleaner lever, not the
+   stronger one.** Editing layer-5 residual along it moves next-move probability
+   mass onto the counterfactual board's legal set by **+3.120 nats [3.023,
+   3.207]** at matched step length (`‖δ‖/‖h‖` = 0.163), against **+0.244 [0.216,
+   0.275]** for a magnitude-matched random direction. The linear fit's direction
+   at that same length reaches **+3.376 [3.265, 3.486]**, i.e. *more* effect,
+   with 3.4× the collateral (0.112 vs 0.033 squares, out-of-family decoder).
+   Under the retired 8,000-row fits the TPR won on both counts (+2.380 vs
+   +2.035); on the canonical probe it wins only on collateral, so what survives
+   is the cleanliness claim and not the strength claim. It is a move and not
+   damage: log-mass on the whole legal set stays inside ±0.06 nats over both
+   sweeps, and the real board's legal-only squares shed mass as the
    counterfactual-only squares gain it — one switch, read on both sides.
 
 Read the contrasts, never the bare proportions. `cos_flip_median` must be
@@ -94,14 +103,14 @@ numbers are below and their CSVs are still in `results/`.
   discs crossing, *s* not crossing — is what any correct board tracker does in a
   mover-relative frame, which is the retracted claim above and not a fact about
   the model. The one contrastive element is the dashed arrow to where the matched
-  non-flipping move *m′* leaves *s*, **14.59 logits [14.46, 14.73] in x** from
+  non-flipping move *m′* leaves *s*, **13.78 logits [13.68, 13.89] in x** from
   where *m* leaves it.
 
   An absolute-colour companion panel was dropped from the figure. Finding 1 still
-  rests on that probe — same architecture, layer and seed, trained on
-  absolute-colour labels, collapsing the flip contrast to 0.04 logits
-  [0.01, 0.07] and sitting 0.004 points *under* its 0.73494 ceiling while the
-  relative fit clears 0.75181 by +23.1 points. The numbers are in `m1_basis.csv`
+  rests on that probe — same architecture, layer, seed and training protocol,
+  trained on absolute-colour labels, collapsing the flip contrast to 0.06 logits
+  [0.01, 0.11] and sitting 0.003 points *under* its 0.73494 ceiling while the
+  relative fit clears 0.75181 by +24.2 points. The numbers are in `m1_basis.csv`
   (`acc_tpr_{relative,absolute}`, `ceiling_{relative,absolute}`); nothing in the
   figure carries them, so a caption or the text has to.
 
@@ -112,47 +121,61 @@ numbers are below and their CSVs are still in `results/`.
   (after − before within event), which is what an arrow asserts.
 - **Fig 2 — the direction and its causal use** (`make_figures.py`). (a) the
   flip-attributable displacement `act(P+m) − act(P+m′)` aligns with the
-  predicted flip direction at median +0.188 (TPR) / +0.205 (linear) against an
-  unflipped-disc null at −0.003. (b) effect against collateral, one point per
-  edit magnitude: up and to the left is a clean intervention, and the TPR edit
-  sits above and left of both the linear edit and the magnitude-matched random
-  null everywhere. Three things that panel is careful about, none of them
-  cosmetic:
+  predicted flip direction at median +0.183 (TPR) / +0.238 (linear) against an
+  unflipped-disc null at −0.003.
+
+  **(b) is currently under-scaled and should not be read as a head-to-head.**
+  The canonical TPR's binding map is roughly ten times larger than the retired
+  fit's, so `pinv(M)` returns a roughly ten times shorter step: the committed
+  scale sweep 1–16 spans `‖δ‖/‖h‖` 0.003–0.049 and tops out at a 12% target-flip
+  rate, where it used to span 0.031–0.488 and saturate. The whole TPR curve now
+  sits in the panel's bottom-left corner and only the linear edit's two betas
+  carry visible effect. The matched-step-length comparison — the one that is
+  actually a head-to-head — is finding 3 above and is in
+  `intervention_summary.csv` under `method=tpr_matched`; it is not on the panel.
+  Fixing the panel needs a different `--scales`, which is a change to the
+  experiment rather than to the drawing, so it is left for a decision.
+
+  Three things that panel is careful about, none of them cosmetic:
   - **Collateral is read by the decoder the edit was *not* built from** — the
     TPR edit by the linear probe, the linear edit by the TPR probe. Grading an
     edit with its own instrument flatters it, and the old panel did exactly that
-    to the TPR arm. The two readings of one edit stay within ~35% of each other,
-    so putting them on one axis does not distort it.
+    to the TPR arm. The two readings of one edit no longer agree as closely as
+    they did: the in-family reading is 1.0–2.1× the out-of-family one along the
+    TPR sweep but 3.6–5.1× along the linear edit, so the axis is a lower bound on
+    the linear edit's damage, not a neutral measurement of it.
   - **The two knobs are not the same quantity.** The TPR edit adds
     `scale · d_TPR` (8 scales, 1–16); the probe edit projects the activation to
     the target class's mean at `β` (2 betas). So nothing is placed by knob value:
     x is measured collateral, and every point is labelled with `‖δ‖/‖h‖`, the
     fraction of the residual norm the edit moves. The probe's two betas land at
-    0.11 and 0.23, inside the TPR sweep's 0.03–0.53, which is what makes the two
-    curves readable against each other.
+    0.16 and 0.33, *outside* the TPR sweep's 0.003–0.049, which is why the two
+    curves no longer overlap on the panel.
   - **The dotted companion is not a control — it is the other side of the same
     switch.** It reads the edit on the squares legal only on the *real* board,
     which the un-flipped board makes illegal, so a successful counterfactual edit
-    drives it down exactly as it drives the solid curve up, and it does: past
-    `‖δ‖/‖h‖ ≈ 0.07` it falls, and at 0.53 the real-only squares have lost 0.124
-    of probability mass while the counterfactual-only squares gained 0.096 (on
-    the 507 events where both sets are non-empty, the only ones that pair). The
-    control is the gray band — log-mass on the *whole* legal set, which is what a
-    damaging edit moves and this one never does (|Δ| ≤ 0.08 nats anywhere).
-    Below `‖δ‖/‖h‖ ≈ 0.07` the dotted curve is not evidence of anything: the two
-    sets start 9.7 nats apart (median base mass 8·10⁻⁶ against 0.115), so a
-    *complete* transfer of the counterfactual gain at the smallest edit would
-    move it by −0.0001 nats, an order of magnitude inside its own CI. The panel
-    says so in-figure. n = 986 events for the counterfactual set, 891 for the
-    real-only set (an event counts only where that set is non-empty), 1,370 for
-    collateral and for the whole-legal-set control.
+    drives it down exactly as it drives the solid curve up, and it does: at
+    `‖δ‖/‖h‖` 0.33 the real-only squares have lost 0.126 of probability mass
+    while the counterfactual-only squares gained 0.067 (on the 507 events where
+    both sets are non-empty, the only ones that pair). The control is the gray
+    band — log-mass on the *whole* legal set, which is what a damaging edit moves
+    and this one never does (|Δ| ≤ 0.06 nats anywhere). At the small end the
+    dotted curve is not evidence of anything: the two sets start 9.4 nats apart
+    (median base mass 9·10⁻⁶ against 0.112), so a *complete* transfer of the
+    counterfactual gain at the smallest edit would move it well inside its own
+    CI. n = 986 events for the counterfactual set, 891 for the real-only set (an
+    event counts only where that set is non-empty), 1,370 for collateral and for
+    the whole-legal-set control.
 - **Fig 3 — the SAE arm** (`sae_pca_figure.py`). 3×3 per-space PCA of
   before/after/control, per-*t* centered. **Each panel refits its own basis**,
   so read the within-panel arrangement and never positions across panels
   (FIGURE_GUIDELINES §4.6 facet rule; SAE scales differ and SpaDE lives on a
   simplex). Numbers in `results/sae_arm.csv` / `reports/SAE_ARM.md`;
   quote the flip cosine and the dissociation *gap*, not the bare proportion,
-  since read-out accuracy is lossy through an SAE.
+  since read-out accuracy is lossy through an SAE. The panel grid still draws
+  the nine spaces it was built for; `sae_arm.csv` now has eight, because
+  `spade.spaces.EXCLUDED_SAE` drops the degenerate seed-42
+  `SpaDETrainer-othello` checkpoint and the committed CSV predated that.
 
 **Findings that no longer have a figure**, kept because they are load-bearing:
 
@@ -162,7 +185,11 @@ numbers are below and their CSVs are still in `results/`.
   apart, so this study and `analysis/rules_causal/pair_patch.png` never
   disagreed. The read-out's own peak wanders between blocks 4 and 5 across
   probes — that is TPR capacity, not a computation stage.
-  (`results/depth_reconciliation.csv`)
+  (`results/depth_reconciliation.csv` — **stale**: nothing in the tree writes
+  that file, so its numbers predate the canonical probe. The read-out peak is
+  still block 4 (`contract_a3.csv`), and `pair_patch.csv` re-ran byte-identical,
+  so the 4.1-block gap is unaffected; the centre-of-mass figures are not
+  reproducible until the file gets a writer.)
 - *The swap is board-specific.* The best shared rank-1 direction is the to-move
   axis at |cos| 0.995 but only 5.5% of the displacement; matching what a single
   matched control explains (68.9%) takes **rank 73**.
@@ -170,13 +197,13 @@ numbers are below and their CSVs are still in `results/`.
 
 ## Pipeline
 
-`spade.bracket_flip.events` → `extract_acts` → `probe_space`, which fits both probe
-families on the probe set and caches them → `probe_space` and `geometry_tables` write
-the CSVs in `results/` → the figure scripts here, which only draw. `tpr_probe` fits
-the ARENA control set and is otherwise the module the vendored TPR is wrapped in.
-Two GPU jobs under `scripts/slurm/studies/bracket_flip/`: `submit_bracket_flip.sbatch`
-(mine and extract) and `submit_bracket_intervene.sbatch` (the M6 sweep; CSVs only,
-the figure is drawn off the GPU by `make_figures.py`).
+`spade.bracket_flip.events` → `extract_acts` → `probe_space` and `geometry_tables`,
+which read `spade.probes.load` and write the CSVs in `results/` → the figure scripts
+here, which only draw. Three GPU jobs under `scripts/slurm/studies/bracket_flip/`:
+`submit_bracket_flip.sbatch` (mine and extract), `submit_bracket_readout.sbatch`
+(`probe_space` + `geometry_tables`), and `submit_bracket_intervene.sbatch` (the M6
+sweep); `submit_bracket_robustness.sbatch` and `submit_bracket_sae.sbatch` run the
+two side arms. Every figure is drawn off the GPU by `make_figures.py`.
 Large artifacts on `$SPADE_BRACKET_DIR`; per-event CSVs in `results/`; the A1–A6
 write-ups in `reports/`.
 

@@ -99,7 +99,7 @@ def probe_acts(path: Path = PROBE_ACTS) -> torch.Tensor:
 
 def fingerprint(acts: torch.Tensor) -> str:
     """Identifies the probe position set, so encodings of one are never mistaken for
-    encodings of another. `tpr_probe._fingerprint`'s job, over floats: shape plus a
+    encodings of another. A fingerprint's job, over floats: shape plus a
     digest of the bytes, since a float sum collides far too easily to key a cache on."""
     digest = hashlib.blake2b(acts.contiguous().numpy().tobytes(), digest_size=8)
     return f"{tuple(acts.shape)}:{digest.hexdigest()}"

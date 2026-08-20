@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 
 from spade.bracket_flip import act_geometry as ag
+from spade.common.config import D_MODEL
 from spade.common.paths import repo_root
 
 SEED = 42  # one seed for the whole table, so `cos_null1_*` and `var_flip_null` draw the same discs
@@ -153,7 +154,7 @@ def summary_table(events: ag.Events, m: Measurements) -> pd.DataFrame:
              "definition": "headline single-flip events, layer 5"},
             {"key": "n_events_strict", "value": int(events.strict.sum()), "n": events.n,
              "definition": "events whose control avoids all eight of s's rays"},
-            {"key": "var_isotropic_chance", "value": 1.0 / (ag.D_MODEL - 1), "n": events.n,
+            {"key": "var_isotropic_chance", "value": 1.0 / (D_MODEL - 1), "n": events.n,
              "definition": "share a random direction takes once the swap axis is removed"},
             *structure_rows(events, m)]
     for (contrast, source), cos in m.cos.items():
