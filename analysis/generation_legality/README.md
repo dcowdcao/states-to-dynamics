@@ -145,9 +145,9 @@ Panel (b) — **The residual illegal mass is not spread over the illegal squares
 board offers them: R3 (turn confusion) dominates from the midgame on and R1 (placement) is
 suppressed.** P(illegal move at move *t*) against move number, split into the three constraint
 rules, on a log axis, with `any illegal` as the reference. The rule series are **sums** over
-their taxonomy categories, not means, so the legend says `sum of 3` (FIGURE_GUIDELINES 1.7),
-and the within-rule ÷ between-rule spread of 0.95 is printed under the panel: on this axis R2
-is a label and R1 is a class.
+their taxonomy categories, not means, so the legend says `sum of 3` (FIGURE_GUIDELINES 1.7).
+The within-rule ÷ between-rule spread is 0.95 (`rule_mass_within_over_between` in
+`overall.csv`): on this axis R2 is a label and R1 is a class.
 
 There is no skew, density or played-rate panel. Those measurements were
 not deleted with their panels — `rule_skew.csv`, `played_rate.csv` and `overall.csv` still
@@ -161,16 +161,15 @@ itself instead of corpus games handed to it. Ratio of rollout to teacher-forced 
 **0.996** over the move axis, **0.907** late (*t* ≥ 40), pooled **0.993**; the ordering and
 the R1 suppression are unchanged. The late deficit is **survivorship, not the model behaving
 better** — a rollout leaves the table at its first illegal move, and the games that leave are
-the ones carrying the most illegal mass. n falls 1000 → 891 across the axis and the panel
-prints it. Its own within-rule ÷ between-rule spread is 0.89, the same story as (b)'s 0.95.
+the ones carrying the most illegal mass. n falls 1000 → 891 across the axis. Its own
+within-rule ÷ between-rule spread is 0.89, the same story as (b)'s 0.95.
 
 **Neither the six taxonomy members nor the bootstrap bands are drawn**, by request: the
 panels carry the four rule curves alone. This is a deliberate departure from
 FIGURE_GUIDELINES 1.2, which wants every claim-supporting curve to carry its uncertainty.
-Nothing stopped being measured — every `lo`/`hi` column is still computed and written, and
-each panel names the file it lives in (`by_move.csv`, `rollout_by_move.csv`,
-`survival.csv`). The members' story survives as the printed spread, which is the number they
-were there to justify.
+Nothing stopped being measured — every `lo`/`hi` column is still computed and written, in
+`by_move.csv`, `rollout_by_move.csv` and `survival.csv`. The members' story survives as the
+spread in `overall.csv`, which is the number they were there to justify.
 
 Why this is worth having: (b) alone is a statement about a prefix distribution the model is
 never in once it starts playing. F2 says the by-rule picture survives self-conditioning,
@@ -219,3 +218,20 @@ survival.csv        arm, plies, value, lo, hi, n_games
 overall.csv         metric, value, lo, hi, n_games, n
                     includes rule_{skew,mass}_within_over_between (GUIDELINES 1.7)
 ```
+
+## Figure notes
+
+The estimator lines the panels used to print under themselves, in their own wording.
+
+- `figures/generation_legality.png`, panel (a) — cumulative, so the curve can only rise.
+  *n* = 1000 whole games at *T* = 1.0, judged by the engine. 95% bootstrap CIs are in
+  `results/survival.csv`, not drawn.
+- `figures/generation_legality.png`, panel (b) — per move, not cumulative; means over
+  *n* = 1000 corpus games. 95% bootstrap CIs are in `results/by_move.csv`, not drawn.
+  Within-rule ÷ between-rule spread = 0.95 (SD of log₁₀ share over the 6 taxonomy
+  categories): it is R2 that drives it, and R3 has a single member, so on this axis R2
+  is closer to a label than a class.
+- `figures/generation_legality_by_rule_rollout.png` — per move, not cumulative; means over
+  the games still legal at each *t*, *n* falling 1000 → 891: a rollout leaves the table at
+  its first illegal move, so *n* falls along the axis. 95% bootstrap CIs are in
+  `results/rollout_by_move.csv`, not drawn. Within-rule ÷ between-rule spread = 0.89.

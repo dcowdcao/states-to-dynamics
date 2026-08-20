@@ -214,11 +214,16 @@ space. The null in (b) recomputes the same expanding window over a random
 permutation of the post-*t0* positions (20 shuffles), so growing the window is
 the only thing left that can move the descriptor.
 
-What stays on the figures is what a reader cannot look up while looking at them:
-the `R^21 undefined` marker on the segment where the descriptor does not exist
-(FIGURE_GUIDELINES §4.2 — an unannotated flat or absent stretch reads as an
-artifact), the refit-per-space disclaimer (§4.6), `one game (n=1)`, and on the
-rollout twins one line about the horizon (below).
+What stays on the figures is the refit-per-space disclaimer (§4.6), `one game
+(n=1)`, and on the rollout twins one line about the horizon (below) — all three
+in the legend title.
+
+## Figure notes
+
+- `r21_expanding_magnitude`, panel (a): the shaded band from *t−t0* = 0 to 14 is
+  where `R^21` is undefined — fewer than 8 sampled positions since *t0*. The grid
+  figure still names it in its legend (`R^21 undefined (< 8 sampled positions
+  since t0)`); the companion's copy of that label was in-panel and is gone.
 
 ## The rollout variant, and why it makes the verdict worse
 

@@ -84,7 +84,7 @@ line at the origin. `run_from_reference` is that number:
 
 A ratio, because every field is z-scored per space and the `refit` plane is fit
 per space too: only a within-space contrast carries from one cell to the next. A
-mark twice as high is not twice the absolute change, and the caption says so.
+mark twice as high is not twice the absolute change.
 1.0 is the control itself; the empirical legal-vs-legal scale — a *third* legal
 move against the control, in full R^21 — is drawn as gray triangles at
 **0.88–1.53, median 1.13**, so 1.0 is roughly where a legal alternative really
@@ -199,3 +199,16 @@ figure can draw is r = +6, because W = 8 sampled positions at stride 2 is 14
 plies of span. So the rollout grids are a **shape check on the reduction**, not
 a result: they show that the K-mean descriptor still fits one plane across nine
 spaces. Read the separation from the spliced figures.
+
+## Figure notes
+
+The lines the figures used to print under their panels, in their own wording.
+
+- `figures/separation_by_plane` — one game (n=1): 6 illegal vs 2 control branches,
+  10 windows each, per space.
+- `figures/run_from_reference` — one game (n=1), 10 anchors *t−t0* = 6…24: ratios, so
+  only the within-space contrast carries across cells — a mark twice as high is not
+  twice the absolute change. The reference is 0 in every field by construction.
+- Both `_rollout` twins also carried: rollout: every anchor drawn is at *r* ≥ +6,
+  where illegal and control have already saturated — shape, not a separation. The
+  `space_fork_grid_r21_*_rollout` grids still carry that line in their legend title.

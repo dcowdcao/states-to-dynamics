@@ -44,8 +44,7 @@ import numpy as np
 from spade.common.paths import results_dir
 from spade.common.study import variant_dir
 from spade.figures.paper_style import (
-    CATEGORY_STYLE, MUTED, NULL, OKABE_ITO, apply_style,
-    rule_key, sae_label, save_figure)
+    CATEGORY_STYLE, NULL, OKABE_ITO, apply_style, sae_label, save_figure)
 from spade.othello.taxonomy import CATEGORIES
 from spade.violation_divergence.rollout_branches import K_ROLLOUTS
 
@@ -220,8 +219,6 @@ def feature_recurrence(meta, mask, variant: str, k: int) -> None:
              "(b) held-out generalization of the top-10")]:
         ax.axhline(chance, color=NULL["color"], lw=0.9, ls=NULL["ls"], zorder=1,
                    label="uniform chance over 8192 features")
-        ax.text(len(SPACES) - 0.5, chance * 1.15, f"uniform chance = {chance:.4f}",
-                fontsize=7, color=MUTED, ha="right", va="bottom")
         ax.set_yscale("log")
         ax.set_xticks(x)
         ax.set_xticklabels([label(s) for s in SPACES], rotation=30, ha="right",
@@ -241,18 +238,8 @@ def feature_recurrence(meta, mask, variant: str, k: int) -> None:
                  f"{min(empty_square_rates):.0%}-{max(empty_square_rates):.0%} of "
                  "empty-square violations",
                  fontsize=11, y=1.02)
-    fig.text(0.5, 0.955,
-             "Top-$|\\Delta|$ features at $r = 0$. Error bars are 95% percentile "
-             "bootstrap over source games (1000 resamples); n per category is "
-             "1636-2000 games, 2000 for the control."
-             if variant == "spliced" else
-             "Top-$|\\Delta|$ features at $r = 0$. Error bars are 95% percentile "
-             "bootstrap over source branches (1000 resamples),\neach branch's K="
-             f"{K_ROLLOUTS} scores averaged first; n per category is 1630-2000 "
-             "branches, 2000 for the control.",
-             fontsize=8, color=MUTED, style="italic", ha="center", va="top")
-    fig.tight_layout(rect=(0, 0.02, 1, 0.90))
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.12)
+    # 0.955 is where the removed estimator note ended; above it is the suptitle's band.
+    fig.tight_layout(rect=(0, 0.02, 1, 0.955))
     save_figure(fig, FIG_DIR / named("sae_feature_recurrence", variant))
 
 

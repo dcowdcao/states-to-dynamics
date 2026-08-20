@@ -3373,3 +3373,36 @@ raw; read the argmax as a decision only where the grid separates by more than th
 `analysis/legality_probe/` figures, READMEs and `readout.csv` still describe the old fits.
 `readout.csv` is stale against the regenerated `probe_fit.csv` and was deliberately not
 rerun.
+
+## Grey prose removed from the figures (2026-08-20)
+
+Every MUTED-grey prose block is gone from ten figure scripts: `rule_key()`/`role_key()`
+keys under the panels, the italic estimator lines above them, and the floating
+"0 by construction" / "saturated" / "axis not calibrated here" annotations. What the
+blocks stated about an estimator, an n or a normalisation moved verbatim into each
+study's README under `## Figure notes`. Chance and threshold lines kept their identity
+by moving into the legend (`chance` in the curvature discriminant's panel (j),
+`uniform over the 60 squares (chance)` in F6(b), `unrelated-activation ceiling` in F1's
+rollout twin, `reference = 0 by construction` in the discriminant's panel (l)); the SAE
+recurrence figure's chance text was already duplicated by its legend and was deleted.
+
+Two gotchas worth keeping:
+
+- **The in-figure n on `sae_feature_recurrence` was stale.** It said "1636-2000 games,
+  2000 for the control"; the committed CSV has 3299-3923 games per category and 3923 for
+  the control. The README records the CSV's numbers, not the figure's.
+- **The committed divergence figures predate the current netscratch tree.** Re-rendering
+  `violation_divergence/make_figures.py`, `sae_spaces/` and `behavioral/` at HEAD, before
+  any edit, already changes them: `$SPADE_DIVERGENCE_DIR` now holds 3923 source games
+  where the committed PNGs and `results/violation_divergence/*.csv` were built from 2003
+  (`ratio_illegal_control_L5` 0.978 -> 0.9749). Those seven figures and their CSVs are in
+  their own commit so the data step can be reviewed or dropped separately from the text
+  removal. The other 23 figures re-render bit-identically at HEAD.
+- **`behavioral --variant rollout` will not run on a login node**: it loads the 949 MB
+  rollout `logits.pt` whole and the OOM killer takes it under an 8 GiB cap.
+  `f6_behavioral_divergence_rollout.{png,pdf}` is therefore still the pre-change render
+  and needs one batch job to catch up.
+
+Rendering a worktree needs two things that are gitignored and so absent from a fresh one:
+`checkpoints/*/trainer_*/ae.pt` (symlink from `/n/home10/dcao/spade_sae/checkpoints/`) and
+`analysis/rules_manifolds/embeddings/`.

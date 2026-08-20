@@ -69,7 +69,7 @@ from spade.common.device import select_device
 from spade.common.study import variant_dir
 from spade.figures.paper_style import (
     CATEGORY_STYLE, FULL_STYLE, GRID, INK, MUTED, NULL, PLANE_STYLE, QUANTITY_STYLE,
-    REFERENCE, apply_style, rule_key, sae_label, save_figure)
+    REFERENCE, apply_style, sae_label, save_figure)
 from spade.othello.taxonomy import CATEGORIES
 from spade.saes.registry import seed42_entries
 from spade.spaces import EXCLUDED_SAE
@@ -306,7 +306,6 @@ def space_grid(plane: str, coords: dict[str, np.ndarray], meta: dict, note: str,
                      f"({plane} plane)", fontsize=11)
     fig.subplots_adjust(left=0.02, right=0.97, top=0.92, bottom=0.06,
                         wspace=0.06, hspace=0.16)
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.065 - drop)
     return save_figure(fig, FIG_DIR / f"space_fork_grid_r21_{plane}{suffix}", camera_ready)
 
 
@@ -320,8 +319,8 @@ def plane_series(ax, x, values: dict[str, list[float]], label: bool = True) -> N
 
 def separation_figure(scores: dict[str, list[float]], nulls: dict[str, np.ndarray],
                       names: list[str], camera_ready: bool, suffix: str = "",
-                      foot: str = "", title: str = "$R^{21}$ moves the branches apart "
-                                                   "faster than it moves the null") -> Path:
+                      title: str = "$R^{21}$ moves the branches apart "
+                                   "faster than it moves the null") -> Path:
     """The number the grids cannot show, against the null that explains most of it.
 
     R^21 raises the raw gap and the null by nearly the same factor, so (b) divides
@@ -360,14 +359,11 @@ def separation_figure(scores: dict[str, list[float]], nulls: dict[str, np.ndarra
     if not camera_ready:
         fig.suptitle(title, fontsize=10.5)
     fig.tight_layout()
-    fig.text(0.5, -0.32, "one game (n=1): 6 illegal vs 2 control branches, 10 windows "
-             "each, per space." + foot, ha="center", va="top", fontsize=7.5, color=MUTED)
     return save_figure(fig, FIG_DIR / f"separation_by_plane{suffix}", camera_ready)
 
 
 def run_figure(coords: dict, X: dict, names: list[str], ill: np.ndarray,
-               c1: int, c2: int, meta: dict, camera_ready: bool, suffix: str,
-               foot: str) -> Path:
+               c1: int, c2: int, meta: dict, camera_ready: bool, suffix: str) -> Path:
     """The number the fork grids make the reader guess at: how far a branch runs.
 
     (a) asks how much of that run each candidate plane keeps; (b) asks what the
@@ -430,14 +426,6 @@ def run_figure(coords: dict, X: dict, names: list[str], ill: np.ndarray,
         fig.suptitle("How far an illegal branch runs from the reference, and how "
                      "much of it survives the plane", fontsize=10.5)
     fig.tight_layout()
-    r = meta["anchors"] - meta["t0"]
-    # A ratio axis with no absolute unit, and a reference that is not a mark: both
-    # decide how the panel reads, so both stay in front of the reader (§4.2, §4.6).
-    fig.text(0.5, -0.30, f"one game (n=1), {int((r >= 0).sum())} anchors "
-             f"$t-t_0$ = {r[r >= 0][0]}…{r[-1]}: ratios, so only the within-space "
-             f"contrast carries across cells — a mark twice as high is not twice the "
-             f"absolute change. The reference is 0 in every field by construction."
-             + foot, ha="center", va="top", fontsize=7.5, color=MUTED)
     return save_figure(fig, FIG_DIR / f"run_from_reference{suffix}", camera_ready)
 
 
@@ -546,14 +534,13 @@ def main():
         out = space_grid(plane, coords[plane], meta, f"{note}{n_state}{rollout_note}",
                          labels, titles, shared_lim, args.camera_ready, suffix)
         print(f"wrote {out}")
-    foot = "" if n_roll == 1 else ROLLOUT_CAVEAT
     # The spliced claim inverts here: with every branch resampling its future the
     # displacement is in the activations, and routing it through R^21 costs.
     title = ("$R^{21}$ moves the branches apart faster than it moves the null"
              if n_roll == 1 else
              "When every branch resamples its own future, the activation plane beats "
              "$R^{21}$ against each plane's own null")
-    print(f"wrote {separation_figure(scores, nulls, names, args.camera_ready, suffix, foot, title)}")
+    print(f"wrote {separation_figure(scores, nulls, names, args.camera_ready, suffix, title)}")
 
     c1, c2 = (int(np.flatnonzero(meta["is_control"] == k)[0]) for k in (1, 2))
     print(f"\nrun from the reference / control 1's run, illegal (mean of 6) except the "
@@ -566,7 +553,7 @@ def main():
                   for c in (slice(None), BLOCKS["d"], BLOCKS["theta"])]
         cells.append(run_ratio(X[name], np.array([c2]), c1, **run_args(meta)))
         print(f"{name:34}" + "".join(f"{v:22.2f}" for v in cells))
-    print(f"wrote {run_figure(coords, X, names, ill, c1, c2, meta, args.camera_ready, suffix, foot)}")
+    print(f"wrote {run_figure(coords, X, names, ill, c1, c2, meta, args.camera_ready, suffix)}")
 
 
 if __name__ == "__main__":

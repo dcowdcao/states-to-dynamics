@@ -357,6 +357,32 @@ control with R3 > R2 > R1 in all nine spaces on game 1235 becomes 1.02 (R2), 1.0
 (R3) and 0.91 (R1) over 100 games, against an empirical legal-vs-legal null of 1.04, whose margin is resolved only over R1
 that no rule reaches.
 
+## Figure notes
+
+The estimator lines the figures used to print under their panels, one per file. They
+were removed from the graphics; the wording here is theirs.
+
+- `figures/divergence_layer5` (F1) — mean over source games; n in the legend, 95% CIs
+  in divergence_curves.csv.
+- `figures/divergence_layer5_rollout` — mean over source branches, K=4 rollouts averaged
+  per branch; n in the legend, 95% CIs in divergence_curves_rollout.csv. Its dotted
+  "unrelated-activation ceiling" is δ̂ between two *different* games' layer-5 rollouts at
+  the same absolute position, mean over *r* ∈ [20, 24], n = 2000 games at seed 0 = 1.312.
+- `figures/depth_sweep` (F3) — error bars: 95% CI of the mean over source games
+  (b: normal approximation on a proportion); n in the legend.
+- `figures/depth_sweep_rollout` — error bars: 95% CI of the mean over source branches,
+  K=4 rollouts averaged per branch (b: normal approximation); n in the legend.
+- `sae_spaces/figures/sae_feature_recurrence` — top-|Δ| features at *r* = 0; error bars
+  are 95% percentile bootstrap over source games, 1000 resamples. **Its n was stale in
+  the figure**, which said "1636-2000 games, 2000 for the control": on the committed
+  `sae_feature_recurrence.csv` the categories carry 3299-3923 games and the control 3923.
+- `sae_spaces/figures/sae_feature_recurrence_rollout` — same estimator over source
+  branches, each branch's K=4 scores averaged first. Its n was stale too ("1630-2000
+  branches, 2000 for the control"); the committed `sae_feature_recurrence_rollout.csv`
+  has 3299-3923 branches per category and 3923 for the control.
+- `behavioral/figures/f6_behavioral_divergence` keeps its estimator line as the legend
+  title, so nothing moved here.
+
 ## Known gaps
 
 - **This study's `mean θ` is not the straightness study's, and the two must never

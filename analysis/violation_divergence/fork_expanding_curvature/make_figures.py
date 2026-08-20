@@ -40,8 +40,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from spade.figures.paper_style import (
-    CATEGORY_STYLE, GRID, INK, MUTED, NULL, REFERENCE, apply_style, rule_key,
-    save_figure)
+    CATEGORY_STYLE, GRID, INK, MUTED, NULL, REFERENCE, apply_style, save_figure)
 from spade.othello.taxonomy import CATEGORIES
 
 from cache_features import VARIANT_DIRS, load
@@ -187,7 +186,6 @@ def space_grid(g: dict, b: Branches, k0: int, rollout: bool, camera_ready: bool)
         fig.suptitle("The fork in the curvature space $R^{21}$, expanding window anchored "
                      f"at $t_0$ (game {g['game']})", fontsize=11)
     fig.subplots_adjust(left=0.02, right=0.97, top=0.92, bottom=0.06, wspace=0.06, hspace=0.16)
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.085)
     return save_figure(fig, FIG_DIR / f"space_fork_grid_r21_expanding{suffix(rollout)}",
                        camera_ready)
 
@@ -206,7 +204,6 @@ def magnitude_panel(ax, F: np.ndarray, b: Branches, pos: np.ndarray,
         ax.plot(r, dh[i], ls=st["ls"], color=st["color"], lw=st["lw"],
                 marker=st["marker"], ms=3.5, markeredgecolor="white",
                 markeredgewidth=0.3, zorder=st["zorder"], label=st["label"])
-    ax.text(0.4, ax.get_ylim()[1] * 0.5, UNDEFINED, fontsize=7, color=MUTED, va="top")
     ax.set_xlabel("position relative to the branch, $t-t_0$")
     ax.set_ylabel(r"$\|\Delta_{21}\|\,/\,\|r_{21}(\mathrm{ref})\|$")
 
@@ -254,7 +251,6 @@ def companion(g: dict, b: Branches, k0: int, rollout: bool, camera_ready: bool) 
         + (ROLLOUT_NOTE if rollout else ""))
     if not camera_ready:
         fig.suptitle("What the $R^{21}$ curve can and cannot show", fontsize=11, y=1.04)
-    rule_key(fig, ["R1", "R2", "R3"], y=-0.30 - drop)
     return save_figure(fig, FIG_DIR / f"r21_expanding_magnitude{suffix(rollout)}",
                        camera_ready)
 
