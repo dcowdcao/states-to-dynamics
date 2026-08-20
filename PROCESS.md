@@ -6,6 +6,35 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The same read-out on a regenerated suffix (2026-08-20)
+
+`changepoint_localization/measure_regenerated.py` + `make_figures_regenerated.py` ->
+`figures/changepoint_by_space_regenerated.png`. The reported study scores the divergence tree,
+whose suffix after t0 is the source game's **verbatim**; the straightness violation corpus
+regenerates a fresh random legal continuation instead. Since `m = 4, paired` was *selected* on
+the regenerated corpus and *applied* to the fixed one, the transfer deserved a by-space check
+rather than the README's window-only note.
+
+**The ordering survives, Spearman rho ~ 0.97.** Top four identical as a set, raw L5 fifth in
+both, bottom four identical; only GatedSAE<->BatchTopK and SpaDE<->PAnneal swap, both adjacent.
+So "four dictionaries clear raw layer 5 and four sit at chance" holds in both suffix regimes.
+
+**What does not transfer, and the axis label says so.** The straightness corpus carries no
+legal-alternative arm, so panel (a) is illegal vs **its own source legal game** -- the parent's
+`vs_reference` contrast, not its `vs_control`. The 0.604 bar has no counterpart here and the
+two left panels must not be read as the same quantity. Only the four empty-square categories
+exist there too (the occupied-square board update is ill-defined), so the higher hit rates are
+partly composition, not regime.
+
+**Gotcha that cost a rerun: the null has to come from disjoint sets.** Pairing the source
+legal games against a rolled copy of themselves is the same multiset, so AUROC is exactly 0.5
+by construction -- a number that looks like an empirical null and measures nothing. It also
+has to be many splits: one split's luck is shared by all nine spaces because they score the
+same games, which showed up as every space landing 0.462-0.499. Averaging 20 disjoint splits
+puts it at 0.491-0.506, against the parent's 0.492-0.512.
+
+---
+
 ## Curvature through the change-point pipeline, and it is at chance (2026-08-20)
 
 `changepoint_localization/theta_ablation.py`, written up in `CURVATURE_ABLATION.md`. The
