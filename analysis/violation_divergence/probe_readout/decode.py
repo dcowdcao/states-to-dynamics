@@ -1,6 +1,7 @@
-"""M6: read the layer-5 linear probe out on every branch of the violation-divergence study.
+"""M6: read the layer-5 board probe out on every branch of the violation-divergence study.
 
-The probe is mover-relative -- {empty, theirs, mine} with "mine" = the player to
+The probe is `spade.probes.load.board(5)`, the project's one board read-out. It is
+mover-relative -- {empty, theirs, mine} with "mine" = the player to
 move at the *next* position -- and after an illegal move whose turn it is is
 exactly what is in dispute. So both branches are decoded and scored against one
 common target: the **reference game's board**, labelled in the **reference
@@ -39,12 +40,13 @@ from spade.common.paths import repo_root
 from spade.common.study import variant_dir
 from spade.othello.boards import flip_set, regular_moves
 from spade.othello.taxonomy import CATEGORIES, LEGAL
+from spade.probes.load import board as board_probe
 from spade.violation_divergence.compute_divergence import group_key
 from spade.violation_divergence.divergence import WINDOW
 
 from circuits.othello_engine_utils import OthelloBoardState, to_string
 
-EMPTY, THEIRS, MINE = 0, 1, 2  # linear_probe.pt class order, as in spade/rules/causal/unflip_edit.py
+EMPTY, THEIRS, MINE = 0, 1, 2  # spade.probes.load.CLASSES order
 PROBE_LAYER = 5
 N_BOOT = 1000
 R0 = WINDOW.index(0)
@@ -192,10 +194,9 @@ def group_tables(items: dict, group_of: np.ndarray, sampled: bool) -> dict[str, 
     return {k: np.asarray(v) for k, v in out.items()}
 
 
-def decode(acts_path: Path, probe_path: Path, t0: torch.Tensor) -> np.ndarray:
+def decode(acts_path: Path, t0: torch.Tensor) -> np.ndarray:
     """argmax probe class per (row, window offset, square). fp32 -- fp16 overflows."""
-    probe = torch.load(probe_path, map_location="cpu", weights_only=False).float()
-    probe = probe.reshape(512, 64, 3)  # same reshape as spade.rules.causal.unflip_edit.probe_directions
+    probe = board_probe(PROBE_LAYER, flat=True).float()
     # mmap: the rollout tree's activation tensor is 4.2 GB and is only gathered
     # from, one batch of window positions at a time.
     acts = torch.load(acts_path, map_location="cpu", weights_only=True, mmap=True)
@@ -279,9 +280,6 @@ def main():
     parser.add_argument("--variant", default="spliced", choices=VARIANTS,
                         help="rollout: every branch samples its own continuation "
                              "($DIR[/smoke]/rollout/), K per branch")
-    parser.add_argument("--probe", type=Path,
-                        default=repo_root() / "analysis/linear_probe/activations/linear_probe.pt",
-                        help="gitignored, so a worktree must point at the main checkout's copy")
     args = parser.parse_args()
     variant = args.variant
     sampled = variant == "rollout"
@@ -292,7 +290,7 @@ def main():
     group_index = group_key(items).numpy()
     k = int(items["rollout"].max()) + 1 if sampled else 1
     tables = group_tables(items, group_index, sampled)
-    dec = decode(study / "acts" / f"resid_post_{PROBE_LAYER}.pt", args.probe, items["t0"])
+    dec = decode(study / "acts" / f"resid_post_{PROBE_LAYER}.pt", items["t0"])
 
     game_index = np.searchsorted(games, items["game_id"].numpy())
     branch_square = np.array([to_string(t) for t in items["branch_token"].tolist()])

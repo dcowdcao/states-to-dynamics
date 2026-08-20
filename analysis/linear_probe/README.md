@@ -1,11 +1,32 @@
-# Linear probe
+# Linear probe — historical
 
-The gold-standard board-state probe. `train_linear_probe.py` replays 200 ARENA games,
-caches OthelloGPT's residual stream at every layer, sweeps the layers with quick probes over
-five initialisations, and trains the full probe on the best one. `activations/linear_probe.pt`
-([512, 8, 8, 3]) is the ground-truth read-out the rules, bracket-flip, violation-divergence
-and geometry studies compare SAE features against; it is what says the residual stream
-already carries the board, so the bottleneck is SAE feature design and not information loss.
+**Superseded as a probe.** The project's board read-out is `spade.probes.load.board(5)`:
+20,000 `adamkarvonen/othello_45MB_games` games, 812k train rows split **by game**,
+engine-replay labels, early stopping on validation accuracy, **0.9937** test at layer 5
+against this study's 0.9923. Do not fit a new probe here, and do not read
+`activations/linear_probe.pt` as one.
+
+The study stays for two reasons. `train_linear_probe.py` also writes the ARENA activation
+cache (`activations/{board_states,primary_layer_activations,all_layer_activations,
+move_indices}.pt`) that the bracket-flip, rules and geometry code still reads, and
+`results/` plus `figures/` are the record of the fit the canonical protocol replaced.
+
+`train_linear_probe.py` replays 200 ARENA games, caches OthelloGPT's residual stream at
+every layer, sweeps the layers with quick probes over five initialisations at a fixed 200
+epochs, and trains the full probe on the best one for a fixed 500 epochs. Neither budget
+has a convergence criterion — that is the defect `spade.probes.train` exists to fix.
+
+### Why the figure was not repointed at the canonical sweep
+
+`$SPADE_PROBES_DIR/probes/board_layer_sweep.csv` is single-seed (42) and holds only
+`layer, best_epoch, epochs_run, val_accuracy, test_accuracy` for layers 0–7. It carries no
+embedding-space row and no majority-class null, and the canonical corpus has no embedding
+activations to compute one from. Drawing it on `layer_sweep_accuracy`'s axes would delete
+all three of that figure's structural elements — the ±1 SD seed bars (FIGURE_GUIDELINES
+§1.2), the input anchor ruled off from the blocks (§4.1) and the null (§3) — which is a
+redesign, not a repoint. The canonical per-layer test accuracies are .9109 .9494 .9720
+.9828 .9899 .9937 .9945 .9940 for layers 0–7; **layer 6 edges layer 5 by 0.0009**, inside
+the noise this single-seed sweep cannot resolve, and layer 5 stays the hook point.
 
     python analysis/linear_probe/train_linear_probe.py    # activations/ + results/
     python analysis/linear_probe/parity_fix_effect.py     # results/parity_fix_effect.csv
@@ -97,9 +118,9 @@ games is *not* measured; a claim that needs it wants a resample over the 200 gam
 ## Downstream
 
 `activations/{linear_probe,board_states,primary_layer_activations,all_layer_activations,
-move_indices}.pt` are read by `spade.rules.causal.unflip_edit`, four `spade.bracket_flip`
-modules (`tpr_probe`, `tpr_intervene`, `sae_arm`, `act_geometry`, plus `redteam`) and
-`analysis/violation_divergence/probe_readout/decode.py`; `probe_metadata.json`'s
+move_indices}.pt` are read by `spade.rules.causal.unflip_edit` and four `spade.bracket_flip`
+modules (`tpr_probe`, `tpr_intervene`, `sae_arm`, `act_geometry`, plus `redteam`);
+`probe_metadata.json`'s
 `layer_accuracies` is the capacity reference in `bracket_flip.tpr_probe`. Everything is paired
 **by row index with no key**, so the row set and order above are a contract, and
 `train_linear_probe.py` asserts them. Anything computed before this fix used the old labels —

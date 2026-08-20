@@ -34,15 +34,14 @@ n is constant across the whole x-axis, verified, with zero off-board NaN.
 
 The rollout tree replaces the shared suffix with a sampled one (see below). The four
 figure scripts take `--variant rollout` and write `*_rollout` beside today's names;
-`probe_readout/decode.py` needs it too, and `--probe` pointing at a checkout that
-carries the gitignored probe.
+`probe_readout/decode.py` needs it too.
 
 ```
 python -m spade.violation_divergence.rollout_branches                          # $DIR/rollout/branches/
 python -m spade.violation_divergence.extract_acts --variant rollout            # $DIR/rollout/acts/
 python -m spade.violation_divergence.compute_divergence --variant rollout      # $DIR/rollout/divergence/
 python analysis/violation_divergence/{,behavioral/,sae_spaces/}make_figures.py --variant rollout
-python analysis/violation_divergence/probe_readout/decode.py       --variant rollout --probe ...
+python analysis/violation_divergence/probe_readout/decode.py       --variant rollout
 python analysis/violation_divergence/probe_readout/make_figures.py --variant rollout
 ```
 
@@ -108,10 +107,10 @@ alternative does.
 
 ## What holds
 
-**1. The model represents the illegal move as played.** At r = 0 the committed
-layer-5 linear probe decodes a disc on the illegally played square in
-**98.5–99.9%** of events, in every category. `occupied_opp` recolors the square to
-the mover in **78.6%** of events — so it is a *recolor*, not a no-op, answering the
+**1. The model represents the illegal move as played.** At r = 0 the canonical
+layer-5 board probe decodes a disc on the illegally played square in
+**99.5–100%** of events, in every category. `occupied_opp` recolors the square to
+the mover in **89.6%** of events — so it is a *recolor*, not a no-op, answering the
 question the design doc left open. `occupied_own` leaves the square unchanged and is
 the study's one genuine zero-board-change violation.
 
@@ -274,7 +273,7 @@ reference board goes 0.830 / 0.825 → 0.289 / 0.289. Findings 2 and 3 above can
 re-derived here; the rollout figures show the collapse and label it. Two more
 constructions break with it: the token embedding is no longer silent after t0 (W_E
 plateau δ̂ 0.000 → 1.233, so "computed, not inherited" has no anchor in this tree),
-and the reference's board only exists while the model keeps playing legally — 1.1% of
+and the reference's board only exists while the model keeps playing legally — 1.0% of
 window positions in `probe_rollout_*` and 4.2% of reference rollouts inside the window
 have none, and those positions are dropped rather than scored.
 
