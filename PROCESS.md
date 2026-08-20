@@ -6,6 +6,37 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Curvature through the change-point pipeline, and it is at chance (2026-08-20)
+
+`changepoint_localization/theta_ablation.py`, written up in `CURVATURE_ABLATION.md`. The
+README asserted curvature "scores 0.53-0.58" but **no committed code ever loaded `theta`** --
+`measure.py`'s `steps()` hardcodes `["d"]` -- so the claim had no artifact behind it. This
+runs the real ablation: same `profile -> drop -> scan -> max/argmax`, same `m = 4`, same
+paired MOSUM, `theta` for `d`. Reproducing `d` first gives GatedAnneal 0.6037 [0.578, 0.629]
+against the committed [0.578, 0.630], so the numbers are like-for-like.
+
+**Curvature cannot localize at all.** Every `theta` hit rate is 0.018-0.056 against a
+shift-chance of 0.027-0.030 -- chance -- while `d` puts GatedAnneal at 0.336, ~16x chance.
+Detection is near-dead too: seven of nine CIs include or touch 0.5, and the best curvature
+space is weaker than step length's fifth-best. The straighter-not-curvier direction does
+survive: flipping the sign puts GatedAnneal and TopK below 0.5.
+
+**The space ordering roughly inverts, Spearman rho ~ -0.67.** GatedAnneal is 1st on `d` and
+8th on `theta`; CosineSpaDE is 6th on `d` and **1st** on `theta`, the one space where
+curvature beats step length. So "which dictionary carries the signal" is not a property of
+the dictionary -- it depends on which quantity is measured. A sparsemax code lies on the
+simplex and sums to 1, which bounds how far a step can travel, so magnitude may simply be
+compressed out of it; that is a hypothesis, and it is the same geometry-vs-magnitude question
+the un-run norm baseline is about.
+
+**Two corrections.** The measured range is 0.500-0.551 (vs matched legal control) or
+0.539-0.616 (vs clean reference); neither reproduces 0.53-0.58, so the README's range needs
+replacing with measured numbers. And the *straightness* geometry npz **does** carry `norm`
+(10000x58) -- only `curvature_discriminant`'s lacks it -- so the norm-only baseline the README
+calls blocking is already runnable on the regenerated corpus, no GPU pass needed.
+
+---
+
 ## Probe geometry: board-state directions against rule-legality directions (2026-08-18)
 
 **Question:** the board-state probe and the two rule probes (legal/illegal, and
