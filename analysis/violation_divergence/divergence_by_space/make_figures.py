@@ -24,12 +24,18 @@ side by side: raw distances differ ~585x across the grid for the same branch.
 per rule; the r axis is what this figure adds, and the population and the
 interval over games.
 
+`--plane r21` draws the same nine cells over `measure.py`'s R^21 sweep, where the
+reference is subtracted after the curvature descriptor rather than in the
+representation space. Everything else -- panels, colours, markers, the
+ratio-to-the-legal-control, the CI -- is the same, and the x window is read off
+the npz because phi's trailing W-window costs the first two offsets.
+
 Reads `measure.py`'s npz. Writes the figure and one tidy CSV of every drawn
 point. Prose belongs in README.md (FIGURE_GUIDELINES 2, 5); what stays inside
 the figure is what a reader cannot decode while looking at it.
 
 Usage: python analysis/violation_divergence/divergence_by_space/make_figures.py
-       [--variant spliced|rollout] [--camera-ready]
+       [--plane displacement|r21] [--variant spliced|rollout] [--camera-ready]
 """
 
 import argparse
@@ -144,7 +150,9 @@ def event_axes(ax, w: np.ndarray, rollout: bool) -> None:
     if rollout:
         ax.axvspan(SATURATED_R, w[-1] + 1, color=GRID, alpha=0.45, lw=0, zorder=0)
     ax.set_xlim(w[0] - 1, w[-1] + 1)
-    ax.set_xticks(range(int(w[0]), int(w[-1]) + 1, 8))
+    # Anchored on the branch, not on w[0]: R^21's window starts at r = -4, and a
+    # tick run from there would skip the event the axis is locked to.
+    ax.set_xticks([r for r in range(int(w[0]), int(w[-1]) + 1) if r % 8 == 0])
 
 
 def spread_note(z) -> str:
@@ -171,14 +179,16 @@ def legend_marks(n_games: int) -> tuple[list, list]:
 
 
 TITLE = {
-    "spliced": "How far the fork panels' branches actually run — and how much of that "
-               "separation is the plane",
-    "rollout": "With a sampled suffix the branch move stops setting the distance, in "
-               "every space",
+    ("displacement", "spliced"): "How far the fork panels' branches actually run — and "
+                                 "how much of that separation is the plane",
+    ("displacement", "rollout"): "With a sampled suffix the branch move stops setting "
+                                 "the distance, in every space",
+    ("r21", "spliced"): "How far the branches run with the reference subtracted in "
+                        "R$^{21}$ curvature space, not in the representation",
 }
 
 
-def figure(z, variant: str, suffix: str, camera_ready: bool) -> Path:
+def figure(z, plane: str, variant: str, suffix: str, camera_ready: bool) -> Path:
     w = z["window"]
     rollout = variant == "rollout"
     n_games = z["plane"].shape[1]
@@ -211,7 +221,7 @@ def figure(z, variant: str, suffix: str, camera_ready: bool) -> Path:
     lead.text(1, 0.06, "above 1: the rule runs further from the reference\nthan a legal "
               "alternative does at the same prefix", fontsize=7, color=MUTED,
               style="italic", ha="left", va="bottom")
-    lead.text(-7, 0.12, "$\\equiv 0$ (shared prefix)", fontsize=7, rotation=90,
+    lead.text(w[0] + 1, 0.12, "$\\equiv 0$ (shared prefix)", fontsize=7, rotation=90,
               color=MUTED, style="italic", ha="center", va="bottom")
     peak = curves["plane"][0].mean(0)[:-1]  # series x r; the control is the last row
     ci, ri = np.unravel_index(np.argmax(np.where(w >= 0, peak, -np.inf)), peak.shape)
@@ -229,13 +239,16 @@ def figure(z, variant: str, suffix: str, camera_ready: bool) -> Path:
                         title=f"mean over n = {n_games} source games, band = 95% CI")
     legend.get_title().set_fontsize(8)
     if not camera_ready:
-        fig.suptitle(TITLE[variant], fontsize=11, y=0.995)
-    name = "divergence_by_space" + (f"_{variant}" if rollout else "") + suffix
+        fig.suptitle(TITLE[(plane, variant)], fontsize=11, y=0.995)
+    name = ("divergence_by_space" + ("" if plane == "displacement" else f"_{plane}")
+            + (f"_{variant}" if rollout else "") + suffix)
     return save_figure(fig, HERE / "figures" / name, camera_ready)
 
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--plane", default="displacement", choices=["displacement", "r21"],
+                    help="the space measure.py subtracted the reference in")
     ap.add_argument("--variant", default="spliced", choices=list(VARIANTS))
     ap.add_argument("--n_games", type=int, default=None,
                     help="draw measure.py's n-game population instead of the whole tree")
@@ -244,13 +257,15 @@ def main():
     apply_style(args.camera_ready)
 
     suffix = f"_n{args.n_games}" if args.n_games else ""
+    tag = "" if args.plane == "displacement" else f"_{args.plane}"
     base = variant_dir("divergence", variant=VARIANTS[args.variant])
-    z = dict(np.load(base / "divergence_by_space" / f"curves{suffix}.npz"))
+    z = dict(np.load(base / "divergence_by_space" / f"curves{tag}{suffix}.npz"))
     z["space"], z["role"] = list(z["space"]), list(z["role"])
 
     out = results_dir("violation_divergence")
     out.mkdir(parents=True, exist_ok=True)
-    csv = out / (f"divergence_by_space{'_' + args.variant if args.variant != 'spliced' else ''}"
+    csv = out / (f"divergence_by_space{tag}"
+                 f"{'_' + args.variant if args.variant != 'spliced' else ''}"
                  f"{suffix}.csv")
     df = table(z, args.variant)
     df.to_csv(csv, index=False, float_format="%.6g")
@@ -266,7 +281,8 @@ def main():
             for rule in RULE_MEMBERS))
     if "spread" in z:
         print(spread_note(z))
-    print(f"wrote {figure(z, args.variant, suffix, args.camera_ready)} and {csv}")
+    print(f"wrote {figure(z, args.plane, args.variant, suffix, args.camera_ready)} "
+          f"and {csv}")
 
 
 if __name__ == "__main__":

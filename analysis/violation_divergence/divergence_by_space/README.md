@@ -14,8 +14,8 @@ draws δ̂ = ‖Δ‖ / ‖z_ref‖ at layer 5 and nowhere else, on a raw activa
 fork panel is drawn in.
 
 ```
-python analysis/violation_divergence/divergence_by_space/measure.py       [--variant rollout] [--n_games 100]
-python analysis/violation_divergence/divergence_by_space/make_figures.py  [--variant rollout] [--n_games 100] [--camera-ready]
+python analysis/violation_divergence/divergence_by_space/measure.py       [--plane r21] [--variant rollout] [--n_games 100]
+python analysis/violation_divergence/divergence_by_space/make_figures.py  [--plane r21] [--variant rollout] [--n_games 100] [--camera-ready]
 ```
 
 `measure.py` writes `$SPADE_DIVERGENCE_DIR[/rollout]/divergence_by_space/curves.npz`
@@ -32,7 +32,8 @@ overwrites the whole-tree figure. n = 100 takes ~2 min.
 ## The figures
 
 `figures/divergence_by_space.{png,pdf}` · `figures/divergence_by_space_rollout.{png,pdf}`
-· `figures/divergence_by_space_n100.png`
+· `figures/divergence_by_space_n100.png` ·
+`figures/divergence_by_space_r21_n100.{png,pdf}`
 
 **In the plane the fork panels draw, R2 and R3 run 6–24% further from the reference than
 a legal alternative does — and roughly half of that is the plane, not the branch.** One
@@ -82,6 +83,59 @@ between-rule spread of the displacements is a median 0.924 [IQR 0.842–0.983] o
 100 games, above 1 in 21% of them, against 0.945 [0.872–1.020] over the whole tree. The twin's sweep computes that
 statistic per game rather than quoting `rule_groups`' whole-tree number, and
 `make_figures.py` prints it for the population drawn.
+
+## The R^21 twin
+
+`figures/divergence_by_space_r21_n100.{png,pdf}` is the same figure with the reference
+subtracted one step later: each branch's trajectory goes through ReStraV's 21 curvature
+components first, and the difference is taken there —
+Δφ(t) = φ(z_b(t)) − φ(z_ref(t)), φ the W = 8 trailing window of
+`curvature_plane.windowed`. Nine cells, same colours and markers, same
+ratio-to-the-legal-control, same 95% CI over the same 100 games. The plane is
+`curvature_plane.fit_plane`'s uncentred top-2 of Δφ, refit per game, and both curves
+are measured in the column-scaled field, because R²¹ mixes degrees with
+activation-scale lengths.
+
+```
+python analysis/violation_divergence/divergence_by_space/measure.py      --plane r21 --n_games 100  # ~20 min
+python analysis/violation_divergence/divergence_by_space/make_figures.py --plane r21 --n_games 100 [--camera-ready]
+```
+
+**The x axis is shorter: r = −4 … +24, 15 offsets.** φ's window ends at t and spans 14
+plies, so it needs seven sampled positions of context and `positions` can only supply
+five at t₀ = 20 — the first two offsets have no full-width window. Two branch-free
+offsets survive, and `measure.py` asserts Δφ is exactly zero on both, which is what
+pins where the branch is once R²¹ smears it.
+
+**The separation is the same event, read through a sliding window.** In the
+displacement figure the rule-minus-control gap is a spike at r = 0 (+0.33 in raw layer
+5) decaying to +0.03 by r = +24. In R²¹ it starts at +0.11, climbs to **+0.34 at
+r = +12**, and collapses to +0.06 at r = +14. Every space peaks at r = +12 (GatedSAE's
+R3 at +10), and r = +12 is exactly where the branch move fills all seven steps of the
+W = 8 window, and r = +14 is the first offset whose window no longer contains the
+step that crosses t₀. So R²¹ does not
+find separation the displacement figure missed — it spreads one ply's worth over seven
+and reads it out as a ramp. **Nothing about the peak's position is a claim about the
+model.**
+
+Integrated over the window that does buy separation. Mean over r ≥ 0 in the plane,
+displacement → R²¹, raw layer 5: R1 0.989 → 1.040, R2 1.157 → 1.228, R3 1.130 → 1.204;
+in the full space R1 0.909 → **0.977**, R2 1.022 → 1.047, R3 1.017 → 1.038. The one
+qualitative change is R1: illegal *placement* sits 8–10% **below** the control
+everywhere in the displacement figure and is within 3% of it in R²¹, in every space.
+The plane inflates in 27 of 27 cells here too, median 1.134 against 1.108 (range
+1.051–1.309).
+
+The price is precision and one unreadable panel. The CI half-width over r ≥ 0 roughly
+doubles — median 0.148 against 0.094 — because φ of a short window is a noisier
+statistic than a displacement. And CosineSpaDE's R2/R3 leave the y-cap for seven
+consecutive offsets rather than the displacement figure's one at r = 0 (peak 2.98× at
+r = +12 against 4.44× at r = 0), so that cell shows its annotated peak and little else.
+Reading it needs the CSV.
+
+The rule grouping is no better in R²¹: the within- ÷ between-rule spread over these 100
+games is a median 0.886 [IQR 0.752–1.022] against the displacement field's 0.924
+[0.842–0.983] — the same "barely coherent" verdict, with a wider spread.
 
 ## Why the plane, and what the plane costs
 
@@ -209,6 +263,9 @@ vector-vs-scalar K reduction above, not a difference in the model's behaviour at
   Three confident lines should not be read as three coherent classes. That number lives
   here and not on the figure, which carries no footer text: a deliberate departure from
   FIGURE_GUIDELINES 1.7, which asks for it in-panel.
+- **`--plane r21` is n = 100 and spliced only.** The whole tree would need t₀ ≥ 18 for a
+  branch-free window to exist at all (`curvature_plane.usable`), and the rollout tree's
+  K = 4 rows are averaged after φ, which is right but untested here.
 - **Seed 42 only**, like the rest of the study.
 - **The rollout K reduction is the fork figures' and not F1's**, and the difference is
   unmeasured. See "The rollout variant" above.

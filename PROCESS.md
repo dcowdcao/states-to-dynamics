@@ -6,6 +6,41 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## divergence_by_space, with the reference subtracted in R^21 (2026-08-20)
+
+`--plane {displacement,r21}` on both scripts in
+`analysis/violation_divergence/divergence_by_space/`. Same nine cells, same eight roles,
+same ratio-to-the-legal-control, same CI; the only change is where the reference comes
+off. `r21` applies `curvature_plane.windowed` (W = 8) per branch and differences after
+φ, then fits `fit_plane(centred=False)` per game — the plane `fork_and_board` and
+`fork_population` already draw. Separate artifacts at every step
+(`curves_r21_n100.npz` → `divergence_by_space_r21_n100.{png,pdf}` → `..._r21_n100.csv`),
+so nothing existing is touched; `--plane displacement` reproduces `curves_n100.npz`
+bitwise and re-renders all five committed figures and three CSVs byte-identically.
+
+**Two things the R^21 path does not inherit.** The window is 15 offsets, r = −4 … +24,
+not the study's 17: φ's trailing window needs seven sampled positions of context and
+`positions` supplies five at t₀ = 20. `make_figures.py` now reads it off the npz — the
+x ticks are anchored on r = 0 rather than run from `w[0]`, and the "≡ 0 (shared prefix)"
+label sits at `w[0] + 1`. And the Gram trick (`G = D Dᵀ`) does not carry: `windowed`
+returns NaN wherever a descriptor window runs off the board and one NaN poisons every
+entry of G, while `fit_plane` fits the finite rows and projects the rest. 21 columns
+make it moot anyway — the trick exists for the 8192-wide bases. Both distances are taken
+in the column-scaled field, `full` included: R^21 mixes degrees with activation-scale
+lengths, so an unscaled norm reports units.
+
+**The result is one event smeared, not a new one.** The rule-minus-control gap in raw
+layer 5 is a spike at r = 0 in the displacement field (+0.33, decaying to +0.03) and a
+ramp peaking at r = +12 in R^21 (+0.11 → +0.34, collapsing to +0.06 at r = +14). Every
+space peaks at +12, which is exactly where the branch fills all seven steps of the W = 8
+window, and +14 is the first offset whose window no longer contains the step that
+crosses t₀. Integrated over r ≥ 0 the
+rules do separate more (raw layer 5 in-plane R2 1.157 → 1.228, full space R1
+0.909 → 0.977 — R1's 8–10% deficit is the one thing that changes sign of interpretation),
+at roughly double the CI half-width (median 0.094 → 0.148). The y-cap is the cost:
+CosineSpaDE's R2/R3 leave it for seven consecutive offsets instead of one.
+
+
 ## Bracket flip and the un-flip edit move onto the canonical probes (2026-08-20)
 
 Branch `probes/na-port`. `src/spade/bracket_flip/tpr_probe.py` was the last duplicate
@@ -69,6 +104,8 @@ BATCH_SIZE` locally, because `analysis/legality_probe/` was fit under the old va
 tracking `probes.tpr`'s re-selected ones would silently invalidate that study.
 
 ---
+
+
 
 ## The population fork loses everything but the fork (2026-08-19)
 
