@@ -6,6 +6,51 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The population fork over the rollout branches (2026-08-20)
+
+`--variant rollout` on both scripts in `analysis/violation_divergence/fork_population/`,
+the twin `fork_and_board` already had. Same 100 games — `games_at_t0` returns the same
+ids from either tree — same nine cells, same three planes, same estimator, same canvas.
+New artifacts everywhere (`$DIR/rollout/fork_population/{plane}_n100.npz` →
+`fork_population_{plane}_rollout.{png,pdf}` → `..._rollout.csv`); `--variant spliced` is
+the default and re-renders all six committed figures and three CSVs byte-identically.
+
+**The K axis.** `population.rows_at` now returns `[B, K]` instead of `[B]`, a branch's
+K rollouts along the second axis; K = 1 on the spliced tree, where a flattened `[B, 1]`
+is the nine rows every caller already read, so `step_length_fork` is untouched.
+`paired_mean` moved out of `fork_and_board/make_figures.py` into `population.py`: two
+surfaces, one rule, and the rule belongs next to the row axis it reduces. Everything
+nonlinear happens before it — encode, then φ, then the difference against the reference
+*drawn on the same rollout*, then the mean over K, then the mean over games.
+
+**The check that the reshape is right is exact, not statistical.** The activation at t0
+depends only on `tokens[:t0+1]`, which both trees share, so the K-reduced displacement at
+r = 0 must equal the spliced one bitwise — it does, over all 100 games x 9 branches x
+512 dims, and the drawn rule paths' coherence at r = 0 is identical to three decimals in
+all nine spaces on the displacement and `d1…d7` planes. (R^21's differs slightly because
+`fit_plane`'s per-column scale is fit over the drawn window, which is shorter.)
+
+**The window is `../fork_and_board`'s, ROLLOUT_RMAX = 8**, duplicated as a constant with
+a comment naming the sibling, the way `CELL_W`/`NCOL`/`PLANE_NAME` already are between
+these two scripts. The title carries the cut, since the canvas otherwise carries no
+caption at all.
+
+**What it does to the result.** R1's deficit — the one thing that replicated across every
+spliced field — survives: below its control in 9/9 spaces, paired null - R1 = +0.063
+[+0.044, +0.080] in raw layer 5 against the spliced +0.133, resolved in 9/9. The
+study's *negative* headline does not: R2 and R3 now outrun the legal control, paired
+null - R2 = -0.066 [-0.088, -0.044], sign-flipped and resolved in 5/9 spaces. Restricting
+the *spliced* branches to the same r <= 8 leaves the spliced verdict unchanged
+(null - R1 = +0.133, null - R2 = +0.002), so it is the branch set and not the shorter
+window. Both descriptor planes go the other way entirely: every series above 1 in 9/9 and
+null - R1 resolved *negative* in 7/9 (R^21) and 9/9 (`d1…d7`), with the empirical null
+itself at 1.19-1.21 against 1.06-1.09 spliced — the attribution loss showing up as a
+number, since two legal continuations sampled from the model disagree in curvature far
+more than two spliced ones do.
+
+---
+
+
 ## The same read-out on a regenerated suffix (2026-08-20)
 
 `changepoint_localization/measure_regenerated.py` + `make_figures_regenerated.py` ->
@@ -64,6 +109,7 @@ replacing with measured numbers. And the *straightness* geometry npz **does** ca
 (10000x58) -- only `curvature_discriminant`'s lacks it -- so the norm-only baseline the README
 calls blocking is already runnable on the regenerated corpus, no GPU pass needed.
 ---
+
 
 ## divergence_by_space, with the reference subtracted in R^21 (2026-08-20)
 

@@ -24,7 +24,7 @@ python analysis/violation_divergence/step_length_fork/make_figures.py # step len
 python analysis/violation_divergence/suffix_legality/measure.py     # the shared-suffix defect, tokens only
 python analysis/violation_divergence/r21_run_population/measure.py  # the R^21 run ratio over n games
 python analysis/violation_divergence/r21_run_population/make_figures.py
-python analysis/violation_divergence/fork_population/measure.py     # the fork over 100 games, --plane displacement|r21
+python analysis/violation_divergence/fork_population/measure.py     # the fork over 100 games, --plane displacement|r21|d7
 python analysis/violation_divergence/fork_population/make_figures.py
 ```
 
@@ -43,6 +43,7 @@ python -m spade.violation_divergence.compute_divergence --variant rollout      #
 python analysis/violation_divergence/{,behavioral/,sae_spaces/}make_figures.py --variant rollout
 python analysis/violation_divergence/probe_readout/decode.py       --variant rollout
 python analysis/violation_divergence/probe_readout/make_figures.py --variant rollout
+python analysis/violation_divergence/fork_population/{measure,make_figures}.py --variant rollout --plane displacement|r21|d7
 ```
 
 ## The rule-complete 2000 at *t0* = 20

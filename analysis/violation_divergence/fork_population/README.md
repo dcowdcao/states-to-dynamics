@@ -45,22 +45,27 @@ member counts a composition panel would show are a spike and a constant. What th
 branches *are* is that figure's panel **(b)**; read it there, on the one game.
 
 ```
-python analysis/violation_divergence/fork_population/measure.py [--plane displacement|r21|d7] [--n_games 100]
+python analysis/violation_divergence/fork_population/measure.py \
+    [--plane displacement|r21|d7] [--n_games 100] [--variant spliced|rollout]
 python analysis/violation_divergence/fork_population/make_figures.py \
-    [--plane displacement|r21|d7] [--n_games 100] [--camera-ready]
+    [--plane displacement|r21|d7] [--n_games 100] [--variant spliced|rollout] [--camera-ready]
 ```
 
-`measure.py` writes `$SPADE_DIVERGENCE_DIR/fork_population/{plane}_n100.npz`.
+`measure.py` writes `$SPADE_DIVERGENCE_DIR/[rollout/]fork_population/{plane}_n100.npz`.
 `make_figures.py` reads it and writes the figure plus
-`results/violation_divergence/fork_population_{plane}.csv`, one row per (space,
-series, plane | full space) with the mean over games, its bootstrap CI and the
-median.
+`results/violation_divergence/fork_population_{plane}[_rollout].csv`, one row per
+(space, series, plane | full space) with the mean over games, its bootstrap CI and
+the median. The two variants read and write different trees and differently named
+figures, so a rollout run cannot touch a spliced artifact.
 
-| file | plane it is drawn in |
-|---|---|
-| `figures/fork_population_displacement` | PCA of `D(t) = z_b(t) − z_ref(t)` — the default |
-| `figures/fork_population_r21` | PCA of `Δφ(t) = φ(z_b(t)) − φ(z_ref(t))`, inside the 21-D ReStraV curvature descriptor |
-| `figures/fork_population_d7` | the same `Δφ(t)` cut to R²¹'s **7 raw step lengths** `d1…d7` — the descriptor's step-length half, without the 4 moments of *d* |
+| file | plane it is drawn in | branch set |
+|---|---|---|
+| `figures/fork_population_displacement` | PCA of `D(t) = z_b(t) − z_ref(t)` — the default | spliced |
+| `figures/fork_population_r21` | PCA of `Δφ(t) = φ(z_b(t)) − φ(z_ref(t))`, inside the 21-D ReStraV curvature descriptor | spliced |
+| `figures/fork_population_d7` | the same `Δφ(t)` cut to R²¹'s **7 raw step lengths** `d1…d7` — the descriptor's step-length half, without the 4 moments of *d* | spliced |
+| `figures/fork_population_displacement_rollout` | the same displacement plane | rollout |
+| `figures/fork_population_r21_rollout` | the same R²¹ plane | rollout |
+| `figures/fork_population_d7_rollout` | the same `d1…d7` block | rollout |
 
 Both planes are fit **once per space, on the population mean field**, and both are
 uncentred, so zero displacement is still the origin and the reference is still the
@@ -147,6 +152,51 @@ the **raw** step lengths, not `fork_r21.BLOCKS["d"]`'s 11, which also match
 It exists because `../r21_shared_basis` panel (b) reports that R²¹'s two halves
 disagree about the same branches, and reports it only as a scalar run ratio. This
 is the fork drawn in the half that moves.
+
+### `fork_population_displacement_rollout`, `..._r21_rollout`, `..._d7_rollout`
+
+**The same three planes, the same 100 games, drawn out of the rollout branch
+set** — where every branch, the reference included, samples its own continuation
+from OthelloGPT instead of replaying the source game's
+(`spade.violation_divergence.rollout_branches`). `branches.games_at_t0` returns
+the same 100 game ids from either tree, so the rollout figures are over the same
+games as the spliced ones and may be read against them cell for cell. Three
+things differ, and the canvas states only the third.
+
+**A branch is K = 4 rows there, and the reduction over K happens after every
+nonlinearity.** The order is: encode into the space → (descriptor planes) φ over
+the W = 8 window → subtract the reference drawn on the same rollout → mean over
+the 4 rollouts → mean over games. `population.paired_mean` is that step, and
+`../fork_and_board` does it the same way for the same reasons. **Paired, not
+marginal**: `rollout_branches` keys the sampler on `(game_id, k)`, so all branches
+of a game share the k-th uniform stream and the difference is a common-random-number
+contrast rather than two independent draws. **After φ, never before**: φ of an
+averaged path is the curvature of a path no rollout takes.
+
+**The window stops at *r* = +8, not +24**, `measure.ROLLOUT_RMAX`. Past *r* ≈ +8
+the rollout set's illegal and control δ̂ agree to within 0.5% over the whole
+2000-game set and cross over by *r* = +13
+(`../fork_and_board/README.md`, *The rollout variant*), so the extra offsets draw
+separation that is not there. The drawn windows are *r* ∈ [−8, +8] on the
+displacement figure and *r* ∈ [−4, +8] on the two descriptor ones; the title
+carries the cut and this is why it is there. The CSV's estimator averages **5**
+drawn offsets *r* = 0, 2, …, 8 instead of 13, and the same restriction applied to
+the *spliced* branches leaves that figure's verdict unchanged, so nothing below is
+an artifact of the shorter window (*What the rollout set says*).
+
+**The prefix still collapses.** `tokens[:t0]` is shared in the rollout tree too,
+so *D* and Δφ are exactly zero at every branch-free offset, and `measure.py`
+asserts it per game per space on every run. It passes, and in this variant that is
+not a formality — it is the check that the `[B, K]` row axis is aligned. Stronger
+still: the K-reduced displacement at *r* = 0 is **bit-identical** to the spliced
+one over all 100 games × 9 branches × 512 dims, because the activation at *t0*
+depends only on `tokens[:t0+1]`, which both trees share.
+
+**What this costs is attribution, and it is not a defect of the figure.** Two
+rollout branches differ at *t0* *and* at every position after it, so a displacement
+at *r* > 0 is the branch move plus everything the model chose to do about it.
+`branches.pt` stays the tensor the single-token claims rest on; neither variant is
+the other's replication.
 
 ## What it says
 
@@ -377,9 +427,92 @@ reaches 0.14 (CosineSpaDE R2, 1.564 against 1.428).
   space's own and they differ by ~800× across the grid, so the CSV divides by the
   cell's own control and never reports a distance. That makes nine cells readable
   side by side; it does not make them nine measurements of the same thing.
-- **Spliced branches only.** Every branch replays the source game's `tokens[t0+1:]`,
-  the asymmetry `../fork_and_board`'s rollout variant exists to remove. No rollout
-  twin of this figure has been measured.
+- **The spliced figures are spliced.** Every branch replays the source game's
+  `tokens[t0+1:]`, the asymmetry the rollout set exists to remove, and the three
+  `*_rollout` figures are the twin over that set. They are not a replication of
+  each other — *What the rollout set says* below.
+
+## What the rollout set says
+
+Same 100 games, same nine spaces, same estimator, over the 5 drawn offsets
+*r* = 0, 2, …, 8; `results/violation_divergence/fork_population_{plane}_rollout.csv`.
+Raw layer 5, per game in the full space, mean over the 100 games with a 95%
+percentile bootstrap CI over source games (2000 resamples, seed 0):
+
+| series | displacement, spliced | displacement, rollout | R²¹, rollout | `d1…d7`, rollout |
+|---|---|---|---|---|
+| R1 placement | 0.909 [0.885, 0.934] | **0.956** [0.938, 0.974] | 1.304 [1.171, 1.442] | 1.436 [1.277, 1.604] |
+| R2 bracketing | 1.022 [0.996, 1.049] | **1.084** [1.059, 1.110] | 1.350 [1.186, 1.514] | 1.593 [1.394, 1.805] |
+| R3 turn | 1.017 [0.987, 1.047] | **1.058** [1.029, 1.088] | 1.211 [1.076, 1.356] | 1.443 [1.228, 1.685] |
+| null (a third legal move) | 1.042 [1.006, 1.078] | **1.018** [0.998, 1.037] | 1.187 [1.028, 1.359] | 1.206 [1.043, 1.372] |
+
+**R1's deficit survives the rollout on the displacement, and it is the only
+spliced conclusion that does.** R1 sits below its legal control in **9 of 9**
+spaces with every upper bound under 1 (0.937–0.976), and paired per game
+null − R1 = **+0.063** [+0.044, +0.080] in raw layer 5, resolved in **9 of 9**
+spaces (+0.035 … +0.079). It is about half the spliced gap (+0.110 … +0.138) and
+in the same direction everywhere. This is the one effect that replicated across
+every spliced field, and resampling the future does not remove it.
+
+**The spliced *negative* result does not survive.** "No rule outruns a legal
+alternative" was the study's headline, and on the rollout displacement R2 and R3
+do: paired null − R2 = **−0.066** [−0.088, −0.044] and null − R3 = **−0.039**
+[−0.066, −0.012] in raw layer 5, both resolved and both **sign-flipped** from the
+spliced +0.021 and +0.025, which were not resolved either way. Across the grid the
+flip holds in 5 of 9 spaces for each (raw layer 5, PAnneal, Standard, CosineSpaDE,
+SpaDE); the four TopK/Gated cells sit on zero (−0.000 … +0.016). CosineSpaDE is
+the largest, null − R2 = −0.155 [−0.184, −0.130].
+
+**It is the branch set, not the shorter window.** The rollout figure averages 5
+offsets and the spliced one 13, so the comparison was re-run with the *spliced*
+branches cut to the same *r* ≤ 8 (raw layer 5, full space): R1 0.906 [0.880, 0.934],
+R2 1.037 [1.006, 1.069], R3 1.020 [0.987, 1.053], null 1.039 [1.000, 1.076], and
+paired null − R1 = +0.133 [+0.100, +0.164], null − R2 = +0.002 [−0.032, +0.037],
+null − R3 = +0.019 [−0.018, +0.058] — the spliced verdict unchanged to three
+decimals on the R1 gap and still unresolved on the other two. The window is not
+what moves the numbers.
+
+**Both descriptor planes lose R1 and reverse it.** In R²¹ every series jumps above
+1 in **9 of 9** spaces (R1 1.26–1.45, R2 1.23–2.01, R3 1.11–1.77) and paired
+null − R1 = −0.117 [−0.271, +0.044] in raw layer 5, resolved *negative* in 7 of 9
+spaces; the `d1…d7` block is the same and stronger, null − R1 = **−0.230**
+[−0.405, −0.068], resolved negative in **9 of 9**. So R1's "runs less far" is a
+property of the displacement field under both branch sets and of the curvature
+descriptor under neither: on the rollout set, an occupied-square branch's *φ*
+runs measurably *further* from the reference than a third legal move's. Read the
+displacement row as the finding and the descriptor rows as what the rollout does
+to a curvature statistic when the whole suffix is resampled.
+
+**The null itself moves, and that is the attribution loss showing up as a number.**
+The empirical null — a second legal move scored against the first — is 1.018
+[0.998, 1.037] on the rollout displacement against 1.042 [1.006, 1.078] spliced,
+but 1.19 and 1.21 in R²¹ and `d1…d7` against 1.06 and 1.09. Two legal
+continuations sampled from the model diverge from each other in curvature far more
+than two spliced ones do, so in the descriptor planes the divisor and the
+numerator are both inflated and only the paired contrast is readable.
+
+**Coherence is unchanged where it must be and larger where it may be.** At *r* = 0
+the rule paths' coherence is identical to the spliced figure's to three decimals in
+all nine spaces on the displacement plane (0.256–0.396) and on `d1…d7`
+(0.378–0.795) — it has to be, since the *r* = 0 field is bit-identical between the
+trees — and 0.236–0.657 against 0.287–0.681 in R²¹, where the per-column scaling
+the plane fit is taken with differs between windows. At the last drawn offset the
+rollout keeps *more*: 0.145–0.193 at *r* = +8 against 0.143–0.198 at *r* = +24 on
+the displacement, 0.26–0.45 against 0.15–0.35 in R²¹, 0.31–0.66 against 0.14–0.44
+in `d1…d7`. That is the shorter window, not a stronger signal: the spliced paths
+cancel further the longer they run.
+
+**The rule grouping is unchanged.** Within ÷ between-rule spread over the same 100
+games, raw layer 5: displacement median 0.927 [IQR 0.887–0.983] against the
+spliced 0.924 [0.842–0.983]; R²¹ 0.913 [0.746–1.034] against 0.917 [0.744–1.031];
+`d1…d7` 0.821 [0.619–1.017] against 0.856 [0.697–1.032]. Still near 1, still a
+labelling rather than a measured structure, and the rollout neither helps nor
+hurts it.
+
+Everything in *Reading it honestly* applies to these three figures unchanged — the
+paths are still vector means that cancel, the plane is still in-sample and refit
+per space, the CSV's `full space` rows are still the ones to quote, and the
+bootstrap still resamples source games and never branches or rollouts.
 
 ## What the figure is for
 

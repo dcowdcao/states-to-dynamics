@@ -32,10 +32,17 @@ quantities: `ratio_plane`/`ratio_space` measure the distance OF the mean field,
 which is what the drawn panel shows, while `game_plane`/`game_space` are the mean
 OF each game's own distance, which is what carries a CI.
 
-Spliced only. The rollout tree resamples every branch's suffix, so a mean over
-games there would also average over which continuation was sampled.
+`--variant rollout` runs the same sweep over the rollout branch set, where every
+branch -- the reference included -- samples its own continuation from OthelloGPT
+instead of replaying the source game's. A branch is K rows there, so a mean over
+games is also a mean over which continuation was sampled: `population.paired_mean`
+does that reduction, paired on the rollout index because a rollout's reference is
+the one drawn from the same uniform stream, and after the encode and phi because
+both are nonlinear. It draws to ROLLOUT_RMAX and not to the study window's r = 24,
+the window `../fork_and_board` set on this same branch set. The two variants read
+and write different trees, so neither can overwrite the other's npz.
 
-    $DIR/fork_population/{plane}_n{N}.npz
+    $DIR[/rollout]/fork_population/{plane}_n{N}.npz
       game        [G]              source game ids, ascending
       n_pool      scalar           branch-complete games forking at t0, before the
                                    first G were taken
@@ -72,7 +79,7 @@ import numpy as np
 import torch
 
 from spade.common.device import select_device
-from spade.common.study import study_dir
+from spade.common.study import variant_dir
 from spade.figures.branch_panels import plane_displacement
 from spade.othello.taxonomy import CATEGORIES
 from spade.violation_divergence.branches import FIGURE_GAME, games_at_t0
@@ -81,15 +88,19 @@ from spade.violation_divergence.curvature_plane import (
 from spade.violation_divergence.fork_plane import positions, spaces
 from spade.violation_divergence.fork_r21 import top2
 from spade.violation_divergence.population import (
-    C1, C2, REF, ROLES, encode, encoders, rows_at)
+    C1, C2, REF, ROLES, encode, encoders, paired_mean, rows_at)
 from spade.violation_divergence.rule_groups import rule_rows, spread_ratio
 
 T0 = 20                       # the one fork position the population is drawn from
 FULL = positions(T0, W - 1)   # 2, 4, ..., 44: the study window plus descriptor context
 N_CONTEXT = 5                 # FULL[N_CONTEXT:] is the study window itself
-DRAWN = {"displacement": FULL[N_CONTEXT:], "r21": FULL[W - 1:], "d7": FULL[W - 1:]}
+PLANES = ("displacement", "r21", "d7")
+VARIANTS = {"spliced": "", "rollout": "rollout"}
+# Past r = +8 the rollout set's illegal and control paths agree to within 0.5% and
+# cross over by r = +13, so the extra offsets draw separation that is not there.
+# `../fork_and_board` sets the same window over the same branch set.
+ROLLOUT_RMAX = 8
 CHUNK = 5                     # games per encode call
-COHERENCE_R = (0, 24)
 # `spread_ratio` and `rule_rows` read a branch's taxonomy off its row, and in
 # ROLES order those are constants rather than a per-game lookup.
 ROWS = ([{"category": 0, "is_control": k} for k in range(3)]
@@ -97,33 +108,45 @@ ROWS = ([{"category": 0, "is_control": k} for k in range(3)]
 RULES = rule_rows(ROWS)
 
 
-def fields(plane: str, acts: torch.Tensor, rows: torch.Tensor, enc):
-    """One game's field at a time, in `rows` order, over DRAWN[plane].
+def window(plane: str, variant: str) -> tuple[np.ndarray, np.ndarray]:
+    """(the positions encoded, the positions drawn). A descriptor plane reads W-1
+    sampled positions of context the study window does not carry, and the rollout
+    set stops at ROLLOUT_RMAX."""
+    full = FULL[FULL - T0 <= ROLLOUT_RMAX] if variant else FULL
+    return full, full[N_CONTEXT if plane == "displacement" else W - 1:]
+
+
+def fields(plane: str, acts: torch.Tensor, rows: torch.Tensor, enc,
+           full: np.ndarray):
+    """One game's field at a time, in `rows` order, over the drawn positions.
 
     The sweep encodes each space twice -- once for the mean field, once to place
     every game in the plane fit on it -- rather than holding the fields between
     the two passes: 100 games of the displacement plane are 500 MB per space, and
     the login node's 8 GB user cgroup does not have that beside the encoders.
     """
+    B, K = rows.shape[1:]
     for lo in range(0, len(rows), CHUNK):
-        Z = acts[rows[lo:lo + CHUNK].flatten()][:, FULL, :].float()
+        Z = acts[rows[lo:lo + CHUNK].flatten()][:, full, :].float()
         F = Z.numpy() if enc is None else encode(Z, enc)
-        yield from (field(plane, Fg)
-                    for Fg in F.reshape(-1, len(ROLES), len(FULL), F.shape[-1]))
+        yield from (field(plane, Fg, K)
+                    for Fg in F.reshape(-1, B * K, len(full), F.shape[-1]))
 
 
-def field(plane: str, F: np.ndarray) -> np.ndarray:
-    """[B, T, k]: one game's displacement from its own reference, over DRAWN[plane].
+def field(plane: str, F: np.ndarray, K: int) -> np.ndarray:
+    """[B, T, k]: one game's displacement from its own reference over the drawn
+    positions, reduced over the K rollouts of each branch.
 
     A descriptor plane windows the trajectory and differences afterwards, so the
     shared prefix collapses onto the origin instead of feeding phi a zero-length
     step; `PLANE_COLUMNS` then keeps all 21 of it or only the raw step lengths.
+    The encode and phi are both nonlinear, so the K rollouts are reduced here,
+    after them, and paired on the rollout index.
     """
     if plane == "displacement":
-        D = F[:, N_CONTEXT:]
-        return D - D[REF]
-    dphi = windowed(F, W)
-    return (dphi - dphi[REF])[:, W - 1:, PLANE_COLUMNS[plane]]
+        return paired_mean(F[:, N_CONTEXT:], REF, K)
+    dphi = paired_mean(windowed(F, W), REF, K)
+    return dphi[:, W - 1:, PLANE_COLUMNS[plane]]
 
 
 def population_plane(plane: str, M: np.ndarray):
@@ -199,7 +222,7 @@ def report(names: list[str], games: list[int], pos: np.ndarray, z: dict) -> None
         print(f"  {name:<12} {q[1]:.3f} [{q[0]:.3f}-{q[2]:.3f}] | {z['spread_mean'][s]:.3f}")
 
     rule = next(iter(RULES))
-    at = [int(np.flatnonzero(pos - T0 == r)[0]) for r in COHERENCE_R]
+    at = [int(np.flatnonzero(pos - T0 == r)[0]) for r in (0, pos[-1] - T0)]
     print(f"\ncoherence ||mean D|| / mean ||D||, the {rule} mean path | the legal "
           f"control (1/sqrt(n) = {1 / np.sqrt(len(games)):.3f} is cancellation)")
     for s, name in enumerate(names):
@@ -210,25 +233,34 @@ def report(names: list[str], games: list[int], pos: np.ndarray, z: dict) -> None
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--plane", default="displacement", choices=list(DRAWN))
+    ap.add_argument("--plane", default="displacement", choices=PLANES)
     ap.add_argument("--n_games", type=int, default=100)
+    ap.add_argument("--variant", default="spliced", choices=list(VARIANTS),
+                    help="rollout: every branch samples its own continuation, K rows "
+                         "per branch, paired on the rollout index and reduced after "
+                         "the encode and phi")
     args = ap.parse_args()
 
-    base = study_dir("divergence")
+    variant = VARIANTS[args.variant]
+    base = variant_dir("divergence", variant=variant)
     meta = torch.load(base / "branches" / "branches.pt", weights_only=True)
-    assert "rollout" not in meta, "spliced only: the rollout tree is K rows per branch"
+    K = int(meta["rollout"].max()) + 1 if "rollout" in meta else 1
     pool = games_at_t0(meta, T0)
     games = pool[:args.n_games]
     assert len(games) == args.n_games, f"only {len(pool)} games fork at t0 = {T0}"
-    # At t0 = 20 the sampled geometry is fixed, so it is asserted and not discovered.
-    assert len(FULL) == 22 and FULL[9] == T0 and (FULL[N_CONTEXT:] == positions(T0)).all()
-    assert [len(p) for p in DRAWN.values()] == [17, 15, 15]
-    pos = DRAWN[args.plane]
+    full, pos = window(args.plane, variant)
     post = pos >= T0
+    # At t0 = 20 the sampled geometry is fixed, so it is asserted and not discovered.
+    assert full[0] == 2 and full[9] == T0, "the sampled positions moved off t0 = 20"
+    assert (full[N_CONTEXT:] == positions(T0)[:len(full) - N_CONTEXT]).all(), \
+        "N_CONTEXT does not line the displacement window up with the study window"
+    assert pos[0] < T0, "no branch-free offset is drawn, so the prefix check is vacuous"
 
-    # mmap: the activation tensor is 2 GB and one game is nine of its rows.
+    # mmap: the rollout activation tensor is 8.3 GB (spliced 2.1) and one game is
+    # K * 9 of its rows.
     acts = torch.load(base / "acts" / "resid_post_5.pt", weights_only=True, mmap=True)
-    rows = torch.stack([rows_at(meta, g) for g in games])
+    rows = torch.stack([rows_at(meta, g, K).reshape(len(ROLES), K) for g in games])
+    assert rows.shape == (len(games), len(ROLES), K), "rows_at lost a rollout"
     names = []
     G, S, B, T = len(games), len(spaces()), len(ROLES), len(pos)
     z = {"coords": np.zeros((S, B, T, 2)), "var": np.zeros((S, 2)),
@@ -242,7 +274,7 @@ def main():
     for s, (name, enc) in enumerate(encoders(select_device())):
         names.append(name)
         total, seen = None, None
-        for g, x in enumerate(fields(args.plane, acts, rows, enc)):
+        for g, x in enumerate(fields(args.plane, acts, rows, enc, full)):
             assert not x[REF].any() and not x[:, ~post].any(), \
                 f"game {games[g]}, {name}: the reference or the prefix is not zero"
             if total is None:
@@ -259,7 +291,7 @@ def main():
         z["ratio_space"][s] = ratios(space, pos)
         z["spread_mean"][s] = spread_ratio(space[:, post], ROWS)
         norm, rule_norm = np.empty((G, B, T)), np.empty((G, len(RULES), T))
-        for g, x in enumerate(fields(args.plane, acts, rows, enc)):
+        for g, x in enumerate(fields(args.plane, acts, rows, enc, full)):
             Xg = x / scale
             z["game_coords"][s, g] = project(x)
             z["game_plane"][s, g] = ratios(z["game_coords"][s, g], pos)

@@ -82,6 +82,7 @@ from spade.violation_divergence.curvature_plane import (
     PLANE_COLUMNS, W, fit_plane, windowed)
 from spade.violation_divergence.fork_plane import (
     EMBEDDINGS, positions, space_features, spaces)
+from spade.violation_divergence.population import paired_mean
 from spade.violation_divergence.rule_groups import rule_rows, spread_ratio
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
@@ -108,17 +109,6 @@ ROLLOUT_RMAX = 8
 SELECTION_NOTE = (f"game {FIGURE_GAME} is selected, not typical: the argmax over 1550 "
                   f"branch-complete games of its illegal branches' mutual separation "
                   f"(README)")
-
-
-def paired_mean(X: np.ndarray, ref: int, K: int) -> np.ndarray:
-    """[n*K, ...] -> [n, ...]: each row's difference from the reference drawn on
-    the same rollout, averaged over the K rollouts of its branch.
-
-    Rows are K-contiguous per branch, and a rollout's reference is the one sharing
-    its uniform stream, so the difference is paired before it is averaged. K = 1
-    is the spliced set, where this is exactly X - X[ref]."""
-    Y = X.reshape(-1, K, *X.shape[1:])
-    return (Y - Y[ref]).mean(axis=1)
 
 
 @dataclass(frozen=True)

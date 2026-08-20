@@ -18,8 +18,15 @@ nothing, and its bootstrap CI over source games are in the CSV this script write
 and in the README's table: the quantitative companion FIGURE_GUIDELINES 4.8 asks
 for is a table here, not a second panel.
 
+`--variant rollout` draws the same nine cells over the rollout branch set, where
+every branch resamples its continuation from OthelloGPT. That set saturates, so
+its window stops at `measure.ROLLOUT_RMAX`; the title says where, and README.md
+carries the rest of the caption. Its files carry a `_rollout` tag, so the spliced
+figure and CSV are never written over.
+
 Usage: python analysis/violation_divergence/fork_population/make_figures.py
-       [--plane displacement|r21|d7] [--n_games 100] [--camera-ready]
+       [--plane displacement|r21|d7] [--n_games 100] [--variant spliced|rollout]
+       [--camera-ready]
 """
 
 import argparse
@@ -30,12 +37,13 @@ import numpy as np
 import pandas as pd
 
 from spade.common.paths import results_dir
-from spade.common.study import study_dir
+from spade.common.study import variant_dir
 from spade.figures.branch_panels import axis_labels, rule_fork_population_panel
 from spade.figures.branch_style import ordered_legend
 from spade.figures.paper_style import MUTED, apply_style, save_figure
 from spade.violation_divergence.rule_groups import rule_rows
 
+VARIANTS = {"spliced": "", "rollout": "rollout"}
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 NCOL = 3
 CELL_W, CELL_H = 3.7, 3.5  # one fork cell, as in ../fork_and_board
@@ -76,10 +84,13 @@ def coherence_note(z, si: int, rows: list[dict]) -> str:
     return f"coherence at $t$ = {z['pos'][-1]}: {per_rule}"
 
 
-def figure(z, plane: str, camera_ready: bool) -> Path:
+def figure(z, plane: str, variant: str, camera_ready: bool) -> Path:
     rows = rows_of(z)
     names, pos, t0 = list(z["space"]), z["pos"], int(z["t0"])
     n_games = len(z["game"])
+    # The rollout set saturates and is drawn short, so the window rides on the
+    # canvas beside the population it is a mean over (`measure.ROLLOUT_RMAX`).
+    window = f"; {variant} branches, drawn to $r$ = +{int(pos[-1]) - t0}" if variant else ""
     nrow = int(np.ceil(len(names) / NCOL))
     # The second control is the null *for* the first, and nothing here scores one
     # against the other; it is a row of the CSV.
@@ -101,7 +112,7 @@ def figure(z, plane: str, camera_ready: bool) -> Path:
     head.patch.set_visible(False)
     head.set_title("where the branches go: the fork in each representation space, "
                    "one path per rule\n"
-                   f"mean over n = {n_games} games, all forking at $t_0$ = {t0}",
+                   f"mean over n = {n_games} games, all forking at $t_0$ = {t0}{window}",
                    loc="left", fontsize=11, pad=18)
 
     for j, name in enumerate(names):
@@ -123,8 +134,10 @@ def figure(z, plane: str, camera_ready: bool) -> Path:
 
     if not camera_ready:
         fig.suptitle(f"Fork Trajectory ({PLANE_NAME[plane]} PCA) in Each Representation "
-                     f"Space — {n_games} games at $t_0$ = {t0}", fontsize=12)
-    return save_figure(fig, FIG_DIR / f"fork_population_{plane}", camera_ready)
+                     f"Space — {n_games} games at $t_0$ = {t0}"
+                     + (f", {variant} branches" if variant else ""), fontsize=12)
+    suffix = f"_{variant}" if variant else ""
+    return save_figure(fig, FIG_DIR / f"fork_population_{plane}{suffix}", camera_ready)
 
 
 def table(z, draws: np.ndarray) -> pd.DataFrame:
@@ -154,11 +167,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--plane", default="displacement", choices=list(PLANE_NAME))
     ap.add_argument("--n_games", type=int, default=100, help="names the npz to read")
+    ap.add_argument("--variant", default="spliced", choices=list(VARIANTS),
+                    help="rollout: the branch set that resamples every continuation")
     ap.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = ap.parse_args()
     apply_style(args.camera_ready)
 
-    npz = study_dir("divergence") / "fork_population" / f"{args.plane}_n{args.n_games}.npz"
+    variant = VARIANTS[args.variant]
+    npz = (variant_dir("divergence", variant=variant) / "fork_population"
+           / f"{args.plane}_n{args.n_games}.npz")
     z = dict(np.load(npz))
     assert len(z["game"]) == args.n_games, f"{npz.name} holds {len(z['game'])} games"
     assert np.allclose(z["game_coords"].mean(axis=1), z["coords"], atol=1e-5), \
@@ -168,7 +185,8 @@ def main():
                                                       size=(BOOT, args.n_games))
 
     df = table(z, draws)
-    out = results_dir("violation_divergence") / f"fork_population_{args.plane}.csv"
+    suffix = f"_{variant}" if variant else ""
+    out = results_dir("violation_divergence") / f"fork_population_{args.plane}{suffix}.csv"
     out.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out, index=False)
 
@@ -195,7 +213,7 @@ def main():
           f"{np.percentile(g, 75):.3f}], above 1 in {(g > 1).mean():.0%}; on the mean "
           f"field {z['spread_mean'][0]:.3f} (a different quantity)")
     print(f"wrote {out}")
-    print(f"wrote {figure(z, args.plane, args.camera_ready)}")
+    print(f"wrote {figure(z, args.plane, variant, args.camera_ready)}")
 
 
 if __name__ == "__main__":

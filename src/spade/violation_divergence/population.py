@@ -40,6 +40,18 @@ def rows_at(meta: dict, game: int, K: int = 1) -> torch.Tensor:
     return torch.tensor([i for r in ROLES for i in by_role[r]])
 
 
+def paired_mean(X: np.ndarray, ref: int, K: int) -> np.ndarray:
+    """[B*K, ...] -> [B, ...]: each row's difference from the reference drawn on
+    the same rollout, averaged over the K rollouts of its branch.
+
+    Rows are K-contiguous per branch, and a rollout's reference is the one sharing
+    its uniform stream, so the difference is paired before it is averaged -- and
+    taken after the encode and phi, never before, since both are nonlinear. K = 1
+    is the spliced set, where this is exactly X - X[ref]."""
+    Y = X.reshape(-1, K, *X.shape[1:])
+    return (Y - Y[ref]).mean(axis=1)
+
+
 def encoders(device: str):
     """(label, encode or None) per space, one checkpoint resident at a time.
 
