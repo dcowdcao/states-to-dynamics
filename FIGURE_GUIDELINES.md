@@ -103,6 +103,12 @@ The rule that matters most in this repo, since nearly every study is
 - **Same measurement on null/random data → same color, dashed.** A *different
   quantity* → different color. (Ansuini: trained solid black, random-weights
   dashed black, PCA red.)
+- **A ratio to a per-item reference is only readable while the two are paired.**
+  Dividing by the reference's value on the *same* item keeps numerator and
+  denominator correlated; when a variant breaks that (each item resampled on its
+  own), the convexity of 1/x lifts every curve above 1 — the null included — and
+  the level stops being a finding. Draw the null through every offset and assert
+  the paired contrast, not the level, whenever the pairing is not exact.
 - Chance/threshold lines are thin, dashed, gray, drawn behind data, and
   **labeled in-panel or in the legend** — never a bare unexplained line.
 - An untrained/randomized-model control belongs **on the plot as a gray band**,
@@ -166,6 +172,15 @@ For anything aligned to an intervention at position `t0`:
   the window is a different and unstated statistic. Two error bars that happen
   not to overlap are not a measured ordering; reading one off a panel is a
   mistake this study has had to correct twice.
+- **A variant of an existing figure keeps that figure's axis**, unless the axis
+  is what changed. Two figures a reader is meant to set side by side — the same
+  quantity over a different branch set, corpus or seed — share x range, y range,
+  panel grid and note block, so what differs on the page is the data. Truncate a
+  variant's window only when the extra offsets draw a separation that has already
+  closed, which is a property of *cumulative* quantities (a distance from a
+  reference saturates; a per-position rate does not), and say which case it is.
+  The reduction the variant adds — an average over resampled continuations,
+  seeds, crops — is part of the estimator and goes in the note block.
 - Overlay conditions on shared axes; never split them into panels when the
   point is the difference.
 - Standard layout when items are inspectable: per-item heatmap on top,

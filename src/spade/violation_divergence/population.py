@@ -21,14 +21,23 @@ ROLES = ["reference", "control_legal", "control_legal_2"] + CATEGORIES[1:]
 REF, C1, C2 = 0, 1, 2
 
 
-def rows_at(meta: dict, game: int) -> torch.Tensor:
-    """The nine branch rows of `game`, in ROLES order."""
+def rows_at(meta: dict, game: int, K: int = 1) -> torch.Tensor:
+    """The branch rows of `game` in ROLES order, each role's K rollouts contiguous.
+
+    K = 1 is the spliced tree, one row per role. The rollout tree stores each
+    spliced row K times as `source_row * K + k` (rollout_branches), so a role's
+    rows are already ascending in rollout index and a [B * K, ...] array reshapes
+    to [B, K, ...] with the branch axis still in ROLES order.
+    """
     idx = (meta["game_id"] == game).nonzero().flatten()
-    by_role = {role(int(meta["category"][i]), int(meta["is_control"][i])): int(i)
-               for i in idx}
-    assert sorted(by_role) == sorted(ROLES) and len(idx) == len(ROLES), \
-        f"game {game} is not branch-complete"
-    return torch.tensor([by_role[r] for r in ROLES])
+    by_role = {}
+    for i in idx:
+        by_role.setdefault(role(int(meta["category"][i]), int(meta["is_control"][i])),
+                           []).append(int(i))
+    assert sorted(by_role) == sorted(ROLES), f"game {game} is not branch-complete"
+    assert all(len(r) == K for r in by_role.values()), \
+        f"game {game} does not carry K = {K} rows per branch"
+    return torch.tensor([i for r in ROLES for i in by_role[r]])
 
 
 def encoders(device: str):

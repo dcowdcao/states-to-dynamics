@@ -3502,3 +3502,47 @@ Two gotchas worth keeping:
 Rendering a worktree needs two things that are gitignored and so absent from a fresh one:
 `checkpoints/*/trainer_*/ae.pt` (symlink from `/n/home10/dcao/spade_sae/checkpoints/`) and
 `analysis/rules_manifolds/embeddings/`.
+
+## Step length at the fork, on the rollout branch set (2026-08-20)
+
+`analysis/violation_divergence/step_length_fork` grew `--variant {spliced,rollout}` on both
+its scripts; the spliced defaults, filenames and numbers are untouched and re-render
+byte-identically. New: `figures/n100_step_length_fork_rollout.{png,pdf}`,
+`results/violation_divergence/step_length_fork_n100_rollout.csv`, and the sweep's
+`$SPADE_DIVERGENCE_DIR/rollout/step_length_fork/n100.npz` — under the rollout tree, so it
+cannot land on the spliced npz of the same name.
+
+**Rows.** The rollout tree is `source_row * K + k`, K = 4. `population.rows_at` took one row
+per role and asserted nine rows per game; it now takes `K` and returns the K rows of each
+role contiguously, still in ROLES order, so `[B*K, ...]` reshapes to `[B, K, ...]`.
+
+**The order of the reductions.** Encode every row, form the step length, form the ratio
+against the reference's rollout of the *same* index (common random numbers — the k-th
+uniform stream is shared across a game's branches), and mean over K last. Ratio-of-means is
+a different quantity on a nonlinear map and cannot hold the shared prefix at exactly 1,
+which is the sweep's assertion in all nine spaces.
+
+**r ≤ 0 is not a replication.** The step drawn at r = 0 is ‖z(t₀) − z(t₀−2)‖ and both
+positions precede the resampling, so `step` and `ratio` at every drawn r ≤ 0 come out
+*bitwise equal* to the spliced tree's. R1's 0.936 at the fork and its −0.060 paired gap are
+the same measurement, not evidence about the rollout set. What the tree adds starts at
+r = +2.
+
+**Everything lifts ~1% after the fork, nulls included, and it is the denominator.** With
+each branch sampling its own suffix, the across-game correlation between a branch's step
+length and the reference's falls from 0.73 to 0.09 by r = +12 (raw layer 5), and
+E[s_b/s_ref] = 1.009 parts company with E[s_b]/E[s_ref] = 0.997 — convexity of 1/s once the
+pairing is only in the seed. `control_legal` over r ≥ 0 sits at 1.012 [1.006, 1.018] here
+against 0.991 [0.984, 0.997] spliced, above 1 in all nine spaces. Read paired contrasts on
+this tree; a level above 1 past the fork is not a finding.
+
+**Window kept at r = −6 … +24**, not cut to `fork_and_board.ROLLOUT_RMAX = 8`: that cut
+exists because a cumulative δ̂ has saturated by then, and a per-position step-length ratio
+has not. R2 − control is +0.023 [+0.008, +0.036] at r = +8 and +0.020 [+0.006, +0.033] at
++12 (both unresolved or barely resolved spliced), and the spliced twin's axis is what this
+figure is read against.
+
+**Gotcha: the 5-game encode chunk OOMs at K = 4.** The sweep died with no message on
+CosineSpaDE — the whole-user cgroup is ~8 GB and two sibling rollout sweeps were running.
+`CHUNK` is now divided by K, so a chunk holds the same feature block on either tree; the
+run then takes 234 s for 100 games x 9 spaces.

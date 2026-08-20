@@ -23,9 +23,10 @@ the one that carries an interval. The reduction and the interval are the whole
 difference between them, so they are one script.
 
 ```
-python analysis/violation_divergence/step_length_fork/measure.py [--n_games 100]
+python analysis/violation_divergence/step_length_fork/measure.py [--n_games 100] \
+    [--variant spliced|rollout]
 python analysis/violation_divergence/step_length_fork/make_figures.py \
-    [--game 1235 | --n_games 100] [--camera-ready]
+    [--game 1235 | --n_games 100] [--variant spliced|rollout] [--camera-ready]
 ```
 
 | file | what it is |
@@ -35,11 +36,15 @@ python analysis/violation_divergence/step_length_fork/make_figures.py \
 | `$SPADE_DIVERGENCE_DIR/step_length_fork/n100.npz` | `measure.py`'s output: per space, game, branch and position, the absolute step length and the ratio |
 | `results/violation_divergence/step_length_fork.csv` | one row per (space, series, position): the **absolute** step length and the ratio, for the reference, the three rules, all six member categories and the control |
 | `results/violation_divergence/step_length_fork_n100.csv` | the same rows over the population: the mean with its bootstrap CI, the median, and the paired contrast against the legal control |
+| `figures/n100_step_length_fork_rollout.{png,pdf}` | the population grid over the **rollout** branch set, same 100 games (below) |
+| `$SPADE_DIVERGENCE_DIR/rollout/step_length_fork/n100.npz` | its sweep output, `n_rollouts` = 4; it never renders over the spliced npz |
+| `results/violation_divergence/step_length_fork_n100_rollout.csv` | its table, columns identical to the spliced one |
 
-Spliced branches only (`$SPADE_DIVERGENCE_DIR/branches`): every branch replays
-the source game's `tokens[t0+1:]`, so a difference at *r* > 0 descends from one
-token. The rollout set forks the suffix too, which is a different quantity and a
-different figure.
+The default is the spliced set (`$SPADE_DIVERGENCE_DIR/branches`): every branch
+replays the source game's `tokens[t0+1:]`, so a difference at *r* > 0 descends
+from one token. The rollout set forks the suffix too — a different quantity, and
+therefore its own figure and its own files, never mixed into these
+(**The rollout twin**, below).
 
 ## Caption
 
@@ -282,6 +287,135 @@ rule against `control_legal` at *r* = 0, taken inside each game. Within ÷
 between-rule spread over *t* ≥ *t₀*, per game, raw layer 5: median 0.866 [IQR
 0.728–1.021]. The population is the first 100 of the 1696 branch-complete games
 forking at *t₀* = 20, ascending by game id, with no game-level criterion.
+
+## The rollout twin
+
+Same 100 games, same nine panels, same axis, one thing changed: the branch set.
+In `$SPADE_DIVERGENCE_DIR/rollout` every branch — **the reference included** —
+keeps `tokens[:t₀]` and its own branch token and then samples the rest of the
+game from OthelloGPT at temperature 1, K = 4 times per branch
+(`spade.violation_divergence.rollout_branches`). Nothing replays the source
+game's suffix, so the reference is no longer the one in-distribution sequence in
+the set. The price is single-token attribution: two branches now differ at every
+position after *t₀*, not at *t₀* alone, so a difference at *r* > 0 is the branch
+move **plus everything the model then chose to do about it**.
+
+`branches.games_at_t0` returns the same 100 ids on both trees (10, 35, 85, 110,
+…), so the two figures are over the same games and are read side by side.
+
+### The reduction, and the order it is taken in
+
+A branch is 4 rows. Every row is encoded and turned into its own step length, and
+the mean over the four is taken **last**: the SAE encode is nonlinear, so a mean
+taken before it is the code of an average activation and not the average of four
+codes.
+
+The ratio is formed **within a rollout index** — s_b^k(t) ÷ s_ref^k(t), then the
+mean over k — because a branch's k-th rollout and the reference's k-th are driven
+by the same uniform stream, so the pairing holds the sampled continuation fixed
+and lets only the branch token vary. Common random numbers, the same argument
+that makes this figure bootstrap games rather than branches. Ratio-of-means
+(average the four lengths, divide once) was rejected on three counts: E[s_b/s_ref]
+≠ E[s_b]/E[s_ref], so it is a different quantity, not a rounder version of this
+one; it throws away the pairing the seeds were built to provide; and it cannot
+hold the shared prefix at exactly 1 branch by branch, which is the check the
+sweep asserts in all nine spaces on every run.
+
+### *r* ≤ 0 is the spliced figure exactly, by construction
+
+The step drawn at *r* = 0 is ‖z(t₀) − z(t₀−2)‖, and both positions are causally
+upstream of the resampling — every rollout of every branch shares
+`tokens[:t₀+1]`. The two npz files confirm it: `step` and `ratio` at every drawn
+*r* ≤ 0 are **bitwise equal** across the two trees, in all nine spaces, for all
+100 games. The fork-position numbers below are therefore not a replication of the
+spliced result, they are the same measurement; everything the rollout set can add
+is at *r* ≥ +2.
+
+### Raw layer 5
+
+| series | at *r* = 0 | mean over *r* ≥ 0 | (series − control) at *r* = 0 | (series − control) over *r* ≥ 0 |
+|---|---|---|---|---|
+| R1 placement | **0.936** [0.910, 0.961] | 1.008 [1.002, 1.014] | **−0.060** [−0.081, −0.038] | −0.004 [−0.010, +0.002] |
+| R2 bracketing | **1.099** [1.068, 1.131] | 1.036 [1.031, 1.042] | **+0.104** [+0.077, +0.132] | **+0.024** [+0.019, +0.030] |
+| R3 turn | **1.076** [1.044, 1.108] | 1.029 [1.021, 1.036] | **+0.080** [+0.051, +0.111] | **+0.017** [+0.010, +0.024] |
+| `control_legal` (null) | 0.995 [0.967, 1.024] | 1.012 [1.006, 1.018] | — (the divisor) | — |
+| `control_legal_2` (null) | 1.016 [0.986, 1.046] | 1.016 [1.010, 1.023] | +0.021 [−0.004, +0.047] | +0.004 [−0.002, +0.011] |
+
+1. **R1 still steps shorter than a legal alternative, and at *r* = 0 that is
+   arithmetic rather than evidence.** 0.890–0.957 across the nine spaces with
+   every interval clear of 1, paired against the control **−0.032 to −0.117** and
+   resolved negative in all nine — the spliced numbers to the last digit, because
+   the measurement is the same one. Past the fork the story changes: over
+   *r* ≥ 0 the paired R1 − control gap is **−0.004** [−0.010, +0.002] in raw
+   layer 5, unresolved there and in PAnneal, Standard, CosineSpaDE and SpaDE, and
+   resolved negative only in the four gated/TopK spaces (−0.011 to −0.013). The
+   shortened step is a fork-position effect, and resampling the suffix does not
+   extend it.
+2. **Once the suffixes diverge every curve lifts ~1%, both nulls included, and
+   that is the denominator.** `control_legal` over *r* ≥ 0 goes from 0.991
+   [0.984, 0.997] spliced to **1.012** [1.006, 1.018] here, above 1 with the
+   interval clear of it in all nine spaces (1.008–1.018). It is not a branch
+   effect: at *r* = +12 in raw layer 5 the across-game correlation between the
+   control's step length and the reference's falls from **0.73** spliced to
+   **0.09** here, and the mean of the ratio (1.009) parts company with the ratio
+   of the means (0.997) — with the denominator no longer moving with the
+   numerator, the convexity of 1/s pushes E[s_b/s_ref] above E[s_b]/E[s_ref].
+   Read the paired contrast, which subtracts a lift both nulls carry; the level
+   of a curve above 1 past the fork is not a finding on this tree.
+3. **R2's edge over the null survives further out than it does spliced.**
+   Window-mean paired gaps in raw layer 5: R2 **+0.024** [+0.019, +0.030] against
+   +0.019 [+0.013, +0.024] spliced, R3 +0.017 [+0.010, +0.024] against +0.018
+   [+0.011, +0.024]. Per offset, R2 − control is **+0.023** [+0.008, +0.036] at
+   *r* = +8, where the spliced set gives an unresolved +0.003 [−0.012, +0.017],
+   +0.015 [+0.001, +0.027] at +10 and +0.020 [+0.006, +0.033] at +12, and is
+   unresolved from *r* = +16 on. Against the control's own excursion band —
+   ±0.027 here against ±0.023 spliced, so a comparable band — **8** of the
+   3 × 10 rule-mean values past *r* = +4 leave it in raw layer 5 (spliced: 2), 11
+   in PAnneal, 13 in CosineSpaDE and 0–3 in the gated/TopK spaces.
+4. **The rule grouping is as weak as it is on the spliced set.** Within ÷
+   between-rule spread of the drawn ratio over *t* ≥ *t₀*, per game, raw layer 5:
+   median **0.896** [IQR 0.829–1.014], above 1 in 30% of games (spliced 0.866
+   [0.728–1.021], 29%); the nine-space medians run 0.842 (CosineSpaDE) to 0.976
+   (GatedSAE).
+
+### The window is not truncated at *r* = +8
+
+`../fork_and_board` draws its rollout figures only to `ROLLOUT_RMAX = 8` because
+past that its illegal and control δ̂ agree to within 0.5%. That rule does not
+transfer here and the window is the spliced twin's, *r* = −6 … +24:
+
+- **δ̂ is cumulative and this is not.** Distance from the reference grows and then
+  saturates against a ceiling set by how far two independently sampled
+  continuations drift apart, so its late offsets draw a separation that has
+  already closed. A step length is per-position: it returns towards 1 and stays
+  there, which is a reading rather than an artifact, and the two nulls are drawn
+  through the same offsets so a reader can see what "nothing" looks like at each.
+- **There is resolved signal past +8** (point 3): cutting at +8 would drop
+  R2 − control at *r* = +10 and +12, both clear of 0.
+- **Comparability is the point of the figure.** The spliced twin is the thing
+  this is read against; a shorter x-axis would make part of the visible
+  difference an axis difference.
+
+### Caption
+
+**Resampling every branch's continuation leaves the fork-position result exactly
+where it was — it is the same measurement — and adds two ply of resolved
+separation after it, on top of a ~1% lift that both nulls carry.** Nine panels,
+one per representation space, raw layer 5 first; layer-5 `resid_post`, 100 source
+games all forking at *t₀* = 20, the rollout branch set (K = 4 sampled
+continuations per branch, temperature 1). y is each branch's step length divided
+by that game's own reference branch's at the same position, formed within a
+rollout index and averaged over the four afterwards; x is move index *t*, sampled
+every 2 plies at *t₀*'s parity. The dashed rule is *t₀* and the shaded band left
+of it is the shared prefix, where the ratio is 1 by construction — asserted in
+all nine spaces, per game, on every sweep. Each curve is the mean over the 100
+games of that game's own ratio, the rule mean taken over its 2, 3 or 1 member
+categories inside the game; **bands are 95% percentile bootstrap CIs of that mean
+over source games** (2000 resamples, seed 0, resampling games and not branches).
+The two grey curves are the two legal controls, two draws of one empirical null.
+Each panel prints the paired contrast of its largest rule against `control_legal`
+at *r* = 0, taken inside each game. Everything at *r* ≤ 0 is bitwise identical to
+the spliced twin, since the step ending at *t₀* precedes the resampling.
 
 ## Reading it honestly
 

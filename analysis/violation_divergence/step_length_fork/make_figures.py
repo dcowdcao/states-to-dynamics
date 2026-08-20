@@ -26,6 +26,14 @@ Before t0 every branch is token-identical, so the ratio is exactly 1 there.
 positions -- shaded, with the legend saying why they are flat -- instead of
 starting at the fork.
 
+`--variant rollout` draws the population figure over the branch set where every
+branch -- the reference included -- samples its own continuation from OthelloGPT
+after t0 rather than replaying the source game's. A branch is K rows there, so
+the ratio is formed within a rollout index and averaged over K afterwards
+(`measure.py`); the panels, the axis and the window are the spliced figure's, so
+the two are read side by side. The single-game figure is the spliced
+construction and takes no variant.
+
 **Two figures, one quantity and one panel grid.** Without `--n_games` this is one
 game (n = 1): an illustration of the construction, not a claim, with the three
 rule curves drawn over their member categories and the within/between-rule spread
@@ -37,7 +45,7 @@ game-to-game spread. The reduction and the interval are the whole difference;
 the quantity, the panel and the grid are shared.
 
 Usage: python analysis/violation_divergence/step_length_fork/make_figures.py
-       [--game 1235 | --n_games 100] [--camera-ready]
+       [--game 1235 | --n_games 100] [--variant spliced|rollout] [--camera-ready]
 """
 
 import argparse
@@ -50,7 +58,7 @@ import numpy as np
 import torch
 
 from spade.common.device import select_device
-from spade.common.study import study_dir
+from spade.common.study import study_dir, variant_dir
 from spade.figures.branch_panels import (
     ratio_series, rule_ratio_panel, rule_ratio_population_panel)
 from spade.figures.branch_style import below, ordered_legend, rule_member_key
@@ -65,6 +73,7 @@ from spade.violation_divergence.rule_groups import rule_rows, spread_ratio
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 RESULTS = (Path(__file__).resolve().parents[3] / "results" / "violation_divergence")
 CSV = RESULTS / "step_length_fork.csv"
+VARIANTS = {"spliced": "", "rollout": "rollout"}
 NCOL = 3
 CELL_W, CELL_H = 3.2, 2.6
 BAND_H = 1.1          # the legend and the notes under the grid
@@ -79,6 +88,14 @@ SAMPLING_NOTE = (f"one step spans {2 * STRIDE} plies: positions are sampled ever
                  f"where the same layer-5 legal corpus steps 29.2 against 18.9 here "
                  f"(../theta_comparability) — the two conventions measure different "
                  f"quantities and must never share an axis.")
+ROLLOUT_NOTE = (
+    "the branch set is the rollout tree: after $t_0$ every branch — the reference "
+    "included — samples its own continuation from OthelloGPT at temperature 1, {K} times "
+    "each, instead of replaying the source\ngame's. The ratio is formed within a rollout "
+    "index — a branch's $k$-th draw against the reference's $k$-th, the one sharing its "
+    "uniform stream — and averaged over the {K} afterwards, never\nratio-of-means. Two "
+    "branches now differ at every position after $t_0$ and not at $t_0$ alone, so the "
+    "single-token attribution the spliced twin carries is gone (README).")
 NULL_NOTE = ("the two grey curves are two draws of one null — a different legal token at "
              "$t_0$, measured exactly as the illegal branches are. Neither is a divisor "
              "here (the reference is), so the gap\nbetween them is the size of a "
@@ -302,7 +319,13 @@ def annotate_contrast(ax, x: np.ndarray, draws: np.ndarray, at: int,
             ha="right", va="top", fontsize=7, color=MUTED)
 
 
-def population_notes(z, n_games: int) -> list[str]:
+def tagged(name: str, variant: str) -> str:
+    """The spliced names are the study's; a variant renders beside them, never over
+    them."""
+    return name if variant == "spliced" else f"{name}_{variant}"
+
+
+def population_notes(z, n_games: int, variant: str) -> list[str]:
     """What the population is, and what its spread ratio says (§1.7).
 
     The spread is raw layer 5's, the space `rule_groups` measures the study's own
@@ -316,14 +339,18 @@ def population_notes(z, n_games: int) -> list[str]:
     if FIGURE_GAME in z["game"]:
         pop += (f", and game {FIGURE_GAME} — the argmax the\nsingle-game figure draws — "
                 f"is in it as one ordinary member of {n_games}")
-    return [f"within ÷ between-rule spread of the drawn ratio over $t \\geq t_0$, {where}: "
-            f"median {np.median(g):.3f} [IQR {np.percentile(g, 25):.3f}–"
-            f"{np.percentile(g, 75):.3f}], above 1 in {(g > 1).mean():.0%} of them.\nNear "
-            f"1 the three curves are a label rather than a finding; the nine spaces' "
-            f"values are in README.md.", NULL_NOTE, pop + " (README)."]
+    spread = (f"within ÷ between-rule spread of the drawn ratio over $t \\geq t_0$, "
+              f"{where}: median {np.median(g):.3f} [IQR {np.percentile(g, 25):.3f}–"
+              f"{np.percentile(g, 75):.3f}], above 1 in {(g > 1).mean():.0%} of them.\n"
+              f"Near 1 the three curves are a label rather than a finding; the nine "
+              f"spaces' values are in README.md.")
+    notes = [spread, NULL_NOTE, pop + " (README)."]
+    if variant == "spliced":
+        return notes
+    return [ROLLOUT_NOTE.format(K=int(z["n_rollouts"])), *notes]
 
 
-def population_figure(z, draws: np.ndarray, camera_ready: bool) -> Path:
+def population_figure(z, draws: np.ndarray, variant: str, camera_ready: bool) -> Path:
     rows, names = rows_of(z), list(z["space"])
     rules = list(rule_rows(rows))
     pos, t0, n_games = z["pos"], int(z["t0"]), len(z["game"])
@@ -355,15 +382,18 @@ def population_figure(z, draws: np.ndarray, camera_ready: bool) -> Path:
     band.axis("off")
     leg = ordered_legend(band, axes[0], 3, loc="upper left", bbox_to_anchor=(0.0, 1.05))
     y = below(fig, leg, 0.012)
-    for note in [SAMPLING_NOTE, *population_notes(z, n_games)]:
+    for note in [SAMPLING_NOTE, *population_notes(z, n_games, variant)]:
         y = below(fig, fig.text(0.005, y, note, ha="left", va="top", fontsize=7.5,
                                 color=MUTED, linespacing=1.5), 0.006)
     rule_member_key(fig, x=0.005, y=y)
 
     if not camera_ready:
         fig.suptitle(f"Step Length at the Fork in Each Representation Space — "
-                     f"{n_games} games at $t_0$ = {t0}, layer 5", fontsize=12)
-    return save_figure(fig, FIG_DIR / f"n{n_games}_step_length_fork", camera_ready)
+                     f"{n_games} games at $t_0$ = {t0}, layer 5"
+                     + ("" if variant == "spliced" else f", {variant} branches"),
+                     fontsize=12)
+    return save_figure(fig, FIG_DIR / tagged(f"n{n_games}_step_length_fork", variant),
+                       camera_ready)
 
 
 def population_table(z, draws: np.ndarray) -> list[dict]:
@@ -454,20 +484,21 @@ def report(z, draws: np.ndarray) -> None:
               f"{np.percentile(g, 75):.3f}]  {(g > 1).mean():.0%}")
 
 
-def population(n_games: int, camera_ready: bool) -> None:
-    npz = study_dir("divergence") / "step_length_fork" / f"n{n_games}.npz"
+def population(n_games: int, variant: str, camera_ready: bool) -> None:
+    base = variant_dir("divergence", variant=VARIANTS[variant])
+    npz = base / "step_length_fork" / f"n{n_games}.npz"
     z = dict(np.load(npz))
     assert len(z["game"]) == n_games, f"{npz.name} holds {len(z['game'])} games"
     draws = np.random.default_rng(BOOT_SEED).integers(n_games, size=(BOOT, n_games))
 
     report(z, draws)
-    out = RESULTS / f"step_length_fork_n{n_games}.csv"
+    out = RESULTS / f"{tagged(f'step_length_fork_n{n_games}', variant)}.csv"
     rows = population_table(z, draws)
     with out.open("w", newline="") as fh:
         w = csv.DictWriter(fh, list(rows[0]))
         w.writeheader()
         w.writerows(rows)
-    print(f"\nwrote {population_figure(z, draws, camera_ready)}\nwrote {out}")
+    print(f"\nwrote {population_figure(z, draws, variant, camera_ready)}\nwrote {out}")
 
 
 def main():
@@ -475,13 +506,16 @@ def main():
     parser.add_argument("--game", type=int, default=FIGURE_GAME)
     parser.add_argument("--n_games", type=int, default=None,
                         help="draw measure.py's population twin instead of one game")
+    parser.add_argument("--variant", default="spliced", choices=list(VARIANTS))
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()
+    assert args.n_games or args.variant == "spliced", \
+        "the single-game figure is the spliced construction; --variant needs --n_games"
 
     apply_style(args.camera_ready)
     RESULTS.mkdir(parents=True, exist_ok=True)
     if args.n_games:
-        population(args.n_games, args.camera_ready)
+        population(args.n_games, args.variant, args.camera_ready)
     else:
         one_game(args.game, args.camera_ready)
 
