@@ -6,6 +6,65 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The same read-out on a regenerated suffix (2026-08-20)
+
+`changepoint_localization/measure_regenerated.py` + `make_figures_regenerated.py` ->
+`figures/changepoint_by_space_regenerated.png`. The reported study scores the divergence tree,
+whose suffix after t0 is the source game's **verbatim**; the straightness violation corpus
+regenerates a fresh random legal continuation instead. Since `m = 4, paired` was *selected* on
+the regenerated corpus and *applied* to the fixed one, the transfer deserved a by-space check
+rather than the README's window-only note.
+
+**The ordering survives, Spearman rho ~ 0.97.** Top four identical as a set, raw L5 fifth in
+both, bottom four identical; only GatedSAE<->BatchTopK and SpaDE<->PAnneal swap, both adjacent.
+So "four dictionaries clear raw layer 5 and four sit at chance" holds in both suffix regimes.
+
+**What does not transfer, and the axis label says so.** The straightness corpus carries no
+legal-alternative arm, so panel (a) is illegal vs **its own source legal game** -- the parent's
+`vs_reference` contrast, not its `vs_control`. The 0.604 bar has no counterpart here and the
+two left panels must not be read as the same quantity. Only the four empty-square categories
+exist there too (the occupied-square board update is ill-defined), so the higher hit rates are
+partly composition, not regime.
+
+**Gotcha that cost a rerun: the null has to come from disjoint sets.** Pairing the source
+legal games against a rolled copy of themselves is the same multiset, so AUROC is exactly 0.5
+by construction -- a number that looks like an empirical null and measures nothing. It also
+has to be many splits: one split's luck is shared by all nine spaces because they score the
+same games, which showed up as every space landing 0.462-0.499. Averaging 20 disjoint splits
+puts it at 0.491-0.506, against the parent's 0.492-0.512.
+
+---
+
+## Curvature through the change-point pipeline, and it is at chance (2026-08-20)
+
+`changepoint_localization/theta_ablation.py`, written up in `CURVATURE_ABLATION.md`. The
+README asserted curvature "scores 0.53-0.58" but **no committed code ever loaded `theta`** --
+`measure.py`'s `steps()` hardcodes `["d"]` -- so the claim had no artifact behind it. This
+runs the real ablation: same `profile -> drop -> scan -> max/argmax`, same `m = 4`, same
+paired MOSUM, `theta` for `d`. Reproducing `d` first gives GatedAnneal 0.6037 [0.578, 0.629]
+against the committed [0.578, 0.630], so the numbers are like-for-like.
+
+**Curvature cannot localize at all.** Every `theta` hit rate is 0.018-0.056 against a
+shift-chance of 0.027-0.030 -- chance -- while `d` puts GatedAnneal at 0.336, ~16x chance.
+Detection is near-dead too: seven of nine CIs include or touch 0.5, and the best curvature
+space is weaker than step length's fifth-best. The straighter-not-curvier direction does
+survive: flipping the sign puts GatedAnneal and TopK below 0.5.
+
+**The space ordering roughly inverts, Spearman rho ~ -0.67.** GatedAnneal is 1st on `d` and
+8th on `theta`; CosineSpaDE is 6th on `d` and **1st** on `theta`, the one space where
+curvature beats step length. So "which dictionary carries the signal" is not a property of
+the dictionary -- it depends on which quantity is measured. A sparsemax code lies on the
+simplex and sums to 1, which bounds how far a step can travel, so magnitude may simply be
+compressed out of it; that is a hypothesis, and it is the same geometry-vs-magnitude question
+the un-run norm baseline is about.
+
+**Two corrections.** The measured range is 0.500-0.551 (vs matched legal control) or
+0.539-0.616 (vs clean reference); neither reproduces 0.53-0.58, so the README's range needs
+replacing with measured numbers. And the *straightness* geometry npz **does** carry `norm`
+(10000x58) -- only `curvature_discriminant`'s lacks it -- so the norm-only baseline the README
+calls blocking is already runnable on the regenerated corpus, no GPU pass needed.
+---
+
 ## divergence_by_space, with the reference subtracted in R^21 (2026-08-20)
 
 `--plane {displacement,r21}` on both scripts in
