@@ -2,14 +2,16 @@
 
 `python src/probe_geometry/robustness.py` writes every number below to
 `analysis/probe_geometry/results/robustness_*.csv`. Layer 5, `blocks.5.hook_resid_post`,
-d = 512. Board arm: 200 ARENA games, 10000 rows. Rules arm: the move-legality fit set,
-800 games, 176262 rows, 60 candidate squares with 2482-4544 rows each.
+d = 512. Both committed probes were fit on `adamkarvonen/othello_45MB_games`; the board
+arm's *re-fits* run on 200 ARENA games, 10000 rows, which is the only corpus difference
+left. Rules arm: the move-legality fit set, 800 games, 176262 rows, 60 candidate squares
+with 2482-4544 rows each.
 
 ## The two claims, and why only one of them is a claim
 
 **Pooled.** The committed rules probes are square-agnostic: one "illegal" direction read off
 the residual wherever the candidate move was spliced in. Every board direction is
-square-specific. Mean |cos| between them is 0.018-0.030, against an isotropic floor of
+square-specific. Mean |cos| between them is 0.016-0.029, against an isotropic floor of
 sqrt(2/(pi*512)) = 0.0353. This is close to forced. A single global direction cannot be a
 combination of per-square contrasts, because the per-square feature is a conjunction of
 square identity and occupancy while the global one is the marginal. **The pooled number is
@@ -20,7 +22,7 @@ not evidence about how the model computes legality.**
 
 | board arm | matched mean cos | matched mean abs cos | positive at n/60 squares | other-square mean abs cos |
 |---|---|---|---|---|
-| committed probe | **+0.1487** colour, **+0.3057** occupancy | 0.1523 / 0.3334 | 55 / 55 | 0.0260 / 0.0226 |
+| committed probe | **+0.1677** colour, **+0.3120** occupancy | 0.1725 / 0.3419 | 57 / 54 | 0.0203 / 0.0212 |
 | ridge, matched estimator | **+0.1742** colour, **+0.3592** occupancy | 0.1796 / 0.3825 | 57 / 54 | 0.0177 / 0.0168 |
 
 n = 60 matched pairs; n = 3780 (colour) and 3540 (occupancy) off-square pairs. Every threat
@@ -77,9 +79,10 @@ held-out-game accuracy so an over-shrunk fit is not mistaken for a geometric res
 | 1e4 | 0.9685 | 0.8785 | +0.171 | +0.108 | 0.031 / 0.032 |
 | 1e5 | 0.8295 | 0.7398 | +0.127 | +0.049 | 0.032 / 0.070 |
 
-The committed arms were fit by two different estimators (board: unregularized Adam softmax,
-500 epochs, no standardization; rules: L2 multinomial logistic on z-scored features).
-Matching them changes the number by less than the shrinkage sweep does. Survives.
+The committed arms were fit by two different estimators (board: AdamW on a per-square
+3-way softmax, early-stopped on held-out-game validation accuracy; rules: L2 multinomial
+logistic on z-scored features). Matching them changes the number by less than the
+shrinkage sweep does. Survives.
 
 ## 2 Token identity
 
@@ -135,13 +138,20 @@ square-agnostic rules directions toward the occupancy family.
 
 ## 4 Corpus
 
-The board probe is fit on ARENA games, the rules probes on `adamkarvonen/othello_45MB_games`.
+Both committed probes are fit on `adamkarvonen/othello_45MB_games`; what is still
+ARENA-only is the board arm's ridge re-fit corpus, which is what this threat now tests.
+The swap costs one thing: all 800 rules-corpus games are inside the board probe's 20000,
+576 of them in its training split, because both stream the same dataset at seed 42. That
+is 4% of the probe's games, and it makes the committed board number below a fit statistic
+rather than a transfer one — the transfer test is the ridge row under it.
+
 The rules corpus' legal rows carry the move the game actually played, so replaying
 `fit_set/tokens.pt` with `circuits.othello_engine_utils` gives them mover-relative board
 labels (perspective from the engine's `next_hand_color`, never from move-index parity).
 
-- ARENA-fit committed board probe on those rows: **98.39%** 3-way accuracy, n = 46256 rows
-  x 64 squares.
+- Committed board probe on those rows: **99.36%** 3-way accuracy, n = 46256 rows
+  x 64 squares, matching its own held-out test accuracy of 0.9937 — but see the overlap
+  above.
 - Board arm refit on rules-corpus games, scored on held-out games: **99.25%**, n = 9253 rows.
 - Per-direction cos between the ARENA-fit and rules-corpus-fit board arms: colour mean
   0.960 (min 0.936), occupancy mean 0.973 (min 0.948), n = 124.
@@ -210,7 +220,7 @@ which is not zero (`robustness_captured.csv`).
 |---|---|---|
 | per-square legality inside the **2** board dims at its own square, n = 60 | **0.2119** | isotropic 0.0039 [0.0001, 0.0143]; covariance-matched 0.0087 [0.0002, 0.0375]; shuffled rules labels 0.0070 |
 | per-square legality inside the **124**-dim board basis, n = 60 | 0.2640 (0.072-0.447) | isotropic 0.2415 [0.192, 0.295]; covariance-matched 0.4756 [0.368, 0.584] |
-| pooled rules directions inside the 124-dim basis | committed 0.091-0.128; ridge 0.033-0.040 | same |
+| pooled rules directions inside the 124-dim basis | committed 0.053-0.068; ridge 0.033-0.040 | same |
 
 Two things at once, and they are the result:
 
@@ -253,17 +263,19 @@ gives +0.1877 colour and +0.3102 occupancy — the effect is not the imbalance.
 
 ## Caveats inherited from the probes
 
-- The committed 4-class probe recovers `legal` at recall **0.2324** on its own test split
-  (n = 9255 true-legal rows), with **71.9%** of them predicted R1. Any claim resting on the
-  rules4 contrasts — including illegal·R1 = 0.923 — carries that confusion as a caveat.
-- The board probe's committed 8000/2000 split is already a game split, so it is not an extra
-  holdout. Every accuracy reported here uses this module's own 80/20 split by game.
+- The committed 4-class probe recovers `legal` at recall **0.8238** on its own test split
+  (n = 9255 true-legal rows), with **15.6%** of them predicted R1. Scored in the wrong
+  input space it read 0.2324 / 71.9%; the probe's features are `load_space("raw")`, not
+  the bare residual. So illegal·R1 = 0.923 is not explained away by an anchor confused
+  with R1: the anchor works.
+- The committed board probe was fit on 20000 Karvonen games, so all 200 ARENA games are
+  held out for it — but the 800 rules-corpus games are not (threat 4). The board arm's
+  *ridge* accuracies use this module's own 80/20 split by game over the 200.
 - Activations are held in float32: this box caps the user at 8 GB shared with other jobs and
   a float64 corpus plus the ridge's own copies does not fit. Fitted directions still come
   out in float64 and agree with a float64 corpus to cos >= 0.999998 over the whole lambda
-  grid. Even so the entrypoint was killed twice by that cap mid-run and the CSVs here come
-  from two passes of it (everything through threat 8, then the bootstrap). Every fit is
-  seeded, and the files a second pass rewrote came back byte-identical.
+  grid. The CSVs here come from one SLURM pass at 96 GB; on the 8 GB login node the
+  entrypoint has to be split in two (everything through threat 8, then the bootstrap).
 - The bootstrap covers the board arm and the 60 per-square directions, which is what the
   square-matched claim rests on. The pooled square-agnostic arms carry point estimates only;
   refitting them inside 200 replicates needs 700 MB of working set this box does not have.

@@ -14,7 +14,7 @@ Where each interval comes from, so no column is an unlabelled mixture:
   `refit_*`, `pooled_*`): a bare point estimate, no interval.
 
 Point estimate and interval come from different estimators — committed probe against ridge
-refit, agreeing at median cos 0.75 (rules4) to 0.87 (rules2) per family, in bootstrap.json.
+refit, agreeing at median cos 0.75 (rules4) to 0.88 (colour) per family, in bootstrap.json.
 Several intervals therefore do not contain their own point estimate. That gap is estimator
 disagreement plus the attenuation below, not a computation error; the `refit_*` columns give
 the all-ridge value the intervals are actually centred on.
@@ -35,15 +35,15 @@ square 27.
 
 | board_family | n_squares | matched_mean_cos | matched_mean_abs_cos | matched_abs_lo | matched_abs_hi | other_mean_abs_cos | excess_mean_abs_cos | excess_lo | excess_hi | pooled_illegal_mean_abs_cos |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| colour | 60 | 0.1487 | 0.1523 | 0.1470 | 0.1622 | 0.0260 | 0.1263 | 0.1215 | 0.1374 | 0.0267 |
-| occupancy | 60 | 0.3057 | 0.3334 | 0.3088 | 0.3280 | 0.0226 | 0.3108 | 0.2861 | 0.3052 | 0.0222 |
+| colour | 60 | 0.1677 | 0.1725 | 0.1470 | 0.1622 | 0.0203 | 0.1522 | 0.1215 | 0.1374 | 0.0215 |
+| occupancy | 60 | 0.3120 | 0.3419 | 0.3088 | 0.3280 | 0.0212 | 0.3207 | 0.2861 | 0.3052 | 0.0227 |
 
 Reading: occupancy at the matched square reaches mean |cos| =
-0.3334 against 0.0226 at the other 59
-squares, and colour 0.1523 against
-0.0260. 55/60 and
-55/60 squares are positive, so the signed means
-(+0.3057, +0.1487) track the unsigned ones —
+0.3419 against 0.0212 at the other 59
+squares, and colour 0.1725 against
+0.0203. 54/60 and
+57/60 squares are positive, so the signed means
+(+0.3120, +0.1677) track the unsigned ones —
 a consistent direction, not an alignment of arbitrary sign. Both other-square nulls sit at
 the 0.0353 random-vector scale, so a square's legality direction overlaps that square's
 board directions and nothing else's.
@@ -79,36 +79,36 @@ replaces the rule direction with a random unit vector.
 
 | board_family | rule_direction | mean_cos | mean_abs_cos | abs_cos_lo | abs_cos_hi | max_abs_cos | argmax_square | null_mean_abs_cos | null_random_mean_abs_cos |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| colour | illegal | -0.0118 | 0.0267 | 0.0333 | 0.0469 | 0.1056 | C5 | 0.0280 | 0.0352 |
-| colour | R1 | -0.0124 | 0.0252 | 0.0434 | 0.0615 | 0.0856 | E5 | 0.0283 | 0.0352 |
-| colour | R2 | -0.0135 | 0.0301 | 0.0309 | 0.0432 | 0.1066 | C3 | 0.0281 | 0.0352 |
-| colour | R3 | 0.0065 | 0.0251 | 0.0204 | 0.0283 | 0.0660 | G3 | 0.0291 | 0.0352 |
-| occupancy | illegal | -0.0074 | 0.0222 | 0.0285 | 0.0397 | 0.0608 | C2 | 0.0358 | 0.0351 |
-| occupancy | R1 | -0.0140 | 0.0295 | 0.0417 | 0.0561 | 0.0817 | F4 | 0.0423 | 0.0351 |
-| occupancy | R2 | -0.0022 | 0.0178 | 0.0306 | 0.0396 | 0.0704 | D2 | 0.0444 | 0.0351 |
-| occupancy | R3 | -0.0031 | 0.0182 | 0.0184 | 0.0245 | 0.0496 | E1 | 0.0411 | 0.0351 |
+| colour | illegal | -0.0182 | 0.0215 | 0.0333 | 0.0469 | 0.0591 | C1 | 0.0262 | 0.0351 |
+| colour | R1 | -0.0148 | 0.0197 | 0.0434 | 0.0615 | 0.0514 | G1 | 0.0283 | 0.0351 |
+| colour | R2 | -0.0210 | 0.0247 | 0.0309 | 0.0432 | 0.0750 | A7 | 0.0282 | 0.0351 |
+| colour | R3 | -0.0054 | 0.0164 | 0.0204 | 0.0283 | 0.0548 | A0 | 0.0286 | 0.0351 |
+| occupancy | illegal | -0.0046 | 0.0227 | 0.0285 | 0.0397 | 0.0579 | D1 | 0.0459 | 0.0351 |
+| occupancy | R1 | -0.0105 | 0.0286 | 0.0417 | 0.0561 | 0.0596 | A7 | 0.0581 | 0.0351 |
+| occupancy | R2 | -0.0061 | 0.0181 | 0.0306 | 0.0396 | 0.0541 | A3 | 0.0616 | 0.0351 |
+| occupancy | R3 | -0.0116 | 0.0198 | 0.0184 | 0.0245 | 0.0565 | D5 | 0.0567 | 0.0351 |
 
-Reading: the largest cell is colour vs R2 at mean |cos| =
-0.0301, with signed means running from -0.0140 to
-+0.0065. The honest floor for a pooled number is not the isotropic
+Reading: the largest cell is occupancy vs R1 at mean |cos| =
+0.0286, with signed means running from -0.0210 to
+-0.0046. The honest floor for a pooled number is not the isotropic
 0.0353 but the covariance-matched null of 0.084-0.110 reported in `ROBUSTNESS.md`, against
 which these cells are *more* orthogonal than chance rather than at it. Either way the
 comparison to make is with table 1: the same probe family, measured square by square, is
-11x higher. Read this table as the cost of
+12x higher. Read this table as the cost of
 pooling over 60 squares, not as evidence that legality and board state are unrelated.
 
 ## 3. Within-board: colour vs occupancy
 
 | pair_kind | square_relation | n_pairs | mean_cos | mean_abs_cos | median_cos | q25_cos | q75_cos | mean_ci_lo | mean_ci_hi |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| colour-colour | different_square | 2016 | 0.0117 | 0.0469 | 0.0021 | -0.0298 | 0.0397 | 0.0101 | 0.0126 |
-| occupancy-occupancy | different_square | 1770 | 0.0343 | 0.0474 | 0.0260 | -0.0028 | 0.0645 | 0.0170 | 0.0183 |
-| colour-occupancy | same_square | 60 | 0.0294 | 0.0377 | 0.0252 | 0.0021 | 0.0555 | 0.0630 | 0.0716 |
-| colour-occupancy | different_square | 3780 | 0.0010 | 0.0203 | 0.0027 | -0.0148 | 0.0183 | -0.0011 | -0.0001 |
+| colour-colour | different_square | 2016 | 0.0184 | 0.0317 | 0.0049 | -0.0108 | 0.0280 | 0.0101 | 0.0126 |
+| occupancy-occupancy | different_square | 1770 | 0.0463 | 0.0514 | 0.0392 | 0.0162 | 0.0721 | 0.0170 | 0.0183 |
+| colour-occupancy | same_square | 60 | 0.0214 | 0.0360 | 0.0229 | -0.0049 | 0.0416 | 0.0630 | 0.0716 |
+| colour-occupancy | different_square | 3780 | 0.0004 | 0.0174 | 0.0027 | -0.0108 | 0.0156 | -0.0011 | -0.0001 |
 
 Reading: at one square, "which disc" and "is there a disc" sit at cos =
-0.0294 (median 0.0252, IQR 0.0021 to
-0.0555), at the 0.0353 random-vector scale — the two board axes are close to
+0.0214 (median 0.0229, IQR -0.0049 to
+0.0416), at the 0.0353 random-vector scale — the two board axes are close to
 independent readouts of the same square. The CI is on the mean; per-Chebyshev-distance rows
 are in within_board_cosine.csv.
 
@@ -122,13 +122,13 @@ are in within_board_cosine.csv.
 | illegal | 0.9226 | 0.4611 | 0.5868 | 1.0000 |
 
 Reading: the four square-agnostic rule directions are far from orthogonal to each other, so
-they are not four independent readouts. Caveat on illegal.R1 =
-0.923: every rule direction is W[c] - W[legal], and the
-committed 4-class probe finds `legal` badly — recall 0.2324, macro-F1
-0.6047, with 6653 of 9255 true-legal rows in the
-split.pt test games predicted R1. A shared anchor that is itself confused with R1 explains
-part of that cosine. This is the table where the two estimators disagree most: the ridge
-intervals sit far from the committed cosines they accompany (R1.R2 is
+they are not four independent readouts. illegal.R1 = 0.923
+is a fact about the geometry and not about a confused anchor: every rule direction is
+W[c] - W[legal], and the committed 4-class probe recovers `legal` at recall
+0.8238, macro-F1 0.7667, with 1444 of
+9255 true-legal rows in the split.pt test games predicted R1. This is the
+table where the two estimators disagree most: the ridge intervals sit far from the
+committed cosines they accompany (R1.R2 is
 0.309 committed against a ridge interval of
 0.615
 to 0.663),
@@ -137,17 +137,18 @@ so treat the inter-rule geometry as estimator-dependent and read the intervals a
 ## 5. Replication on the injected-move pairs corpus
 
 Rules directions refit on the 4000-prefix pairs corpus, board arm unchanged: the pooled
-maximum is mean |cos| = 0.0323 (colour vs
-R2) against a shuffled-label null of 0.0308, so
+maximum is mean |cos| = 0.0264 (colour vs
+R2) against a shuffled-label null of 0.0277, so
 the pooled table replicates on an independent corpus. The per-square arm is not replicated
 here: 28189 rows over 60 squares is ~470 rows per square against 512 dimensions.
 
 ## Probes
 
 probe_quality.csv carries held-out-GAME accuracy for every probe above, over the whole
-lambda grid. The committed board probe is 0.9884 against a
-0.5449 per-square majority baseline; its eval rows are game-disjoint from
-its fit rows because the 8000/2000 row cut falls exactly at game 160, but they are the same
-200 ARENA games, not a fresh holdout. The committed 4-class rules probe is 0.6248
-on the split.pt test games with macro-F1 0.6047 and legal-class recall
-0.2324.
+lambda grid. The committed board probe is 0.9965 against a
+0.5449 per-square majority baseline, and all 200 ARENA games are held out
+for it: it was fit on 20000 Karvonen games. The 8000/2000 row cut that splits this arm falls
+exactly at game 160, so the ridge refit's eval games are disjoint too. The committed 4-class
+rules probe is 0.7657 on the split.pt test games with macro-F1 0.7667
+and legal-class recall 0.8238, scored through `load_space("raw")` — the
+feature map it was fit on.

@@ -3,7 +3,7 @@
 Two claims, and the contrast between them is the finding.
 
 POOLED: the square-agnostic rules directions (the committed 4-class and 2-class probes,
-one direction read wherever the candidate move was spliced) sit at mean |cos| 0.018-0.030
+one direction read wherever the candidate move was spliced) sit at mean |cos| 0.016-0.029
 against every board direction. A single global "illegal" direction cannot be a combination
 of per-square board contrasts, so that near-orthogonality is close to forced.
 
@@ -47,6 +47,7 @@ from spade.probe_geometry.probes import (
     ridge_weights,
     rows_of_games,
     rules_corpus,
+    rules_proba,
     square_name,
     square_rules_directions,
     stack,
@@ -389,7 +390,7 @@ def replay_labels(games: np.ndarray) -> np.ndarray:
 
 def board_arm_on_rules(rules: dict) -> dict:
     """A board-probe corpus out of the rules corpus' legal rows, whose spliced move is played."""
-    games = torch.load(study_dir() / "fit_set" / "tokens.pt",
+    games = torch.load(study_dir("move_legality") / "fit_set" / "tokens.pt",
                        weights_only=True).numpy().astype(np.int64)
     labels = replay_labels(games)
     rows = np.flatnonzero(rules["rule"] == 0)
@@ -402,11 +403,10 @@ def board_arm_on_rules(rules: dict) -> dict:
 
 def four_class_confusion(rules: dict) -> list[dict]:
     """The committed 4-class probe on its own test split: `legal` recall is the caveat."""
-    p = torch.load(study_dir() / "probes" / "raw_4class.pt", weights_only=False)
-    split = torch.load(study_dir() / "fit_set" / "split.pt", weights_only=True).numpy()
+    split = torch.load(study_dir("move_legality") / "fit_set" / "split.pt",
+                       weights_only=True).numpy()
     test = np.flatnonzero(split[rules["game"]] == 2)
-    z = (rules["acts"][test] - p["mean"].double().numpy()) / p["scale"].double().numpy()
-    pred = (z @ p["weight"].double().numpy().T + p["bias"].double().numpy()).argmax(1)
+    pred = rules_proba(4, rules["acts"][test]).argmax(1)
     truth = rules["rule"][test]
     return [{"statistic": "committed_4class_legal_predicted_as", "family": NONE, "name": name,
              "n": int((truth == 0).sum()), "value": float((pred[truth == 0] == c).mean())}

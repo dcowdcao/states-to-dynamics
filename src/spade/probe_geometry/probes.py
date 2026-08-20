@@ -4,8 +4,8 @@ Both probes read the same 512-d space (blocks.5.hook_resid_post of
 common.config.MODEL_NAME), so their weights are directly comparable — but only
 as class *contrasts*. A k-way softmax is unchanged by adding one vector to all k
 class weights, so a single class weight does not name a direction; a difference
-of two does. The committed board probe carries a large unidentified common
-component (‖mean_c W_q‖ ≈ 1.1 against ‖mine − theirs‖ ≈ 8.5), so this is not a
+of two does. The board probe carries an unidentified common component
+(‖mean_c W_q‖ ≈ 0.67 against ‖mine − theirs‖ ≈ 4.29), so this is not a
 formality. Every direction below is a contrast, unit-normalized.
 
 Board contrasts, per square, span the gauge-invariant space of a 3-way
@@ -14,8 +14,10 @@ Board contrasts, per square, span the gauge-invariant space of a 3-way
 (mine + theirs)/2 − empty (whether there is one). mine − empty and
 theirs − empty are occupancy ± colour/2.
 
-The rules probes standardize their inputs, so their weights live in z-space; a
-direction in activation space is W_c / scale.
+The rules probes were fit on `load_space("raw")` features — one global shift and
+one positive scalar, applied before the probe's own per-feature standardization.
+The scalar cancels under unit-normalization, so a direction is W_c / scale; a
+*score* is not free to ignore it, which is what `rules_proba` is for.
 
 Primary directions come from the committed probes. `refit_directions` re-derives
 both arms by ridge regression onto centered one-hot targets — closed form, so
@@ -32,8 +34,11 @@ import torch
 
 
 from spade.common.paths import add_karvonen_to_path, repo_root
-from spade.othello.taxonomy import CATEGORIES
 from spade.common.study import study_dir
+from spade.move_legality import probe
+from spade.othello.taxonomy import CATEGORIES
+from spade.probes.load import board
+from spade.spaces import load_space
 
 add_karvonen_to_path()
 
@@ -50,7 +55,7 @@ RULES_FAMILIES = ("rules4", "rules2", "rules_square")
 RULE_OF_CATEGORY = np.array([0, 1, 1, 2, 2, 2, 3])
 assert len(RULE_OF_CATEGORY) == len(CATEGORIES)
 
-BOARD_DIR = Path(os.environ.get(
+BOARD_CORPUS_DIR = Path(os.environ.get(
     "SPADE_LINEAR_PROBE_ACTIVATIONS",
     repo_root() / "analysis" / "linear_probe" / "activations"))
 BOARD_GAME_LEN = 50  # rows are game-major over moves 5..54
@@ -96,25 +101,28 @@ def ridge_weights(X: np.ndarray, Y: np.ndarray, lam: float) -> np.ndarray:
 # ---------------------------------------------------------------- committed probes
 
 def board_probe() -> np.ndarray:
-    """[64, 3, 512] committed board-state probe, engine-square order."""
-    w = torch.load(BOARD_DIR / "linear_probe.pt", weights_only=True).double().numpy()
-    return w.reshape(D_MODEL, 64, 3).transpose(1, 2, 0)
+    """[64, 3, 512] canonical board-state probe (spade.probes.load), engine-square order."""
+    return board(flat=True).double().numpy().transpose(1, 2, 0)
 
 
-def rules_probe(n_classes: int) -> dict:
-    """Committed move-legality probe, weights mapped out of z-space into activation space."""
-    p = torch.load(study_dir("move_legality") / "probes" / f"raw_{n_classes}class.pt",
-                   weights_only=False)
-    return {"weight": p["weight"].double().numpy() / p["scale"].double().numpy(),
-            "classes": tuple(p["classes"]), "l2": p["l2"]}
+def rules_weights(n_classes: int) -> np.ndarray:
+    """[k, 512] committed move-legality class weights as directions in activation space."""
+    p = probe.load("raw", n_classes)
+    return (p.weight.double() / p.scale.double()).numpy()
+
+
+def rules_proba(n_classes: int, acts: np.ndarray) -> np.ndarray:
+    """[n, k] committed-probe class probabilities of raw layer-5 activations."""
+    feats = load_space("raw", None, "cpu")(torch.as_tensor(acts).float())
+    return probe.load("raw", n_classes).proba(feats).numpy()
 
 
 # ---------------------------------------------------------------- corpora
 
 def board_corpus() -> dict[str, np.ndarray]:
     """Layer-5 activations and mover-relative board labels, 200 ARENA games."""
-    acts = torch.load(BOARD_DIR / "primary_layer_activations.pt", weights_only=True)
-    boards = torch.load(BOARD_DIR / "board_states.pt", weights_only=True)
+    acts = torch.load(BOARD_CORPUS_DIR / "primary_layer_activations.pt", weights_only=True)
+    boards = torch.load(BOARD_CORPUS_DIR / "board_states.pt", weights_only=True)
     return {"acts": acts.double().numpy(),
             "labels": boards.reshape(len(boards), 64).numpy(),
             "game": np.arange(len(acts)) // BOARD_GAME_LEN}
@@ -194,7 +202,7 @@ def rules_directions(w4: np.ndarray, w2: np.ndarray) -> list[Direction]:
 def committed_directions() -> list[Direction]:
     """The primary direction set: both arms straight off the committed probes."""
     return board_directions(board_probe()) + rules_directions(
-        rules_probe(4)["weight"], rules_probe(2)["weight"])
+        rules_weights(4), rules_weights(2))
 
 
 def refit_directions(board: dict, rules: dict, board_rows: np.ndarray,
@@ -250,7 +258,7 @@ def square_rule_class_directions(rules: dict, rows: np.ndarray, lam: float) -> l
 
 def committed_rule_class_directions() -> list[Direction]:
     """The same four contrasts off the committed 4-class probe, plus pooled illegal."""
-    w4, w2 = rules_probe(4)["weight"], rules_probe(2)["weight"]
+    w4, w2 = rules_weights(4), rules_weights(2)
     return [Direction(name, name, unit(w4[i] - w4.mean(0)))
         for i, name in enumerate(RULE_CLASSES)] + \
         [Direction("illegal", "illegal", unit(w2[1] - w2[0]))]
