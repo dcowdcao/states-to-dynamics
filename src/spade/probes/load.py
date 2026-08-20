@@ -43,9 +43,5 @@ def tpr(layer: int = LAYER):
     corpus and protocol as `board`. Call it on [n, 512] for [n, 64, 3] logits."""
     # Local: probes.tpr puts the vendored external/tpr_othello/src on sys.path, and
     # nothing that only wants `board()` should pay that.
-    from spade.probes.tpr import TPR
-    meta = torch.load(path(layer, "tpr"), weights_only=True)
-    arm = TPR(meta["probe_state_dict"]["binding_map"].shape[0], meta["seed"],
-              meta["weight_decay"], meta["role_dim"])
-    arm.module.load_state_dict(meta["probe_state_dict"])
-    return arm.requires_grad_(False)
+    from spade.probes.tpr import from_card
+    return from_card(torch.load(path(layer, "tpr"), weights_only=True))

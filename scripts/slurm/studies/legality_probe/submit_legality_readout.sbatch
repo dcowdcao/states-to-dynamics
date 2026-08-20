@@ -1,7 +1,7 @@
 #!/bin/bash
-# Fit the 4 probe arms in each space and read the legality probe out over the branch window.
-# Needs the cached encodings from submit_legality_spaces.sbatch; the fingerprint in each
-# row_<space>.json is checked against the current fit set before anything is fitted.
+# Read each space's legality probe out over the branch window. Needs the cached encodings
+# from submit_legality_spaces.sbatch and the fitted probes from submit_legality_fit.sbatch;
+# both carry the fit set's fingerprint and both are checked before anything is decoded.
 #SBATCH --job-name=legality_readout
 #SBATCH --account=kempner_ba_lab
 #SBATCH --partition=kempner_h100
