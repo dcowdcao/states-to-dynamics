@@ -1,5 +1,5 @@
 statistic,family,name,n,value
-committed_board_accuracy_on_rules_corpus,-,-,46256,0.9839037773478035
+committed_board_accuracy_on_rules_corpus,-,-,46256,0.9935842782557939
 ridge_board_accuracy_on_rules_corpus,-,-,9253,0.9925243839835729
 cos_arena_vs_rules_corpus_board_direction,colour,colour@A0,1,0.9358633370669421
 cos_arena_vs_rules_corpus_board_direction,colour,colour@B0,1,0.9671101016761989
@@ -125,7 +125,7 @@ cos_arena_vs_rules_corpus_board_direction,occupancy,occupancy@E7,1,0.97717821681
 cos_arena_vs_rules_corpus_board_direction,occupancy,occupancy@F7,1,0.9648931619884571
 cos_arena_vs_rules_corpus_board_direction,occupancy,occupancy@G7,1,0.9533793119022569
 cos_arena_vs_rules_corpus_board_direction,occupancy,occupancy@H7,1,0.9683781628259372
-committed_4class_legal_predicted_as,-,legal,9255,0.23241491085899513
-committed_4class_legal_predicted_as,-,R1,9255,0.7188546731496488
-committed_4class_legal_predicted_as,-,R2,9255,0.04095083738519719
-committed_4class_legal_predicted_as,-,R3,9255,0.007779578606158833
+committed_4class_legal_predicted_as,-,legal,9255,0.8237709346299298
+committed_4class_legal_predicted_as,-,R1,9255,0.15602377093462994
+committed_4class_legal_predicted_as,-,R2,9255,0.005294435440302539
+committed_4class_legal_predicted_as,-,R3,9255,0.014910858995137763

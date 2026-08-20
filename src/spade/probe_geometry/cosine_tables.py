@@ -57,6 +57,7 @@ from spade.probe_geometry.probes import (
     rows_of_games,
     rules_corpus,
     rules_directions,
+    rules_proba,
     square_name,
     square_rules_directions,
     stack,
@@ -71,19 +72,20 @@ N_NULL_SHUFFLE = 100
 N_NULL_RANDOM = 1000
 RULE_ORDER = ("illegal", "R1", "R2", "R3")
 PAIR_KINDS = (("colour", "colour"), ("occupancy", "occupancy"), ("colour", "occupancy"))
-COLOUR_OFFDIAG_REFERENCE = 0.0117  # regression check: the notebook that first reported 0.012
+COLOUR_OFFDIAG_REFERENCE = 0.0184  # regression check on the canonical board probe
 
 # The per-square arm is pinned rather than swept: held-out accuracy is 0.9252 here against
 # 0.9269 at the grid argmax of 100 (probe_quality.csv), and 10 is what ROBUSTNESS.md and
 # the figure were computed at. The matched cosine is shrinkage-sensitive, so one value has
 # to hold across the study.
 SQUARE_LAMBDA = 10.0
-# Headline number, reproduced by two independent implementations. Full corpus only.
-SQUARE_MATCHED_REFERENCE = {"colour": 0.1487, "occupancy": 0.3057}
+# Headline number: the committed board probe against the per-square legality refits.
+# Full corpus only.
+SQUARE_MATCHED_REFERENCE = {"colour": 0.1677, "occupancy": 0.3120}
 
-# The committed board probe was fit on the first 8000 of 10000 game-major rows.
-# The cut falls exactly at game 160, so its eval rows are game-disjoint from its
-# fit rows — but they are the same 200 ARENA games, not a fresh holdout.
+# The board arm's ridge refits fit on the first 8000 of 10000 game-major rows; the cut
+# falls exactly at game 160, so the eval rows are game-disjoint. The committed board probe
+# saw none of these games — it was fit on 20000 Karvonen games.
 BOARD_TRAIN_FRACTION = 0.8
 COMMITTED_RULES_GAMES = 480  # fit_set/split.pt train split, which the committed rules probes saw
 
@@ -202,7 +204,8 @@ def board_split(arm: BoardArm) -> tuple[np.ndarray, np.ndarray]:
 
 def rules_split(arm: RulesArm) -> tuple[np.ndarray, np.ndarray]:
     """The fit set's own grouped split, so the committed probe's test games are used as such."""
-    split = torch.load(study_dir() / "fit_set" / "split.pt", weights_only=True).numpy()
+    split = torch.load(study_dir("move_legality") / "fit_set" / "split.pt",
+                       weights_only=True).numpy()
     return games_of(arm, split == 0), games_of(arm, split == 2)
 
 
@@ -226,13 +229,6 @@ def board_majority(arm: BoardArm, train: np.ndarray, test: np.ndarray) -> float:
 
 def majority(y_train: np.ndarray, y_test: np.ndarray, k: int) -> float:
     return float((y_test == np.bincount(y_train, minlength=k).argmax()).mean())
-
-
-def committed_rules_predictions(arm: RulesArm, n_classes: int, rows: np.ndarray) -> np.ndarray:
-    """probes.rules_probe drops the shift and bias, which the classifier needs."""
-    p = torch.load(study_dir() / "probes" / f"raw_{n_classes}class.pt", weights_only=False)
-    z = (arm.acts[rows] - p["mean"].numpy()) / p["scale"].numpy()
-    return (z @ p["weight"].numpy().T + p["bias"].numpy()).argmax(1)
 
 
 def metrics(pred: np.ndarray, y: np.ndarray, k: int) -> dict:
@@ -271,7 +267,7 @@ def rules_quality(arm: RulesArm, corpus: str, train: np.ndarray, test: np.ndarra
             n_train_games=len(np.unique(arm.game[tr])),
             n_eval_games=len(np.unique(arm.game[te])), majority_baseline=majority(y_tr, y_te, k))
         out.append(dict(base, estimator="committed", lam=None, n_train_games=COMMITTED_RULES_GAMES,
-            **metrics(committed_rules_predictions(arm, k, te), y_te, k)))
+            **metrics(rules_proba(k, arm.acts[te]).argmax(1), y_te, k)))
         fit, X = stats(arm.acts, targets, tr), arm.acts[te]
         out += [dict(base, estimator="ridge", lam=lam,
             **metrics(fit.solve(lam).scores(X).argmax(1), y_te, k)) for lam in LAMBDA_GRID]
@@ -570,7 +566,7 @@ Where each interval comes from, so no column is an unlabelled mixture:
   `refit_*`, `pooled_*`): a bare point estimate, no interval.
 
 Point estimate and interval come from different estimators — committed probe against ridge
-refit, agreeing at median cos 0.75 (rules4) to 0.87 (rules2) per family, in bootstrap.json.
+refit, agreeing at median cos 0.75 (rules4) to 0.88 (colour) per family, in bootstrap.json.
 Several intervals therefore do not contain their own point estimate. That gap is estimator
 disagreement plus the attenuation below, not a computation error; the `refit_*` columns give
 the all-ridge value the intervals are actually centred on.
@@ -657,13 +653,13 @@ are in within_board_cosine.csv.
 {md_table(wide.reset_index())}
 
 Reading: the four square-agnostic rule directions are far from orthogonal to each other, so
-they are not four independent readouts. Caveat on illegal.R1 =
-{float(wide.loc["R1", "illegal"]):.3f}: every rule direction is W[c] - W[legal], and the
-committed 4-class probe finds `legal` badly — recall {r4.legal_recall:.4f}, macro-F1
-{r4.macro_f1:.4f}, with {int(r4.legal_as_R1)} of {int(r4.legal_rows)} true-legal rows in the
-split.pt test games predicted R1. A shared anchor that is itself confused with R1 explains
-part of that cosine. This is the table where the two estimators disagree most: the ridge
-intervals sit far from the committed cosines they accompany (R1.R2 is
+they are not four independent readouts. illegal.R1 = {float(wide.loc["R1", "illegal"]):.3f}
+is a fact about the geometry and not about a confused anchor: every rule direction is
+W[c] - W[legal], and the committed 4-class probe recovers `legal` at recall
+{r4.legal_recall:.4f}, macro-F1 {r4.macro_f1:.4f}, with {int(r4.legal_as_R1)} of
+{int(r4.legal_rows)} true-legal rows in the split.pt test games predicted R1. This is the
+table where the two estimators disagree most: the ridge intervals sit far from the
+committed cosines they accompany (R1.R2 is
 {float(wide.loc["R1", "R2"]):.3f} committed against a ridge interval of
 {float(rules[(rules.direction_a == "R1") & (rules.direction_b == "R2")].ci_lo.iloc[0]):.3f}
 to {float(rules[(rules.direction_a == "R1") & (rules.direction_b == "R2")].ci_hi.iloc[0]):.3f}),
@@ -681,11 +677,12 @@ here: 28189 rows over 60 squares is ~470 rows per square against 512 dimensions.
 
 probe_quality.csv carries held-out-GAME accuracy for every probe above, over the whole
 lambda grid. The committed board probe is {b.accuracy:.4f} against a
-{b.majority_baseline:.4f} per-square majority baseline; its eval rows are game-disjoint from
-its fit rows because the 8000/2000 row cut falls exactly at game 160, but they are the same
-200 ARENA games, not a fresh holdout. The committed 4-class rules probe is {r4.accuracy:.4f}
-on the split.pt test games with macro-F1 {r4.macro_f1:.4f} and legal-class recall
-{r4.legal_recall:.4f}.
+{b.majority_baseline:.4f} per-square majority baseline, and all 200 ARENA games are held out
+for it: it was fit on 20000 Karvonen games. The 8000/2000 row cut that splits this arm falls
+exactly at game 160, so the ridge refit's eval games are disjoint too. The committed 4-class
+rules probe is {r4.accuracy:.4f} on the split.pt test games with macro-F1 {r4.macro_f1:.4f}
+and legal-class recall {r4.legal_recall:.4f}, scored through `load_space("raw")` — the
+feature map it was fit on.
 """
 
 
@@ -822,8 +819,8 @@ def main():
         "lambda": {"board": lam_board, "rules": lam_rules, "rules_square": lam_square,
                    "pairs": lam_pairs},
         "lambda_grid": LAMBDA_GRID.tolist(),
-        "split": {"board": "games 0..159 of 200 — the committed probe's own row cut, "
-                           "game-disjoint but the same 200 games",
+        "split": {"board": "games 0..159 of 200 for the ridge refit; the committed probe "
+                           "saw none of these games",
                   "rules": "fit_set/split.pt, train=0 test=2",
                   "pairs": f"random 80/20 over prefixes, seed {SEED}"},
         "committed_vs_ridge_median_cos": agree,

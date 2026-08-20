@@ -54,7 +54,12 @@ def arrows(pts: list[Direction]) -> list[Direction]:
 
 def pca(points_matrix: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     _, s, vt = np.linalg.svd(points_matrix, full_matrices=False)
-    return vt[:2], s**2 / (s**2).sum()
+    basis = vt[:2]
+    # SVD sign is arbitrary and a refit that flips it mirrors the panel for no reason a
+    # reader can act on. Pin each component so the point cloud's mean coordinate on it is
+    # positive: the PCA is uncentred, so that mean is a drawn quantity, not a basis choice.
+    sign = np.sign((points_matrix @ basis.T).mean(0))
+    return basis * sign[:, None], s**2 / (s**2).sum()
 
 
 def main():

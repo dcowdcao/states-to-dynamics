@@ -28,13 +28,13 @@
     100000.0
   ],
   "split": {
-    "board": "games 0..159 of 200 \u2014 the committed probe's own row cut, game-disjoint but the same 200 games",
+    "board": "games 0..159 of 200 for the ridge refit; the committed probe saw none of these games",
     "rules": "fit_set/split.pt, train=0 test=2",
     "pairs": "random 80/20 over prefixes, seed 0"
   },
   "committed_vs_ridge_median_cos": {
-    "colour": 0.8372544649375935,
-    "occupancy": 0.8299774072426878,
+    "colour": 0.8817099377456917,
+    "occupancy": 0.8404929029331599,
     "rules2": 0.8717726594713159,
     "rules4": 0.7470383408478612
   },
@@ -46,6 +46,6 @@
     "square_matched": "same rules direction at the other squares",
     "analytic_random_abs_cos": 0.03526184897173477
   },
-  "colour_colour_offdiag_mean_cos": 0.011748366554860236,
-  "runtime_s": 1563.1
+  "colour_colour_offdiag_mean_cos": 0.018356589517560456,
+  "runtime_s": 955.0
 }
