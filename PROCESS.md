@@ -3168,3 +3168,106 @@ CSV moves from n = 2000 to n = 2003 per category. The committed artifacts predat
 `extend_branches`. No number the READMEs quote changes past the fourth decimal
 (`ratio_illegal_control_L5` 0.9797 -> 0.9798 spliced, 1.0016 unchanged on the rollout
 tree), but the diff on the CSVs is larger than the diff on the figure text.
+
+## The legality probe joins the shared protocol, and its weight decay was reading code norm
+
+`src/spade/legality_probe/probe.py` was the last fit in the tree running on a step budget:
+120 epochs, no validation split, no stopping rule, `WEIGHT_DECAY = 2.0` inherited from a
+3-class d=512 fit on 8,000 rows, and weights that were never written — `readout.py` refit
+all 44 probes in memory on every run, so a published number was reproducible only from a
+seed. It now runs `spade.probes.train.fit` through `spade.probes.tpr.TPR`, whose filler
+alphabet, epoch ceiling and weight decay are parameters. `fit_probes.py` fits and saves the
+44 probes; `readout.py` loads them and does nothing else.
+
+**The split.** `fit_set`'s 40 eval games stay the test split. 32 of the 160 fit games become
+validation, leaving 128 games / 6,400 training rows. Early stopping and the weight-decay
+selection both live inside the fit games, so nothing selects on test. Every one of the 44
+fits stopped on its plateau — `best_epoch = epochs_run - 21` in all 44, i.e. patience
+expired — and none reached the ceiling.
+
+**One weight decay cannot serve eleven spaces, and this is the study's headline.** The
+argmax over {1e-4 … 8.0} runs from 0.1 to 2.0, and where it moves it moves a lot:
+
+| space | ‖code‖ | wd* | val macro-F1 at wd* | at 2.0 |
+|---|---|---|---|---|
+| SpaDE-lam1e-03-gam1e-04 | 0.034 | 0.1 | 0.9253 | 0.4449 |
+| CosineSpaDETrainer | 0.126 | 0.5 | 0.8788 | 0.5022 |
+| StandardTrainer | 5.34 | 1.0 | 0.9424 | 0.9416 |
+| raw | 11.66 | 2.0 | 0.9322 | 0.9322 |
+| random_proj | 33.0 | 0.1 | 0.9276 | 0.9173 |
+
+AdamW's decoupled decay parks the weight scale near `lr / (lr * wd)` regardless of the
+input, so a fixed wd caps the logit scale and a code whose norm is two orders of magnitude
+smaller underfits. The two SpaDE codes have norms 0.034 and 0.126 against 5–33 for
+everything else, and they are exactly the two that collapsed. **The shipped claim that the
+SpaDE spaces lose the legality representation was measuring code norm.** On the same
+encodings, at each space's own validated weight decay:
+
+    SpaDE-lam1e-03-gam1e-04   legality 0.4297 -> 0.9252, board 0.6345 -> 0.9750
+    CosineSpaDETrainer        legality 0.4896 -> 0.8704, board 0.6994 -> 0.9379
+
+SpaDE goes from last of eleven to fourth, above every SAE but StandardTrainer. Everything
+else moves by -0.017 to +0.023. `weight_decay.selected(space)` is therefore per space, and
+the three non-headline arms inherit their space's value so a floor is not tuned differently
+from what it floors.
+
+**This changes what the study compares, and a reader has to be told.** Per-space weight
+decay makes the table "each space read out at its best" rather than "one shared recipe
+applied to every space". Both are defensible questions; they are not the same question, and
+the SpaDE result inverts between them. There is no test leakage either way -- the sweep
+touches only the 128 training and 32 validation games, never the 40 test games -- so the
+choice is about what is being claimed, not about validity. The reason to prefer the
+per-space form here is that the shared-recipe number was not measuring what it was read as:
+||code|| is 0.034 for SpaDE against 11.66 for raw, AdamW's decoupled decay parks the weight
+scale at roughly lr/(lr*wd) independent of the input norm, so a fixed wd caps the logit
+scale and starves a small-norm code. 0.4297 was a statement about SpaDE's code norm.
+
+**The fit set is far too small, and the learning curve is not close to flat.** Fitting on
+16 / 32 / 64 / 128 training games against the same 32 validation and 40 test games:
+
+    raw                 0.7805  0.8534  0.9004  0.9303   (+0.073, +0.047, +0.030 per doubling)
+    StandardTrainer     0.6957  0.8210  0.8973  0.9394   (+0.125, +0.076, +0.042)
+    CosineSpaDE         0.6166  0.7181  0.8096  0.8704   (+0.101, +0.091, +0.061)
+
+Deltas shrink by a factor of only 0.54–0.78 per doubling, so a geometric extrapolation puts
+the asymptote at 0.96–0.99 for every space and the remaining headroom at 0.05–0.23.
+
+**This is the opposite of the rules logistic probes, and the contrast matters.** Those
+saturated: 60/120/240/480 games gave 0.7414/0.7602/0.7719/0.7760, so five more doublings
+would have bought about +0.004 and retraining at scale was not worth it. The legality TPR
+probe at 128 games still has 0.05-0.23 to go. Neither result generalizes to the other --
+a saturation check is per probe, per corpus, and has to be run rather than inherited.
+Two consequences here.
+The between-space gaps at 128 games are partly a sample-efficiency contrast — the d=8192
+codes are further from their own asymptote than raw is — so the ordering below the top few
+is not safe to read as information loss. And the study should extract a much larger fit set
+before any of these numbers is quoted as a ceiling.
+
+**The seed-replication problem shrinks.** `redteam/seed_probe.py` exists because
+`random_proj`'s shipped macro-F1 would not replicate across seeds. Range over four seeds,
+old loop against new protocol: random_proj 0.0256 -> 0.0059, TopK 0.0043 -> 0.0030, raw
+0.0017 -> 0.0013. Best-validation checkpointing is what does it — the training curves show
+AdamW blowing up mid-run on several fits (`random_proj` seed 42: train loss 0.006 at epoch
+200, 499 at epoch 210) and the old loop had no way to not ship whatever the last epoch left.
+Part of the random_proj shrink is also its new weight decay of 0.1; the two effects are not
+separated here.
+
+**What the move costs.** raw's headline legality macro-F1 goes 0.9379 -> 0.9303 and the
+other eight unaffected spaces lose 0.007–0.017, all from the 20% of training games that
+became the validation split. That is the price of a stopping rule, and given the learning
+curve above it is recoverable several times over by extending the fit set.
+
+**Known limitations.** `probes.train.fit` early-stops on validation *accuracy* while this
+study reports macro-F1. The two agreed on all 99 weight-decay argmaxes, but a probe whose
+macro-F1 peaks after its accuracy does would be stopped early and nothing here measures
+that. Deliberately not special-cased: one protocol that every probe shares is worth more
+than a per-study stopping metric, and the fix, if it is ever needed, belongs in
+`probes.train` for every arm at once.
+
+The weight-decay selection is one seed and one validation split. That is decisive for the
+0.48 macro-F1 SpaDE effect and meaningless for the 0.001 separating wd=1.0 from wd=2.0 on
+raw; read the argmax as a decision only where the grid separates by more than that.
+
+`analysis/legality_probe/` figures, READMEs and `readout.csv` still describe the old fits.
+`readout.csv` is stale against the regenerated `probe_fit.csv` and was deliberately not
+rerun.
