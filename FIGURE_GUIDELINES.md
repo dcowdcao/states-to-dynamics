@@ -462,12 +462,22 @@ it is what unrelated vectors in a high-dimensional space do by default.
   seed count, n per class).
 - Panel letters `(a)`, `(b)` bottom- or top-left of each axes, enumerated in one
   figure caption.
-- **Domain shorthand in a legend earns a key inside the figure.** If series are
-  labeled with codes that live in a spec elsewhere (`R2 bracketing`, a category
-  name, a condition ID), print one short line per code under the panels. A
-  figure that can only be read next to the doc it abbreviates gets read wrong
-  in a talk, on a poster, and in the README. Keep it to one line each, muted,
-  and drive it from the same constant the labels come from.
+- **Domain shorthand in a legend earns a key — in the README, not in the
+  figure.** If series are labeled with codes that live in a spec elsewhere
+  (`R2 bracketing`, a category name, a condition ID), the figure carries no
+  explanatory prose; the study README carries a `## Figure notes` section with
+  one line per figure file, driven from the same constant the labels come from.
+  This reverses an earlier rule that printed the key under the panels. Grey
+  prose accumulated on every figure until it was competing with the data, and
+  the same text had to be maintained in two places. The cost is real and worth
+  naming: a figure lifted into a talk or a poster no longer explains its own
+  codes, so whoever lifts it has to carry the README line with it.
+- **Band semantics and n move with it.** §1.2 still requires them, so a removed
+  block that stated a CI, an n, a bandwidth or a normalisation goes into the
+  same `## Figure notes` entry verbatim — not paraphrased, not rounded.
+- **A chance or threshold line keeps its label** (§3). If dropping prose would
+  orphan one, move the label into the legend rather than deleting it; a bare
+  unexplained line is worse than the prose was.
 - **Panels that share a styling table share one legend.** When two panels of
   different kinds (a projection and a board, a curve and a matrix) draw the same
   classes from the same style dict, a second legend only repeats itself. Place
