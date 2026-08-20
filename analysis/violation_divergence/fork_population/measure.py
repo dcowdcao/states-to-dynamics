@@ -260,7 +260,11 @@ def main():
     # K * 9 of its rows.
     acts = torch.load(base / "acts" / "resid_post_5.pt", weights_only=True, mmap=True)
     rows = torch.stack([rows_at(meta, g, K).reshape(len(ROLES), K) for g in games])
-    assert rows.shape == (len(games), len(ROLES), K), "rows_at lost a rollout"
+    # The reshape already catches a wrong row count; what it cannot catch is a
+    # k-major order, which `paired_mean` would silently pair across branches.
+    if "rollout" in meta:
+        assert (meta["rollout"][rows] == torch.arange(K)).all(), \
+            "rows are k-major: paired_mean would pair a branch with another rollout"
     names = []
     G, S, B, T = len(games), len(spaces()), len(ROLES), len(pos)
     z = {"coords": np.zeros((S, B, T, 2)), "var": np.zeros((S, 2)),
