@@ -13,14 +13,20 @@ from spade.training.core import TrainParams, run_cli  # also puts circuits on sy
 
 from circuits.dictionary_learning.trainers.batch_top_k import BatchTopKSAE, BatchTopKTrainer
 
+K = 80
+# The canonical run keeps this name; spade.training.sweep's k grid passes
+# `BatchTopK-k<k>` so a swept point cannot be mistaken for the baseline row that
+# results/acceptance and the registry match on.
+WANDB_NAME = "BatchTopKTrainer-othello"
 
-def config(p: TrainParams) -> dict:
+
+def config(p: TrainParams, k: int = K, wandb_name: str = WANDB_NAME) -> dict:
     return {
         "trainer": BatchTopKTrainer,
         "dict_class": BatchTopKSAE,
         "activation_dim": p.activation_dim,
         "dict_size": p.dict_size,
-        "k": 80,
+        "k": k,
         "auxk_alpha": 1 / 32,
         "threshold_beta": 0.999,
         "threshold_start_step": 1000,
@@ -29,7 +35,7 @@ def config(p: TrainParams) -> dict:
         "seed": p.seed,
         "layer": p.layer,
         "lm_name": p.model_name,
-        "wandb_name": "BatchTopKTrainer-othello",
+        "wandb_name": wandb_name,
         "device": p.device,
     }
 

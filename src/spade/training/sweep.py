@@ -19,6 +19,8 @@ Usage:
         --spade_sweep --spade_lambdas "1e-3,1e-4" --spade_gammas "1e-4,1e-3,1e-2,1e-1"
     python -m spade.training.sweep --save_dir checkpoints/cosine_spade_sweep \\
         --cosine_spade_sweep --cosine_spade_gammas "1e-1,5e-1,1.0,2.0,5.0"
+    python -m spade.training.sweep --save_dir checkpoints/batch_topk_sweep \\
+        --batch_topk_sweep --batch_topk_ks "10,20,40,60,80,110,140,200,280,400"
     python -m spade.training.sweep --save_dir checkpoints/main \\
         --spade_pairs "1e-7:5e-3,8e-8:1e-3"
 """
@@ -89,9 +91,21 @@ def cosine_config(p: core.TrainParams, gam: float) -> dict:
     }
 
 
+def batch_topk_config(p: core.TrainParams, k: int) -> dict:
+    """k sets L0 directly, so the grid is the L0 axis. No second body: the canonical
+    entrypoint's config takes k, and this only renames the run."""
+    return train_batch_topk.config(p, k, f"BatchTopK-k{k}")
+
+
 def configs(p: core.TrainParams, args: argparse.Namespace) -> list[dict]:
     """The grid, or the eight baselines; then any --spade_pairs appended to it."""
-    if args.spade_sweep:
+    if args.batch_topk_sweep:
+        ks = [int(x) for x in args.batch_topk_ks.split(",")]
+        trainer_configs = [batch_topk_config(p, k) for k in ks]
+        print(f"BatchTopK sweep: {len(trainer_configs)} configs")
+        for c in trainer_configs:
+            print(f"  {c['wandb_name']}: k={c['k']}")
+    elif args.spade_sweep:
         lambdas = [float(x) for x in args.spade_lambdas.split(",")]
         gammas = [float(x) for x in args.spade_gammas.split(",")]
         trainer_configs = [spade_config(p, lam, gam) for lam in lambdas for gam in gammas]
@@ -153,14 +167,25 @@ def main():
         help="Comma-separated gamma_reg values for CosineSpaDE sweep"
     )
     parser.add_argument(
+        "--batch_topk_sweep", action="store_true",
+        help="Replace all trainer configs with a BatchTopK k sweep. Uses --batch_topk_ks."
+    )
+    parser.add_argument(
+        "--batch_topk_ks", type=str, default="10,20,40,60,80,110,140,200,280,400",
+        help="Comma-separated k values for the BatchTopK sweep. k sets L0, so this "
+             "default spans Karvonen's whole axis (his TopK sweep runs k=10..400)."
+    )
+    parser.add_argument(
         "--spade_pairs", type=str, default="",
         help="Comma-separated lambda:gamma SpaDE configs trained IN ADDITION to "
              "the selected configs (e.g. '1e-7:5e-3,8e-8:1e-3')"
     )
     args = parser.parse_args()
 
-    if args.spade_sweep and args.cosine_spade_sweep:
-        raise ValueError("--spade_sweep and --cosine_spade_sweep are mutually exclusive.")
+    selected = [name for name in ("spade_sweep", "cosine_spade_sweep", "batch_topk_sweep")
+                if getattr(args, name)]
+    if len(selected) > 1:
+        raise ValueError(f"pick one sweep, not {sorted('--' + s for s in selected)}.")
 
     refuse_if_populated(args.save_dir)
 
