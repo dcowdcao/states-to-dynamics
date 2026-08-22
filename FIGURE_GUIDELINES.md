@@ -467,6 +467,34 @@ it is what unrelated vectors in a high-dimensional space do by default.
 - **Pair the scatter with the projection it is a picture of.** A 2-D loading
   plot cannot show that a direction keeps 4% of its mass in the plane; the
   companion panel is the captured-fraction curve against the same null.
+- **When the directions are near-orthogonal, drop the variance panel for an
+  ordinal one.** A cloud whose pairwise angles sit in a narrow band around 90°
+  has no dominant plane, and a variance ratio in the axis label invites the
+  reader to ask why it is 4%. Embed the *angular* distance θ = arccos(cos) —
+  a metric, which 1 − cos is not — with nonmetric (ordinal) MDS, which fits only
+  the rank order of the angles. Label the axes `arb. units`, report **rank
+  fidelity** (Spearman between the true angles and the drawn distances, over all
+  pairs) instead of a variance ratio, and say in the panel that distance is
+  monotone in angle, not proportional to it.
+- **An ordinal embedding ships with a structure-free null.** A plane can always
+  render class *means*; that is most of what it renders. Rebuild the cloud
+  keeping each family's mean direction and replacing the residuals with
+  isotropic noise at the observed within-family spread, embed it the same way,
+  and print its fidelity beside the real one. If the null scores at or above the
+  real embedding — it does here — the panel is evidence about families and never
+  about individual members, and the caption says so rather than leaving the
+  reader to infer it.
+- **Pin the orientation, and do not draw arrows in a space with no origin.**
+  SMACOF, Isomap and UMAP fix a configuration only up to rigid motion, so a
+  refit is free to rotate or mirror the panel; align the solution to a fixed
+  basis (orthogonal Procrustes onto the PCA coordinates) so it cannot. For the
+  same reason the committed probes are drawn as ringed markers among the cloud,
+  not as arrows from a centre that means nothing.
+- **Check the direction set for algebraic duplicates before embedding it.** Two
+  contrasts fit by ridge onto centred indicators over the same rows are exact
+  negatives when their targets are (`1[y>0] = 1 − 1[y=0]`). Drawing both puts one
+  set on the panel twice, reflected, and its 180° pairs inflate every fidelity
+  score.
 
 ## 5. Captions and panel labels
 

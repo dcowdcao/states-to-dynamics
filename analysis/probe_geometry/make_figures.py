@@ -1,6 +1,6 @@
-"""Probe directions in OthelloGPT's layer-5 residual space: a PCA and their cosines.
+"""Probe directions in OthelloGPT's layer-5 residual space: a nonmetric MDS and their cosines.
 
-Draws the CSVs written by src/probe_geometry/embed_directions.py; recomputes nothing.
+Draws the CSVs written by spade.probe_geometry.embed_directions; recomputes nothing.
 
 Usage: python analysis/probe_geometry/make_figures.py [--camera-ready]
 """
@@ -12,11 +12,11 @@ import numpy as np
 import pandas as pd
 
 
-import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
 
+from spade.figures.embedding_panels import class_ellipse
 from spade.figures.paper_style import (
-    DIRECTION_ORDER, DIRECTION_STYLE, GRID, INK, apply_style, save_figure)
+    DIRECTION_ORDER, DIRECTION_STYLE, INK, apply_style, save_figure)
 
 RESULTS = Path(__file__).resolve().parent / "results"
 FIGURES = Path(__file__).resolve().parent / "figures"
@@ -28,33 +28,42 @@ def panel_letter(ax, letter: str) -> None:
             color=INK, fontsize=9)
 
 
-def pca_panel(ax, points: pd.DataFrame, arrows: pd.DataFrame, ratio: pd.DataFrame) -> None:
-    span = 1.08 * max(np.abs(points[["pc1", "pc2"]].to_numpy()).max(),
-                      np.abs(arrows[["pc1", "pc2"]].to_numpy()).max())
-    ax.axhline(0, color=GRID, lw=0.6, zorder=0)
-    ax.axvline(0, color=GRID, lw=0.6, zorder=0)
-    for family in DIRECTION_ORDER:
+def embed_panel(ax, points: pd.DataFrame, probes: pd.DataFrame,
+                fidelity: pd.DataFrame) -> None:
+    """Nonmetric MDS: distance is monotone in angle, not proportional to it.
+
+    No origin line and no variance ratio -- SMACOF fixes a configuration only up to
+    rigid motion, so the centre is the cloud's own centroid and both axes are arbitrary.
+    The committed probe is drawn open so it cannot be read as the family centroid: they
+    are different objects, and for the board families they differ by up to 1.3 within-
+    family radii.
+    """
+    order = [f for f in DIRECTION_ORDER if f in set(points.family)]
+    for family in order:
         style, at = DIRECTION_STYLE[family], points[points.family == family]
-        ax.scatter(at.pc1, at.pc2, s=18, marker=style["marker"], color=style["color"],
-                   alpha=0.45, lw=0, zorder=3,
-                   label=f"{style['label']} (n={len(at)})")
-    for family in DIRECTION_ORDER:
+        xy = at[["x", "y"]].to_numpy()
+        ax.scatter(*xy.T, s=18, marker=style["marker"], color=style["color"],
+                   alpha=0.6, lw=0, zorder=3, label=f"{style['label']} (n={len(at)})")
+        class_ellipse(ax, xy, style["color"])
+        ax.plot(*xy.mean(0), ls="none", marker=style["marker"], ms=7,
+                color=style["color"], markeredgecolor="white", markeredgewidth=1.1,
+                zorder=6)
+    for family in order:
         style = DIRECTION_STYLE[family]
-        head = arrows[arrows.family == family].iloc[0]
-        ax.annotate("", xy=(head.pc1, head.pc2), xytext=(0, 0), zorder=6,
-                    arrowprops=dict(arrowstyle="-|>", color=style["color"], lw=1.8,
-                                    shrinkA=0, shrinkB=0,
-                                    path_effects=[pe.withStroke(linewidth=3.2,
-                                                                foreground="white")]))
-    ax.set_xlim(-span, span)
-    ax.set_ylim(-span, span)
+        at = probes[probes.family == family].iloc[0]
+        ax.plot(at.x, at.y, ls="none", marker="o", ms=10, mfc="none",
+                markeredgecolor=style["color"], markeredgewidth=1.8, zorder=7)
     ax.set_xticks([])
     ax.set_yticks([])
-    ax.set_xlabel(f"PC1 ({ratio.variance_ratio[0]:.1%} var)")
-    ax.set_ylabel(f"PC2 ({ratio.variance_ratio[1]:.1%} var)")
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.13), ncol=4, fontsize=7,
+    ax.set_xlabel("MDS axis 1 (arb. units)")
+    ax.set_ylabel("MDS axis 2 (arb. units)")
+    row = fidelity.iloc[0]
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.13), ncol=3, fontsize=7,
               labelspacing=0.3, columnspacing=1.1, handletextpad=0.3,
-              title="point = one board square; arrow = the committed probe, same origin",
+              title=("point = one square; filled = centroid; ring = committed probe;\n"
+                     "ellipse = 50% dispersion, not a CI. No origin, and distance is\n"
+                     "monotone in angle, not proportional. Rank fidelity "
+                     f"$\\rho$ = {row.rank_fidelity:.2f} (null {row.null_mean:.2f})"),
               title_fontsize=7)
 
 
@@ -85,14 +94,14 @@ def cosine_panel(fig, ax, gram: pd.DataFrame) -> None:
 
 
 def figure(camera_ready: bool) -> Path:
-    points = pd.read_csv(RESULTS / "pca_points.csv")
-    arrows = pd.read_csv(RESULTS / "pca_arrows.csv")
-    ratio = pd.read_csv(RESULTS / "pca_variance.csv")
+    points = pd.read_csv(RESULTS / "embed_points.csv")
+    probes = pd.read_csv(RESULTS / "embed_probes.csv")
+    fidelity = pd.read_csv(RESULTS / "embed_fidelity.csv")
     gram = pd.read_csv(RESULTS / "type_cosines.csv", index_col=0).loc[
         list(DIRECTION_ORDER), list(DIRECTION_ORDER)]
 
     fig, axes = plt.subplots(1, 2, figsize=(9.0, 4.3))
-    pca_panel(axes[0], points, arrows, ratio)
+    embed_panel(axes[0], points, probes, fidelity)
     cosine_panel(fig, axes[1], gram)
     for ax, letter in zip(axes, "ab"):
         panel_letter(ax, letter)

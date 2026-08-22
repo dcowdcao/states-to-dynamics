@@ -6,6 +6,43 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Fig 1(a) was a 6.75% plane of a 121-dimensional cloud (2026-08-22)
+
+`fig1_direction_geometry`'s left panel was an uncentred PCA of 424 per-square directions,
+top two components 4.24% and 2.51% of the variance. That is not a bad draw of a flat cloud:
+the directions are near-mutually-orthogonal — mean pairwise angle 89.90° ± 4.86 against
+90.00 ± 2.53 for isotropic vectors in 512-d, participation ratio 121, 50 PCs to reach half
+the variance — so no plane holds their variance. `embed_directions.py` now fits a nonmetric
+MDS on the angular distances θ_ij = arccos(x_i·x_j), keeping the *order* of the angles
+instead: rank fidelity (Spearman, 512-d angles against drawn distances, every pair) **0.504**
+against PCA's 0.395, with **0.525** the ceiling from gradient descent on the exact objective.
+Orthogonal Procrustes onto the PCA basis pins the orientation, so a refit cannot rotate or
+mirror the panel.
+
+**The panel was drawing one 60-point set twice.** `illegal@q` is exactly `−legal@q`: both are
+ridge onto centred indicators over the same rows at the same λ, and 1[rule>0] = 1 − 1[rule==0]
+forces `w2[1] = −w4[0]`. The duplicate sat reflected through the origin and its 180° pairs
+inflated every fidelity score, which is why the method survey on that 424-point set (nonmetric
+0.551, metric MDS 0.511, Isomap k=100 0.502, UMAP nn=100 0.499, PCA 0.394) sits above the
+shipped 0.504 — those numbers rank methods and nothing else. The cloud is 364 points over 6
+families now; the *committed* illegal probe is a separate fit (cos with committed `legal`
+−0.829, not −1) and stays in panel (b).
+
+**The null is why the README now says what the panel cannot be read for.** Six family mean
+directions with the residuals replaced by isotropic noise at the observed within-family spread
+score 0.574 ± 0.007, *above* the real embedding, and family identity alone reaches 0.523 of
+the 0.525 ceiling. Square identity is gone: the fraction of a point's 6 nearest neighbours
+sharing its board square is 0.001 in the panel against 0.111 in 512-d. The square-matched
+claim never leaned on this panel — the cosine tables carry it — but a reader would have.
+
+Arrows are gone; the committed probes are ringed markers among the cloud. MDS fixes a
+configuration only up to rigid motion, so there is no origin to draw from, and arrow-to-arrow
+angle fidelity was only ρ ≈ 0.69. `pca_points.csv`/`pca_arrows.csv` → `embed_points.csv`/
+`embed_probes.csv`, and `pca_variance.csv` → `embed_fidelity.csv`, since a nonlinear embedding
+has no variance ratio to report.
+
+---
+
 ## A fixed cut beside the argmax, on both suffix regimes (2026-08-22)
 
 `changepoint_localization` gained a per-position detector next to `located()`, in

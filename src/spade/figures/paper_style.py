@@ -217,12 +217,12 @@ def role_key(fig, roles: list[str], y: float = -0.005) -> None:
              va="top", fontsize=7.5, color=MUTED, linespacing=1.5)
 
 
-# Probe-geometry study: the direction families whose cosines and PCA are drawn.
+# Probe-geometry study: the direction families whose cosines and embedding are drawn.
 # Every entry is a gauge-invariant class contrast, so "legal" and the board's
 # three classes are the origin these are measured from, not plotted directions.
-# The 2-class illegal axis is the reference the 4-class R1/R2/R3 split is judged
-# against, so it takes REFERENCE's black; the board's two contrasts take the
-# hues the rules taxonomy leaves free.
+# `legal` is the reference the 4-class R1/R2/R3 split is judged against, so it
+# takes REFERENCE's black; the board's two contrasts take the hues the rules
+# taxonomy leaves free.
 DIRECTION_STYLE = {
     "legal":     {"color": REFERENCE["color"], "marker": "o", "label": "legal (reference)"},
     "illegal":   {"color": "#56B4E9", "marker": "*", "label": "illegal"},
@@ -230,7 +230,9 @@ DIRECTION_STYLE = {
     "R2":        {"color": RULE_STYLE["R2 bracketing"]["color"], "marker": "^", "label": "R2"},
     "R3":        {"color": RULE_STYLE["R3 turn"]["color"], "marker": "D", "label": "R3"},
     "colour":    {"color": "#CC79A7", "marker": "P", "label": "board colour"},
-    "occupancy": {"color": "#E69F00", "marker": "X", "label": "board position"},
+    # `v`, not `X`: `X` is `P` rotated 45 deg, and the two board families are the
+    # only ones that interpenetrate, at a luminance gap of 0.019.
+    "occupancy": {"color": "#E69F00", "marker": "v", "label": "board position"},
 }
 DIRECTION_ORDER = ("legal", "illegal", "R1", "R2", "R3", "colour", "occupancy")
 
