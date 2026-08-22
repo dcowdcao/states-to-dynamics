@@ -15,7 +15,7 @@ fork panel is drawn in.
 
 ```
 python analysis/violation_divergence/divergence_by_space/measure.py       [--plane r21] [--variant rollout] [--n_games 100]
-python analysis/violation_divergence/divergence_by_space/make_figures.py  [--plane r21] [--variant rollout] [--n_games 100] [--camera-ready]
+python analysis/violation_divergence/divergence_by_space/make_figures.py  [--plane r21] [--variant rollout] [--n_games 100] [--raw] [--camera-ready]
 ```
 
 `measure.py` writes `$SPADE_DIVERGENCE_DIR[/rollout]/divergence_by_space/curves.npz`
@@ -139,55 +139,6 @@ The rule grouping is no better in R²¹: the within- ÷ between-rule spread over
 games is a median 0.886 [IQR 0.752–1.022] against the displacement field's 0.924
 [0.842–0.983] — the same "barely coherent" verdict, with a wider spread.
 
-## The un-normalised twin (`--raw`)
-
-`figures/divergence_by_space_n100_raw.{png,pdf}` ·
-`figures/divergence_by_space_rollout_n100_raw.{png,pdf}` ·
-`figures/divergence_by_space_r21_n100_raw.{png,pdf}` ·
-`figures/divergence_by_space_r21_rollout_n100_raw.{png,pdf}`
-
-```
-python analysis/violation_divergence/divergence_by_space/make_figures.py --raw [--plane r21] [--variant rollout] --n_games 100 [--camera-ready]
-```
-
-The same four figures with the divisor removed, so the magnitudes the ratio hides are on
-the page. Everything else is the ratio figure — same panels, colours, markers, line
-styles, legend, shaded prefix, 95% CI over the same 100 games — minus the three pieces
-that only meant something as a multiple of the control: the dashed line at 1, the y cap
-at 2.0 with its over-cap `N.Nx` label, and the peak `N.NNx at r=` callout. CSVs are
-`results/violation_divergence/divergence_by_space[_r21][_rollout]_n100_raw.csv`, the same
-shape as the ratio ones with `ratio*` renamed `distance*`.
-
-**The displacement pair is the one figure in this study with a per-panel y axis.** It has
-to be. What is drawn spans 1360x spliced (SpaDE 0.0097 to raw layer 5 13.16) and 1671x
-rollout, and on one shared linear axis the two SpaDE panels stop existing: SpaDE's entire
-rule-vs-control separation is 0.0087, 0.06% of a 15.1-unit axis — 0.07 pt at CELL_H, against
-the 1.7 pt the figure draws its lines with — and CosineSpaDE's is 0.69 pt. Both render as a
-flat line on zero, and Standard gets 23% of the axis. That is 2 of 9 panels carrying no
-information and a third badly squashed, so `sharey=False` here is forced by the data.
-The cost is real: **panel heights are not comparable, only within-panel shapes are**, which
-is the same disclaimer §4.6 puts on a per-panel PCA refit, and the tick labels on every
-panel are what carry it. This is a deliberate departure from FIGURE_GUIDELINES 4.2 ("a
-quantity whose scale differs across panels goes on the axis as a paired ratio, never
-raw") — the ratio figure is still the one the claims are read off, and this is its
-companion.
-
-`--shared-y` draws the displacement pair on one autoscaled linear axis anyway. It is not a
-deliverable; it exists so the collapse above can be re-checked rather than taken on trust.
-
-**The R^21 pair keeps one shared linear axis** and needs no deviation at all.
-`curvature_plane.fit_plane` scales its 21 columns to unit variance per game, so every
-panel peaks between 4.63 and 5.78 (within 1.3x, 1.5x on the rollout tree) and uses at
-least 58% of the shared axis. The 11.7x between the smallest and largest value drawn is
-inside one panel, CosineSpaDE, not between panels. Its y label says **descriptor SDs, per
-game**, because that column scaling means those numbers are not physically raw the way
-the displacement pair's are.
-
-The autoscaled raw limits keep the ratio figure's own proportions rather than inventing
-new ones: bottom at -0.045 x top, which is the -0.09/2.0 the ratio panels use, so zero
-sits 4.31% up the axis in every panel of every figure and the shared-prefix region is
-visibly zero instead of resting on the spine.
-
 ## Why the plane, and what the plane costs
 
 The y quantity is `branch_panels.plane_displacement`'s rule, resolved in r instead of
@@ -255,6 +206,149 @@ A scalar divisor, not the control's curve: dividing pointwise would pin the cont
 flat 1 and throw away its shape, and 0/0 in the shared prefix. With a scalar the control
 keeps its own trajectory and averages to 1.
 
+## The raw pair
+
+`figures/divergence_by_space_n100_raw.{png,pdf}` ·
+`figures/divergence_by_space_r21_n100_raw.{png,pdf}` ·
+`figures/divergence_by_space_rollout_n100_raw.{png,pdf}` ·
+`figures/divergence_by_space_r21_rollout_n100_raw.{png,pdf}`
+
+```
+python analysis/violation_divergence/divergence_by_space/make_figures.py --raw --n_games 100
+python analysis/violation_divergence/divergence_by_space/make_figures.py --raw --n_games 100 --variant rollout
+python analysis/violation_divergence/divergence_by_space/make_figures.py --raw --n_games 100 --plane r21
+python analysis/violation_divergence/divergence_by_space/make_figures.py --raw --n_games 100 --plane r21 --variant rollout
+```
+
+`--raw` is a flag on the figure, not a sweep. `measure.py` already writes both distances
+raw — `plane` and `full` in each npz, in each cell's own units — and the division is
+`normalised()`'s, so the raw pair reads the same four n = 100 npz the ratio pair does and
+needs no re-measure.
+
+**Everything but the y-axis is the ratio figure's: same nine cells in the same order, same
+`branch_style` colours and markers, same 95% CI over the same 100 games, same shaded
+prefix and branch rule.** What goes is the ratio's own furniture — the dashed null at
+y = 1, the "above 1" note, the 2.0 cap and the callouts that read against it — because
+none of it means anything on a distance axis.
+
+**Read one figure for the size of a distance and the other for the comparison between
+panels. A number does not carry across.** The raw figure is the only place a cell's
+magnitude appears: the ratio pins every panel's control at 1, so nine panels that differ
+700-fold look identical. The ratio figure is the only form in which the nine may be set
+side by side at all, and it is the only one whose rule-vs-control read is paired per game.
+Neither substitutes for the other, and the styling being identical is exactly why this
+paragraph is here.
+
+The legal control's distance from the reference, mean over r ≥ 0 in each cell's own units,
+n = 100 — the divisor the ratio figure removes:
+
+| space | spliced plane \| full | rollout plane \| full |
+|---|---|---|
+| raw layer 5 | 8.486 \| 13.25 | 7.512 \| 14.53 |
+| PAnneal | 3.964 \| 6.382 | 3.467 \| 6.763 |
+| Standard | 2.057 \| 3.532 | 1.715 \| 3.631 |
+| GatedSAE | 3.814 \| 6.229 | 3.349 \| 6.480 |
+| TopK | 4.317 \| 6.616 | 3.988 \| 7.320 |
+| GatedAnneal | 4.583 \| 7.191 | 4.049 \| 7.752 |
+| BatchTopK | 4.458 \| 6.829 | 4.050 \| 7.478 |
+| CosineSpaDE | 0.0370 \| 0.0820 | 0.0313 \| 0.0815 |
+| SpaDE | 0.0121 \| 0.0226 | 0.00961 \| 0.0219 |
+
+**700× between the top and the bottom of that column** (raw layer 5 against SpaDE, in
+the plane, spliced; 586× in the full space, which is the whole tree's 585× above, and
+782×/664× on the rollout tree). That is the number "Cross-panel comparability" asserts,
+now on an axis.
+
+The same table for the R²¹ pair, where the span is 1.4–1.5×:
+
+| space | spliced plane \| full | rollout plane \| full |
+|---|---|---|
+| raw layer 5 | 3.123 \| 5.405 | 2.849 \| 4.987 |
+| PAnneal | 3.104 \| 5.384 | 2.894 \| 5.018 |
+| Standard | 3.000 \| 5.302 | 2.841 \| 4.991 |
+| GatedSAE | 3.354 \| 5.495 | 2.880 \| 5.055 |
+| TopK | 3.388 \| 5.663 | 2.928 \| 5.186 |
+| GatedAnneal | 3.350 \| 5.553 | 2.833 \| 5.057 |
+| BatchTopK | 3.313 \| 5.595 | 2.953 \| 5.170 |
+| CosineSpaDE | 2.444 \| 4.453 | 1.976 \| 3.843 |
+| SpaDE | 3.022 \| 5.192 | 2.791 \| 4.824 |
+
+**These are not physical units and the R²¹ pair is not a raw figure in the sense the other
+pair is.** `curvature_plane.fit_plane` divides each of the 21 descriptor columns by its SD
+over that game's Δφ rows, `Plane.project` re-applies the same scale, and `measure.py` takes
+the full-space norm of the scaled field too — so both R²¹ curves are lengths in **per-game
+descriptor-SD units**, which is why nine dictionaries land within 1.4× of each other rather
+than 700×. Nothing on that axis is degrees, activation units, or comparable between games.
+The column scaling is not cosmetic: R²¹ mixes turning angles with activation-scale step
+lengths whose variances differ ~450× across dictionaries, and a raw norm of it would report
+whichever component carries the biggest units.
+
+What the raw view adds, on the displacement pair:
+
+- **The excess is 100× smaller where the ratio is largest.** CosineSpaDE's R2 is the grid's
+  biggest ratio (1.387) and its biggest ratio spike (4.44× at r = 0); in that space's units
+  the same curve sits 0.011 above its control, against raw layer 5's 1.04. The ratio ranks
+  cells by excess *relative to a divisor that itself varies 700×*, so a tall bar there is a
+  small divisor as readily as a long branch.
+- **The distances shrink after the branch.** The control's in-plane displacement peaks at
+  r = 0 and falls to 0.68–0.76× of it by r = +24 in the seven dense cells (0.46× in
+  CosineSpaDE). The R²¹ pair runs the other way — 1.25 → 2.81 in raw layer 5, 2.24× — since
+  φ's window keeps absorbing post-branch steps. Both directions survive the division, but
+  only the raw axis says how far anything moved.
+
+What the ratio view does that the raw view cannot, beyond the shared axis:
+
+- **The rule-vs-control contrast is paired per game there and unpaired here.** `ratios()`
+  divides each game by *that game's* control before averaging, so it estimates E[rule /
+  control]; a raw figure invites the reader to compare two population means, E[rule] against
+  E[control]. Those differ, and in R²¹ they differ enough to change the verdict in **14 of
+  27 spliced cells**: R1 reads 1.03–1.09 in the ratio figure and 0.92–0.98 of its control in
+  population means, and GatedSAE's, TopK's, GatedAnneal's and BatchTopK's R3 cross from
+  above the control to below it. On the displacement pair five cells flip, all R1, all
+  within 0.04 of the null. **A raw panel is not the ratio panel rescaled** — no constant
+  divisor relates them, because the divisor is per game.
+- **The null has a position.** The ratio figure's y = 1 is where "no further than a legal
+  alternative" lives, and an eye can check a curve against a rule. In the raw figure the
+  control is one more curve among four, and every ordering has to be read off two lines that
+  nearly coincide.
+
+**r < 0 is exactly zero, not nearly zero.** Every branch is bitwise identical to the
+reference over the shared prefix, so the full-space distance there is 0 and `measure.py`
+asserts it; the in-plane distance is an eigenvector component of a matrix whose row is zero
+and comes out below 1e-18 in absolute value. On a raw axis that region is the true
+origin rather than a rescaled one, and the shaded band plus the in-panel `≡ 0` label carry
+it exactly as they do in the ratio figure.
+
+**The displacement pair is the one figure in this study with a per-panel y axis, and it
+has to be.** What is drawn spans 1360× spliced (SpaDE 0.0097 against raw layer 5's 13.16)
+and 1671× rollout — a wider span than the control column above, which is why the titles
+quote the drawn one. On a single shared linear axis the two SpaDE panels stop existing:
+SpaDE's entire rule-vs-control separation is 0.0087, 0.06% of a 15.1-unit axis, 0.07 pt at
+`CELL_H` against the 1.7 pt the figure draws its lines with; CosineSpaDE's is 0.69 pt. Both
+render as one flat line on zero and Standard gets 23% of the axis, so `sharey=False` is
+forced by the data and not chosen. The cost is real: **panel heights are not comparable,
+only within-panel shapes are**, the same disclaimer §4.6 puts on a per-panel PCA refit, and
+the per-panel tick labels are what carry it. Log y was built and rejected — 3.6 decades of
+axis spent on a within-panel signal of ~0.1 decade leaves the gray legal control invisible
+in all nine panels, which fails §3 outright.
+
+`--shared-y` draws the displacement pair on one autoscaled linear axis anyway. It is not a
+deliverable; it exists so the collapse above can be re-checked rather than taken on trust.
+
+**The R²¹ pair keeps one shared linear axis** and needs no deviation at all: every panel
+peaks between 4.63 and 5.78 (within 1.3×, 1.5× on the rollout tree) and uses at least 58%
+of it. The 11.7× between the smallest and largest value drawn is inside one panel,
+CosineSpaDE, not between panels.
+
+The autoscaled raw limits keep the ratio figure's own proportions rather than inventing new
+ones: bottom at −0.045 × top, which is the −0.09/2.0 the ratio panels use, so zero sits
+4.31% up the axis in every panel of every figure and the shared-prefix region reads as
+visibly zero instead of resting on the spine.
+
+CSVs are `results/violation_divergence/divergence_by_space[_r21][_rollout]_n100_raw.csv`,
+the same shape as the ratio ones with `ratio*` renamed `distance*`. Ground truth computed
+independently from the npz is in `verification/`.
+
 ## The rollout variant
 
 `--variant rollout` reads the tree where every branch, the reference included, samples
@@ -318,6 +412,11 @@ vector-vs-scalar K reduction above, not a difference in the model's behaviour at
   branch-free window to exist at all (`curvature_plane.usable`); the shared t₀ = 20
   population sidesteps that. On the rollout tree the K = 4 rows are averaged after φ,
   never before, and `measure.py` asserts Δφ collapses on both branch-free offsets.
+- **The raw pair departs from FIGURE_GUIDELINES 4.2**, which says a quantity whose scale
+  differs across panels goes on the axis as a paired ratio and never raw. 4.2 also asks
+  for the reference's raw scale per panel; the ratio figure is the compliant one and the
+  raw pair is that scale published as a figure rather than only as the table above. It is
+  a companion, never the figure a cross-panel claim is read off.
 - **Seed 42 only**, like the rest of the study.
 - **The rollout K reduction is the fork figures' and not F1's**, and the difference is
   unmeasured. See "The rollout variant" above.
