@@ -137,12 +137,107 @@ scores time-series boundaries as `1 - NORM(kappa)` and proves curvature is *lowe
 point, and with this study's own finding that violations are straighter at L5-L7. The naive
 reading -- sharp turn implies anomaly -- is the wrong sign.
 
+## The same score read as a detector, not as a forced choice
+
+`located()` names exactly one move per sequence. A legal game therefore cannot come back
+clean, `hit_control` is a pick-a-position rate rather than a false-alarm rate, a game with
+two illegal moves could score at most 1/2, and the 33 candidates that are not the argmax are
+never scored at all. `results/threshold_localization.csv` and
+`results/threshold_localization_regenerated.csv` read the same `s` through a **cut** instead:
+`s >= tau` at every candidate of every arm that ground truth covers, so a sequence gets zero,
+one, or many flags. The unit of a row there is a *position*, not a game.
+
+`tau` is the cut maximizing balanced accuracy `(TPR + TNR)/2` -- Youden's J on the same ROC
+the AUROC summarizes. It is found exactly: accuracy is piecewise constant in `tau` with
+breakpoints only at observed scores and is not unimodal, so a grid can straddle the optimum
+and a bisection can settle on a local one. `changepoint.threshold` sweeps every breakpoint in
+the one sort the ROC needs. It is fitted **5-fold by source game** and reported out of fold.
+
+### What has ground truth, and what does not
+
+| | spliced tree | regenerated suffix |
+|---|---|---|
+| positions | 26,252 over 4 disjoint arms | 63,580 over 870 violations + 1,000 legal games |
+| positive | 575 (2.19%) | 870 (1.37%) |
+| scored band | `t` in [14, *t0*] | all 34 candidates |
+
+The spliced tree's cut at *t0* is the same one the argmax columns take, for the same reason:
+past *t0* a branch replays the source game's suffix onto a board that no longer exists. It is
+applied to the legal arms too, so the two classes keep identical move-index marginals -- an
+unmatched cut would let a threshold separate *position* rather than legality. The regenerated
+corpus needs no cut: its continuation is drawn from the engine's legal moves. That legality
+holds on a board built by `build_games.place_no_flip` (disc placed, nothing flipped, turn
+passed), which is a **stated convention and not a fact** -- no legal play reaches that state.
+
+The four disjoint arms are `illegal`, `reference`, `control`, `control2`. R1/R2/R3 are
+re-draws from the same illegal branches as `illegal` and would count those rows twice.
+
+### What the cut finds
+
+Raw layer 5 and the best space, both corpora:
+
+| corpus | space | `hit@t0` | per-position AUROC | `tau` | balanced accuracy (OOF) | flags per legal game |
+|---|---|---|---|---|---|---|
+| spliced | raw L5 | 0.101 | 0.744 [0.723, 0.765] | 0.869 | 0.680 [0.660, 0.700] | 2.63 |
+| spliced | GatedAnneal | 0.343 | **0.855** [0.837, 0.872] | 1.156 | **0.781** [0.763, 0.798] | 1.63 |
+| regenerated | raw L5 | 0.155 | 0.761 [0.745, 0.777] | 0.782 | 0.704 [0.688, 0.720] | 8.17 |
+| regenerated | GatedAnneal | 0.434 | **0.894** [0.883, 0.905] | 0.960 | **0.819** [0.806, 0.831] | 6.15 |
+
+**The space ordering is the argmax ordering.** Spearman 0.93 against `hit_illegal` on the
+spliced tree; the top six are identical and raw layer 5 is fifth in both. Only the three
+spaces at chance reshuffle. The cut is a more sensitive read of the same signal, not a
+different one -- which is the check that it measures what the study already measures.
+
+**The cut is not overfit, but for the weak spaces it is not fixed either.** In-sample minus
+out-of-fold is <= 0.02 everywhere. `fold_thresholds` carries the five per-fold cuts, and they
+agree to 0.001 for GatedSAE while Standard swings 0.459 to -0.267 and SpaDE 0.010 to 0.310. A
+threshold is only a threshold where the score separates; the accuracy CI holds the cut fixed
+and so does **not** cover that variance.
+
+**Abstention is what the cut buys, and it is not enough to make this an alarm.** On the
+spliced tree 0.61-0.93 of all-legal games draw no flag at all, against **1.000 by
+construction** under the argmax. But at 1.4-2.2% prevalence the balanced operating point
+still puts 1.6-14 flags on a legal game. The two corpora are not comparable on this column:
+a spliced legal arm is scored over `t <= t0`, about 12 positions, while a regenerated legal
+game is scored over all 34, so the regenerated 0.98-1.00 is mostly band length. Per position
+this is a graded score, not a usable detector, and the forced choice was hiding that.
+
+**Plain accuracy is a degenerate objective here.** `threshold_plain_accuracy` sits near 5 in
+every space: at 1-2% prevalence the accuracy-maximizing cut flags almost nothing and scores
+~0.98 by calling every move legal. It is in the table to show that, not to be used.
+
+### Figure notes
+
+`threshold_detection.png` (spliced) and `threshold_detection_regenerated.png` (regenerated),
+one figure per corpus, two panels sharing one sort order so a space is the same column in
+both: (a) per-position AUROC, tie-averaged, illegal positions against legal ones; (b)
+out-of-fold balanced accuracy at the fitted cut. Every interval is a 95% percentile bootstrap
+over **source games as clusters**, 1,000 resamples, seed 42 -- games and never positions,
+because one game's candidates overlap in `m - 1` steps. n is 575 games / 26,252 positions
+(spliced) and 1,000 games / 63,580 positions (regenerated). The dashed gray line is 0.5.
+Panel (a)'s axis label differs between the two figures on purpose: the regenerated corpus has
+no matched legal splice, so its negatives are moves in unspliced legal games.
+
+**The model's own illegal moves are harder than spliced ones.** The regenerated table also
+scores the 2,000 free-running rollouts, whose legality is adjudicable up to `first_illegal`
+and no further; 96 of those first illegal moves fall in the band. At the headline cut
+`rollout_tpr` is 0.30-0.56, below each space's own pooled TPR. Read it only beside
+`rollout_flagged_per_legal_game`: SpaDE has the highest rollout TPR (0.563) because it flags
+the most (14.3 per legal rollout), not because it detects best.
+
 ## Pipeline
 
 ```
+python analysis/violation_divergence/changepoint_localization/test_threshold.py   # no data, no GPU
 python analysis/violation_divergence/changepoint_localization/measure.py      # -> results/
 python analysis/violation_divergence/changepoint_localization/make_figures.py [--camera-ready]
+PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/measure_regenerated.py
+PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/make_figures_regenerated.py
 ```
+
+Each `measure` script writes two tables off one scan: the argmax one it always wrote, and the
+thresholded one. Adding the second moved no number in the first -- both `changepoint_*.csv`
+reproduce byte-identically.
 
 `measure.py` is CPU-only and takes under a minute: it reads the cached `d` that
 `curvature_discriminant/branch_geometry.py` already wrote for all nine spaces, and the
