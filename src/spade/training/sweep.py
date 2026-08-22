@@ -56,6 +56,19 @@ BASELINES = [
 ]
 
 
+def _fmt(x: float) -> str:
+    """`1e-04` for a one-significant-figure point, `1.62e-03` for the rest.
+
+    `:.0e` collides on a log-spaced grid — 0.00162 and 0.00214 both render `2e-03`, and two
+    trainers under one name desync the eval rows from their weights. Plain `:g` would fix
+    that but rewrite every existing name, and the literals `SpaDE-lam1e-03-gam1e-04` etc.
+    are pinned in saes.registry, figures.paper_style, multiseed.aggregate_seeds and
+    export.viewer_weights. Stripping the zero mantissa digits keeps those byte-identical.
+    """
+    mantissa, exponent = f"{x:.2e}".split("e")
+    return f"{mantissa.rstrip('0').rstrip('.')}e{exponent}"
+
+
 def spade_config(p: core.TrainParams, lam: float, gam: float) -> dict:
     return {
         "trainer": SpaDETrainer,
@@ -69,7 +82,7 @@ def spade_config(p: core.TrainParams, lam: float, gam: float) -> dict:
         "seed": p.seed,
         "layer": p.layer,
         "lm_name": p.model_name,
-        "wandb_name": f"SpaDE-lam{lam:.0e}-gam{gam:.0e}",
+        "wandb_name": f"SpaDE-lam{_fmt(lam)}-gam{_fmt(gam)}",
         "device": p.device,
     }
 
