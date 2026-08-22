@@ -6,6 +6,38 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## divergence_by_space, un-normalised (2026-08-22)
+
+`make_figures.py --raw` drops the legal-control divisor and draws the distances
+`measure.py` already stores. Pure figure side; no sweep was re-run. Four new artifacts,
+`divergence_by_space[_r21][_rollout]_n100_raw.{png,pdf}` plus matching CSVs whose
+`ratio*` columns become `distance*`. All four committed ratio figures re-render
+byte-identically (PNG, PDF under `SOURCE_DATE_EPOCH=1`, and CSV), which was the
+constraint the refactor was written against: `if not raw:` guards wrap the existing
+calls rather than restructuring them, so artist creation order is untouched.
+
+**The displacement pair gets `sharey=False`; three axis treatments were prototyped in
+parallel and the data picked one.** What is drawn spans 1360x (SpaDE 0.0097 to raw layer
+5 13.16), and on a shared linear axis SpaDE's whole rule-vs-control separation is 0.0087
+= 0.07 pt of panel height and CosineSpaDE's is 0.69 pt, both under the 1.7 pt line width
+— two panels render as a flat line on zero. Log y was prototyped and rejected by its own
+agent. R^21 keeps one shared linear axis: `fit_plane`'s per-game column scaling puts
+every panel's peak within 1.3x, and its 11.7x drawn range is *inside* the CosineSpaDE
+panel, not between panels.
+
+**Two traps specific to dropping the divisor**, both of which look fine until you check
+the numbers. The in-panel notes hardcoded `y = 0.12`, tuned to `ylim(-0.09, 2.0)`; that
+is 10.05% up the axis, and it is reproduced as `0.06 * top` against a bottom of
+`-0.045 * top`, so the notes and the zero line land at the same axis fractions (10.05%,
+4.31%) in every panel of every figure. And the raw limits must keep a negative pad or the
+exactly-zero shared prefix sits on the spine and stops being visible proof.
+
+The titles quote the span of what is **drawn**, not of the control: the control spans
+700x/782x and `measure.py`'s note says ~585x, which are three different numbers for three
+different populations and the one a reader checks is the drawn one.
+
+---
+
 ## The population fork over the rollout branches (2026-08-20)
 
 `--variant rollout` on both scripts in `analysis/violation_divergence/fork_population/`,

@@ -139,6 +139,55 @@ The rule grouping is no better in R²¹: the within- ÷ between-rule spread over
 games is a median 0.886 [IQR 0.752–1.022] against the displacement field's 0.924
 [0.842–0.983] — the same "barely coherent" verdict, with a wider spread.
 
+## The un-normalised twin (`--raw`)
+
+`figures/divergence_by_space_n100_raw.{png,pdf}` ·
+`figures/divergence_by_space_rollout_n100_raw.{png,pdf}` ·
+`figures/divergence_by_space_r21_n100_raw.{png,pdf}` ·
+`figures/divergence_by_space_r21_rollout_n100_raw.{png,pdf}`
+
+```
+python analysis/violation_divergence/divergence_by_space/make_figures.py --raw [--plane r21] [--variant rollout] --n_games 100 [--camera-ready]
+```
+
+The same four figures with the divisor removed, so the magnitudes the ratio hides are on
+the page. Everything else is the ratio figure — same panels, colours, markers, line
+styles, legend, shaded prefix, 95% CI over the same 100 games — minus the three pieces
+that only meant something as a multiple of the control: the dashed line at 1, the y cap
+at 2.0 with its over-cap `N.Nx` label, and the peak `N.NNx at r=` callout. CSVs are
+`results/violation_divergence/divergence_by_space[_r21][_rollout]_n100_raw.csv`, the same
+shape as the ratio ones with `ratio*` renamed `distance*`.
+
+**The displacement pair is the one figure in this study with a per-panel y axis.** It has
+to be. What is drawn spans 1360x spliced (SpaDE 0.0097 to raw layer 5 13.16) and 1671x
+rollout, and on one shared linear axis the two SpaDE panels stop existing: SpaDE's entire
+rule-vs-control separation is 0.0087, 0.06% of a 15.1-unit axis — 0.07 pt at CELL_H, against
+the 1.7 pt the figure draws its lines with — and CosineSpaDE's is 0.69 pt. Both render as a
+flat line on zero, and Standard gets 23% of the axis. That is 2 of 9 panels carrying no
+information and a third badly squashed, so `sharey=False` here is forced by the data.
+The cost is real: **panel heights are not comparable, only within-panel shapes are**, which
+is the same disclaimer §4.6 puts on a per-panel PCA refit, and the tick labels on every
+panel are what carry it. This is a deliberate departure from FIGURE_GUIDELINES 4.2 ("a
+quantity whose scale differs across panels goes on the axis as a paired ratio, never
+raw") — the ratio figure is still the one the claims are read off, and this is its
+companion.
+
+`--shared-y` draws the displacement pair on one autoscaled linear axis anyway. It is not a
+deliverable; it exists so the collapse above can be re-checked rather than taken on trust.
+
+**The R^21 pair keeps one shared linear axis** and needs no deviation at all.
+`curvature_plane.fit_plane` scales its 21 columns to unit variance per game, so every
+panel peaks between 4.63 and 5.78 (within 1.3x, 1.5x on the rollout tree) and uses at
+least 58% of the shared axis. The 11.7x between the smallest and largest value drawn is
+inside one panel, CosineSpaDE, not between panels. Its y label says **descriptor SDs, per
+game**, because that column scaling means those numbers are not physically raw the way
+the displacement pair's are.
+
+The autoscaled raw limits keep the ratio figure's own proportions rather than inventing
+new ones: bottom at -0.045 x top, which is the -0.09/2.0 the ratio panels use, so zero
+sits 4.31% up the axis in every panel of every figure and the shared-prefix region is
+visibly zero instead of resting on the spine.
+
 ## Why the plane, and what the plane costs
 
 The y quantity is `branch_panels.plane_displacement`'s rule, resolved in r instead of
