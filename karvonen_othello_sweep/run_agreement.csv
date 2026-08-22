@@ -1,0 +1,70 @@
+column,n,median_abs,max_abs,median_rel,n_identical,topk_max_abs,kind
+board_reconstruction_n_inputs,280,0.0,0.0,0.0,280,0.0,sae quality
+cossim,280,0.0020534098148345947,0.04284742474555969,0.002103225475718844,40,0.0,sae quality
+eval_results_n_inputs,280,0.0,0.0,0.0,280,0.0,sae quality
+eval_sae_n_inputs,280,0.0,0.0,0.0,280,0.0,sae quality
+frac_alive,280,0.001020507887005799,0.011550292372703594,0.06511725638270073,51,0.0,sae quality
+frac_recovered,280,0.0005825459957123913,0.033309161663055364,0.0005833605878112949,40,0.0,sae quality
+frac_variance_explained,280,0.024235844612121638,0.7617364525794983,0.030178255025958584,47,0.0,sae quality
+games_batch_to_state_stack_mine_yours_BLRRC_best_L0,280,0.04271507263183594,115.77622985839844,0.001278128135225308,40,0.0,board
+games_batch_to_state_stack_mine_yours_BLRRC_best_f1_score_per_class,280,0.00013893842697138004,0.005202114582061768,0.00019471985288931656,69,0.0,board
+games_batch_to_state_stack_mine_yours_BLRRC_best_idx,280,0.0,6.0,0.0,272,0.0,board
+games_batch_to_state_stack_mine_yours_BLRRC_best_multiple_classes,280,123.5,15328.0,0.0037516624508651675,79,0.0,board
+games_batch_to_state_stack_mine_yours_BLRRC_best_num_false_negative_squares,280,928.0,24039.0,0.0012346224541201797,70,0.0,board
+games_batch_to_state_stack_mine_yours_BLRRC_best_num_false_positive_squares,280,164.0,21884.0,0.00283963136634482,72,0.0,board
+games_batch_to_state_stack_mine_yours_BLRRC_best_num_true_and_false_positive_squares,280,124.5,15158.0,0.0038865730915156865,79,0.0,board
+games_batch_to_state_stack_mine_yours_BLRRC_best_num_true_positive_squares,280,928.0,24039.0,0.00037455873770482836,70,0.0,board
+games_batch_to_state_stack_mine_yours_BLRRC_board_reconstruction_board_count,280,0.0,0.0,0.0,280,0.0,board
+games_batch_to_state_stack_mine_yours_BLRRC_last_f1_score_per_class,40,0.0,0.0,0.0,40,0.0,board
+games_batch_to_state_stack_mine_yours_BLRRC_num_squares,280,0.0,0.0,0.0,280,0.0,board
+games_batch_to_state_stack_mine_yours_BLRRC_zero_L0,280,0.0001068115234375,0.0014953613281818434,1.0210003739481873e-06,42,2.842170943040401e-14,board
+games_batch_to_state_stack_mine_yours_BLRRC_zero_f1_score_per_class,280,0.0,0.0006905794143676758,0.0,189,0.0,board
+games_batch_to_state_stack_mine_yours_BLRRC_zero_multiple_classes,280,0.0,57.0,0.0,245,0.0,board
+games_batch_to_state_stack_mine_yours_BLRRC_zero_num_false_negative_squares,280,0.0,3257.0,0.0,205,0.0,board
+games_batch_to_state_stack_mine_yours_BLRRC_zero_num_false_positive_squares,280,0.0,285.0,0.0,220,0.0,board
+games_batch_to_state_stack_mine_yours_BLRRC_zero_num_true_and_false_positive_squares,280,0.0,57.0,0.0,243,0.0,board
+games_batch_to_state_stack_mine_yours_BLRRC_zero_num_true_positive_squares,280,0.0,3257.0,0.0,205,0.0,board
+games_batch_to_state_stack_mine_yours_blank_mask_BLRRC_best_L0,280,0.04659843444824574,82.69720458984375,0.0013997769875997452,39,2.842170943040401e-14,board
+games_batch_to_state_stack_mine_yours_blank_mask_BLRRC_best_f1_score_per_class,280,0.00021311640739440918,0.010627388954162598,0.0002970866516297151,70,0.0,board
+games_batch_to_state_stack_mine_yours_blank_mask_BLRRC_best_idx,280,0.0,3.0,0.0,269,0.0,board
+games_batch_to_state_stack_mine_yours_blank_mask_BLRRC_best_multiple_classes,280,59.0,16759.0,0.007522409014777619,81,0.0,board
+games_batch_to_state_stack_mine_yours_blank_mask_BLRRC_best_num_false_negative_squares,280,741.5,21213.0,0.0015161393619357918,71,0.0,board
+games_batch_to_state_stack_mine_yours_blank_mask_BLRRC_best_num_false_positive_squares,280,106.5,21578.0,0.005237004224435119,72,0.0,board
+games_batch_to_state_stack_mine_yours_blank_mask_BLRRC_best_num_true_and_false_positive_squares,280,58.5,16740.0,0.007426666194049048,81,0.0,board
+games_batch_to_state_stack_mine_yours_blank_mask_BLRRC_best_num_true_positive_squares,280,741.5,21213.0,0.0006148373206276799,71,0.0,board
+games_batch_to_state_stack_mine_yours_blank_mask_BLRRC_board_reconstruction_board_count,280,0.0,0.0,0.0,280,0.0,board
+games_batch_to_state_stack_mine_yours_blank_mask_BLRRC_last_f1_score_per_class,40,0.0,0.0,0.0,40,0.0,board
+games_batch_to_state_stack_mine_yours_blank_mask_BLRRC_num_squares,280,0.0,0.0,0.0,280,0.0,board
+games_batch_to_state_stack_mine_yours_blank_mask_BLRRC_zero_L0,280,0.0001068115234375,0.0014953613281818434,1.0210003739481873e-06,42,2.842170943040401e-14,board
+games_batch_to_state_stack_mine_yours_blank_mask_BLRRC_zero_f1_score_per_class,280,0.0,4.321336746188065e-06,0.0,211,0.0,board
+games_batch_to_state_stack_mine_yours_blank_mask_BLRRC_zero_multiple_classes,280,0.0,8.0,0.0,261,0.0,board
+games_batch_to_state_stack_mine_yours_blank_mask_BLRRC_zero_num_false_negative_squares,280,0.0,18.0,0.0,228,0.0,board
+games_batch_to_state_stack_mine_yours_blank_mask_BLRRC_zero_num_false_positive_squares,280,0.0,13.0,0.0,245,0.0,board
+games_batch_to_state_stack_mine_yours_blank_mask_BLRRC_zero_num_true_and_false_positive_squares,280,0.0,8.0,0.0,261,0.0,board
+games_batch_to_state_stack_mine_yours_blank_mask_BLRRC_zero_num_true_positive_squares,280,0.0,18.0,0.0,228,0.0,board
+games_batch_to_valid_moves_BLRRC_best_L0,280,0.04129791259765625,61.78479766845703,0.0013538741230803306,40,0.0,board
+games_batch_to_valid_moves_BLRRC_best_f1_score_per_class,280,0.0005330443382263184,0.025342822074890137,0.0009855045743813063,69,0.0,board
+games_batch_to_valid_moves_BLRRC_best_idx,280,0.0,10.0,0.0,260,0.0,board
+games_batch_to_valid_moves_BLRRC_best_multiple_classes,280,0.0,0.0,0.0,280,0.0,board
+games_batch_to_valid_moves_BLRRC_best_num_false_negative_squares,280,408.0,12984.0,0.002661276067561281,69,0.0,board
+games_batch_to_valid_moves_BLRRC_best_num_false_positive_squares,280,58.0,4230.0,0.01698483805322675,73,0.0,board
+games_batch_to_valid_moves_BLRRC_best_num_true_and_false_positive_squares,280,0.0,0.0,0.0,280,0.0,board
+games_batch_to_valid_moves_BLRRC_best_num_true_positive_squares,280,408.0,12984.0,0.001835762732421864,69,0.0,board
+games_batch_to_valid_moves_BLRRC_board_reconstruction_board_count,280,0.0,0.0,0.0,280,0.0,board
+games_batch_to_valid_moves_BLRRC_last_f1_score_per_class,40,0.0,0.0,0.0,40,0.0,board
+games_batch_to_valid_moves_BLRRC_num_squares,280,0.0,0.0,0.0,280,0.0,board
+games_batch_to_valid_moves_BLRRC_zero_L0,280,0.0001068115234375,0.0014953613281818434,1.0210003739481873e-06,42,2.842170943040401e-14,board
+games_batch_to_valid_moves_BLRRC_zero_f1_score_per_class,280,0.0,1.0460615157997788e-05,0.0,272,0.0,board
+games_batch_to_valid_moves_BLRRC_zero_multiple_classes,280,0.0,0.0,0.0,280,0.0,board
+games_batch_to_valid_moves_BLRRC_zero_num_false_negative_squares,280,0.0,3.0,0.0,275,0.0,board
+games_batch_to_valid_moves_BLRRC_zero_num_false_positive_squares,280,0.0,1.0,0.0,276,0.0,board
+games_batch_to_valid_moves_BLRRC_zero_num_true_and_false_positive_squares,280,0.0,0.0,0.0,280,0.0,board
+games_batch_to_valid_moves_BLRRC_zero_num_true_positive_squares,280,0.0,3.0,0.0,275,0.0,board
+l0,280,5.6699981689453125,50.610015869140625,0.06511725638270133,51,0.0,sae quality
+l1_loss,280,2.4113502502441406,37.55613708496094,0.01964640166221064,50,2.842170943040401e-14,sae quality
+l2_loss,280,0.2675600051879883,5.662965774536133,0.0542589110893555,40,0.0,sae quality
+l2_ratio,280,0.0015954375267029919,0.037901520729064886,0.0016335704052536787,40,0.0,sae quality
+loss_original,280,0.001388072967529741,0.001388072967529741,0.0006757679054122095,40,0.0,sae quality
+loss_reconstructed,280,0.001139044761658159,0.09847497940063477,0.0005544642618119031,38,4.440892098500626e-16,sae quality
+loss_zero,280,0.0017824172973641694,0.0017824172973641694,0.0003627852238686534,40,0.0,sae quality
+num_alive_features,280,2.0,35.0,0.0005666844357668437,79,0.0,sae quality
