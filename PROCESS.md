@@ -6,6 +6,36 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## What the change-point score should be computed on (2026-08-22)
+
+`quantity_ablation.py` + `QUANTITY_ABLATION.md` + `figures/quantity_ablation.png`. Step
+length against the representation norm and against curvature, one matched band (moves 14-46),
+identical pipeline, both the argmax hit rate and the per-position AUROC.
+
+**Step length wins where anything is detectable**, and on raw layer 5 it is not close (0.761
+against the norm's 0.544). The README's standing worry that the norm-only baseline "may own
+the result" is not borne out through this pipeline. The norm wins only on Standard, SpaDE and
+CosineSpaDE, all at or near chance on everything.
+
+**The load-bearing argument is the sign, not the AUROC.** `d` keeps one direction in all nine
+spaces; the norm flips -- smaller-is-illegal for Gated/TopK, larger-is-illegal for raw,
+Standard, PAnneal and both SpaDEs. The method is label-free, so a quantity whose sign moves
+across spaces is unusable however it scores: you would have to read the answer to pick the
+direction. `sign` is a column for that reason.
+
+**`CURVATURE_ABLATION.md` is wrong in two places and the paper must not repeat them.** Both
+are artifacts of the peak/argmax statistic, which `theta_ablation.py` was the only thing
+measuring. Per position every theta is *above* chance (0.527-0.596, consistent sign), so
+"curvature cannot localize at all" holds only for the hit rate (0.016-0.048 vs 0.030). And
+the claimed ordering inversion, Spearman -0.67, is **+0.783 per position** -- the same
+ordering as `d`. Curvature still cannot carry a dictionary comparison: its span across spaces
+is 0.068 against d's 0.369.
+
+Regenerated corpus only; the divergence npz has no `norm`, so the spliced tree needs a GPU
+encode pass. And this is the *substitution* test, not the *explanation* test -- whether the
+norm accounts for d's variance (R^2 0.87-0.88, partialling it out drops GatedAnneal 0.587 ->
+0.173) is still unrun, and that is the one that decides whether "geometry" is the right word.
+
 ## Fig 1(a) was a 6.75% plane of a 121-dimensional cloud (2026-08-22)
 
 `fig1_direction_geometry`'s left panel was an uncentred PCA of 424 per-square directions,
