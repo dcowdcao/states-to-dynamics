@@ -6,6 +6,75 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## A fixed cut beside the argmax, on both suffix regimes (2026-08-22)
+
+`changepoint_localization` gained a per-position detector next to `located()`, in
+`changepoint.py` (+`test_threshold.py`, the study's first tests) and both `measure` scripts.
+Nothing was replaced: `changepoint_localization.csv`, `changepoint_regenerated.csv`,
+`window_selection.csv` and both existing PNGs all reproduce **byte-identically**, which is the
+check that the change is additive.
+
+**Why the argmax was costing something.** It names exactly one move per sequence, so a legal
+game cannot come back clean, `hit_control` is a pick-a-position rate and not a false-alarm
+rate, and the 33 non-argmax candidates are never scored. Reading the same `s` through a cut
+gives zero, one or many flags. The score is already z-scored per step index against the legal
+profile, so one global cut is meaningful across games -- which is exactly what is not true of
+the `move_legality` probe scores, and why that study argmaxes and this one need not.
+
+**Neither a grid nor a bisection: an exact sweep.** Balanced accuracy is piecewise constant in
+`tau` with breakpoints only at observed scores, and it is not unimodal, so a grid straddles
+the optimum and a bisection can settle on a local one. `changepoint.threshold` sweeps every
+breakpoint in the one sort the ROC already needs. `test_threshold.py` pins it against a
+brute-force scan of every distinct cut, on 20 random cases x 3 objectives.
+
+**AUROC cannot be what a threshold search maximizes**, so the two are one curve read twice:
+per-position AUROC is the threshold-free headline, and `tau` is Youden's J on the same ROC.
+Reported through the existing tie-averaged `probe.auroc`, never off the sweep, so it agrees
+with every other AUROC in the tree.
+
+**Plain accuracy is degenerate at this prevalence and the table says so.** At 1.4-2.2%
+positives the accuracy-maximizing cut sits near 5 in every space: it flags almost nothing and
+scores ~0.98 by calling every move legal. `threshold_plain_accuracy` and `threshold_f1` are
+carried beside the balanced cut so the objective's grip on the answer is visible.
+
+**The ordering survives, which is the validity check.** Spearman 0.93 against `hit_illegal`;
+the top six spaces are identical and raw layer 5 is fifth in both. GatedAnneal 0.855 / 0.894
+per-position AUROC (spliced / regenerated) against raw's 0.744 / 0.761. So the cut is a more
+sensitive read of the same signal, not a new one.
+
+**What the cut actually shows, and the argmax hid: this is not an alarm.** 0.61-0.93 of
+spliced all-legal games draw no flag, against 1.000 by construction under the argmax -- but at
+the balanced operating point a legal game still collects 1.6-14 flags. `legal_games_with_any_flag`
+is **not comparable across the two corpora**: a spliced legal arm is scored over `t <= t0`
+(~12 positions) and a regenerated one over all 34, so the regenerated 0.98-1.00 is mostly band
+length.
+
+**A fixed threshold is not fixed where the score does not separate.** `fold_thresholds` carries
+all five per-fold cuts because the mean would hide it: GatedSAE's agree to 0.001 while Standard
+swings 0.459 to -0.267. The accuracy CI holds the cut fixed and does not cover that variance;
+5-fold out-of-fold is what guards the optimism, which is <= 0.02 everywhere.
+
+**Two gotchas, both caught in review rather than by a test.** A subagent keyed the regenerated
+pool on shifted ids so a violation and the legal game it was spliced from landed in *different*
+folds -- they share `tokens[:t0]` bitwise, so that is the exact leak folding by source game
+exists to prevent. Every violation source is an odd index and `NULL_POOL` is the odd indices,
+so keying both on the source game fixes it (1,000 clusters, not 1,870); it moved the numbers
+only in the 4th decimal, but the next corpus need not be so forgiving. And the two writers
+first disagreed on the CI column names, which a figure script had papered over with a rename;
+the shim is gone and the writers agree instead.
+
+**Multiple illegal moves per game are still not in any corpus.** They are definable only under
+the regenerated regime, where `place_no_flip` leaves a board behind an illegal move -- a stated
+convention, not a fact. The per-position statistic already handles 0, 1 or many positives per
+sequence, so the cell is reachable without touching the estimator; it needs a new corpus and a
+GPU geometry pass. Not built.
+
+The nearest thing that exists is the rollout block: 96 model-generated first-illegal moves land
+in the band, and they are *harder* than spliced ones (`rollout_tpr` 0.30-0.56, below each
+space's pooled TPR). Read that column only beside `rollout_flagged_per_legal_game` -- SpaDE
+tops it at 0.563 because it flags 14.3 times per legal rollout, not because it detects best.
+
+
 ## The population fork over the rollout branches (2026-08-20)
 
 `--variant rollout` on both scripts in `analysis/violation_divergence/fork_population/`,

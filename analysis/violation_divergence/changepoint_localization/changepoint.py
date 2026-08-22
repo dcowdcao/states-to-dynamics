@@ -85,3 +85,108 @@ def ci(statistic, draws: list[np.ndarray]) -> tuple[float, float]:
 def located(s: np.ndarray, cand: np.ndarray) -> np.ndarray:
     """The move index each row's score peaks at."""
     return cand[s.argmax(1)] + CAND_OFFSET
+
+
+# ---------------------------------------------------------------------------
+# Thresholded detection: the same score read as a per-position flag rather than
+# as one forced choice per game.
+#
+# `located` names exactly one move per sequence, so a legal game cannot come back
+# clean and a game with two illegal moves cannot score above 1/2. A cut on the
+# score emits zero, one or many flags. The score is already standardized per step
+# index against the legal profile (`drop`), so one cut is meaningful across games.
+#
+# Accuracy is piecewise constant in the cut, with breakpoints only at observed
+# scores, and it is not unimodal -- a grid straddles the optimum and a binary
+# search converges on a local one. Sweeping the breakpoints is exact and costs one
+# sort, the same sort the ROC needs, so the cut and the curve come out together.
+# ---------------------------------------------------------------------------
+
+FOLDS = 5
+
+# tp, fp are cumulative counts down the descending score; P, N the class totals.
+OBJECTIVES = {
+    "balanced": lambda tp, fp, P, N: tp / P - fp / N,        # Youden's J
+    "accuracy": lambda tp, fp, P, N: (tp + N - fp) / (P + N),
+    "f1": lambda tp, fp, P, N: 2 * tp / (P + tp + fp),
+}
+
+
+def flags(s: np.ndarray, tau: float) -> np.ndarray:
+    """Which candidates the detector calls illegal. `>=` matches `threshold`'s tie handling."""
+    return s >= tau
+
+
+def _cuts(score: np.ndarray, label: np.ndarray):
+    """(tau, tp, fp, P, N) at the last index of every tie run, descending by score.
+
+    Cutting inside a tie run is not a threshold anyone can apply, so only run ends
+    are candidates and `>= tau` then flags exactly the rows counted at that index.
+    """
+    order = np.argsort(-score, kind="stable")
+    s, hit = score[order], label[order]
+    tp, fp = np.cumsum(hit), np.cumsum(~hit)
+    end = np.append(s[:-1] != s[1:], True)
+    return s[end], tp[end], fp[end], int(hit.sum()), int((~hit).sum())
+
+
+def threshold(score: np.ndarray, label: np.ndarray, objective: str = "balanced") -> float:
+    """The score cut maximizing `objective` over the pooled positions, exactly.
+
+    "balanced" is (TPR + TNR)/2 up to a constant. Prevalence here is ~2%, so plain
+    "accuracy" optimizes to a cut that flags almost nothing and scores ~0.98 by
+    calling every move legal; it is reported to show that, not to be used.
+    """
+    tau, tp, fp, P, N = _cuts(score, label)
+    assert P and N, "an objective needs both classes"
+    return float(tau[np.argmax(OBJECTIVES[objective](tp, fp, P, N))])
+
+
+def rates(predicted: np.ndarray, label: np.ndarray) -> dict:
+    """TPR, TNR, their mean, and precision, from a boolean prediction."""
+    tpr, tnr = float(predicted[label].mean()), float((~predicted[~label]).mean())
+    hits = int((predicted & label).sum())
+    return {"tpr": tpr, "tnr": tnr, "balanced_accuracy": (tpr + tnr) / 2,
+            "precision": hits / max(int(predicted.sum()), 1)}
+
+
+def folds(game_id: np.ndarray, k: int = FOLDS, seed: int = 0) -> np.ndarray:
+    """Fold index per position, assigned by SOURCE game.
+
+    By game and not by position: a game's arms share `tokens[:t0]` and its candidates
+    overlap in m-1 steps, so splitting one game across folds leaks the fit into the
+    held-out half and the out-of-fold number stops being out of fold.
+    """
+    ids = np.unique(game_id)
+    order = np.random.default_rng(seed).permutation(len(ids))
+    return (order % k)[np.searchsorted(ids, game_id)]
+
+
+def out_of_fold(score, label, game_id, objective: str = "balanced", k: int = FOLDS,
+                seed: int = 0) -> tuple[np.ndarray, np.ndarray]:
+    """(per-fold tau, pooled out-of-fold prediction).
+
+    Fitting the cut and reading accuracy off the same positions is an upper bound, not
+    an estimate. Each fold is predicted at a cut the other four chose.
+    """
+    fold = folds(game_id, k, seed)
+    predicted, taus = np.zeros(len(score), dtype=bool), []
+    for f in range(k):
+        held = fold == f
+        taus.append(threshold(score[~held], label[~held], objective))
+        predicted[held] = flags(score[held], taus[-1])
+    return np.array(taus), predicted
+
+
+def by_game(game_id: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """(positions sorted by game, count per game) -- the index a cluster bootstrap draws on."""
+    order = np.argsort(game_id, kind="stable")
+    return order, np.unique(game_id[order], return_counts=True)[1]
+
+
+def take(order: np.ndarray, counts: np.ndarray, draw: np.ndarray) -> np.ndarray:
+    """Position indices of the games in `draw`, with replacement: every position a game holds."""
+    lengths = counts[draw]
+    ends = np.cumsum(lengths)
+    starts = np.append(0, np.cumsum(counts)[:-1])[draw] - np.append(0, ends[:-1])
+    return order[np.repeat(starts, lengths) + np.arange(ends[-1] if len(ends) else 0)]

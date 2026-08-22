@@ -1,16 +1,21 @@
 """Which representation space lets a reference-free change-point score catch the splice?
 
-Two panels over the same nine spaces and the same sort order, so a space is one column in
-both: (a) does the score know a game contains an illegal move at all, (b) does its argmax
-say which ply. They are different questions and a space can be good at one and not the other,
-which is why they are two panels and not one number.
+`changepoint_by_space` -- two panels over the same nine spaces and the same sort order, so a
+space is one column in both: (a) does the score know a game contains an illegal move at all,
+(b) does its argmax say which ply. They are different questions and a space can be good at one
+and not the other, which is why they are two panels and not one number.
+
+`threshold_detection` -- the same score read as a detector that has to commit. (a) is the
+per-position AUROC, illegal move against legal move, so it asks whether the score orders
+positions at all; (b) is what a fitted cut actually buys out of fold. A space can rank well
+and still have no cut that transfers, which is why these are also two panels.
 
 Sorted by (a), because the ordering is the claim; raw layer 5 keeps reference styling wherever
 it lands, so the reader can see how many dictionaries clear it, and keeping one order across
 both panels is what makes the two rankings comparable.
 
 No note under the axes: the estimator, n, seed and null semantics are the caption, and the
-caption is the paragraph under "Results" in README.md. This figure is not standalone.
+caption is the paragraph under "Results" in README.md. These figures are not standalone.
 
 Usage: python analysis/violation_divergence/changepoint_localization/make_figures.py
            [--camera-ready]
@@ -36,8 +41,10 @@ def panel_letter(ax, i: int) -> None:
 
 
 def panel(ax, table: pd.DataFrame, value: str, ylabel: str, chance: float,
-          band: tuple[float, float], index: int, top: float, chance_label: str) -> None:
-    ax.axhspan(*band, color=NULL["color"], alpha=0.28, lw=0, zorder=1)
+          band: tuple[float, float] | None, index: int, top: float,
+          chance_label: str) -> None:
+    if band is not None:
+        ax.axhspan(*band, color=NULL["color"], alpha=0.28, lw=0, zorder=1)
     ax.axhline(chance, color=NULL["color"], ls=NULL["ls"], lw=1.2, zorder=2)
     for x, row in table.iterrows():
         style = SPACE_STYLE[row.space]
@@ -66,7 +73,14 @@ def panel(ax, table: pd.DataFrame, value: str, ylabel: str, chance: float,
     ax.tick_params(axis="x", length=0)
 
 
-def draw(table: pd.DataFrame, camera_ready: bool) -> Path:
+def finish(fig, stem: str, camera_ready: bool) -> Path:
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
+    fig.text(0.005, 0.985, "hue = architecture family, hatch = its second dictionary; "
+             "raw layer 5 is the reference space", fontsize=7, color=MUTED, va="top")
+    return save_figure(fig, HERE / "figures" / stem, camera_ready)
+
+
+def draw_by_space(table: pd.DataFrame, camera_ready: bool) -> Path:
     table = table.sort_values("auroc_vs_control", ascending=False).reset_index(drop=True)
     row = table.iloc[0]
     alarms = table[FALSE_ALARM]
@@ -81,10 +95,33 @@ def draw(table: pd.DataFrame, camera_ready: bool) -> Path:
           row.chance_uniform, (alarms.values.min(), alarms.values.max()), 1, 0.50,
           "chance")
 
-    fig.tight_layout(rect=(0, 0, 1, 0.94))
-    fig.text(0.005, 0.985, "hue = architecture family, hatch = its second dictionary; "
-             "raw layer 5 is the reference space", fontsize=7, color=MUTED, va="top")
-    return save_figure(fig, HERE / "figures" / "changepoint_by_space", camera_ready)
+    return finish(fig, "changepoint_by_space", camera_ready)
+
+
+def threshold_table(table: pd.DataFrame) -> pd.DataFrame:
+    """Sorted by panel (a). Both corpora sort the same way, so a space is one column."""
+    return table.sort_values("auroc_position", ascending=False).reset_index(drop=True)
+
+
+def threshold_top(table: pd.DataFrame) -> float:
+    """One ceiling for both panels: two probability scales sharing a chance line at 0.5."""
+    hi = table[["auroc_position_hi", "balanced_accuracy_hi"]].to_numpy().max()
+    return max(1.05, float(hi) * 1.12)
+
+
+def draw_threshold(table: pd.DataFrame, camera_ready: bool) -> Path:
+    table = threshold_table(table)
+    fig, axes = plt.subplots(1, 2, figsize=(7.6, 3.6))
+    top = threshold_top(table)
+
+    panel(axes[0], table, "auroc_position",
+          "per-position AUROC, illegal move vs legal move\n($\\uparrow$ better)",
+          0.5, None, 0, top, "chance")
+    panel(axes[1], table, "balanced_accuracy",
+          "balanced accuracy at the fitted cut, out of fold\n($\\uparrow$ better)",
+          0.5, None, 1, top, "chance")
+
+    return finish(fig, "threshold_detection", camera_ready)
 
 
 def main() -> None:
@@ -93,8 +130,11 @@ def main() -> None:
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    table = pd.read_csv(HERE / "results" / "changepoint_localization.csv")
-    print(draw(table, args.camera_ready))
+    results = HERE / "results"
+    print(draw_by_space(pd.read_csv(results / "changepoint_localization.csv"),
+                        args.camera_ready))
+    print(draw_threshold(pd.read_csv(results / "threshold_localization.csv"),
+                         args.camera_ready))
 
 
 if __name__ == "__main__":

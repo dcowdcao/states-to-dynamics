@@ -1,13 +1,16 @@
-"""`changepoint_by_space`, drawn on the corpus whose suffix is REGENERATED after t0.
+"""`changepoint_by_space` and `threshold_detection`, on the corpus whose suffix is REGENERATED
+after t0.
 
-Same two panels, same nine spaces, same estimator, same sort order and styling as
-`make_figures.py` -- it imports that module's `panel` rather than restating the drawing rule,
-so the two figures cannot drift apart.
+Same panels, same nine spaces, same estimator, same sort order and styling as
+`make_figures.py` -- it imports that module's `panel`, `finish` and threshold helpers rather
+than restating the drawing rules, so the two sets of figures cannot drift apart.
 
-One axis label had to change and it is not cosmetic. The straightness violation corpus
-carries no legal-alternative arm, so panel (a) is the illegal game against **its own source
-legal game**, which is the parent figure's `vs_reference` contrast, not its `vs_control`.
-Reading the two figures' left panels as the same quantity would overstate the transfer.
+One axis label had to change in each figure and it is not cosmetic. The straightness violation
+corpus carries no legal-alternative arm, so the contrast is the illegal game against **its own
+source legal game**: in `changepoint_by_space` that is the parent figure's `vs_reference`
+rather than its `vs_control`, and in `threshold_detection` the negatives are positions of
+unspliced legal games rather than of a matched legal splice. Reading the two corpora's left
+panels as the same quantity would overstate the transfer.
 
 Usage: PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/make_figures_regenerated.py
            [--camera-ready]
@@ -20,14 +23,15 @@ from pathlib import Path
 import pandas as pd
 from matplotlib import pyplot as plt
 
-from spade.figures.paper_style import MUTED, apply_style, save_figure
+from spade.figures.paper_style import apply_style
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-from make_figures import FALSE_ALARM, panel  # noqa: E402  (sibling module)
+from make_figures import (  # noqa: E402  (sibling module)
+    FALSE_ALARM, finish, panel, threshold_table, threshold_top)
 
 
-def draw(table: pd.DataFrame, camera_ready: bool) -> Path:
+def draw_by_space(table: pd.DataFrame, camera_ready: bool) -> Path:
     table = table.sort_values("auroc_vs_control", ascending=False).reset_index(drop=True)
     row = table.iloc[0]
     alarms = table[FALSE_ALARM]
@@ -45,11 +49,23 @@ def draw(table: pd.DataFrame, camera_ready: bool) -> Path:
           row.chance_uniform, (alarms.values.min(), alarms.values.max()), 1, top_b,
           "chance")
 
-    fig.tight_layout(rect=(0, 0, 1, 0.94))
-    fig.text(0.005, 0.985, "hue = architecture family, hatch = its second dictionary; "
-             "raw layer 5 is the reference space", fontsize=7, color=MUTED, va="top")
-    return save_figure(fig, HERE / "figures" / "changepoint_by_space_regenerated",
-                       camera_ready)
+    return finish(fig, "changepoint_by_space_regenerated", camera_ready)
+
+
+def draw_threshold(table: pd.DataFrame, camera_ready: bool) -> Path:
+    table = threshold_table(table)
+    fig, axes = plt.subplots(1, 2, figsize=(7.6, 3.6))
+    top = threshold_top(table)
+
+    panel(axes[0], table, "auroc_position",
+          "per-position AUROC, illegal move vs move in an\n"
+          "unspliced legal game ($\\uparrow$ better)",
+          0.5, None, 0, top, "chance")
+    panel(axes[1], table, "balanced_accuracy",
+          "balanced accuracy at the fitted cut, out of fold\n($\\uparrow$ better)",
+          0.5, None, 1, top, "chance")
+
+    return finish(fig, "threshold_detection_regenerated", camera_ready)
 
 
 def main() -> None:
@@ -58,8 +74,11 @@ def main() -> None:
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    print(draw(pd.read_csv(HERE / "results" / "changepoint_regenerated.csv"),
-               args.camera_ready))
+    results = HERE / "results"
+    print(draw_by_space(pd.read_csv(results / "changepoint_regenerated.csv"),
+                        args.camera_ready))
+    print(draw_threshold(pd.read_csv(results / "threshold_localization_regenerated.csv"),
+                         args.camera_ready))
 
 
 if __name__ == "__main__":
