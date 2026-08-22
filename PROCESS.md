@@ -75,6 +75,67 @@ space's pooled TPR). Read that column only beside `rollout_flagged_per_legal_gam
 tops it at 0.563 because it flags 14.3 times per legal rollout, not because it detects best.
 
 
+---
+
+## divergence_by_space, un-normalised (2026-08-22)
+
+`--raw` on `divergence_by_space/make_figures.py` -> the four n = 100 figures again with
+`_raw`, y showing the measured distance instead of the distance over that cell's legal
+control. **No sweep.** `measure.py` has always written `plane` and `full` raw; normalising
+is `normalised()`/`ratios()`, one line in the figure. All four committed ratio figures
+re-render byte-identically (PNG, PDF under `SOURCE_DATE_EPOCH=1`, CSV), which is the
+constraint the refactor was written against: `if not raw:` guards wrap the existing calls
+rather than restructuring them, so artist creation order is untouched.
+
+**The R^21 pair is not raw and must not be read as if it were.** `fit_plane` divides each
+of the 21 descriptor columns by its SD over that game's dphi rows and `Plane.project`
+re-applies the same scale, so both R^21 curves are lengths in **per-game descriptor-SD
+units**. That is why its nine panels' peaks sit within 1.3x while the displacement pair
+spans 700x in the plane (586x full) -- the ~585x the README quotes is already divided out
+of R^21 before any distance is taken. Nothing on that axis is degrees or activation units,
+and it is not comparable between games.
+
+**The two figures are not the same curve rescaled, and with the styling identical that is
+the trap.** The divisor is per game: the ratio figure estimates E[rule / control], a raw
+panel invites E[rule] vs E[control]. In R^21 spliced those disagree in **14 of 27 cells** --
+R1 reads 1.03-1.09 as a ratio and 0.92-0.98 of its control in population means, and four
+dictionaries' R3 crosses from above the control to below it. Five displacement cells flip
+too, all R1; both rollout figures flip none in the drawn curve. Jensen, confirmed
+independently: the per-game ratio exceeds the ratio of means in every cell of all four
+figures, worst case 0.34 in ratio units. The README's new section is the only thing
+standing between a reader and that mistake, since the panels are otherwise
+indistinguishable.
+
+**The displacement pair gets `sharey=False`; three axis treatments were prototyped in
+parallel and the data picked one.** What is drawn spans 1360x spliced / 1671x rollout
+(SpaDE 0.0097 to raw layer 5 13.16), and on a shared linear axis SpaDE's whole
+rule-vs-control separation is 0.0087 = 0.07 pt of panel height and CosineSpaDE's is
+0.69 pt, both under the 1.7 pt line width the figure draws with -- two panels render as a
+flat line on zero, and they are the two SpaDE codes. Log y was built and rejected by its
+own agent: 3.6 decades of axis spent on a within-panel signal of ~0.1 decade leaves the
+gray legal control **invisible in all nine panels**, which fails FIGURE_GUIDELINES 3
+outright, and symlog buys nothing back. R^21 keeps one shared linear axis and needs no
+deviation; its 11.7x drawn range is *inside* the CosineSpaDE panel, not between panels.
+
+**Two traps specific to dropping the divisor**, both of which look fine until you check
+the numbers. The in-panel notes hardcoded `y = 0.12`, tuned to `ylim(-0.09, 2.0)`; that is
+10.05% up the axis, and it is reproduced as `0.06 * top` against a bottom of
+`-0.045 * top`, so the notes and the zero line land at the same axis fractions (10.05%,
+4.31%) in every panel of every figure. And the raw limits must keep a negative pad or the
+exactly-zero shared prefix sits on the spine and stops being visible proof. (The `plane`
+prefix is 1e-21 rather than 0 -- float noise from the eigenvector route; `measure.py`
+asserts exactness on `full` only.)
+
+The titles quote the span of what is **drawn**, not of the control: the control spans
+700x/782x and `measure.py`'s note says ~585x, three different numbers for three different
+populations, and the one a reader checks is the drawn one.
+
+Ground truth for all four figures, computed independently from the npz, is in
+`divergence_by_space/verification/`; dividing it by the control per game reproduces the
+committed ratio CSVs to 5.2e-06, which is serialisation rounding.
+
+---
+
 ## The population fork over the rollout branches (2026-08-20)
 
 `--variant rollout` on both scripts in `analysis/violation_divergence/fork_population/`,

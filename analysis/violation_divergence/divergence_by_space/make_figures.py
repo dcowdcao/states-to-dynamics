@@ -30,12 +30,26 @@ representation space. Everything else -- panels, colours, markers, the
 ratio-to-the-legal-control, the CI -- is the same, and the x window is read off
 the npz because phi's trailing W-window costs the first two offsets.
 
+`--raw` drops the divisor and draws the measured distances, so the magnitudes the
+ratio hides are on the page. Nothing else about the figure changes: the same panel
+grid, styling, legend and furniture, minus only the pieces the divisor defined --
+the line at 1, the y cap, and the two callouts written in multiples of the control.
+The displacement pair then gets a per-panel y axis, because what it draws spans
+1360x: SpaDE's curves sit at 0.0097-0.023 where raw layer 5's run 7-13, and on one
+linear axis the two SpaDE panels are a flat line on zero. `--shared-y` is that pair
+on one autoscaled linear axis anyway, i.e. with no deviation from the ratio
+figure's format at all, so the two can be judged against each other. R^21 needs
+neither: `curvature_plane.fit_plane` scales its 21 columns to unit variance per
+game, so every panel's peak lands within 1.3x of every other's -- and its units are
+per-game descriptor SDs, not activations.
+
 Reads `measure.py`'s npz. Writes the figure and one tidy CSV of every drawn
 point. Prose belongs in README.md (FIGURE_GUIDELINES 2, 5); what stays inside
 the figure is what a reader cannot decode while looking at it.
 
 Usage: python analysis/violation_divergence/divergence_by_space/make_figures.py
-       [--plane displacement|r21] [--variant spliced|rollout] [--camera-ready]
+       [--plane displacement|r21] [--variant spliced|rollout] [--raw [--shared-y]]
+       [--camera-ready]
 """
 
 import argparse
@@ -71,6 +85,15 @@ SATURATED_R = 8  # rollout: from here the illegal/control ratio is within 0.5% o
 # plateau -- where the claim is -- readable in all nine cells; a curve that runs
 # past the cap is labelled with the value it reaches, so nothing is hidden.
 YMAX = 2.0
+RATIO_YLABEL = "distance from the reference\n(legal control = 1)"
+# --raw has no divisor, so the label has to name the units. R^21's 21 columns are
+# scaled to unit variance per game inside `curvature_plane.fit_plane`, which
+# `measure.curvature_distances` measures both its distances in, so that pair is in
+# per-game descriptor SDs and is not physically raw.
+RAW_YLABEL = {
+    "displacement": "distance from the reference\n(each space's own units)",
+    "r21": "distance from the reference\n($R^{21}$ descriptor SDs,\nper game)",
+}
 
 
 def series_rows(z) -> dict[str, list[int]]:
@@ -92,10 +115,11 @@ def normalised(z, key: str) -> np.ndarray:
     return z[key] / control[:, :, None, None]
 
 
-def ratios(z, key: str) -> np.ndarray:
-    """[S, G, series, T]: `normalised`, with each rule collapsed onto the mean of
-    its member categories, so the resampling unit stays the source game."""
-    x = normalised(z, key)
+def rule_means(z, key: str, raw: bool) -> np.ndarray:
+    """[S, G, series, T]: the measured distances, or `normalised`, with each rule
+    collapsed onto the mean of its member categories, so the resampling unit stays
+    the source game."""
+    x = z[key] if raw else normalised(z, key)
     return np.stack([x[:, :, members].mean(2) for members in series_rows(z).values()],
                     axis=2)
 
@@ -106,18 +130,19 @@ def mean_ci(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return x.mean(0), 1.96 * x.std(0, ddof=1) / np.sqrt(len(x))
 
 
-def table(z, variant: str) -> pd.DataFrame:
+def table(z, variant: str, raw: bool) -> pd.DataFrame:
     """Every drawn point, so the README can quote a number without reading a curve."""
+    col = "distance" if raw else "ratio"
     rows = []
     for key in TABLE_MEASURES:
-        r = ratios(z, key)
+        r = rule_means(z, key, raw)
         for si, space in enumerate(z["space"]):
             for ci, name in enumerate(series_rows(z)):
                 mu, half = mean_ci(r[si, :, ci])
                 rows.append(pd.DataFrame({
                     "variant": variant, "space": space, "series": name,
                     "measured_in": key, "r": z["window"], "n_games": r.shape[1],
-                    "ratio": mu, "ratio_lo": mu - half, "ratio_hi": mu + half}))
+                    col: mu, f"{col}_lo": mu - half, f"{col}_hi": mu + half}))
     return pd.concat(rows, ignore_index=True)
 
 
@@ -146,7 +171,6 @@ def event_axes(ax, w: np.ndarray, rollout: bool) -> None:
     rollout tree the offsets where the comparison has saturated (README)."""
     ax.axvspan(w[0] - 1, -1, color=GRID, alpha=0.75, lw=0, zorder=0)
     ax.axvline(0, color=MUTED, lw=1.0, ls=(0, (4, 3)), zorder=1)
-    ax.axhline(1, color=NULL["color"], lw=0.9, ls=(0, (5, 2)), zorder=1)
     if rollout:
         ax.axvspan(SATURATED_R, w[-1] + 1, color=GRID, alpha=0.45, lw=0, zorder=0)
     ax.set_xlim(w[0] - 1, w[-1] + 1)
@@ -188,52 +212,81 @@ TITLE = {
     ("r21", "rollout"): "With a sampled suffix, R$^{21}$'s trailing window puts the "
                         "separation where the comparison has already saturated",
 }
+# Spans are of what is drawn -- every rule mean and the control, over r >= 0 -- not
+# of the control alone, which is the ~585x `measure.py` reports and a smaller number.
+RAW_TITLE = {
+    ("displacement", "spliced"): "The same branches un-normalised: nine spaces, nine "
+                                 "scales, 1360$\\times$ from SpaDE to raw layer 5",
+    ("displacement", "rollout"): "Un-normalised on the rollout tree: the same nine "
+                                 "scales, 1671$\\times$ from SpaDE to raw layer 5",
+    ("r21", "spliced"): "Un-normalised in R$^{21}$: column-scaling per game puts every "
+                        "panel's peak within 1.3$\\times$, so one axis holds all nine",
+    ("r21", "rollout"): "Un-normalised in R$^{21}$ on the rollout tree, where every "
+                        "panel's peak is within 1.5$\\times$ and one axis still holds",
+}
 
 
-def figure(z, plane: str, variant: str, suffix: str, camera_ready: bool) -> Path:
+def figure(z, plane: str, variant: str, suffix: str, raw: bool, shared_y: bool,
+           camera_ready: bool) -> Path:
     w = z["window"]
     rollout = variant == "rollout"
     n_games = z["plane"].shape[1]
-    curves = {key: ratios(z, key) for key in MEASURES}
+    curves = {key: rule_means(z, key, raw) for key in MEASURES}
     nrow = int(np.ceil(len(z["space"]) / NCOL))
+    # What raw displacement draws spans 1360x, which no one linear axis holds;
+    # --shared-y is that same pair on one anyway, to be judged against.
+    free_y = raw and plane == "displacement" and not shared_y
 
     fig, axes = plt.subplots(nrow, NCOL, figsize=(CELL_W * NCOL, CELL_H * nrow),
-                             sharex=True, sharey=True)
+                             sharex=True, sharey=not free_y)
     for si, space in enumerate(z["space"]):
         ax = axes.flat[si]
         event_axes(ax, w, rollout)
+        if not raw:
+            ax.axhline(1, color=NULL["color"], lw=0.9, ls=(0, (5, 2)), zorder=1)
         for ci, (name, rows) in enumerate(series_rows(z).items()):
             for key, how in MEASURES.items():
                 draw_series(ax, w, *mean_ci(curves[key][si, :, ci]), name, how, ci)
         ax.set_title(space, loc="left", fontsize=8)
-        ax.set_ylim(-0.09, YMAX)
-        off = curves["plane"][si].mean(0).max(0)
-        if off.max() > YMAX:
-            ri = int(off.argmax())
-            ax.annotate(f"{off[ri]:.1f}$\\times$", xy=(w[ri], YMAX * 0.985),
-                        xytext=(w[ri] + 2.5, YMAX * 0.86), fontsize=7.5, color=INK,
-                        arrowprops=dict(arrowstyle="->", color=MUTED, lw=0.8))
+        if not raw:
+            ax.set_ylim(-0.09, YMAX)
+            off = curves["plane"][si].mean(0).max(0)
+            if off.max() > YMAX:
+                ri = int(off.argmax())
+                ax.annotate(f"{off[ri]:.1f}$\\times$", xy=(w[ri], YMAX * 0.985),
+                            xytext=(w[ri] + 2.5, YMAX * 0.86), fontsize=7.5, color=INK,
+                            arrowprops=dict(arrowstyle="->", color=MUTED, lw=0.8))
         if si % NCOL == 0:
-            ax.set_ylabel("distance from the reference\n(legal control = 1)",
-                          fontsize=8.5)
+            ax.set_ylabel(RAW_YLABEL[plane] if raw else RATIO_YLABEL, fontsize=8.5)
     axes.flat[-NCOL + 1].set_xlabel("position relative to the branch move "
                                     "($r = s - t_0$)", fontsize=9)
+    # Autoscaled, since YMAX is a multiple of a divisor --raw does not have, but
+    # keeping the ratio panels' -0.09/2.0 of headroom under zero, so the shared
+    # prefix is visibly zero rather than sitting on the spine. After the loop: on a
+    # shared axis the first set_ylim would freeze the autoscale mid-grid.
+    if raw:
+        for ax in axes.flat[:len(z["space"])]:
+            ax.set_ylim(bottom=-0.045 * ax.get_ylim()[1])
 
     lead = axes.flat[0]
-    lead.text(1, 0.06, "above 1: the rule runs further from the reference\nthan a legal "
-              "alternative does at the same prefix", fontsize=7, color=MUTED,
-              style="italic", ha="left", va="bottom")
-    lead.text(w[0] + 1, 0.12, "$\\equiv 0$ (shared prefix)", fontsize=7, rotation=90,
-              color=MUTED, style="italic", ha="center", va="bottom")
-    peak = curves["plane"][0].mean(0)[:-1]  # series x r; the control is the last row
-    ci, ri = np.unravel_index(np.argmax(np.where(w >= 0, peak, -np.inf)), peak.shape)
-    lead.annotate(f"{peak[ci, ri]:.2f}$\\times$ at $r$={w[ri]}", xy=(w[ri], peak[ci, ri]),
-                  xytext=(4, YMAX * 0.90), fontsize=7.5, color=INK,
-                  arrowprops=dict(arrowstyle="->", color=MUTED, lw=0.8))
+    top = lead.get_ylim()[1]
+    if not raw:
+        lead.text(1, 0.06, "above 1: the rule runs further from the reference\nthan a "
+                  "legal alternative does at the same prefix", fontsize=7, color=MUTED,
+                  style="italic", ha="left", va="bottom")
+    lead.text(w[0] + 1, 0.06 * top, "$\\equiv 0$ (shared prefix)", fontsize=7,
+              rotation=90, color=MUTED, style="italic", ha="center", va="bottom")
+    if not raw:
+        peak = curves["plane"][0].mean(0)[:-1]  # series x r; the control is the last row
+        ci, ri = np.unravel_index(np.argmax(np.where(w >= 0, peak, -np.inf)), peak.shape)
+        lead.annotate(f"{peak[ci, ri]:.2f}$\\times$ at $r$={w[ri]}",
+                      xy=(w[ri], peak[ci, ri]), xytext=(4, 0.90 * top), fontsize=7.5,
+                      color=INK, arrowprops=dict(arrowstyle="->", color=MUTED, lw=0.8))
     if rollout:
-        axes.flat[NCOL - 1].text(SATURATED_R + 1, 0.12, f"$r \\geq {SATURATED_R}$: "
-                                 "saturated,\nnot evidence", fontsize=7, color=MUTED,
-                                 style="italic", ha="left", va="bottom")
+        sat = axes.flat[NCOL - 1]
+        sat.text(SATURATED_R + 1, 0.06 * sat.get_ylim()[1], f"$r \\geq {SATURATED_R}$: "
+                 "saturated,\nnot evidence", fontsize=7, color=MUTED,
+                 style="italic", ha="left", va="bottom")
 
     fig.tight_layout(rect=(0, 0.12, 1, 0.97 if camera_ready else 0.94))
     legend = fig.legend(*legend_marks(n_games), ncol=3, fontsize=8, frameon=False,
@@ -241,9 +294,11 @@ def figure(z, plane: str, variant: str, suffix: str, camera_ready: bool) -> Path
                         title=f"mean over n = {n_games} source games, band = 95% CI")
     legend.get_title().set_fontsize(8)
     if not camera_ready:
-        fig.suptitle(TITLE[(plane, variant)], fontsize=11, y=0.995)
+        fig.suptitle((RAW_TITLE if raw else TITLE)[(plane, variant)],
+                     fontsize=11, y=0.995)
     name = ("divergence_by_space" + ("" if plane == "displacement" else f"_{plane}")
-            + (f"_{variant}" if rollout else "") + suffix)
+            + (f"_{variant}" if rollout else "") + suffix
+            + ("_raw" if raw else "") + ("_sharedy" if shared_y else ""))
     return save_figure(fig, HERE / "figures" / name, camera_ready)
 
 
@@ -254,8 +309,15 @@ def main():
     ap.add_argument("--variant", default="spliced", choices=list(VARIANTS))
     ap.add_argument("--n_games", type=int, default=None,
                     help="draw measure.py's n-game population instead of the whole tree")
+    ap.add_argument("--raw", action="store_true",
+                    help="draw the measured distances, not the ratio to the control")
+    ap.add_argument("--shared-y", dest="shared_y", action="store_true",
+                    help="--raw --plane displacement on one autoscaled linear y instead "
+                         "of a per-panel one")
     ap.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = ap.parse_args()
+    if args.shared_y and not args.raw:
+        ap.error("--shared-y only means anything with --raw")
     apply_style(args.camera_ready)
 
     suffix = f"_n{args.n_games}" if args.n_games else ""
@@ -266,25 +328,26 @@ def main():
 
     out = results_dir("violation_divergence")
     out.mkdir(parents=True, exist_ok=True)
+    # --shared-y is the same numbers on a different axis, so it writes no second CSV.
     csv = out / (f"divergence_by_space{tag}"
                  f"{'_' + args.variant if args.variant != 'spliced' else ''}"
-                 f"{suffix}.csv")
-    df = table(z, args.variant)
+                 f"{suffix}{'_raw' if args.raw else ''}.csv")
+    df = table(z, args.variant, args.raw)
     df.to_csv(csv, index=False, float_format="%.6g")
 
+    col = "distance" if args.raw else "ratio"
     post = df[(df.r >= 0) & (df.series != CONTROL)]
     print(f"mean over r >= 0, plane / full space, {z['plane'].shape[1]} games:")
     for space in z["space"]:
-        cell = post[post.space == space]
+        cell = post[post.space == space].groupby(["series", "measured_in"])[col].mean()
         print(f"  {space:<34} " + "  ".join(
-            f"{rule.split()[0]} "
-            f"{cell[(cell.series == rule) & (cell.measured_in == 'plane')].ratio.mean():5.2f}"
-            f"|{cell[(cell.series == rule) & (cell.measured_in == 'full')].ratio.mean():5.2f}"
+            f"{rule.split()[0]} {cell[rule, 'plane']:5.3g}|{cell[rule, 'full']:5.3g}"
             for rule in RULE_MEMBERS))
     if "spread" in z:
         print(spread_note(z))
-    print(f"wrote {figure(z, args.plane, args.variant, suffix, args.camera_ready)} "
-          f"and {csv}")
+    png = figure(z, args.plane, args.variant, suffix, args.raw, args.shared_y,
+                 args.camera_ready)
+    print(f"wrote {png} and {csv}")
 
 
 if __name__ == "__main__":
