@@ -6,6 +6,40 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## divergence_by_space without the divisor (2026-08-22)
+
+`--raw` on `divergence_by_space/make_figures.py` -> the four n = 100 figures again with
+`_raw`, y showing the measured distance instead of the distance over that cell's legal
+control. **No sweep.** `measure.py` has always written `plane` and `full` raw; normalising
+is `normalised()`/`ratios()`, one line in the figure. Four npz already on disk, four new
+figures, zero GPU.
+
+**The R^21 pair is not raw and must not be read as if it were.** `fit_plane` divides each
+of the 21 descriptor columns by its SD over that game's Δφ rows and `Plane.project`
+re-applies the same scale, so both R^21 curves are lengths in **per-game descriptor-SD
+units**. That is why its nine panels span 1.4-1.5x while the displacement pair spans 700x
+in the plane (586x in the full space) -- the ~585x the README quotes is already divided
+out of R^21 before any distance is taken. Nothing on that axis is degrees or activation
+units, and it is not comparable between games.
+
+**The two figures are not the same curve rescaled, and with the styling identical that is
+the trap.** The divisor is per game: the ratio figure estimates E[rule / control], a raw
+panel invites E[rule] vs E[control]. In R^21 spliced those disagree in **14 of 27 cells** --
+R1 reads 1.03-1.09 as a ratio and 0.92-0.98 of its control in population means, and four
+dictionaries' R3 crosses from above the control to below it. Five displacement cells flip
+too, all R1. The README's new section is the only thing standing between a reader and that
+mistake, since the panels are otherwise indistinguishable.
+
+Format is the existing figure's, unchanged; what goes is the ratio-only furniture (null at
+1, the "above 1" note, the 2.0 cap and its callouts). The one forced-open detail is y:
+shared linear flattens eight of nine displacement panels, per-panel y invites the
+cross-panel read the units forbid, and log y cannot draw r < 0, which is exactly 0 by
+construction (shared prefix; `measure.py` asserts it).
+
+AXIS DECISION (bake-off pending, fill in): _____
+
+---
+
 ## The population fork over the rollout branches (2026-08-20)
 
 `--variant rollout` on both scripts in `analysis/violation_divergence/fork_population/`,
