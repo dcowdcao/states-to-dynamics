@@ -243,6 +243,11 @@ PROBE_STYLE = {
     "linear": {"color": REFERENCE["color"], "marker": "o", "label": "linear probe"},
     "tpr":    {"color": "#E69F00", "marker": "D", "label": "TPR ($d_r$=52, $d_f$=2)"},
 }
+# The canonical board probe's layer sweep. One series -- one probe class over eight
+# input spaces -- so one hue, with the layer the project actually hooks drawn darker
+# rather than in a second colour: it is the same series, marked.
+BOARD_SWEEP_STYLE = {"layer": {"color": "#0072B2"}, "hook": {"color": "#014369"}}
+
 BASIS_STYLE = {
     "relative": {"ls": "-", "marker": "^", "label": "mover-relative"},
     "absolute": {"ls": (0, (4, 2)), "marker": "v", "label": "absolute colour"},

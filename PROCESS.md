@@ -6,6 +6,37 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## A board-probe layer sweep that describes the probe anything actually loads (2026-08-22)
+
+New study `analysis/board_probe_sweep/`, one entry point, `layer_sweep.py`. It loads the
+eight canonical `probes.load.board(layer)` and reads them out over the corpus's 3,000
+test games: accuracy 0.9109 / 0.9494 / 0.9720 / 0.9828 / 0.9899 / 0.9937 / **0.9945** /
+0.9940 for layers 0-7, per-square majority-class null 0.5456. Every layer reproduces its
+saved card's `test_accuracy` to the last digit, which is the check that the read-out path
+here is the one the fit used.
+
+**Why re-measure something the cards already carry.** A card holds one scalar. The two
+things a figure needs, it cannot hold: an interval -- 95% cluster bootstrap over test
+games, since positions inside a game share a board -- and a null scored on the same rows.
+The null is fit on the *train* split; fit on the split it is scored on it would be a
+ceiling, not a null.
+
+**The cut baseline is a deliberate departure from FIGURE_GUIDELINES 1.6.** At a zero
+baseline the eight bars are one flat block: everything this figure exists to show is in
+the second and third decimal. Each bar carries its interval and prints its value, so the
+axis cannot manufacture a gap the marks do not support -- the same argument
+`analysis/linear_probe`'s panel (b) makes for its truncation. The cost is that the null,
+at 0.5456, cannot be drawn; it is a CSV row and a README number.
+
+**It does not replace `analysis/linear_probe/`,** which stays the record of the retired
+ARENA fit (0.9919 at layer 5, five seeds, 200 games) and still writes the activation cache
+`rules.causal.unflip_edit` and four `bracket_flip` modules read. The two are not
+comparable line for line -- different corpus, labels and split. Layer 6 is the argmax by
+0.0009 over layer 5 and the hook point did not move: a single-seed sweep cannot resolve
+that, and every downstream artifact is fit at 5.
+
+---
+
 ## The AUROC bar chart loses its footer, and its inputs were checked first (2026-08-22)
 
 `analysis/move_legality/detection_auroc.py` drops both gray blocks under the axes: the
