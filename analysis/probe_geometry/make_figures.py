@@ -42,7 +42,7 @@ def embed_panel(ax, points: pd.DataFrame, probes: pd.DataFrame,
     centre = points[["x", "y"]].to_numpy().mean(0)
     ax.add_patch(Circle(centre, row.ring_radius, fill=False, color=NULL["color"],
                         ls=(0, (5, 2)), lw=1.2, zorder=2,
-                        label=f"rule / board split ({row.ring_balanced_accuracy:.0%} bal. acc.)"))
+                        label="rule / board split"))
     for family in DIRECTION_ORDER:
         style, at = DIRECTION_STYLE[family], points[points.family == family]
         xy = at[["x", "y"]].to_numpy()
@@ -59,8 +59,8 @@ def embed_panel(ax, points: pd.DataFrame, probes: pd.DataFrame,
     ax.set_aspect("equal")
     ax.set_xticks([])
     ax.set_yticks([])
-    ax.set_xlabel("MDS axis 1 (arb. units)")
-    ax.set_ylabel("MDS axis 2 (arb. units)")
+    ax.set_xlabel("MDS axis 1")
+    ax.set_ylabel("MDS axis 2")
     # No legend title: what the markers mean, the missing origin, the monotone-not-
     # proportional distance and the fidelity all live in the README's Figure notes.
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.13), ncol=3, fontsize=7,

@@ -474,8 +474,10 @@ it is what unrelated vectors in a high-dimensional space do by default.
   a metric, which 1 − cos is not — with nonmetric (ordinal) MDS, which fits only
   the rank order of the angles. Label the axes `arb. units`, report **rank
   fidelity** (Spearman between the true angles and the drawn distances, over all
-  pairs) instead of a variance ratio, and say in the panel that distance is
-  monotone in angle, not proportional to it.
+  pairs) instead of a variance ratio. That the coordinates are arbitrary and that
+  distance is monotone in angle rather than proportional to it has to be stated,
+  but it can live in the study README's Figure notes rather than on the canvas —
+  a scatter carrying three lines of its own caption is the thing §5 is against.
 - **An ordinal embedding ships with a structure-free null.** A plane can always
   render class *means*; that is most of what it renders. Rebuild the cloud
   keeping each family's mean direction and replacing the residuals with
