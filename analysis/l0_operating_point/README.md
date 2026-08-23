@@ -134,11 +134,53 @@ the search returns L0 55-506 — a 9x spread that is not a matched comparison at
 - CosineSpaDE, by contrast, is thoroughly sampled: 15 configs at 5 seeds spanning the target,
   with a score plateau of 0.754-0.774. More points there cannot move the answer.
 
+## Figures
+
+Karvonen's Figure 4 (arXiv:2408.00113v2), rebuilt with our three architectures on it.
+`figures/l0_operating_point/`:
+
+    figure4_othello_karvonen_only.{png,pdf}   his five types, his figure
+    figure4_othello_with_spade.{png,pdf}      + BatchTopK, SpaDE, CosineSpaDE
+    karvonen_only/, with_spade/               the four panels of each, separately
+
+His 2x2 layout and subcaptions: top row coverage, bottom row board reconstruction, left
+column the loss-recovered-vs-L0 scatter coloured by the metric, right column the metric
+against L0 — (a) Coverage of Board State, (b) Coverage of Board State vs. L0,
+(c) Board Reconstruction, (d) Board Reconstruction vs. L0.
+
+Style is copied from his `circuits/f1_analysis.ipynb`, not from `paper_style.py`:
+`FIGURE_GUIDELINES.md` deliberately does not apply to a figure whose point is to be his.
+`KARVONEN_STYLE.md` records what was copied. His repo renders the four panels separately
+and the paper composites them in LaTeX, so `combine_figure.py` composites the same PNGs
+rather than re-plotting — every panel stays byte-identical to what `verify_match.py` checks.
+
+**`karvonen_only` reproduces his published PNGs exactly** — max channel diff 0, zero pixels
+differing on all four, against the vendored `saved_data/07-31_images/`. That is what makes
+`with_spade` readable as data rather than as styling drift.
+
+`with_spade` deviates from his rendering twice, both forced by our points landing where his
+never did, and neither touching colour, marker, size or font:
+
+- **The legend moves below the axes.** SpaDE and CosineSpaDE put points in the lower right
+  of both right-column panels, which is where his legend sits.
+- **The left-column y-axis widens** from his 0.9960–1.0005. On his window 44 of 55 SpaDE
+  and 62 of 117 CosineSpaDE points fall off the bottom with nothing to say they were
+  dropped. It is floored at 0 rather than at the true minimum because six of *his* Standard
+  configs at L0 < 3 recover less loss than zero-ablation (down to −0.81) and would flatten
+  every real point onto one line; `render()` prints what the floor excludes.
+
+The cost of that second deviation is real: the widened left column is honest but flatter
+than his, because his tight window was a zoom on the region where all his SAEs live and
+ours do not. For a paper, publish the two windows as a pair rather than compromise on one.
+
 ## Reproduce
 
     python -m spade.l0_operating_point.aggregate          # -> results/l0_operating_point/pooled.csv
     python -m spade.l0_operating_point.pick --rule nearest # -> results/l0_operating_point/picks.csv
     python -m spade.l0_operating_point.pick --rule band     # the alternative
+    python -m spade.l0_operating_point.plot_pareto          # the four panels, both variants
+    python -m spade.l0_operating_point.verify_match         # holds karvonen_only to his PNGs
+    python -m spade.l0_operating_point.combine_figure       # the 2x2 Figure 4
 
 Use the conda interpreter directly; worktrees have no `.venv`:
 `/n/home10/dcao/.conda/envs/spade_env/bin/python`, with `PYTHONPATH=<worktree>/src` so the
