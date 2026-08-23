@@ -1,7 +1,8 @@
 # One shared L0 for all eight SAE types
 
-**Status (2026-08-22): provisional.** BatchTopK is still a single point and two of the four
-scored metrics are 25-activation estimates. Both are being fixed; see [Not yet
+**Status (2026-08-23): the sweeps are done, the target is not settled.** All three of our
+architectures now carry a 20-config grid. But with BatchTopK no longer pinning the search,
+the two scoring rules stop agreeing on where the target is — see [Not yet
 final](#not-yet-final) before quoting any number here.
 
 ## The problem
@@ -18,7 +19,7 @@ comparison is at matched sparsity.
 
 ### 1. Assemble the points
 
-`spade.l0_operating_point.aggregate` builds one table of 456 configs.
+`spade.l0_operating_point.aggregate` builds one table of 516 configs.
 
 - **SpaDE, CosineSpaDE, BatchTopK** come from the `karvonen_repro` eval streams under
   `$SPADE_KARVONEN_REPRO_DIR`. Each checkpoint is identified from the `config.json` beside it,
@@ -85,31 +86,34 @@ score is in practice driven by coverage and recon-F1. `score.spread` reports tha
 
 ## Result
 
-**Shared target L0 = 116.7**, mean score 0.884.
+**Shared target L0 = 116.7**, mean score 0.878. Every type seats within 5% of it.
 
 | Type | Hyperparameter | Value | L0 | L0/target | coverage | recon F1 | score |
 |---|---|---|---|---|---|---|---|
-| Gated | `l1_penalty` | 1.1053 | 112.9 | 0.97x | 0.481 | 0.890 | 0.966 |
-| Standard + p-anneal | `sparsity_penalty` | 0.028947 | 119.3 | 1.02x | 0.431 | 0.921 | 0.949 |
-| TopK | `k` | 120 | 120.0 | 1.03x | 0.467 | 0.826 | 0.938 |
-| Gated + p-anneal | `sparsity_penalty` | 0.552632 | 110.5 | 0.95x | 0.488 | 0.760 | 0.934 |
-| **BatchTopK** | `k` | **80** | **78.6** | **0.67x** | 0.453 | 0.843 | 0.929 |
-| Standard | `l1_penalty` | 0.061053 | 116.1 | 1.00x | 0.280 | 0.906 | 0.871 |
-| CosineSpaDE | `gamma_reg` | 10 | 131.1 | 1.12x | 0.352 | 0.484 | 0.773 |
-| SpaDE | `lambda_init` 1e-3, `gamma_reg` | 0.01 | 130.5 | 1.12x | 0.156 | 0.620 | 0.711 |
+| **BatchTopK** | `k` | **120** | 120.3 | 1.03x | 0.538 | 0.821 | **0.956** |
+| Gated | `l1_penalty` | 1.1053 | 112.9 | 0.97x | 0.481 | 0.890 | 0.954 |
+| Standard + p-anneal | `sparsity_penalty` | 0.028947 | 119.3 | 1.02x | 0.431 | 0.921 | 0.938 |
+| TopK | `k` | 120 | 120.0 | 1.03x | 0.467 | 0.826 | 0.926 |
+| Gated + p-anneal | `sparsity_penalty` | 0.552632 | 110.5 | 0.95x | 0.488 | 0.760 | 0.921 |
+| Standard | `l1_penalty` | 0.061053 | 116.1 | 1.00x | 0.280 | 0.906 | 0.864 |
+| CosineSpaDE | `gamma_reg` | 13.7 | 115.6 | 0.99x | 0.348 | 0.494 | 0.764 |
+| SpaDE | `lambda_init` 1e-3, `gamma_reg` | 0.0115 | 116.7 | 1.000x | 0.145 | 0.627 | 0.701 |
 
-The rank-mean twin picks the identical target and the identical eight configs, so the answer is
-not an artifact of the normalization.
+**BatchTopK ranks first, above all five of Karvonen's types.** That was not observable before
+its grid existed: its only config was k = 80 at 0.67x the target, and a type seated a third of
+the way off the comparison point cannot be read against the rest. Our two novel architectures
+sit at the bottom, below every one of his.
 
-Karvonen's five occupy the top of the table and our two novel architectures the bottom, with
-BatchTopK — his trainer, our training run — in between and ahead of his Standard.
+SpaDE lands at 1.0002x the target — the grids were built by inverting each architecture's
+measured L0 response, and they hit what they aimed at.
 
 ### The alternative rule, for reference
 
 `--rule band` instead searches for a shared *band* and gives each type its **best-scoring**
-config inside it. That returns L0 63.1-143.2 (2.27x) at mean score 0.897. The extra 0.013 is
-bought by letting the eight roam over a 2.2x spread in sparsity, which is the confound this
-study exists to remove; `--rule nearest` is the reported answer.
+config inside it. That returns L0 105.3-238.8 (2.27x) at mean score 0.888. The extra 0.010 is
+bought by letting the eight roam over a 2.3x spread in sparsity, which is the confound this
+study exists to remove; `--rule nearest` is the reported answer. It agrees on the shape of the
+result — BatchTopK second by 0.004, our two architectures last.
 
 The band rule needs its width capped and the cap is load-bearing, not a tuning knob: the mean of
 per-type winners is monotone in width, since a wider band only ever adds candidates. Uncapped,
@@ -117,10 +121,14 @@ the search returns L0 55-506 — a 9x spread that is not a matched comparison at
 
 ## Not yet final
 
-- **BatchTopK is a placeholder.** `k = 80` is its only trained config, so it seats at 0.67x the
-  target when every other type is within 12%. It is the one type that cannot currently reach the
-  shared L0. `scripts/slurm/batch_topk_sweep/` fills in k = 10..400; expect k=110 or k=120 to
-  land near the target and to move the target itself.
+- **The target is rule-dependent, and that is new.** Min-max puts it at L0 116.7; the
+  rank-mean twin puts it at **L0 215.6** and changes all eight configs. While BatchTopK was a
+  single pinned point the two agreed exactly, and this README cited that agreement as evidence
+  the answer was not a normalization artifact. That evidence is gone: removing the constraint
+  let the rules separate. Min-max is driven by `recon_f1` and `coverage` (sigma 0.288, 0.281)
+  whose ranges are set by collapsed SAEs; rank-mean weights the fidelity terms more evenly and
+  prefers denser SAEs. Per the plan a pick that flips under the twin is reported as unresolved,
+  so **which rule to defend is an open decision**, not something this file settles.
 - **Two of the four metrics are n = 25.** `frac_recovered` and FVE come from Karvonen's
   published protocol, where the SAE-quality columns average one batch of 25 activation vectors
   (`PROTOCOL.md` section 2). FVE carries sd ~ 0.14 there and is biased low below L0 ~ 100. The
@@ -128,11 +136,13 @@ the search returns L0 55-506 — a 9x spread that is not a matched comparison at
   the fidelity columns at `--mode measurement` (2500 activations) for the configs near the
   target is the outstanding step before these scores are quotable.
 - **SpaDE's optimum is outside any band CosineSpaDE can share.** Its score still climbs as it
-  leaves the target region — 0.619 at L0 41, 0.678 at 77, 0.711 at 130, 0.737 at 232 — while
-  CosineSpaDE ceilings at L0 178 for any gamma. That is a fact about the architectures, not a
-  sampling gap, and more SpaDE points near 117 will not change it.
-- CosineSpaDE, by contrast, is thoroughly sampled: 15 configs at 5 seeds spanning the target,
-  with a score plateau of 0.754-0.774. More points there cannot move the answer.
+  leaves the target region — 0.701 at L0 117, 0.732 at 234 — while CosineSpaDE ceilings at
+  L0 183 for any gamma. That is a fact about the architectures, not a sampling gap, and more
+  SpaDE points near 117 will not change it.
+- **Everything here is seed 42.** The three grids match Karvonen's own single-seed sweep, so
+  the figure is like-for-like, but no point on our side carries a seed spread. Earlier streams
+  (the gamma sweep, `l0_coverage`) do carry 4-5 seeds and are still pooled in; the `n_seeds`
+  column in `picks.csv` says which is which.
 
 ## Figures
 
