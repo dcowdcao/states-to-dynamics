@@ -46,8 +46,14 @@ OUR_STREAMS = {
     "canonical": REPRO_ROOT / "karvonen_repro_spade_canonical",
     "gamma_sweep": REPRO_ROOT / "karvonen_repro_spade_sweep",
     "l0_coverage": REPRO_ROOT / "karvonen_repro_l0_coverage",
-    "batch_topk": REPRO_ROOT / "karvonen_repro_batchtopk",
-    "batch_topk_sweep": REPRO_ROOT / "karvonen_repro_batch_topk_sweep",
+    "batch_topk_k80": REPRO_ROOT / "karvonen_repro_batchtopk",
+    # The three 20-config grids, one per architecture, each internally consistent:
+    # scripts/slurm/l0_grids/. These are what the operating point is chosen from; the
+    # streams above are earlier runs kept because they add points, not because the
+    # picks depend on them.
+    "spade_l0_grid": REPRO_ROOT / "karvonen_repro_spade_l0_grid",
+    "cosine_spade_l0_grid": REPRO_ROOT / "karvonen_repro_cosine_spade_l0_grid",
+    "batch_topk_l0_grid": REPRO_ROOT / "karvonen_repro_batch_topk_l0_grid",
 }
 # karvonen_repro_cosine_beta is deliberately absent: the beta dial lives on
 # karvonen/cosine-beta, so this branch would score those checkpoints at beta=1 and cannot
