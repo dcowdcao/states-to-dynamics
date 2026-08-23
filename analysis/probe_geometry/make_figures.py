@@ -21,6 +21,7 @@ from spade.figures.paper_style import (
 RESULTS = Path(__file__).resolve().parent / "results"
 FIGURES = Path(__file__).resolve().parent / "figures"
 DIVERGING = "RdBu_r"
+TITLE = "Similarity between probe directions across board state and rules"
 
 
 def panel_letter(ax, letter: str) -> None:
@@ -104,7 +105,9 @@ def figure(camera_ready: bool) -> Path:
     cosine_panel(fig, axes[1], gram)
     for ax, letter in zip(axes, "ab"):
         panel_letter(ax, letter)
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0, 1, 1 if camera_ready else 0.93))
+    if not camera_ready:
+        fig.suptitle(TITLE, fontsize=11, y=0.995)
     return save_figure(fig, FIGURES / "fig1_direction_geometry", camera_ready)
 
 
