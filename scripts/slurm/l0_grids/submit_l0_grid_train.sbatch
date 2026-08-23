@@ -45,6 +45,10 @@ case "${L0_ARCH}" in
   spade)        FLAGS=(--spade_sweep --spade_lambdas 1e-3 --spade_gammas "${L0_GRID}") ;;
   cosine_spade) FLAGS=(--cosine_spade_sweep --cosine_spade_gammas "${L0_GRID}") ;;
   batch_topk)   FLAGS=(--batch_topk_sweep --batch_topk_ks "${L0_GRID}") ;;
+  # Karvonen's five, swept over their own sparsity knob so they can reach the shared L0.
+  # spade.training.sweep.BASELINES_SWEPT maps each name to its knob.
+  standard|gated|panneal|gated_anneal|topk)
+                FLAGS=(--baseline_sweep "${L0_ARCH}" --baseline_values "${L0_GRID}") ;;
   *) echo "unknown L0_ARCH ${L0_ARCH}" >&2; exit 1 ;;
 esac
 

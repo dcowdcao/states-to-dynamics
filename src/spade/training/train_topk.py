@@ -12,19 +12,27 @@ from spade.training.core import TrainParams, run_cli  # also puts circuits on sy
 from circuits.dictionary_learning.trainers.top_k import AutoEncoderTopK, TopKTrainer
 
 
-def config(p: TrainParams) -> dict:
+K = 80
+# The canonical run keeps this name; spade.training.sweep's grid passes a swept
+# one, so a swept point cannot be mistaken for the baseline row that
+# results/acceptance, saes.registry and figures.paper_style match on.
+WANDB_NAME = "TopKTrainer-othello"
+
+
+def config(p: TrainParams, k: int = K,
+           wandb_name: str = WANDB_NAME) -> dict:
     return {
         "trainer": TopKTrainer,
         "dict_class": AutoEncoderTopK,
         "activation_dim": p.activation_dim,
         "dict_size": p.dict_size,
-        "k": 80,
+        "k": k,
         "warmup_steps": p.warmup_steps,
         "steps": p.steps,
         "seed": p.seed,
         "layer": p.layer,
         "lm_name": p.model_name,
-        "wandb_name": "TopKTrainer-othello",
+        "wandb_name": wandb_name,
         "device": p.device,
     }
 

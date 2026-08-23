@@ -13,14 +13,22 @@ from circuits.dictionary_learning.dictionary import AutoEncoder
 from circuits.dictionary_learning.trainers.p_anneal import PAnnealTrainer
 
 
-def config(p: TrainParams) -> dict:
+INITIAL_SPARSITY_PENALTY = 0.042105
+# The canonical run keeps this name; spade.training.sweep's grid passes a swept
+# one, so a swept point cannot be mistaken for the baseline row that
+# results/acceptance, saes.registry and figures.paper_style match on.
+WANDB_NAME = "PAnnealTrainer-othello"
+
+
+def config(p: TrainParams, initial_sparsity_penalty: float = INITIAL_SPARSITY_PENALTY,
+           wandb_name: str = WANDB_NAME) -> dict:
     return {
         "trainer": PAnnealTrainer,
         "dict_class": AutoEncoder,
         "activation_dim": p.activation_dim,
         "dict_size": p.dict_size,
         "lr": 3e-4,
-        "initial_sparsity_penalty": 0.042105,
+        "initial_sparsity_penalty": initial_sparsity_penalty,
         "sparsity_warmup_steps": p.sparsity_warmup_steps,
         **P_ANNEAL,
         "warmup_steps": p.warmup_steps,
@@ -29,7 +37,7 @@ def config(p: TrainParams) -> dict:
         "seed": p.seed,
         "layer": p.layer,
         "lm_name": p.model_name,
-        "wandb_name": "PAnnealTrainer-othello",
+        "wandb_name": wandb_name,
         "device": p.device,
     }
 

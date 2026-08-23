@@ -110,9 +110,39 @@ def batch_topk_config(p: core.TrainParams, k: int) -> dict:
     return train_batch_topk.config(p, k, f"BatchTopK-k{k}")
 
 
+# Karvonen's five, so they can move along the L0 axis as our three now can. His own sweep
+# cannot stand in: he trains on raw activations where we standardize, so his penalty scale
+# does not transfer (his Gated l1 0.958 -> L0 138.5; ours at 1.368 -> L0 50.3), and
+# commit 8b95ec9 rewrote standard/p_anneal's recon loss under our pin. Same reason
+# aggregate.py refuses to mix the two pipelines under one type name.
+#     module, knob, run-name prefix
+BASELINES_SWEPT = {
+    "standard": (train_standard, "l1_penalty", "Standard"),
+    "gated": (train_gated, "l1_penalty", "Gated"),
+    "panneal": (train_panneal, "initial_sparsity_penalty", "PAnneal"),
+    "gated_anneal": (train_gated_anneal, "initial_sparsity_penalty", "GatedAnneal"),
+    "topk": (train_topk, "k", "TopK"),
+}
+
+
+def baseline_config(p: core.TrainParams, kind: str, value: float) -> dict:
+    module, knob, prefix = BASELINES_SWEPT[kind]
+    shown = f"{int(value)}" if knob == "k" else f"{value:g}"
+    return module.config(p, value, f"{prefix}-{knob}{shown}")
+
+
 def configs(p: core.TrainParams, args: argparse.Namespace) -> list[dict]:
     """The grid, or the eight baselines; then any --spade_pairs appended to it."""
-    if args.batch_topk_sweep:
+    if args.baseline_sweep:
+        kind = args.baseline_sweep
+        knob = BASELINES_SWEPT[kind][1]
+        values = [(int(x) if knob == "k" else float(x))
+                  for x in args.baseline_values.split(",")]
+        trainer_configs = [baseline_config(p, kind, v) for v in values]
+        print(f"{kind} sweep: {len(trainer_configs)} configs")
+        for c in trainer_configs:
+            print(f"  {c['wandb_name']}: {knob}={c[knob]}")
+    elif args.batch_topk_sweep:
         ks = [int(x) for x in args.batch_topk_ks.split(",")]
         trainer_configs = [batch_topk_config(p, k) for k in ks]
         print(f"BatchTopK sweep: {len(trainer_configs)} configs")
@@ -189,16 +219,29 @@ def main():
              "default spans Karvonen's whole axis (his TopK sweep runs k=10..400)."
     )
     parser.add_argument(
+        "--baseline_sweep", type=str, default="", choices=["", *BASELINES_SWEPT],
+        help="Replace all trainer configs with a sweep of one Karvonen baseline type. "
+             "Uses --baseline_values for the grid."
+    )
+    parser.add_argument(
+        "--baseline_values", type=str, default="",
+        help="Comma-separated values of that type's sparsity knob (l1_penalty, "
+             "initial_sparsity_penalty or k). No default: the response is unmeasured, "
+             "so the range is a decision the caller has to make and record."
+    )
+    parser.add_argument(
         "--spade_pairs", type=str, default="",
         help="Comma-separated lambda:gamma SpaDE configs trained IN ADDITION to "
              "the selected configs (e.g. '1e-7:5e-3,8e-8:1e-3')"
     )
     args = parser.parse_args()
 
-    selected = [name for name in ("spade_sweep", "cosine_spade_sweep", "batch_topk_sweep")
-                if getattr(args, name)]
+    selected = [name for name in ("spade_sweep", "cosine_spade_sweep", "batch_topk_sweep",
+                                  "baseline_sweep") if getattr(args, name)]
     if len(selected) > 1:
         raise ValueError(f"pick one sweep, not {sorted('--' + s for s in selected)}.")
+    if args.baseline_sweep and not args.baseline_values:
+        raise ValueError("--baseline_sweep needs --baseline_values; there is no sane default.")
 
     refuse_if_populated(args.save_dir)
 
