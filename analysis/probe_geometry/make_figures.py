@@ -13,10 +13,10 @@ import pandas as pd
 
 
 import matplotlib.pyplot as plt
+from matplotlib.patches import Circle
 
-from spade.figures.embedding_panels import class_ellipse
 from spade.figures.paper_style import (
-    DIRECTION_ORDER, DIRECTION_STYLE, INK, apply_style, save_figure)
+    DIRECTION_ORDER, DIRECTION_STYLE, INK, NULL, apply_style, save_figure)
 
 RESULTS = Path(__file__).resolve().parent / "results"
 FIGURES = Path(__file__).resolve().parent / "figures"
@@ -35,35 +35,38 @@ def embed_panel(ax, points: pd.DataFrame, probes: pd.DataFrame,
     No origin line and no variance ratio -- SMACOF fixes a configuration only up to
     rigid motion, so the centre is the cloud's own centroid and both axes are arbitrary.
     The committed probe is drawn open so it cannot be read as the family centroid: they
-    are different objects, and for the board families they differ by up to 1.3 within-
-    family radii.
+    are different objects, and for R1 they differ by more than a within-family radius.
     """
-    order = [f for f in DIRECTION_ORDER if f in set(points.family)]
-    for family in order:
+    row = fidelity.iloc[0]
+    centre = points[["x", "y"]].to_numpy().mean(0)
+    ax.add_patch(Circle(centre, row.ring_radius, fill=False, color=NULL["color"],
+                        ls=(0, (5, 2)), lw=1.2, zorder=2,
+                        label=f"rule / board split ({row.ring_balanced_accuracy:.0%} bal. acc.)"))
+    for family in DIRECTION_ORDER:
         style, at = DIRECTION_STYLE[family], points[points.family == family]
         xy = at[["x", "y"]].to_numpy()
         ax.scatter(*xy.T, s=18, marker=style["marker"], color=style["color"],
                    alpha=0.6, lw=0, zorder=3, label=f"{style['label']} (n={len(at)})")
-        class_ellipse(ax, xy, style["color"])
         ax.plot(*xy.mean(0), ls="none", marker=style["marker"], ms=7,
                 color=style["color"], markeredgecolor="white", markeredgewidth=1.1,
                 zorder=6)
-    for family in order:
+    for family in DIRECTION_ORDER:
         style = DIRECTION_STYLE[family]
         at = probes[probes.family == family].iloc[0]
         ax.plot(at.x, at.y, ls="none", marker="o", ms=10, mfc="none",
                 markeredgecolor=style["color"], markeredgewidth=1.8, zorder=7)
+    ax.set_aspect("equal")
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_xlabel("MDS axis 1 (arb. units)")
     ax.set_ylabel("MDS axis 2 (arb. units)")
-    row = fidelity.iloc[0]
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.13), ncol=3, fontsize=7,
               labelspacing=0.3, columnspacing=1.1, handletextpad=0.3,
-              title=("point = one square; filled = centroid; ring = committed probe;\n"
-                     "ellipse = 50% dispersion, not a CI. No origin, and distance is\n"
-                     "monotone in angle, not proportional. Rank fidelity "
-                     f"$\\rho$ = {row.rank_fidelity:.2f} (null {row.null_mean:.2f})"),
+              title=("point = one square; filled = centroid; open = committed probe.\n"
+                     "No origin, and distance is monotone in angle, not proportional.\n"
+                     f"Rank fidelity $\\rho$ = {row.rank_fidelity:.2f} "
+                     f"(null {row.null_mean:.2f}), scored without illegal, "
+                     "which is exactly $-$legal per square"),
               title_fontsize=7)
 
 

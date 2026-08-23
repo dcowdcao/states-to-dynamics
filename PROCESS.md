@@ -6,6 +6,24 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Fig 1(a): illegal back in, ellipses out, a rule/board ring (2026-08-22)
+
+Three changes to the panel, on request. The 50% dispersion ellipses are gone. Per-square
+`illegal` is drawn again — it is still exactly `-legal@q`, so it is drawn and **scored
+out**, and fidelity stays the 364-point number (0.504) rather than the flattered 424-point
+one. A dashed ring marks the rule/board split.
+
+**The ring is real but it cost something.** Board contrasts sit at a smaller mean angle to
+every other direction than rule contrasts do, 89.71 deg against 90.13, and the drawn radius
+tracks that at rho = +0.505 per point (AUC 0.897). But on the 364-point layout, before
+`illegal` was drawn, the same split was 93.4% accurate at rho = +0.844. Adding 60 points
+that must be antipodal to 60 others is what degraded it: a plane cannot realise many
+antipodal pairs, so it distorts the radii around them, and `legal` is pushed out to mean
+radius 0.880 while its own antipode sits at 0.642. The ring is annotated with its balanced
+accuracy so the 18% on the wrong side are not read as noise.
+
+---
+
 ## Fig 1(a) was a 6.75% plane of a 121-dimensional cloud (2026-08-22)
 
 `fig1_direction_geometry`'s left panel was an uncentred PCA of 424 per-square directions,

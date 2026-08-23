@@ -21,7 +21,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy.linalg import orthogonal_procrustes
-from scipy.stats import spearmanr
+from scipy.stats import mannwhitneyu, spearmanr
 from sklearn.manifold import MDS
 
 from spade.common.paths import repo_root
@@ -32,6 +32,7 @@ from spade.probe_geometry.probes import (
     committed_rule_class_directions,
     rules_corpus,
     square_rule_class_directions,
+    square_rules_directions,
     stack,
     unit,
 )
@@ -40,21 +41,24 @@ RESULTS = repo_root() / "analysis" / "probe_geometry" / "results"
 LAMBDA = 10.0
 ORDER = ("legal", "illegal", "R1", "R2", "R3", "colour", "occupancy")
 
-# The families the panel draws. `illegal` is absent because `illegal@q` is exactly
-# -`legal@q`: both are ridge onto centred indicators over the same rows, and
-# 1[rule>0] = 1 - 1[rule==0] forces w2[1] = -w4[0]. Drawing both put one 60-point set on
-# the panel twice, reflected through the origin, and its 180 deg pairs inflated every
-# fidelity score. The *committed* illegal probe is a separate fit, is not redundant, and
-# stays in the cosine matrix, so `committed()` is filtered against this and `points()`
-# simply never builds the family.
-CLOUD = ("legal", "R1", "R2", "R3", "colour", "occupancy")
+RULE_FAMILIES = ("legal", "illegal", "R1", "R2", "R3")
+
+# `illegal@q` is exactly -`legal@q`: both are ridge onto centred indicators over the same
+# rows, and 1[rule>0] = 1 - 1[rule==0] forces w2[1] = -w4[0]. The panel draws it -- the
+# reflection is legible, and legality having two opposed poles is the thing the eye should
+# see -- but it is scored out. Its 180 deg pairs are the easiest in the set and a plane
+# renders them for free, so leaving them in lifts every fidelity number without any of the
+# structure being better shown.
+SCORED = tuple(f for f in ORDER if f != "illegal")
 NULL_DRAWS = 5
 
 
 def points() -> list[Direction]:
     rules = rules_corpus()
     rows = np.arange(len(rules["acts"]))
-    return (board_directions(board_probe())
+    legality = [Direction("illegal", d.name, d.vec, d.square)
+        for d in square_rules_directions(rules, rows, LAMBDA)]
+    return (board_directions(board_probe()) + legality
             + square_rule_class_directions(rules, rows, LAMBDA))
 
 
@@ -114,10 +118,36 @@ def structure_free_null(x: np.ndarray, family: np.ndarray) -> tuple[float, float
     return float(np.mean(scores)), float(np.std(scores, ddof=1))
 
 
+def ring(xy: np.ndarray, family: np.ndarray, x: np.ndarray) -> dict:
+    """The radius that best splits the rule families from the board families.
+
+    The panel draws the board contrasts inside and the rule contrasts outside. That is a
+    property of the directions, not of the layout: a board contrast sits at a smaller mean
+    angle to every other direction than a rule contrast does, 89.71 deg against 90.13.
+    `centrality_rho` is how well the drawn radius tracks that 512-d quantity, per point,
+    and is what licenses drawing the ring at all.
+    """
+    radii = np.linalg.norm(xy - xy.mean(0), axis=1)
+    is_rule = np.isin(family, RULE_FAMILIES)
+    # Balanced, not raw, accuracy: there are 300 rule points against 124 board ones, and a
+    # cut chosen on raw accuracy buys itself the majority class and leaves a third of the
+    # board points outside the ring it is supposed to enclose.
+    balanced = lambda cut: ((radii[is_rule] > cut).mean() + (radii[~is_rule] <= cut).mean()) / 2
+    grid = np.linspace(radii.min(), radii.max(), 2000)
+    cut = grid[np.argmax([balanced(c) for c in grid])]
+
+    theta = angular(x).astype(float)
+    np.fill_diagonal(theta, np.nan)
+    auc = mannwhitneyu(radii[is_rule], radii[~is_rule]).statistic / (is_rule.sum() * (~is_rule).sum())
+    return {"ring_radius": float(cut),
+            "ring_balanced_accuracy": float(balanced(cut)),
+            "ring_auc": float(auc),
+            "ring_centrality_rho": float(spearmanr(radii, np.nanmean(theta, 1)).statistic)}
+
+
 def main():
     pts = points()
-    all_probes = committed(pts)
-    drawn = [d for d in all_probes if d.family in CLOUD]
+    drawn = committed(pts)
 
     cloud = stack(pts)
     xy = embed(np.vstack([cloud, stack(drawn)]))
@@ -130,18 +160,25 @@ def main():
         for d, p in zip(drawn, probe_xy)]).to_csv(RESULTS / "embed_probes.csv", index=False)
 
     family = np.array([d.family for d in pts])
-    fidelity = rank_fidelity(cloud, cloud_xy)
-    null_mean, null_sd = structure_free_null(cloud, family)
-    pd.DataFrame([{"n_points": len(pts), "rank_fidelity": fidelity,
-                   "null_mean": null_mean, "null_sd": null_sd}]).to_csv(
+    keep = np.isin(family, SCORED)
+    fidelity = rank_fidelity(cloud[keep], cloud_xy[keep])
+    null_mean, null_sd = structure_free_null(cloud[keep], family[keep])
+    pd.DataFrame([{"n_drawn": len(pts), "n_scored": int(keep.sum()),
+                   "rank_fidelity": fidelity,
+                   "null_mean": null_mean, "null_sd": null_sd,
+                   **ring(cloud_xy, family, cloud)}]).to_csv(
         RESULTS / "embed_fidelity.csv", index=False)
 
-    by_family = {d.family: d.vec for d in all_probes}
+    by_family = {d.family: d.vec for d in drawn}
     gram = np.array([[by_family[a] @ by_family[b] for b in ORDER] for a in ORDER])
     pd.DataFrame(gram, index=ORDER, columns=ORDER).to_csv(RESULTS / "type_cosines.csv")
 
-    print("points per family:", {f: int((family == f).sum()) for f in CLOUD})
+    print("points per family:", {f: int((family == f).sum()) for f in ORDER})
+    r = ring(cloud_xy, family, cloud)
     print(f"rank fidelity {fidelity:.3f}  null {null_mean:.3f} +- {null_sd:.3f}")
+    print(f"ring r={r['ring_radius']:.3f} splits rule from board, balanced accuracy "
+          f"{r['ring_balanced_accuracy']:.1%}, AUC {r['ring_auc']:.3f}, tracking 512-d "
+          f"centrality at rho={r['ring_centrality_rho']:+.3f}")
     print(pd.DataFrame(gram, index=ORDER, columns=ORDER).round(3))
 
 
