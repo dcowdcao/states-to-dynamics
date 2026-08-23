@@ -60,14 +60,10 @@ def embed_panel(ax, points: pd.DataFrame, probes: pd.DataFrame,
     ax.set_yticks([])
     ax.set_xlabel("MDS axis 1 (arb. units)")
     ax.set_ylabel("MDS axis 2 (arb. units)")
+    # No legend title: what the markers mean, the missing origin, the monotone-not-
+    # proportional distance and the fidelity all live in the README's Figure notes.
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.13), ncol=3, fontsize=7,
-              labelspacing=0.3, columnspacing=1.1, handletextpad=0.3,
-              title=("point = one square; filled = centroid; open = committed probe.\n"
-                     "No origin, and distance is monotone in angle, not proportional.\n"
-                     f"Rank fidelity $\\rho$ = {row.rank_fidelity:.2f} "
-                     f"(null {row.null_mean:.2f}), scored without illegal, "
-                     "which is exactly $-$legal per square"),
-              title_fontsize=7)
+              labelspacing=0.3, columnspacing=1.1, handletextpad=0.3)
 
 
 def cosine_panel(fig, ax, gram: pd.DataFrame) -> None:
