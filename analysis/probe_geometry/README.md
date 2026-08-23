@@ -43,20 +43,33 @@ contrast norm of ≈ 4.29, so this is load-bearing rather than pedantic.
 | board colour | mine − theirs, at one square | 64 | `spade.probes.load.board()`, layer 5, test acc 0.9937 |
 | board position | ½(mine + theirs) − empty, at one square | 60 | same |
 | legal, R1, R2, R3 | each class − the mean of the four | 60 each | 4-class rule probe refit on one candidate square |
-| illegal | illegal − legal | 60 | 2-class rule probe refit on one candidate square; not drawn in panel (a) |
+| illegal | illegal − legal | 60 | 2-class rule probe refit on one candidate square |
 
-Panel (a) draws 364 of these — one point per board square, six families, every
-family but per-square `illegal` — with the committed probe of the same colour as
-a ringed marker among them. The board probe has no pooled direction, so its
-marker is the mean of its per-square points.
+Panel (a) draws all 424 — one point per board square per family — with the
+committed probe of the same colour as an open marker among them, and the filled
+marker of that colour as the family's own centroid. The board probe has no pooled
+direction, so its open marker is the mean of its per-square points.
 
 `illegal@q` is exactly `−legal@q`: both are ridge onto centred indicators over
 the same rows at the same λ, and 1[rule>0] = 1 − 1[rule==0] forces
-`w2[1] = −w4[0]`. Drawing both put one 60-point set on the panel twice, reflected
-through the origin, and its 180° pairs inflated every fidelity score below. The
-*committed* illegal probe is a separate fit — its cosine with the committed
-`legal` is −0.829, not −1 — so it is not redundant and stays in panel (b)'s
-cosine matrix.
+`w2[1] = −w4[0]`. It is drawn, because legality having two opposed poles is worth
+seeing, but it is **scored out**: a 180° pair is the easiest thing a plane can
+render and leaving those 60 in lifts every fidelity number below without any
+structure being better shown. Fidelity is therefore computed on the 364
+non-duplicate points. The *committed* illegal probe is a separate fit — its cosine
+with the committed `legal` is −0.829, not −1 — so it is genuinely independent and
+carries its own entry in panel (b).
+
+**The dashed ring** splits the rule families from the board families at the radius
+that maximizes balanced accuracy (82.2%; AUC 0.897, p = 8×10⁻³⁸). It is drawn
+because the split is a property of the directions and not of the layout: a board
+contrast sits at a smaller mean angle to every other direction than a rule
+contrast does, 89.71° against 90.13°, and the drawn radius tracks that 512-d
+quantity at ρ = +0.505 per point. Two cautions. That 0.42° is the whole of the
+effect the ring renders as a visible boundary. And the ring was appreciably
+cleaner before `illegal` was drawn — 93.4% raw accuracy and ρ = +0.844 on the
+364-point layout — because antipodal pairs cannot be placed in a plane without
+distorting every radius around them.
 
 The colour and position contrasts span everything a 3-way per-square head identifies, so
 there is no third board axis to have missed. The four centre squares are never
@@ -72,12 +85,13 @@ it, and `probes.rules_proba` is the only path that scores.
 
 The panel is a nonmetric (ordinal) MDS of the angular distances
 θ_ij = arccos(x_i·x_j), not a PCA. These directions are near-mutually-orthogonal
-— mean pairwise angle 89.99° ± 3.96 against 90.00° ± 2.53 for isotropic random
-vectors in 512 dimensions — the spectrum's participation ratio is 121, and it
-takes 50 components to reach half the variance. No plane holds their variance:
-the uncentred PCA puts 3.21% and 2.47% on its two axes (4.24% and 2.51% on
-the 424 points the replaced panel drew). What a
-plane can hold is the *order* of the angles, which is what nonmetric MDS fits.
+— mean pairwise angle 89.90° ± 4.86 over all 424, and 89.99° ± 3.96 over the 364
+scored ones, against 90.00° ± 2.53 for isotropic random vectors in 512 dimensions
+— the spectrum's participation ratio is 121, and it takes 50 components to reach
+half the variance. No plane holds that variance: the uncentred PCA it replaces
+put 4.24% and 2.51% on its two axes (3.21% and 2.47% over the scored points).
+What a plane can hold is the *order* of the angles, which is what nonmetric MDS
+fits.
 So distance in the panel is monotone in angle and not proportional to it, the
 axes carry no variance ratio, and — SMACOF fixing a configuration only up to
 rigid motion — there is no canonical origin to draw arrows from. Orthogonal
@@ -86,11 +100,11 @@ mirror the panel.
 
 Rank fidelity — Spearman between the 512-d angles and the drawn distances, over
 every pair — is **0.504**, against **0.395** for the PCA and **0.525** for direct
-gradient descent on the exact objective. Metric MDS, Isomap and UMAP were
-surveyed and none led; the survey ran on the old 424-point set, where the
-duplicated `illegal` points lift every method (nonmetric MDS 0.551, metric MDS
-0.511, Isomap k=100 0.502, UMAP nn=100 0.499, PCA 0.394), so those numbers rank
-methods and are not comparable to the 0.504 above.
+gradient descent on the exact objective, all three on the 364 scored points.
+Metric MDS, Isomap and UMAP were surveyed and none led; that survey scored the
+duplicated `illegal` points in, which lifts every method (nonmetric MDS 0.551,
+metric MDS 0.511, Isomap k=100 0.502, UMAP nn=100 0.499, PCA 0.394), so those
+numbers rank methods against each other and are not comparable to the 0.504.
 
 **The panel is family-level evidence and nothing finer.** A structure-free null —
 the same six family mean directions, residuals replaced by isotropic noise at the
@@ -109,7 +123,9 @@ angle is read off panel (b).
 
 What the panels do not print, so a reader does not have to infer it:
 
-- `fig1_direction_geometry.png` / `.pdf` panel (a) — the rule codes are R1 placement,
+- `fig1_direction_geometry.png` / `.pdf` panel (a) — the dashed ring is the rule/board
+  boundary, not a contour of the data; it is placed at the balanced-accuracy-optimal
+  radius and 18% of points fall on its wrong side. The rule codes are R1 placement,
   R2 bracketing, R3 turn (`docs/othello_rules.md`). The null beside the fidelity is
   0.574 ± 0.007, SD over 5 draws, and it is *above* the embedding's own 0.504: the
   layout is evidence about families and never about individual squares. The committed

@@ -490,11 +490,16 @@ it is what unrelated vectors in a high-dimensional space do by default.
   basis (orthogonal Procrustes onto the PCA coordinates) so it cannot. For the
   same reason the committed probes are drawn as ringed markers among the cloud,
   not as arrows from a centre that means nothing.
-- **Check the direction set for algebraic duplicates before embedding it.** Two
-  contrasts fit by ridge onto centred indicators over the same rows are exact
-  negatives when their targets are (`1[y>0] = 1 − 1[y=0]`). Drawing both puts one
-  set on the panel twice, reflected, and its 180° pairs inflate every fidelity
-  score.
+- **Check the direction set for algebraic duplicates before embedding it, and
+  score them out.** Two contrasts fit by ridge onto centred indicators over the
+  same rows are exact negatives when their targets are (`1[y>0] = 1 − 1[y=0]`).
+  Draw both only when the reflection is itself the point — two opposed poles of
+  one axis is a real thing to show — and then say on the figure that it is an
+  identity, not a measurement. Either way compute fidelity on the de-duplicated
+  set: a 180° pair is the easiest thing a plane can render, so leaving it in
+  inflates every score for free. Note also that antipodes cost the rest of the
+  layout, since a plane cannot place many of them without distorting the radii
+  around them.
 
 ## 5. Captions and panel labels
 
