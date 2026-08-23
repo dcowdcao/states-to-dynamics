@@ -4,7 +4,11 @@ A plain L2 logistic regression is fit on OthelloGPT's layer-5 residual at the po
 played move, and asked one question per position: was the move just played legal? Two
 heads — 2-class (legal vs illegal) and 4-class (legal, R1, R2, R3) — are fit independently
 in each of 11 representation spaces, then run over every position of 34,546 game sequences
-that are legal everywhere except at one known index.
+that are legal everywhere except at one known index. The three constraint rules:
+
+- **R1 placement** — a move puts one disc of the mover's color on an empty square.
+- **R2 bracketing** — the disc must close a gapless line of opponent discs with one of the mover's own.
+- **R3 turn** — colors alternate; legality is judged for the mover, not the opponent.
 
 The point is not that legality is decodable. It is whether the probe's output, read across
 a whole game, **puts its maximum on the move that is actually illegal**, and whether a
@@ -238,10 +242,16 @@ rows would give intervals several times too tight. Every arm draws one branch pe
 seed 42 rather than averaging a game's categories, which would give it 1/√k of its spread.
 
 `raw_detection_auroc.png` is a bar per illegal arm of the paired AUROC at *t0* — one illegal
-branch against the same game's legal control, threshold-free, so a head's hit rate and its
-false alarms are one number. Its chance line is empirical rather than assumed: each head also
-scores that legal control against the second legal control the game carries, which lands at
-0.502, and the note carries both. Numbers in `detection_auroc_<space>.csv`.
+branch against the same game's legal control, one pair per game, threshold-free, so a head's
+hit rate and its false alarms are one number. The 2-class head is read as *P*(illegal), the
+4-class as 1 − *P*(legal). Above 0.5 the head scores the illegal move above the legal one,
+and AUROCs are never flipped here, so a bar *below* 0.5 would be the finding. Error bars are
+95% percentile bootstrap CIs over paired games (1,000 resamples).
+
+Its chance line is empirical rather than assumed: each head also scores that legal control
+against the second legal control the game carries, which lands at 0.502 (CI 0.491–0.512) for
+both heads. Those two rows stay in `detection_auroc_<space>.csv` and are what licenses the
+line; the figure itself carries no text under its axes.
 
 Everything else the study measures is a table: `localization_<space>.csv` and
 `localization_by_space.csv` (localization rate, rank of *t0*, paired AUROC, pick-a-position

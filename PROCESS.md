@@ -6,6 +6,27 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The AUROC bar chart loses its footer, and its inputs were checked first (2026-08-22)
+
+`analysis/move_legality/detection_auroc.py` drops both gray blocks under the axes: the
+five-line note and `rule_key`'s R1/R2/R3 definitions. Same treatment as
+`divergence_by_space` and fig 1 -- the reading direction, the CI semantics and the
+empirical null (0.502, CI 0.491-0.512, both heads) are now in `analysis/move_legality/README.md`,
+and the R1/R2/R3 definitions with them. `localization.py` still calls `rule_key`, so the
+helper stays.
+
+**Was the figure due for a re-run?** No, and the check is worth writing down because the
+two Aug 20 probe commits look like they should have touched it. They did not:
+`spade.probes` (`f904c3e`) and the legality probe's move onto it (`11ab0c5`) never reach
+`spade.move_legality`, which carries its own fit -- full-batch L-BFGS to the exact optimum,
+per-space feature standardization, `l2` selected on validation -- so neither the fixed
+epoch budget nor the fixed weight decay those commits removed was ever in this path.
+`branches.pt` is unchanged since Aug 7 and the readout since Aug 11; the rollout tree is a
+separate variant this study does not read. The re-run reproduces
+`detection_auroc_raw.csv` byte for byte, which is the evidence.
+
+---
+
 ## Fig 1(a): illegal back in, ellipses out, a rule/board ring (2026-08-22)
 
 Three changes to the panel, on request. The 50% dispersion ellipses are gone. Per-square

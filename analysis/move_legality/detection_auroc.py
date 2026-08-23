@@ -9,7 +9,8 @@ its own short bar rather than being averaged away.
 AUROC is threshold-free, so a head's hit rate and the false alarms it pays for it are one
 number rather than two bars. The legal-vs-legal null -- a game's legal control against the
 second legal control it carries -- is still measured, since it is what makes the 0.5 line
-empirical rather than assumed, but it is a number under the panel and not a bar of its own.
+empirical rather than assumed, but it is neither a bar nor a caption: it goes to the CSV
+and to README.md, and the figure carries no text under its axes.
 
 Usage: python analysis/move_legality/detection_auroc.py [--space raw] [--camera_ready]
 """
@@ -24,7 +25,7 @@ from matplotlib import pyplot as plt
 
 from spade.common.paths import repo_root
 from spade.figures.paper_style import (
-    CLASS_STYLE, MUTED, NULL, PROBE_CLASS_STYLE, apply_style, rule_key, save_figure)
+    CLASS_STYLE, MUTED, NULL, PROBE_CLASS_STYLE, apply_style, save_figure)
 from spade.move_legality import localize
 
 FIGURES = repo_root() / "analysis" / "move_legality" / "figures"
@@ -65,14 +66,13 @@ def bars(space: str, meta: dict, selection: dict) -> list[dict]:
 
 
 def draw(space: str, rows: list[dict], camera_ready: bool) -> Path:
-    """The illegal arms as bars; the legal-vs-legal null stays a number under them.
+    """The illegal arms as bars, and nothing else.
 
-    Drawn, the null was two bars at the chance line saying the same thing the line says. It
-    is still measured -- it is what licenses that line being read as empirical -- so it goes
-    in the note and in the CSV.
+    Drawn, the null was two bars at the chance line saying the same thing the line says; the
+    caption that replaced it said what README.md says. Both are still measured -- the null is
+    what licenses the chance line being read as empirical -- and both live in the CSV.
     """
     fig, ax = plt.subplots(figsize=(5.5, 3.4))
-    null = {r["head"]: r for r in rows if r["arm"] == "control"}
     rows = [r for r in rows if r["arm"] != "control"]
     x = np.array([i + (GAP if r["head"] == "4-class" else 0.0) for i, r in enumerate(rows)])
 
@@ -104,16 +104,6 @@ def draw(space: str, rows: list[dict], camera_ready: bool) -> Path:
     ax.tick_params(axis="x", length=0)
 
     fig.tight_layout()
-    fig.text(0.005, -0.005,
-             "AUROC at $t_0$ of an illegal branch against the same game's legal control, one "
-             "pair per game: above 0.5\nthe head scores the illegal move above the legal one, "
-             "and AUROCs are never flipped, so a bar below 0.5\nis the finding. 2-class head "
-             "read as $P$(illegal), 4-class as $1-P$(legal); bars are 95% percentile\nbootstrap "
-             "CIs over paired games (1,000 resamples). The chance line is empirical: that same "
-             f"control\nagainst the second legal control the game carries scores "
-             f"{null['2-class']['auroc']:.3f} and {null['4-class']['auroc']:.3f}.",
-             ha="left", va="top", fontsize=7, color=MUTED)
-    rule_key(fig, RULES, y=-0.205)
     return save_figure(fig, FIGURES / f"{space}_detection_auroc", camera_ready)
 
 
