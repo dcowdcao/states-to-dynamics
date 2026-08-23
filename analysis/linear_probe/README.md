@@ -28,6 +28,12 @@ redesign, not a repoint. The canonical per-layer test accuracies are .9109 .9494
 .9828 .9899 .9937 .9945 .9940 for layers 0–7; **layer 6 edges layer 5 by 0.0009**, inside
 the noise this single-seed sweep cannot resolve, and layer 5 stays the hook point.
 
+That redesign now exists as its own study, `analysis/board_probe_sweep/`: the same eight
+layers under the canonical probe, with a cluster bootstrap over test games in place of the
+seed bars and a null scored on the canonical corpus. It supersedes this figure as the
+description of the probe anything currently loads; this one remains the record of the
+ARENA fit.
+
     python analysis/linear_probe/train_linear_probe.py    # activations/ + results/
     python analysis/linear_probe/parity_fix_effect.py     # results/parity_fix_effect.csv
     python analysis/linear_probe/make_figures.py          # figures/ [--camera-ready]
