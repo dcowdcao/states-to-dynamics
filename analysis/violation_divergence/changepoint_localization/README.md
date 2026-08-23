@@ -233,10 +233,11 @@ python analysis/violation_divergence/changepoint_localization/measure.py      # 
 python analysis/violation_divergence/changepoint_localization/make_figures.py [--camera-ready]
 PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/measure_regenerated.py
 PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/make_figures_regenerated.py
-PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/quantity_ablation.py
+PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/quantity_ablation.py --variant regenerated
+PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/quantity_ablation.py --variant spliced
 ```
 
-`quantity_ablation.py` asks what the score should be computed *on* — step length against the
+`quantity_ablation.py --variant {regenerated,spliced}` asks what the score should be computed *on* — step length against the
 representation norm and against curvature proper, one matched band, both statistics. It
 supersedes `theta_ablation.py`, which measured only the argmax half and on that basis called
 curvature dead; per position it is weakly alive, and that file's claimed ordering inversion

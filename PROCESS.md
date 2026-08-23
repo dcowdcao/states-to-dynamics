@@ -6,7 +6,7 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
-## What the change-point score should be computed on (2026-08-22)
+## What the change-point score should be computed on, both suffix regimes (2026-08-22)
 
 `quantity_ablation.py` + `QUANTITY_ABLATION.md` + `figures/quantity_ablation.png`. Step
 length against the representation norm and against curvature, one matched band (moves 14-46),
@@ -31,10 +31,29 @@ the claimed ordering inversion, Spearman -0.67, is **+0.783 per position** -- th
 ordering as `d`. Curvature still cannot carry a dictionary comparison: its span across spaces
 is 0.068 against d's 0.369.
 
-Regenerated corpus only; the divergence npz has no `norm`, so the spliced tree needs a GPU
-encode pass. And this is the *substitution* test, not the *explanation* test -- whether the
-norm accounts for d's variance (R^2 0.87-0.88, partialling it out drops GatedAnneal 0.587 ->
-0.173) is still unrun, and that is the one that decides whether "geometry" is the right word.
+Both regimes now, and **every claim above replicates**: theta above chance per position in
+both (0.527-0.596 regenerated, 0.553-0.617 spliced), Spearman d-vs-theta **+0.783 in both**,
+norm's sign flipping in both, d beating norm on the same 6/9 spaces in both, and the two `d`
+orderings agreeing at +0.983. So none of it is a property of one suffix convention.
+
+`branch_norms.py` + `submit_branch_norms.sbatch` is what made the spliced half possible: the
+divergence npz had `d` and `theta` but no `norm`. It is **non-destructive** -- writes
+`<space>_norm.npz` beside `<space>.npz` -- because re-running `branch_geometry.py` to add a key
+would recompute d and theta through a GPU encode that is not bitwise reproducible, and every
+committed number in this study is byte-identical against the current files.
+
+**Two gotchas that cost three GPU submissions.** Rows must come from the committed `meta.npz`
+`row` column and never be re-derived: `extend_branches` grew the tree after that npz was
+written, so `eval_games` now returns 2,207 games where the npz holds 575. A shape assert caught
+it; without one the norm array would have been silently misaligned with `d` and every number
+here would have been plausible garbage. And **a git worktree gets the tracked checkpoint
+scaffolding but not the weights** (`*.pt` is gitignored), so `registry._verify` asserts on a
+missing `ae.pt` until they are symlinked from the main tree.
+
+The still-open question is unchanged and is the one that decides whether "geometry" is the
+right word: this is the *substitution* test, not the *explanation* test. Whether the norm
+accounts for d's variance (R^2 0.87-0.88; partialling it out drops GatedAnneal 0.587 -> 0.173)
+has still not been run.
 
 ## Fig 1(a) was a 6.75% plane of a 121-dimensional cloud (2026-08-22)
 
