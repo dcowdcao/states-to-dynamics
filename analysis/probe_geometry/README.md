@@ -123,9 +123,18 @@ angle is read off panel (b).
 
 What the panels do not print, so a reader does not have to infer it:
 
-- `fig1_direction_geometry.png` / `.pdf` panel (a) — the dashed ring is the rule/board
-  boundary, not a contour of the data; it is placed at the balanced-accuracy-optimal
-  radius and 18% of points fall on its wrong side. The rule codes are R1 placement,
+- `fig1_direction_geometry.png` / `.pdf` panel (a) — **how to read it.** A point is one
+  board square; the filled marker of a colour is that family's centroid, the open ring is
+  the committed probe (a different object — for R1 they are more than a within-family
+  radius apart). There is **no origin**: SMACOF fixes a configuration only up to rigid
+  motion, so the centre is the cloud's own centroid and both axes are arbitrary units.
+  **Distance is monotone in angle, not proportional to it** — nonmetric MDS fits only the
+  rank order — so read which points are nearer than which, never how much. Rank fidelity
+  is ρ = 0.50 against 0.57 for a family-means-only null, scored on the 364 points that
+  exclude `illegal`, which is exactly −`legal` per square. The dashed ring is the
+  rule/board boundary, not a contour of the data; it is placed at the
+  balanced-accuracy-optimal radius and 18% of points fall on its wrong side. The rule
+  codes are R1 placement,
   R2 bracketing, R3 turn (`docs/othello_rules.md`). The null beside the fidelity is
   0.574 ± 0.007, SD over 5 draws, and it is *above* the embedding's own 0.504: the
   layout is evidence about families and never about individual squares. The committed

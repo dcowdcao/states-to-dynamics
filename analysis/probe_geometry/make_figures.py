@@ -21,6 +21,7 @@ from spade.figures.paper_style import (
 RESULTS = Path(__file__).resolve().parent / "results"
 FIGURES = Path(__file__).resolve().parent / "figures"
 DIVERGING = "RdBu_r"
+TITLE = "Similarity between probe directions across board state and rules"
 
 
 def panel_letter(ax, letter: str) -> None:
@@ -60,14 +61,10 @@ def embed_panel(ax, points: pd.DataFrame, probes: pd.DataFrame,
     ax.set_yticks([])
     ax.set_xlabel("MDS axis 1 (arb. units)")
     ax.set_ylabel("MDS axis 2 (arb. units)")
+    # No legend title: what the markers mean, the missing origin, the monotone-not-
+    # proportional distance and the fidelity all live in the README's Figure notes.
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.13), ncol=3, fontsize=7,
-              labelspacing=0.3, columnspacing=1.1, handletextpad=0.3,
-              title=("point = one square; filled = centroid; open = committed probe.\n"
-                     "No origin, and distance is monotone in angle, not proportional.\n"
-                     f"Rank fidelity $\\rho$ = {row.rank_fidelity:.2f} "
-                     f"(null {row.null_mean:.2f}), scored without illegal, "
-                     "which is exactly $-$legal per square"),
-              title_fontsize=7)
+              labelspacing=0.3, columnspacing=1.1, handletextpad=0.3)
 
 
 def cosine_panel(fig, ax, gram: pd.DataFrame) -> None:
@@ -108,7 +105,9 @@ def figure(camera_ready: bool) -> Path:
     cosine_panel(fig, axes[1], gram)
     for ax, letter in zip(axes, "ab"):
         panel_letter(ax, letter)
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0, 1, 1 if camera_ready else 0.93))
+    if not camera_ready:
+        fig.suptitle(TITLE, fontsize=11, y=0.995)
     return save_figure(fig, FIGURES / "fig1_direction_geometry", camera_ready)
 
 
