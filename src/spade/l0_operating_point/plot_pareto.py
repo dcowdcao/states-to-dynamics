@@ -171,41 +171,43 @@ def plot_3var_graph(
 
 HIS_3VAR_YLIMS = (0.996, 1.0005)
 
-
-def _ylims_holding(df: pd.DataFrame, xlims: tuple[float, float]) -> tuple[float, float]:
-    """His frac_recovered window is 0.9960-1.0005 because every SAE of his sits at ~1.
-    Ours do not: on his window 44 of 55 SpaDE points and 62 of 117 CosineSpaDE points
-    fall off the bottom and vanish without trace. A panel that silently drops 80% of an
-    architecture is not a comparison, so the combined figure widens to hold what it plots.
-
-    Floored at 0 rather than at the true minimum. Recovering less loss than zero-ablation
-    is degeneracy, not a worse operating point, and the six points that do (his own
-    Standard configs at L0 < 3, down to -0.81) drag the axis far enough that every real
-    point collapses onto one line at the top. `render` prints what the floor excludes."""
-    shown = df[(df["l0"] >= xlims[0]) & (df["l0"] <= xlims[1])]["frac_recovered"]
-    low, high = max(0.0, shown.min()), shown.max()
-    pad = 0.04 * (high - low)
-    return (low - pad, high + pad)
+# The typeface half of spade.figures.paper_style.apply_style(camera_ready=True), and only
+# that half: apply_style also sets a colour cycle, grids and spine visibility, which would
+# overwrite the Set1 colours and marker scheme this figure exists to match. Point sizes stay
+# his -- ours are tuned for a 3.25in column and would render at a third the apparent size on
+# a 10in canvas. Applied to the combined figure only, so karvonen_only stays byte-identical.
+OUR_FONTS = {
+    "font.family": "serif",
+    "font.serif": ["Times New Roman", "Nimbus Roman No9 L", "DejaVu Serif"],
+    "mathtext.fontset": "stix",
+    "pdf.fonttype": 42, "ps.fonttype": 42,  # TrueType; Type 3 fails NeurIPS
+}
 
 
 def render(df: pd.DataFrame, out_dir: Path, faithful: bool = True):
     """faithful=True is his figure exactly, and verify_match holds it to that.
 
-    faithful=False keeps every style parameter but moves the legend out of the data and
-    widens the 3-var y-axis; both are forced by our points landing where his never did."""
+    faithful=False keeps every axis he set -- including the 3-var frac_recovered window,
+    so the tick increments stay his 1.0005 / 1.0000 / 0.9995 -- and changes two things: the
+    legend moves out from under our points, and the type becomes this project's (OUR_FONTS).
+
+    That window costs coverage of our own data: a low-fidelity SAE falls off the bottom
+    rather than compressing the axis. This prints how many and of which type, every run, so
+    the omission is on the record rather than inferred from a suspiciously empty panel."""
     out_dir.mkdir(parents=True, exist_ok=True)
     below = not faithful
-    y3 = HIS_3VAR_YLIMS if faithful else _ylims_holding(df, (0.0, 400.0))
-    plot_l0_metric(df, RECON, r"Othello Board State Reconstruction $F_1$",
-        legend_below=below, output_filename=out_dir / "othello_2var_reconstruct.png")
-    plot_l0_metric(df, COVERAGE, "Coverage of Othello Board State",
-        legend_below=below, output_filename=out_dir / "othello_2var_coverage.png")
-    plot_3var_graph(df, RECON, y_lims=y3, legend_below=below,
-        colorbar_label=r"Othello Board State Reconstruction $F_1$",
-        output_filename=out_dir / "othello_3var_reconstruct.png")
-    plot_3var_graph(df, COVERAGE, y_lims=y3, legend_below=below,
-        colorbar_label="Coverage of Othello Board State",
-        output_filename=out_dir / "othello_3var_coverage.png")
+    y3 = HIS_3VAR_YLIMS
+    with plt.rc_context({} if faithful else OUR_FONTS):
+        plot_l0_metric(df, RECON, r"Othello Board State Reconstruction $F_1$",
+            legend_below=below, output_filename=out_dir / "othello_2var_reconstruct.png")
+        plot_l0_metric(df, COVERAGE, "Coverage of Othello Board State",
+            legend_below=below, output_filename=out_dir / "othello_2var_coverage.png")
+        plot_3var_graph(df, RECON, y_lims=y3, legend_below=below,
+            colorbar_label=r"Othello Board State Reconstruction $F_1$",
+            output_filename=out_dir / "othello_3var_reconstruct.png")
+        plot_3var_graph(df, COVERAGE, y_lims=y3, legend_below=below,
+            colorbar_label="Coverage of Othello Board State",
+            output_filename=out_dir / "othello_3var_coverage.png")
     off = df[~((df.l0 <= 400) & df.frac_recovered.between(*y3))]
     print(f"{len(df)} SAEs -> {out_dir}   3-var y {y3[0]:.4f}..{y3[1]:.4f}, "
           f"{len(off)} off the axes"

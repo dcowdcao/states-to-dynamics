@@ -28,6 +28,7 @@ import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 
 from spade.common.paths import repo_root
+from spade.l0_operating_point.plot_pareto import OUR_FONTS
 
 RENDERS = repo_root() / "figures/l0_operating_point"
 
@@ -40,7 +41,13 @@ PANELS = [
 ]
 
 
-def combine(panel_dir: Path, out_stem: Path, dpi: int = 200) -> Path:
+def combine(panel_dir: Path, out_stem: Path, dpi: int = 200, our_fonts: bool = False) -> Path:
+    # The subcaptions must match the type inside the panels they label.
+    with plt.rc_context(OUR_FONTS if our_fonts else {}):
+        return _compose(panel_dir, out_stem, dpi)
+
+
+def _compose(panel_dir: Path, out_stem: Path, dpi: int) -> Path:
     images = [(mpimg.imread(panel_dir / name), caption) for name, caption in PANELS]
     cell_w = max(im.shape[1] for im, _ in images)
     cell_h = max(im.shape[0] for im, _ in images)
@@ -72,7 +79,8 @@ def main():
         panel_dir = args.renders / variant
         if not panel_dir.is_dir():
             raise FileNotFoundError(f"{panel_dir} -- run spade.l0_operating_point.plot_pareto first")
-        out = combine(panel_dir, args.renders / f"figure4_othello_{variant}")
+        out = combine(panel_dir, args.renders / f"figure4_othello_{variant}",
+                      our_fonts=(variant == "with_spade"))
         print(f"{variant}: {out} (+ .pdf)")
 
 
