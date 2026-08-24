@@ -52,7 +52,7 @@ out of the baseline it is scored against.
 
 | file | what it shows |
 |---|---|
-| `board_states.png` | the board at *t0*−2 … *t0*+2 of game 2498: the legal move played at each of the four surrounding plies, and one illegal candidate per rule at *t0* |
+| `board_states.png` | the board at *t0*−2 … *t0*+2 of game 3889: the legal move played at each of the four surrounding plies, and the illegal move the drawn branch plays at *t0* |
 | `detector_trace.png` | the detector score for that same game over moves *t0*−5 … *t0*+5, three rule arms against the matched legal control, with τ |
 | `auroc_by_rule.png` | AUROC at *t0*, illegal branch against the same game's legal control, pooled and per rule, n = 1,000 games |
 | `score_histograms.png` | the distributions that AUROC summarizes: the score at *t0* for legal, illegal, R1, R2, R3, n = 200 games each, with τ |
@@ -63,29 +63,31 @@ overlap in *M*−1 steps.
 
 ### Figure notes
 
-`board_states` — game 2498 at *t0* = 20. Rule codes are `docs/othello_rules.md`'s: **R1**
-placement-on-empty, **R2** bracketing, **R3** turn order. The four non-*t0* panels mark the
-move actually played, with the bracket lines that make it legal; the *t0* panel marks one
-illegal candidate per rule, boxed and framed so the event is findable. Every marked square
-carries the disc the mover would place and a verdict — a green tick on the legal move, a red
-cross on each illegal one, and each rule's label names the move that branch played (R1 c5,
-R2 e8, R3 a8).
+`board_states` — game 3889 at *t0* = 20. The four non-*t0* panels mark the move actually
+played, named, with the bracket lines that make it legal. **A position has one move played in
+it, so the *t0* panel marks one**: the branch the trace's peak belongs to, which for this game
+is the **R2 bracketing** branch at h4 (`empty_no_bracket` — a line of opponent discs out of the
+square that nothing of the mover's closes, drawn to the empty square that breaks it). It is
+labelled `illegal` rather than by its rule, because "illegal" is what the position knows about
+it; which rule it breaks is this file's to say, and the trace's, where all three branch arms
+are drawn as curves. That panel is framed so the event is findable. Every marked square carries
+the disc the mover would place and a verdict — a green tick on a legal move, a red cross on the
+illegal one.
 
 **Under each panel is what the detector says about that ply, and whether it is right**, green
 for right and red for wrong. Off *t0* the row scored is the reference game itself, whose move
-there is the legal one it played, so anything above τ is a false alarm; at *t0* it is the
-three branch rows, all illegal, and the panel reports how many clear τ. On this game that
-reads 3/3 at *t0* and correct at *t0*−2, and a false alarm at the other three plies — the same
-thing "τ flags the legal control too" says below, one game at a time. It is a property of this
-illustrative game, not a measurement: the population numbers are `auroc_by_rule` and
-`score_histograms`.
+there is the legal one it played, so anything above τ is a false alarm; at *t0* it is the drawn
+branch. On this game the detector is right at four of the five and false-alarms at *t0*−1. It
+is a property of this illustrative game, not a measurement: the population numbers are
+`auroc_by_rule` and `score_histograms`.
 
 **Each rule is drawn from the member category that is legible as that rule**, chosen by
-`select_game.py`'s `PREFERRED` table rather than by whichever branch came first: R1 is
-`occupied_opp` (c5) and R2 is `empty_no_bracket` (e8). This matters — R2's shallowest member,
-`empty_detached`, touches no opponent disc at all, so it draws an empty square with nothing to
-see, which is exactly why `figures/othello_rules` avoids it too. Its square is marked and
-named and carries no geometry, because there is no failing line to draw.
+`select_game.py`'s `PREFERRED` table rather than by whichever branch came first: at this *t0*,
+R1 is `occupied_opp` (f5), R2 `empty_no_bracket` (h4) and R3 `opponent_only` (f1). This matters
+— R2's shallowest member, `empty_detached`, touches no opponent disc at all, so it draws an
+empty square with nothing to see, which is exactly why `figures/othello_rules` avoids it too.
+The pooled illegal arm's own draw for this game *is* that shallow member, which is why the
+board draws `PREFERRED`'s branch and not the pooled one.
 
 `score_histograms` — the five series are Gaussian KDEs (Scott's rule), not bars. The y axis is
 still a count: each curve is its density × n × one 22nd of the pooled range, so its height is
@@ -100,16 +102,19 @@ splice.
 
 ### What the panels do and do not say
 
-**Game 2498 is illustrative, not typical.** `select_game.py` chose it *because* all three rule
-arms peak at *t0* and the legal control does not. The population is the other two panels; the
-trace is there to show the shape, and its docstring says so.
+**Game 3889 is illustrative, not typical.** `select_game.py` chose it *because* all three rule
+arms peak at *t0*, the legal control does not, and the detector is right about four of the five
+plies `board_states` draws. That last criterion is the strongest selection of the three, and
+the panel says so by keeping the one false alarm: windows with no false alarm at all exist, and
+they read as a cleaner detector than the population is. The population is the other two panels;
+the trace is there to show the shape, and its docstring says so.
 
 **The trace's right half is off-support.** After *t0* the branch replays the source game's
 suffix onto a board that no longer exists — which is why `changepoint_localization` truncates
 its curves at *r* = 0. Moves *t0*+1 … *t0*+5 read as "the score decays", never as a legality
 judgement of those moves.
 
-**τ flags the legal control too, in this game.** At *t0* the control scores 1.219 against
+**τ flags the legal control too, in this game.** At *t0* the control scores 1.654 against
 τ = 0.629. The three rule arms clear it by more, but the separation is in magnitude, not in
 whether the cut fires — and `score_histograms` shows the same thing at population scale: 34% of
 legal controls sit above τ.

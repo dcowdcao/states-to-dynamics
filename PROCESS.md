@@ -30,18 +30,28 @@ nearly flat across that whole span** -- balanced accuracy 0.6721 at 0.629 agains
 (0.664/0.680 vs 0.584/0.748), not accuracy. More evidence for the fold-spread caveat.
 
 **The honest headline of these panels is that the cut sits inside the overlap.** 34% of legal
-controls score above tau, and in the illustrative game the legal control itself reads 1.219
+controls score above tau, and in the illustrative game the legal control itself reads 1.654
 against tau 0.629. The rule arms clear it by more, but the separation is magnitude, not
 whether the cut fires. Figure 4 draws that rather than hiding it.
 
 **R2 > R3 > R1 at 0.764 / 0.661 / 0.599**, the same ordering `move_legality`'s supervised probe
 finds by an unrelated route -- an occupied square is the violation this score sees worst.
 
-Two things a reader has to be told and the README says both: game 2498 was *selected* because
-all three rule arms peak at t0 (`select_game.py` used that as a criterion), so the trace is
-illustrative and the other two panels are the population; and the trace's right half is
-off-support, because after t0 the branch replays the source suffix onto a board that no longer
-exists.
+Two things a reader has to be told and the README says both: the illustrative game was
+*selected* because all three rule arms peak at t0 (`select_game.py` used that as a criterion),
+so the trace is illustrative and the other two panels are the population; and the trace's right
+half is off-support, because after t0 the branch replays the source suffix onto a board that no
+longer exists.
+
+**The game moved to 3889, and the t0 board to one move (2026-08-24).** `select_game.py` gained
+a criterion -- the detector has to be right about at least four of the five plies
+`board_states` draws -- because the old pick, 2498, false-alarmed on three of its four legal
+plies once the panels started reporting the detector's call. MIN_CORRECT is 4 and not 5 on
+purpose: 5/5 windows exist, and a figure that shows one reads as a cleaner detector than 34%
+false-alarm rate is. The t0 panel now draws ONE move, not three: a position has one move played
+in it, and three marked squares read as three moves being played at once. Which one is drawn is
+the arm the trace's peak belongs to, so the two figures name the same move; the board labels it
+`illegal` and the rule it breaks is the README's to say.
 
 ## A board-probe layer sweep that describes the probe anything actually loads (2026-08-22)
 

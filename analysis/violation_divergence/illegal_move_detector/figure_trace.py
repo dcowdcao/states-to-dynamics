@@ -1,9 +1,10 @@
 """The detector score across one game's spliced move, for the three rule arms and its control.
 
-An illustrative game, not a typical one. `select_game.py` picked game 2498 because all three
+An illustrative game, not a typical one. `select_game.py` picked game 3889 because all three
 rules have a branch at its t0, all of t0 +- 5 sit inside the scanned band, raw's score peaks
-at t0 on every rule arm and NOT on the matched legal control, and among the games that hold
-it has the largest margin over its own runner-up. That is a selection over games, so this
+at t0 on every rule arm and NOT on the matched legal control, the detector is right about four
+of the five plies `board_states` draws, and among the games that hold it has the largest
+margin over its own runner-up. That is a selection over games, so this
 panel shows what a clean detection looks like and says nothing about how often one happens:
 the AUROC and histogram figures of this study are the population.
 

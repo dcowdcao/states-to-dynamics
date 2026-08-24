@@ -8,10 +8,15 @@ order they bind:
   * t0 - 5 .. t0 + 5 all sit inside the scanned band, so the trace needs no truncation
   * raw's score peaks at t0 on all three rule arms, so the figure is not drawing a miss
   * the matched legal control does NOT peak at t0, so the peak reads as the violation
+  * the detector is right about at least MIN_CORRECT of the five plies board_states draws:
+    all three rule branches clear tau at t0, and the reference game -- legal at every one of
+    those plies -- stays under tau at at least MIN_CORRECT - 1 of the other four
   * among those, the largest margin between the rule arms' t0 score and their own runner-up
 
-The last criterion is a selection over games and the figure caption has to say so: this is an
-illustrative game chosen to be legible, not a typical one. Figures 3 and 4 are the population.
+The last two criteria are selections over games and the figure caption has to say so: this is
+an illustrative game chosen to be legible, not a typical one. Figures 3 and 4 are the
+population, where 34% of legal positions sit above tau. MIN_CORRECT is 4, not 5: a window with
+no false alarm at all exists but reads as a cleaner detector than the population is.
 
 Writes figure_game.json.
 
@@ -29,6 +34,8 @@ from spade.othello.taxonomy import CATEGORIES
 
 HERE = Path(__file__).resolve().parent
 TRACE_HALF = 5
+PANELS = (-2, -1, 1, 2)   # the plies board_states draws either side of t0
+MIN_CORRECT = 4           # of its five panels, t0 included
 
 # Which member category to draw for each rule, and why -- `figure_othello_rules.py` settled
 # this and the panels must agree with it. R2's `empty_detached` touches no opponent disc at
@@ -45,6 +52,7 @@ def main() -> None:
     cand = detector.band()
     s = detector.score(data, cand)
     sel = detector.arms(data)
+    tau = detector.operating_point(s, cand, data, sel)
     move = cand + CAND_OFFSET
 
     t0_of = data["t0"]
@@ -72,16 +80,21 @@ def main() -> None:
         control = [r for r in rows if data["is_control"][r] == 1]
         if not control or peak[control[0]] == t0:
             continue
+        reference = int([r for r in rows
+                         if data["is_control"][r] == 0 and rule[r] == ""][0])
         j = int(np.searchsorted(move, t0))
+        if not all(s[r, j] > tau for r in picked.values()):
+            continue
+        quiet = sum(s[reference, int(np.searchsorted(move, t0 + o))] <= tau for o in PANELS)
+        if 1 + quiet < MIN_CORRECT:
+            continue
         margin = min(s[r, j] - np.delete(s[r], j).max() for r in picked.values())
         if best is None or margin > best["margin"]:
             best = {"game_id": g, "t0": t0, "margin": float(margin),
+                    "panels_correct": int(1 + quiet),
                     "rows": {u: int(v) for u, v in picked.items()},
                     "categories": {u: str(category[v]) for u, v in picked.items()},
-                    "control_row": int(control[0]),
-                    "reference_row": int([r for r in rows
-                                          if data["is_control"][r] == 0
-                                          and rule[r] == ""][0])}
+                    "control_row": int(control[0]), "reference_row": reference}
     assert best, "no game satisfies the panel criteria"
     (HERE / "figure_game.json").write_text(json.dumps(best, indent=2) + "\n")
     print(json.dumps(best, indent=2))
