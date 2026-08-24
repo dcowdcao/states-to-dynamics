@@ -114,6 +114,13 @@ numbers are below and their CSVs are still in `results/`.
   (`acc_tpr_{relative,absolute}`, `ceiling_{relative,absolute}`); nothing in the
   figure carries them, so a caption or the text has to.
 
+  **Panel (b)'s axes.** Both are read-outs of the mover-relative TPR probe, and the
+  panel no longer glosses their signs on the canvas: *x* is
+  ℓ_mine − ℓ_theirs, where **> 0 means the square is owned by the player to move**;
+  *y* is ½(ℓ_mine + ℓ_theirs) − ℓ_empty, where **> 0 means the square is occupied**.
+  Neither panel carries a title either, so the probe the arrows read and the worked
+  example's move index (*t* = 25, in `f2_event_meta.csv`) belong in the caption.
+
   Arrows are means over **1,000 strict-control events, 40 at every move index in
   *t* ∈ [10, 34]** — the window and unit steps `move_legality` and
   `changepoint_localization` evaluate on, so the three figures rest on one *t*
