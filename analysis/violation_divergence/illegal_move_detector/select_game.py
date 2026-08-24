@@ -3,7 +3,8 @@
 Two panels of one game only work if the game is honest about the claim. The criteria, in the
 order they bind:
 
-  * all three rules have a branch at this game's t0, so one board shows R1, R2 and R3
+  * all three rules have a branch at this game's t0, so one board shows R1, R2 and R3,
+    each drawn from the member category that is actually legible as its rule (PREFERRED)
   * t0 - 5 .. t0 + 5 all sit inside the scanned band, so the trace needs no truncation
   * raw's score peaks at t0 on all three rule arms, so the figure is not drawing a miss
   * the matched legal control does NOT peak at t0, so the peak reads as the violation
@@ -24,9 +25,19 @@ import numpy as np
 
 import detector
 from detector import CAND_OFFSET, RULES
+from spade.othello.taxonomy import CATEGORIES
 
 HERE = Path(__file__).resolve().parent
 TRACE_HALF = 5
+
+# Which member category to draw for each rule, and why -- `figure_othello_rules.py` settled
+# this and the panels must agree with it. R2's `empty_detached` touches no opponent disc at
+# all, so it draws an empty square with nothing to see; `empty_no_bracket` has a real line of
+# opponent discs that simply is not closed. R1's `occupied_opp` is also the cell the supervised
+# probe reads worst, so it is the one worth showing. Fall back in order if a game lacks one.
+PREFERRED = {"R1": ["occupied_opp", "occupied_own"],
+             "R2": ["empty_no_bracket", "empty_own_only", "empty_detached"],
+             "R3": ["opponent_only"]}
 
 
 def main() -> None:
@@ -41,6 +52,7 @@ def main() -> None:
     peak = move[s.argmax(1)]
     rule = detector.rule_of_row(data["category"])
 
+    category = np.array([CATEGORIES[c] for c in data["category"]])
     rows_by_game = {}
     for r in np.arange(len(data["game_id"])):
         rows_by_game.setdefault(int(data["game_id"][r]), []).append(r)
@@ -53,7 +65,8 @@ def main() -> None:
         by_rule = {u: [r for r in rows if rule[r] == u] for u in RULES}
         if not all(by_rule.values()):
             continue
-        picked = {u: v[0] for u, v in by_rule.items()}
+        rank = lambda r: PREFERRED[rule[r]].index(category[r])
+        picked = {u: min(v, key=rank) for u, v in by_rule.items()}
         if not all(peak[r] == t0 for r in picked.values()):
             continue
         control = [r for r in rows if data["is_control"][r] == 1]
@@ -64,6 +77,7 @@ def main() -> None:
         if best is None or margin > best["margin"]:
             best = {"game_id": g, "t0": t0, "margin": float(margin),
                     "rows": {u: int(v) for u, v in picked.items()},
+                    "categories": {u: str(category[v]) for u, v in picked.items()},
                     "control_row": int(control[0]),
                     "reference_row": int([r for r in rows
                                           if data["is_control"][r] == 0

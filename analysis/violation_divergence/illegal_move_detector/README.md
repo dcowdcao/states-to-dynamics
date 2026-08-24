@@ -61,6 +61,25 @@ Band semantics: every interval is a 95% percentile bootstrap over **source games
 clusters, 1,000 resamples, seed 42 — games and never positions, because one game's candidates
 overlap in *M*−1 steps.
 
+### Figure notes
+
+`board_states` — game 2498 at *t0* = 20. Rule codes are `docs/othello_rules.md`'s: **R1**
+placement-on-empty, **R2** bracketing, **R3** turn order. The four non-*t0* panels mark the
+move actually played, with the bracket lines that make it legal; the *t0* panel marks one
+illegal candidate per rule, boxed and bold-titled so the event is findable.
+
+**Each rule is drawn from the member category that is legible as that rule**, chosen by
+`select_game.py`'s `PREFERRED` table rather than by whichever branch came first: R1 is
+`occupied_opp` (c5) and R2 is `empty_no_bracket` (e8). This matters — R2's shallowest member,
+`empty_detached`, touches no opponent disc at all, so it draws an empty square with nothing to
+see, which is exactly why `figures/othello_rules` avoids it too. R2's pale tint is the
+neighbourhood that fails to close, not a ray: there is no single failing line to draw.
+
+`detector_trace` — no uncertainty band by construction: four branches of one prefix, so there
+is nothing to average over. The shaded region is `t <= t0 - M`, not `t < t0`: the MOSUM window
+reads *M* = 4 steps forward, so the score is branch-identical only until its window touches the
+splice.
+
 ### What the panels do and do not say
 
 **Game 2498 is illustrative, not typical.** `select_game.py` chose it *because* all three rule
