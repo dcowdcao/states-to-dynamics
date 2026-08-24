@@ -23,26 +23,24 @@ panels are about what the detector does, not which dictionary does it best, whic
 `changepoint_localization`'s question.
 
 `τ` is the cut that maximizes balanced accuracy, found by exact breakpoint sweep
-(`changepoint.threshold`), **refit on this population**. It is 0.629 here against the 0.869 in
-`changepoint_localization/results/threshold_localization.csv`, and the difference is not a
-disagreement: that table was fitted on the 575 games `curvature_discriminant` selected before
-`extend_branches` grew the tree, and restricting this corpus to those 575 games reproduces
-0.8691 exactly. Two things move it — excluding the scored games from the profile fit (+0.110)
-and the larger population (−0.240).
+(`changepoint.threshold`), **refit on this population**. It is 0.850 here against the 0.869 in
+`changepoint_localization/results/threshold_localization.csv`, which was fitted on the 575
+games `curvature_discriminant` selected before `extend_branches` grew the tree, and on a
+profile that included the games it scored.
 
-**The objective is nearly flat across that whole range.** Balanced accuracy is 0.6721 at
-τ = 0.629 and 0.6662 at τ = 0.869: a 0.24 move in the cut buys 0.006 accuracy. What τ actually
-selects is the trade — 0.664 TPR / 0.680 TNR here against 0.584 / 0.748 there. Quote τ with
-that caveat or not at all.
+**The objective is nearly flat across that whole range, which is the thing to remember about
+τ.** Balanced accuracy is 0.6651 at τ = 0.850, 0.6640 at 0.869 and 0.6619 at 0.629: a cut
+moved by 0.22 buys 0.003 accuracy. What τ selects is the trade — 0.586 TPR / 0.745 TNR here,
+0.643 / 0.681 at 0.629. Quote τ with that caveat or not at all.
 
 ## Corpus
 
 | | |
 |---|---|
-| eligible games | 2,207 (branch-complete, *t0* ∈ [16, 34], odd-parity source) |
-| branch rows | 19,863 — reference, two legal controls, six illegal categories per game |
+| eligible games | 2,278 (branch-complete, *t0* ∈ [14, 34], odd-parity source) |
+| branch rows | 20,502 — reference, two legal controls, six illegal categories per game |
 | scanned band | moves 14–47, 34 candidates |
-| profile fit | 1,427 straightness legal games, excluding every game scored here |
+| profile fit | 1,356 straightness legal games, excluding every game scored here |
 
 Eligibility is `curvature_discriminant/branch_geometry.py`'s own rule, imported rather than
 restated. The odd-parity filter and the `held_out_legal` exclusion are what keep a trajectory
@@ -54,8 +52,8 @@ out of the baseline it is scored against.
 |---|---|
 | `board_states.png` | the board at *t0*−2 … *t0*+2 of game 3889: the legal move played at each of the four surrounding plies, and the illegal move the drawn branch plays at *t0* |
 | `detector_trace.png` | the detector score for that same game over moves *t0*−5 … *t0*+5, three rule arms against the matched legal control, with τ |
-| `auroc_by_rule.png` | AUROC at *t0*, illegal branch against the same game's legal control, pooled and per rule, n = 418 games |
-| `score_histograms.png` | the distributions that AUROC summarizes: the score at *t0* for legal, illegal, R1, R2, R3, the same 418 games, with τ |
+| `auroc_by_rule.png` | AUROC at *t0*, illegal branch against the same game's legal control, pooled and per rule, n = 462 games |
+| `score_histograms.png` | the distributions that AUROC summarizes: the score at *t0* for legal, illegal, R1, R2, R3, the same 462 games, with τ |
 
 Band semantics: every interval is a 95% percentile bootstrap over **source games** as
 clusters, 1,000 resamples, seed 42 — games and never positions, because one game's candidates
@@ -77,7 +75,9 @@ illegal one.
 **Under each panel is what the detector says about that ply, and whether it is right**, green
 for right and red for wrong. Off *t0* the row scored is the reference game itself, whose move
 there is the legal one it played, so anything above τ is a false alarm; at *t0* it is the drawn
-branch. On this game the detector is right at four of the five and false-alarms at *t0*−1. It
+branch. On this game the detector is right at all five: it was right at four of them under the
+narrower corpus, and the *t0*−1 false alarm went away when the wider one moved τ from 0.629 to
+0.850. Read that as one game, not as a rate — 29% of legal positions sit above τ. It
 is a property of this illustrative game, not a measurement: the population numbers are
 `auroc_by_rule` and `score_histograms`.
 
@@ -95,15 +95,21 @@ score at that game's own *t0*, one value per branch. `legal / illegal` is the po
 illegal branch per game); R1/R2/R3 are that same arm split by rule.
 
 **The evaluation set is flat over *t0*.** `detector.stratified` takes an equal quota of games
-at every *t0* in the scored range — **22 games at each of 16…34, n = 418** — because the tree
-is not balanced on move index: `extend_branches.py` forked 1,666 of its 2,207 eligible games at
+at every *t0* in the scored range — **22 games at each of 14…34, n = 462** — because the tree
+is not balanced on move index: `extend_branches.py` forked 1,665 of its 2,278 eligible games at
 *t0* = 20 and about 30 at each other value, so any prefix of game ids is ~46% one position, and
 move index is the strongest nuisance variable this tree has. `move_legality.detection_auroc`
-deals its groups the same way. The quota is the smallest stratum, which is what caps n at 418:
-outside *t0* = 20 the whole tree holds only 541 eligible games. n grows on its own if the tree
-is extended at the sparse positions.
+deals its groups the same way.
 
-`score_histograms` — same corpus, same eligibility, same statistic and now the **same 418
+**The range is [14, 34], and it cannot be [10, 34].** That is where the bar chart of
+`move_legality` scans, and this study's floor is two positions higher for a reason that is not
+a choice: its score is a MOSUM over *M*max = 12 steps either side of a candidate, so no score
+exists below move 14, while the probe reads one position's activations and can be evaluated
+anywhere. The quota is the smallest stratum (22 games, at *t0* = 32 and 33), which is what caps
+n at 462: outside *t0* = 20 the whole tree holds 613 eligible games. n grows on its own if the
+tree is extended at the sparse positions.
+
+`score_histograms` — same corpus, same eligibility, same statistic and the **same 462
 games** as `auroc_by_rule`, on five arms held aligned game by game (asserted on `game_id` and
 on *t0*). So the panel is literally the distribution those bars summarize, which it was not
 while the two drew different prefixes of the tree.
@@ -134,11 +140,11 @@ its curves at *r* = 0. Moves *t0*+1 … *t0*+5 read as "the score decays", never
 judgement of those moves.
 
 **τ flags the legal control too, in this game.** At *t0* the control scores 1.654 against
-τ = 0.629. The three rule arms clear it by more, but the separation is in magnitude, not in
-whether the cut fires — and `score_histograms` shows the same thing at population scale: 34% of
+τ = 0.850. The three rule arms clear it by more, but the separation is in magnitude, not in
+whether the cut fires — and `score_histograms` shows the same thing at population scale: 29% of
 legal controls sit above τ.
 
-**R2 ≫ R3 ≫ R1**, at 0.764 / 0.661 / 0.599 AUROC. Playing on an already-occupied square is
+**R2 ≫ R3 ≫ R1**, at 0.775 / 0.670 / 0.589 AUROC. Playing on an already-occupied square is
 the hardest violation for this score to see, barely clearing chance. That is the same ordering
 the supervised probe in `analysis/move_legality` finds by an unrelated route, where
 `occupied_opp` is likewise its worst cell.

@@ -20,7 +20,7 @@ raw `d` for every eligible game (2207, against the 575 that study selected befor
 stay untouched -- the byte-identity every `changepoint_localization` number is verified
 against depends on them. Raw needs no dictionary encode, so this is cheap and GPU-optional.
 
-**tau is refit here and moves 0.869 -> 0.629, and the decomposition is the point.** Restricting
+**tau is refit here and moves 0.869 -> 0.850 (0.629 before the corpus floor widened).** Restricting
 this corpus to the same 575 games reproduces 0.8691 exactly, which is what validates the
 re-implementation. The rest is +0.110 from excluding scored games from the profile fit (a leak
 I shipped first and caught: the profile was fit on all 2000 straightness legal games, some of
@@ -29,7 +29,7 @@ nearly flat across that whole span** -- balanced accuracy 0.6721 at 0.629 agains
 0.869, so a 0.24 move in the cut buys 0.006. What tau selects is the TPR/TNR trade
 (0.664/0.680 vs 0.584/0.748), not accuracy. More evidence for the fold-spread caveat.
 
-**The honest headline of these panels is that the cut sits inside the overlap.** 34% of legal
+**The honest headline of these panels is that the cut sits inside the overlap.** 29% of legal
 controls score above tau, and in the illustrative game the legal control itself reads 1.654
 against tau 0.629. The rule arms clear it by more, but the separation is magnitude, not
 whether the cut fires. Figure 4 draws that rather than hiding it.

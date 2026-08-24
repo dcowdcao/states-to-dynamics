@@ -6,9 +6,16 @@ and these figures want ~1000. Raw layer 5 needs no dictionary encode, so re-extr
 every eligible game is cheap and leaves that study's artifacts untouched -- which matters,
 because every number in `changepoint_localization` is verified byte-identical against them.
 
-Eligibility is `branch_geometry`'s own rule, imported rather than restated: branch-complete,
-t0 inside T0_RANGE, and an odd-parity source game so the per-move-index profile (fit on the
-even-index straightness legal games) never saw a scored trajectory.
+Eligibility is `branch_geometry`'s rule with one change: branch-complete, an odd-parity source
+game so the per-move-index profile (fit on the even-index straightness legal games) never saw a
+scored trajectory, and t0 inside T0_RANGE -- which here is (14, 34), not that module's (16, 34).
+
+The wider floor is so this study's population figures scan the same move indices as
+`move_legality.detection_auroc`'s bar chart, which they are read beside. They still cannot
+match it exactly: that chart reads one position's activations, so its range is the tree's whole
+[10, 34], while this score is a MOSUM over M_MAX = 12 steps either side of a candidate and does
+not exist below t0 = 14. `branch_geometry`'s own range is left alone -- `changepoint_localization`
+verifies byte-identical against its artifacts.
 
 Writes study_dir("divergence")/illegal_move_detector/{d,meta}.npz.
 
@@ -24,12 +31,22 @@ import torch
 from spade.common.device import select_device
 from spade.common.study import study_dir
 from spade.straightness.geometry import temporal_geometry
+from spade.violation_divergence.branches import complete_games
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "curvature_discriminant"))
 from branch_geometry import (  # noqa: E402  (sibling script, not an installed package)
-    GAME_BATCH, eval_games, straightness_legal_index)
+    GAME_BATCH, straightness_legal_index)
 
 OUT = study_dir("divergence") / "illegal_move_detector"
+T0_RANGE = (14, 34)   # the floor is the MOSUM's, see above
+
+
+def eligible(meta: dict, legal_index: np.ndarray) -> list[int]:
+    """Branch-complete, held out of the legal profile, and scannable at its own t0."""
+    t0 = {int(g): int(t) for g, t in zip(meta["game_id"], meta["t0"])}
+    return [g for g in complete_games(meta)
+            if legal_index[g] % 2 == 1                       # -1 (absent) also passes
+            and T0_RANGE[0] <= t0[g] <= T0_RANGE[1]]
 
 
 def main() -> None:
@@ -37,7 +54,7 @@ def main() -> None:
     branches = study_dir("divergence") / "branches" / "branches.pt"
     meta = torch.load(branches, weights_only=True)
     legal_index = straightness_legal_index(meta)
-    games = eval_games(meta, legal_index)
+    games = eligible(meta, legal_index)
     rows = torch.cat([(meta["game_id"] == g).nonzero().flatten() for g in games])
     print(f"{len(games)} games, {len(rows)} branch rows", flush=True)
 
