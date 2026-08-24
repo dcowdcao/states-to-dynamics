@@ -27,10 +27,16 @@ square's name stop being legible, which puts the figure at 12 in -- past NeurIPS
 README/appendix figure at its drawn size; the trace figure is the one that fits a column.
 
 R2's branch at this $t_0$ is `empty_detached`, the shallowest of R2's three members: a2
-touches no disc at all, so there is no line that fails to close and nothing to draw along.
-What the panel shades instead is the neighbourhood any line would have to start in, empty in
-every direction. R1's square is occupied by the mover's own disc and R3's line brackets for
-the opponent, so both keep figure_othello_rules' geometry.
+touches no disc at all, so there is no line that fails to close and nothing to draw along --
+the square is marked and named and that is all there is to see. R1's square is occupied by the
+mover's own disc and R3's line brackets for the opponent, so both keep figure_othello_rules'
+geometry.
+
+Under each panel is what the detector of this study says about that ply, and whether it is
+right. Off $t_0$ the row scored is the reference game itself, whose move there is the legal
+one it played; at $t_0$ it is the three branch rows, one per rule, all three illegal. On this
+game the detector is right at $t_0$ and at $t_0-2$ and false-alarms at the other three, which
+is the same thing README's "tau flags the legal control too" says at population scale.
 
 The game, its $t_0$ and the three branch rows are `select_game.py`'s pick, read from
 figure_game.json; every square's category is re-derived with `taxonomy.classify`, so a corpus
@@ -44,16 +50,16 @@ import argparse
 import json
 from pathlib import Path
 
+import numpy as np
 import torch
 from matplotlib import pyplot as plt
-from matplotlib.colors import to_rgba
-from matplotlib.patches import Rectangle
 
+import detector
 from detector import FIGURES, load
 from spade.common.study import study_dir
 from spade.figures.othello_board import (candidate, draw_board, mark_square, square_xy,
                                           verdict)
-from spade.figures.paper_style import INK, RULE_STYLE, apply_style, save_figure
+from spade.figures.paper_style import INK, RULE_STYLE, VERDICT_STYLE, apply_style, save_figure
 from spade.othello.boards import rays, replay
 from spade.othello.taxonomy import CATEGORIES, LEGAL, RULE_OF, classify
 
@@ -66,8 +72,7 @@ FIGURE_SIZE = (12.0, 3.3)
 # A fifth of this canvas is about half figure_othello_rules' panel, so the disc shrinks with
 # it: a disc that keeps ms=13 here fills three quarters of its cell and swallows the outlines.
 DISC_SIZE = 8.0
-NEIGHBOUR_TINT = 0.16   # R2's empty neighbourhood, shaded under the grid rather than outlined
-LABEL_STRIP = 0.11      # figure fraction reserved under the panels for their labels
+LABEL_STRIP = 0.19      # figure fraction reserved under the panels for their two label lines
 # Where a rule's code goes, in cells from the square's centre, tried in order until one lands
 # inside the board: the square itself is spoken for by the candidate disc and the verdict
 # cross, and a2 and a8 sit on the board's edge where a centred label hangs off it. Keying this on
@@ -142,23 +147,15 @@ def event_panel(ax, board, rules: dict[str, int]) -> None:
     """t0: the same board, and the three illegal moves the branch tree forks into."""
     draw_board(ax, board.state.flatten(), DISC_SIZE)
 
-    # R2 here is `empty_detached`, so the geometry is an absence and there is no line to draw
-    # along: the cells a bracket would have to start in are shaded instead, under the grid,
-    # and they are empty. An outline around them would have to run along the board's edge.
-    x, y = square_xy(rules["R2 bracketing"])
-    lo_x, lo_y = max(x - 1, 0), max(y - 1, 0)
-    ax.add_patch(Rectangle((lo_x - 0.5, lo_y - 0.5), min(x + 1, 7) - lo_x + 1,
-                           min(y + 1, 7) - lo_y + 1, lw=0, zorder=0,
-                           facecolor=to_rgba(RULE_STYLE["R2 bracketing"]["color"],
-                                             NEIGHBOUR_TINT)))
-
+    # R2 here is `empty_detached`: it touches no disc at all, so there is no line to draw
+    # along and its square is marked and named and nothing else.
     # R3: the bracket that does close -- for the opponent.
     theirs = next(r for r in rays(board.state, rules["R3 turn"], -int(board.next_hand_color))
                   if r.closed)
     ray_line(ax, rules["R3 turn"], theirs.terminator, RULE_STYLE["R3 turn"]["color"])
 
-    # No legend: each square carries its rule's colour, its rule's marker and its rule's code,
-    # placed in whichever empty cells sit beside it.
+    # No legend: each square carries its rule's colour, its rule's marker, and its rule's code
+    # with the move that branch played, placed in whichever empty cells sit beside it.
     mover = int(board.next_hand_color)
     for rule, square in rules.items():
         mark_square(ax, square, RULE_STYLE[rule])
@@ -168,7 +165,7 @@ def event_panel(ax, board, rules: dict[str, int]) -> None:
         dx, dy, ha, va = next((p for p in LABEL_AT
                                if -0.5 <= x + p[0] <= 7.5 and -0.5 <= y + p[1] <= 7.5),
                               LABEL_AT[0])
-        ax.annotate(rule.split()[0], (x + dx, y + dy), ha=ha, va=va,
+        ax.annotate(f"{rule.split()[0]} {name(square)}", (x + dx, y + dy), ha=ha, va=va,
                     fontsize=9, fontweight="bold", zorder=6,
                     color=RULE_STYLE[rule]["color"])
 
@@ -181,12 +178,49 @@ def frame(ax) -> None:
         spine.set_linewidth(1.2)
 
 
-def panel_label(fig, ax, text: str, bold: bool) -> None:
-    """The panel's letter and ply, under the board (figure_rules_and_generation's placement)."""
-    box = ax.get_position()
-    fig.text(box.x0 + box.width / 2, 0.012, text, ha="center", va="bottom",
-             color=INK, fontsize=plt.rcParams["axes.titlesize"],
-             fontweight="bold" if bold else "normal")
+def verdicts(spec: dict) -> dict[int, tuple[str, bool]]:
+    """What the detector says at each drawn ply, and whether it is right.
+
+    Off t0 the reference row is scored: the move drawn there is the legal one the game played,
+    so a score above tau is a false alarm. At t0 the three branch rows are, all three illegal,
+    and the panel reports how many of them clear tau.
+    """
+    data = load()
+    cand = detector.band()
+    s = detector.score(data, cand)
+    tau = detector.operating_point(s, cand, data, detector.arms(data))
+    pos = cand + detector.CAND_OFFSET
+
+    def at(row: int, t: int) -> float:
+        j = int(np.searchsorted(pos, t))
+        assert pos[j] == t, f"move {t} is outside the scanned band"
+        return float(s[row, j])
+
+    out = {}
+    for offset in OFFSETS:
+        t = spec["t0"] + offset
+        if offset:
+            flagged = at(spec["reference_row"], t) > tau
+            out[offset] = (f"detector: {'illegal' if flagged else 'legal'}"
+                           f"{', false alarm' if flagged else ', correct'}", not flagged)
+        else:
+            hits = sum(at(row, t) > tau for row in spec["rows"].values())
+            out[offset] = (f"detector: illegal, correct {hits}/3", hits == len(spec["rows"]))
+    return out
+
+
+def panel_label(fig, ax, text: str, bold: bool, call: tuple[str, bool]) -> None:
+    """The panel's letter and ply under the board, and the detector's call under that.
+
+    The call is coloured by whether it is right, in the same green/red the board's verdict
+    marks spend on legal/illegal -- there the mark states the move, here the colour states
+    the detector.
+    """
+    x = ax.get_position().x0 + ax.get_position().width / 2
+    fig.text(x, 0.085, text, ha="center", va="bottom", color=INK,
+             fontsize=plt.rcParams["axes.titlesize"], fontweight="bold" if bold else "normal")
+    fig.text(x, 0.02, call[0], ha="center", va="bottom", fontsize=8.0,
+             color=VERDICT_STYLE["legal" if call[1] else "illegal"]["color"])
 
 
 def boards_figure(tokens: list[int], squares: dict[str, int], spec: dict,
@@ -202,9 +236,11 @@ def boards_figure(tokens: list[int], squares: dict[str, int], spec: dict,
         side_to_move(ax, board)
         ax.set_ylabel("rank" if offset == OFFSETS[0] else "")
     fig.tight_layout(rect=(0, LABEL_STRIP, 1, 1))
+    calls = verdicts(spec)
     for ax, offset, letter in zip(axes, OFFSETS, LETTERS):
         tag = "$t_0$" if offset == 0 else f"$t_0{offset:+d}$"
-        panel_label(fig, ax, f"({letter}) {tag}, move {spec['t0'] + offset}", offset == 0)
+        panel_label(fig, ax, f"({letter}) {tag}, move {spec['t0'] + offset}", offset == 0,
+                    calls[offset])
     return save_figure(fig, FIGURES / "board_states", camera_ready)
 
 

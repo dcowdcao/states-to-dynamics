@@ -68,15 +68,24 @@ placement-on-empty, **R2** bracketing, **R3** turn order. The four non-*t0* pane
 move actually played, with the bracket lines that make it legal; the *t0* panel marks one
 illegal candidate per rule, boxed and framed so the event is findable. Every marked square
 carries the disc the mover would place and a verdict — a green tick on the legal move, a red
-cross on each illegal one. **Square names are not drawn on the *t0* panel**: the rule codes
-below name the squares, and a board with three names on it reads as three moves being played.
+cross on each illegal one, and each rule's label names the move that branch played (R1 c5,
+R2 e8, R3 a8).
+
+**Under each panel is what the detector says about that ply, and whether it is right**, green
+for right and red for wrong. Off *t0* the row scored is the reference game itself, whose move
+there is the legal one it played, so anything above τ is a false alarm; at *t0* it is the
+three branch rows, all illegal, and the panel reports how many clear τ. On this game that
+reads 3/3 at *t0* and correct at *t0*−2, and a false alarm at the other three plies — the same
+thing "τ flags the legal control too" says below, one game at a time. It is a property of this
+illustrative game, not a measurement: the population numbers are `auroc_by_rule` and
+`score_histograms`.
 
 **Each rule is drawn from the member category that is legible as that rule**, chosen by
 `select_game.py`'s `PREFERRED` table rather than by whichever branch came first: R1 is
 `occupied_opp` (c5) and R2 is `empty_no_bracket` (e8). This matters — R2's shallowest member,
 `empty_detached`, touches no opponent disc at all, so it draws an empty square with nothing to
-see, which is exactly why `figures/othello_rules` avoids it too. R2's pale tint is the
-neighbourhood that fails to close, not a ray: there is no single failing line to draw.
+see, which is exactly why `figures/othello_rules` avoids it too. Its square is marked and
+named and carries no geometry, because there is no failing line to draw.
 
 `score_histograms` — the five series are Gaussian KDEs (Scott's rule), not bars. The y axis is
 still a count: each curve is its density × n × one 22nd of the pooled range, so its height is
