@@ -100,6 +100,10 @@ def field_panel(ax, field: pd.DataFrame, annotate: bool = False) -> None:
     ax.set_title("TPR trained on mine / theirs / empty", fontsize=9)
 
 
+# The two roles (b) draws blue arrows for. They are the only ones tinted: see board_panel.
+TINTED_ROLES = ("unflipped_own", "unflipped_opp")
+
+
 def board_panel(ax, event: pd.DataFrame, meta: pd.Series) -> None:
     """The board just before the flanking move, drawn the way every other board here is.
 
@@ -109,11 +113,18 @@ def board_panel(ax, event: pd.DataFrame, meta: pd.Series) -> None:
     non-flipping move the control branch plays instead, outlined dashed to match the dashed
     arrow it produces in the next panel.
 
-    The role shading this panel used to carry -- every square tinted by its arrow role -- is
-    gone with the fills. It covered the discs it was drawn over, and the roles are already
-    named in the shared legend beside the markers the next panel uses.
+    The two unflipped roles keep their tint, because they are the panel's one ambiguous
+    reading: which discs the blue arrows in (b) average over is not recoverable from the
+    board otherwise, and unlike `flipped` and `placed` there is no single square to outline.
+    `empty` and the two singleton roles are not tinted -- the empties would wash the board and
+    the singletons are already outlined and named.
     """
     s, m = int(meta.square_s), int(meta.square_m)
+    tinted = event[event.role.isin(TINTED_ROLES)]
+    for _, r in tinted.iterrows():
+        col, row = square_xy(int(r.square))
+        ax.add_patch(plt.Rectangle((col - 0.5, row - 0.5), 1, 1, lw=0, zorder=0,
+                                   color=SQUARE_ROLE_STYLE[r.role]["color"], alpha=0.16))
     draw_board(ax, event.sort_values("square").disc_before.to_numpy())
     ax.set_ylabel("rank")
     for square, label, role, ls in [(s, "$s$", "flipped", "-"),
