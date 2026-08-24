@@ -78,6 +78,12 @@ below name the squares, and a board with three names on it reads as three moves 
 see, which is exactly why `figures/othello_rules` avoids it too. R2's pale tint is the
 neighbourhood that fails to close, not a ray: there is no single failing line to draw.
 
+`score_histograms` — the five series are Gaussian KDEs (Scott's rule), not bars. The y axis is
+still a count: each curve is its density × n × one 22nd of the pooled range, so its height is
+"games per slice of that width" and reads on the scale the binned version drew. One shared
+width for all five, as the shared bin edges were. The bootstrap band the KDE helper returns is
+not drawn — five overlapping curves cannot each carry one and stay readable.
+
 `detector_trace` — no uncertainty band by construction: four branches of one prefix, so there
 is nothing to average over. The shaded region is `t <= t0 - M`, not `t < t0`: the MOSUM window
 reads *M* = 4 steps forward, so the score is branch-identical only until its window touches the
@@ -96,7 +102,7 @@ judgement of those moves.
 
 **τ flags the legal control too, in this game.** At *t0* the control scores 1.219 against
 τ = 0.629. The three rule arms clear it by more, but the separation is in magnitude, not in
-whether the cut fires — and the histogram shows the same thing at population scale: 34% of
+whether the cut fires — and `score_histograms` shows the same thing at population scale: 34% of
 legal controls sit above τ.
 
 **R2 ≫ R3 ≫ R1**, at 0.764 / 0.661 / 0.599 AUROC. Playing on an already-occupied square is

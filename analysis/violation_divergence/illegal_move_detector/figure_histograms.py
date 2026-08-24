@@ -1,6 +1,6 @@
 """What the detector's cut is cutting: the score's distribution under legal and illegal moves.
 
-One panel, five overlapping histograms of the detector score read at each row's own t0 -- the
+One panel, five overlapping densities of the detector score read at each row's own t0 -- the
 value the study's AUROCs rank and the value tau is compared against. Higher means the step at
 t0 is shorter than the legal profile expects, so the cut flags everything to the right of tau.
 
@@ -11,9 +11,16 @@ components drawn separately, not four independent conditions.
 
 n = 200 source games per series: the first 200 game_ids in sorted order, a fixed reproducible
 subset of the 2,207 eligible games, with the five arms kept aligned game by game (asserted on
-game_id and on t0). 22 bin edges shared by all five over the pooled range, or the overlap
-would not be comparable. Per-series n, mean, median and the fraction above tau, the last with
-a 95% bootstrap CI over the same 200 games, go to results/score_histograms.csv.
+game_id and on t0). Per-series n, mean, median and the fraction above tau, the last with a 95%
+bootstrap CI over the same 200 games, go to results/score_histograms.csv.
+
+**The curves are counts, not densities.** Each is `straightness_panels.kde_ci`'s Gaussian KDE
+(Scott's rule) times n times BIN, so a curve reads as "games per BIN-wide slice of the axis"
+and its height is on the same scale the binned version drew. BIN is one shared width over the
+pooled range, as the shared bin edges were, or five curves off five bandwidths would not be
+comparable. The bootstrap band `kde_ci` also returns is not drawn: five overlapping curves
+cannot each carry one and stay readable, the departure from FIGURE_GUIDELINES 1.2 that
+`straightness_panels.density_panel` documents for the same reason.
 
 Raw layer 5 only, on the spliced branch tree.
 
@@ -33,10 +40,12 @@ import detector
 from changepoint import ci, resamples
 from spade.figures.paper_style import (
     DIRECTION_STYLE, GENERATION_STYLE, MUTED, NULL, RULE_STYLE, apply_style, save_figure)
+from spade.figures.straightness_panels import kde_ci
 
 FIGURES = Path(__file__).resolve().parent / "figures"
 RESULTS = Path(__file__).resolve().parent / "results"
-N_GAMES, BINS = 200, 22
+N_GAMES, SLICES = 200, 22   # SLICES sets the count scale: one slice of the pooled range
+GRID = 512                  # points the KDE is evaluated on
 
 SERIES = ["legal", "illegal", "R1", "R2", "R3"]
 ARM_OF = {"legal": "control", "illegal": "illegal", "R1": "R1", "R2": "R2", "R3": "R3"}
@@ -51,8 +60,8 @@ STYLE = {k: {"color": hue["color"], "marker": DIRECTION_STYLE[k]["marker"]}
                         ("R1", RULE_STYLE["R1 placement"]),
                         ("R2", RULE_STYLE["R2 bracketing"]),
                         ("R3", RULE_STYLE["R3 turn"])]}
-# Five filled series cannot separate by hue in grayscale and neither dict carries a line
-# style, so the outline dash is the second cue and the median markers are the third.
+# Five curves cannot separate by hue in grayscale and neither dict carries a line style, so
+# the dash is the second cue and the median markers are the third.
 DASH = {"legal": "-", "illegal": (0, (6, 1.6)), "R1": (0, (1, 1.3)),
         "R2": (0, (4, 1.4, 1, 1.4)), "R3": (0, (2.6, 1.3))}
 LABEL = {"legal": "legal control (baseline)",
@@ -62,7 +71,7 @@ LABEL = {"legal": "legal control (baseline)",
          "R3": "R3 turn (in pooled)"}
 # Five fills at one alpha is mud and unreadable in grayscale (FIGURE_GUIDELINES 4.4), so the
 # fill is spent on the contrast the panel is about -- baseline against pooled illegal -- and
-# the pooled arm's three components ride on their outlines over a light wash.
+# the pooled arm's three components ride on their lines over a light wash.
 FILL = {"legal": 0.22, "illegal": 0.30, "R1": 0.0, "R2": 0.0, "R3": 0.0}
 LINE = {"legal": 2.0, "illegal": 2.0, "R1": 1.4, "R2": 1.4, "R3": 1.4}
 
@@ -91,7 +100,8 @@ def summary(x: dict[str, np.ndarray], tau: float) -> pd.DataFrame:
 
 def draw(x: dict[str, np.ndarray], tau: float, camera_ready: bool) -> Path:
     pooled = np.concatenate([x[k] for k in SERIES])
-    edges = np.linspace(pooled.min(), pooled.max(), BINS + 1)
+    grid = np.linspace(pooled.min(), pooled.max(), GRID)
+    slice_width = (pooled.max() - pooled.min()) / SLICES
 
     fig, ax = plt.subplots(figsize=(5.5, 3.4))
     ax.set_axisbelow(True)
@@ -99,32 +109,28 @@ def draw(x: dict[str, np.ndarray], tau: float, camera_ready: bool) -> Path:
     top = 0.0
     for i, k in enumerate(SERIES):
         color = STYLE[k]["color"]
-        counts, _, _ = ax.hist(x[k], bins=edges, color=color, alpha=FILL[k], lw=0, zorder=2)
-        ax.hist(x[k], bins=edges, histtype="step", color=color, ls=DASH[k], zorder=3 + i,
-                lw=LINE[k], label=LABEL[k])
-        top = max(top, counts.max())
+        curve = kde_ci(x[k], grid)[0] * len(x[k]) * slice_width
+        if FILL[k]:
+            ax.fill_between(grid, curve, color=color, alpha=FILL[k], lw=0, zorder=2)
+        ax.plot(grid, curve, color=color, ls=DASH[k], lw=LINE[k], zorder=3 + i, label=LABEL[k])
+        top = max(top, curve.max())
 
     strip, ceiling = top * 1.04, top * 1.46
     for k in SERIES:
         ax.plot(np.median(x[k]), strip, ls="none", marker=STYLE[k]["marker"],
                 color=STYLE[k]["color"], ms=9 if STYLE[k]["marker"] == "*" else 6.5,
                 mec="white", mew=0.7, zorder=9)
-    ax.text(edges[0], strip, "medians ", ha="left", va="center", fontsize=8.0, color=MUTED)
+    ax.text(grid[0], strip, "medians ", ha="left", va="center", fontsize=8.0, color=MUTED)
     # Stopped just above the median strip: a full-height line runs through the legend.
     ax.axvline(tau, ymax=strip * 1.06 / ceiling, color=NULL["color"], ls=NULL["ls"], lw=1.1,
                zorder=1, label=f"$\\tau$ = {tau:.3f}, the fitted cut")
 
-    ax.set_xlim(edges[0], edges[-1])
+    ax.set_xlim(grid[0], grid[-1])
     ax.set_ylim(0, ceiling)
-    ax.set_xlabel("detector score at $t_0$: standardized step-length drop, paired MOSUM (SDs)\n"
-                  "higher = bigger drop below the legal profile; "
-                  "flagged illegal right of $\\tau$")
-    ax.set_ylabel("count (source games)")
+    ax.set_xlabel("standardized norm of step length")
+    ax.set_ylabel("number of games")
     ax.legend(loc="upper center", ncol=2, fontsize=8.0, labelspacing=0.32, borderpad=0.2,
-              columnspacing=1.4, handlelength=2.4, alignment="left", title_fontsize=8.0,
-              title=f"n = {N_GAMES} source games per series, {BINS} shared bins")
-    if not camera_ready:
-        ax.set_title("The cut sits inside the overlap, not between two separated classes")
+              columnspacing=1.4, handlelength=2.4, alignment="left")
     return save_figure(fig, FIGURES / "score_histograms", camera_ready)
 
 
