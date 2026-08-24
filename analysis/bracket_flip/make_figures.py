@@ -19,7 +19,8 @@ import numpy as np
 import pandas as pd
 from matplotlib.ticker import MaxNLocator, PercentFormatter
 
-from spade.figures.othello_board import draw_board, square_xy
+from spade.figures.figure_othello_rules import mover_note
+from spade.figures.othello_board import draw_board, mark_square, square_xy
 from spade.figures.paper_style import (
     INK, MUTED, NULL, PROBE_STYLE, SQUARE_ROLE_STYLE, apply_style, save_figure)
 from spade.figures.straightness_panels import kde_ci
@@ -100,30 +101,30 @@ def field_panel(ax, field: pd.DataFrame, annotate: bool = False) -> None:
 
 
 def board_panel(ax, event: pd.DataFrame, meta: pd.Series) -> None:
-    """The board just before the flanking move, shaded by the same role colours
-    the arrow panels use, so a reader can see which squares each arrow covers.
+    """The board just before the flanking move, drawn the way every other board here is.
 
-    m' is the matched non-flipping move the control branch plays instead; it is
-    outlined dashed, matching the dashed arrow it produces in the next panel.
+    Same renderer and same marking grammar as `figures/rules_and_generation`: cell outline
+    plus a corner marker, never a fill, so the disc underneath stays visible -- on `s` it is
+    the evidence, since `s` is the square whose disc the move flips. `m'` is the matched
+    non-flipping move the control branch plays instead, outlined dashed to match the dashed
+    arrow it produces in the next panel.
+
+    The role shading this panel used to carry -- every square tinted by its arrow role -- is
+    gone with the fills. It covered the discs it was drawn over, and the roles are already
+    named in the shared legend beside the markers the next panel uses.
     """
     s, m = int(meta.square_s), int(meta.square_m)
-    for _, r in event.iterrows():
-        col, row = square_xy(int(r.square))
-        ax.add_patch(plt.Rectangle((col - 0.5, row - 0.5), 1, 1, lw=0,
-                                   color=SQUARE_ROLE_STYLE[r.role]["color"],
-                                   alpha=0.18, zorder=0))
     draw_board(ax, event.sort_values("square").disc_before.to_numpy())
+    ax.set_ylabel("rank")
     for square, label, role, ls in [(s, "$s$", "flipped", "-"),
                                     (m, "$m$", "placed", "-"),
                                     (int(meta.square_m_prime), "$m'$", "flipped",
                                      (0, (3, 2)))]:
-        col, row = square_xy(square)
-        ax.add_patch(plt.Rectangle((col - 0.5, row - 0.5), 1, 1, fill=False,
-                                   lw=2.2, zorder=4, ls=ls,
-                                   edgecolor=SQUARE_ROLE_STYLE[role]["color"]))
-        ax.annotate(label, (col, row - 0.52), ha="center", va="bottom", fontsize=9,
-                    color=SQUARE_ROLE_STYLE[role]["color"], zorder=5,
-                    fontweight="bold")
+        # A name above the cell falls off the board on rank 1, where m' sits in this event,
+        # and matplotlib clips it away without saying so.
+        mark_square(ax, square, SQUARE_ROLE_STYLE[role], label=label, ls=ls,
+                    below=square_xy(square)[1] == 0)
+    mover_note(ax, int(meta.mover))
     ax.set_title(f"the board before $m$ ($t$={int(meta.t)})")
 
 
@@ -131,7 +132,6 @@ def figure_one(camera_ready: bool) -> None:
     field = pd.read_csv(RESULTS / "m2_field.csv")
     event = pd.read_csv(RESULTS / "f2_event.csv")
     meta = pd.read_csv(RESULTS / "f2_event_meta.csv").iloc[0]
-    layer = int(field.layer.iloc[0])
     # Board is square, so the left column's height sets the figure's: any extra
     # becomes dead space beside it.
     fig = plt.figure(figsize=(9.6, 4.6))
@@ -147,9 +147,6 @@ def figure_one(camera_ready: bool) -> None:
     fig.legend(*native.get_legend_handles_labels(), loc="upper left",
                bbox_to_anchor=(0.50, 0.015), ncol=3, fontsize=7, alignment="left",
                labelspacing=0.3, columnspacing=1.0)
-    if not camera_ready:
-        fig.suptitle(f"Layer-{layer} board read-out before and after a flanking move",
-                     y=0.99)
     save_figure(fig, FIGURES / "fig1_flip_and_basis", camera_ready)
 
 
