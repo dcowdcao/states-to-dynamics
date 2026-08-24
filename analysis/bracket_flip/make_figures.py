@@ -38,6 +38,22 @@ Y_AXIS = (r"$\frac{1}{2}(\ell_{\rm mine}+\ell_{\rm theirs})-\ell_{\rm empty}$"
           "\n" r"$>0$: occupied")
 
 
+def letters_below(fig, axes) -> None:
+    """(a) (b) under the panels, on one baseline measured off what they actually occupy.
+
+    A fixed axes-fraction offset lands in different places here: the board carries a one-line
+    x label and the field panel a two-line one. Sharing the lower edge of the two tight boxes
+    keeps the letters level.
+    """
+    fig.canvas.draw()
+    boxes = [ax.get_tightbbox(fig.canvas.get_renderer())
+               .transformed(fig.transFigure.inverted()) for ax in axes]
+    base = min(b.y0 for b in boxes) - 0.03
+    for i, b in enumerate(boxes):
+        fig.text((b.x0 + b.x1) / 2, base, f"({chr(97 + i)})", ha="center", va="top",
+                 color=INK, fontsize=10)
+
+
 def panel_letter(ax, i: int) -> None:
     ax.text(0.0, 1.02, f"({chr(97 + i)})", va="bottom", transform=ax.transAxes,
             color=INK, fontsize=9)
@@ -97,7 +113,6 @@ def field_panel(ax, field: pd.DataFrame, annotate: bool = False) -> None:
     ax.margins(y=0.12)
     ax.set_xlabel(X_AXIS)
     ax.set_ylabel(Y_AXIS)
-    ax.set_title("TPR trained on mine / theirs / empty", fontsize=9)
 
 
 # The two roles (b) draws blue arrows for. They are the only ones tinted: see board_panel.
@@ -136,7 +151,6 @@ def board_panel(ax, event: pd.DataFrame, meta: pd.Series) -> None:
         mark_square(ax, square, SQUARE_ROLE_STYLE[role], label=label, ls=ls,
                     below=square_xy(square)[1] == 0)
     mover_note(ax, int(meta.mover))
-    ax.set_title(f"the board before $m$ ($t$={int(meta.t)})")
 
 
 def figure_one(camera_ready: bool) -> None:
@@ -153,11 +167,10 @@ def figure_one(camera_ready: bool) -> None:
 
     board_panel(board, event, meta)
     field_panel(native, field, annotate=True)
-    for i, ax in enumerate((board, native)):
-        panel_letter(ax, i)
     fig.legend(*native.get_legend_handles_labels(), loc="upper left",
                bbox_to_anchor=(0.50, 0.015), ncol=3, fontsize=7, alignment="left",
                labelspacing=0.3, columnspacing=1.0)
+    letters_below(fig, (board, native))
     save_figure(fig, FIGURES / "fig1_flip_and_basis", camera_ready)
 
 
