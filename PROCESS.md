@@ -1212,7 +1212,11 @@ left on the canvas. The played square now sits on the rules board itself, and le
 off a green tick on it and a red cross on each of R1/R2/R3 before the rule hues do — the one
 red/green pair in the project, safe because the tick and the cross carry the verdict without
 the hue (`VERDICT_STYLE`). Titles are gone (the figure is one panel; the caption is in
-`docs/othello_rules.md`), the y label is bare `rank`, and the figure is square at 4.6 in.
+`docs/othello_rules.md`), the y label is bare `rank`, and the figure is square at 4.6 in. The
+flanks came back with it — one black line per direction b4 closes, out to the mover's own disc
+— and all four candidate squares carry a half-size black disc at their centre: without it the
+reader has to supply the move, and half size is what leaves R1's occupying white disc visible
+under the candidate that collides with it.
 
 **Choices that are not arbitrary.** R2 is drawn as `empty_no_bracket`, not the shallower
 `empty_detached`: the taxonomy orders R2's members by the board computation a violation takes

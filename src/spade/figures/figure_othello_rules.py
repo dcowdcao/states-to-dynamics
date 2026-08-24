@@ -26,7 +26,8 @@ from matplotlib import pyplot as plt
 
 from spade.common.paths import repo_root
 from spade.figures.othello_board import CORNER, draw_board, mark_square, square_xy
-from spade.figures.paper_style import INK, RULE_STYLE, VERDICT_STYLE, apply_style, save_figure
+from spade.figures.paper_style import (DISC_EDGE, DISC_STYLE, INK, RULE_STYLE, VERDICT_STYLE,
+                                       apply_style, save_figure)
 from spade.othello.boards import rays, replay
 from spade.othello.games import collect_legal, stream_games
 from spade.othello.taxonomy import CATEGORIES, LEGAL, classify
@@ -36,6 +37,7 @@ from circuits.othello_engine_utils import to_string
 FIGURES = repo_root() / "figures" / "othello_rules"
 SEED = 42
 FIGURE_SIZE = (4.6, 4.6)
+CANDIDATE_SIZE = 6.5   # half a disc, so R1's occupying disc still reads under the candidate
 
 # Scanned t in [14, 26] over the first 800 games of the seed-42 stream for a position where
 # all three rules have a candidate, the played move flips several discs in more than one
@@ -85,6 +87,18 @@ def verdict(ax, square: int, legal: bool) -> None:
         ax.plot(cx, cy, marker="x", ms=7, mew=2.2, color=color, zorder=7)
 
 
+def candidate(ax, square: int, mover: int) -> None:
+    """The disc the mover is trying to place, on all four candidate squares.
+
+    Centred and half-size: centred because that is where the disc would go, half-size because
+    R1's square is occupied and the disc already on it is why the move breaks the rule.
+    """
+    style = DISC_STYLE["black" if mover > 0 else "white"]
+    x, y = square_xy(square)
+    ax.plot(x, y, marker=style["marker"], ms=CANDIDATE_SIZE, lw=0, zorder=6,
+            markerfacecolor=style["color"], markeredgecolor=DISC_EDGE, markeredgewidth=0.8)
+
+
 def mover_note(ax, mover: int) -> None:
     """Whose turn it is, in the axes rather than in a title: R3 is unreadable without it and
     a camera-ready figure drops its title (FIGURE_GUIDELINES 5). Rank 8 is empty here."""
@@ -96,8 +110,12 @@ def rules_panel(ax, board, mover: int, played: int) -> None:
     draw_board(ax, board.state.flatten())
     ax.set_ylabel("rank")
 
-    # R2: the one direction out of the square that holds opponent discs, drawn to the empty
-    # square that breaks it. R3: the bracket that does close -- for the opponent.
+    # The legal move: one line per direction that closes, out to the mover's own disc that
+    # closes it. R2: the one direction out of the square that holds opponent discs, drawn to
+    # the empty square that breaks it. R3: the bracket that does close -- for the opponent.
+    for flank in (r for r in rays(board.state, played, mover) if r.closed):
+        ray_line(ax, played, flank.terminator, RULE_STYLE["legal"]["color"])
+
     broken = next(r for r in rays(board.state, ILLEGAL["R2 bracketing"], mover)
                   if r.run and r.blocker is not None)
     ray_line(ax, ILLEGAL["R2 bracketing"], broken.blocker,
@@ -113,10 +131,12 @@ def rules_panel(ax, board, mover: int, played: int) -> None:
     # The played move takes no marker -- the tick is its second cue.
     mark_square(ax, played, RULE_STYLE["legal"], label=name(played), marker=False)
     verdict(ax, played, legal=True)
+    candidate(ax, played, mover)
     for rule, square in ILLEGAL.items():
         mark_square(ax, square, RULE_STYLE[rule], label=rule.split()[0],
                     below=square == ILLEGAL["R3 turn"])
         verdict(ax, square, legal=False)
+        candidate(ax, square, mover)
 
     mover_note(ax, mover)
 

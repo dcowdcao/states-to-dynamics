@@ -412,7 +412,11 @@ conditions:
   own contents and is unchanged in grayscale.
 - **Never cover the evidence.** The disc sitting on a square is often the whole
   reason the square is marked. Mark with an outline on the cell edge and a marker
-  inset into a corner, never a fill or a centred marker.
+  inset into a corner, never a fill or a centred marker. The one centred mark is
+  the *candidate disc* — the piece the mover is trying to place — drawn in the
+  mover's colour at half disc size, because a candidate square with no piece on it
+  makes the reader supply the move; half size is what keeps an occupied square's
+  own disc showing around it.
 - **A marker hue has to survive on a black disc, a white disc and the empty
   cell.** Mid-luminance Okabe–Ito with a white marker edge. Pure black is
   unavailable: it is already the disc colour and the disc edge.
