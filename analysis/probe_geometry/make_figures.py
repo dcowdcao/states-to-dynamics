@@ -22,11 +22,6 @@ FIGURES = Path(__file__).resolve().parent / "figures"
 DIVERGING = "RdBu_r"
 
 
-def panel_letter(ax, letter: str) -> None:
-    ax.text(0.0, 1.02, f"({letter})", va="bottom", transform=ax.transAxes,
-            color=INK, fontsize=9)
-
-
 def embed_panel(ax, points: pd.DataFrame, probes: pd.DataFrame) -> None:
     """Nonmetric MDS: distance is monotone in angle, not proportional to it.
 
@@ -94,8 +89,6 @@ def figure(camera_ready: bool) -> Path:
     fig, axes = plt.subplots(1, 2, figsize=(9.0, 4.3))
     embed_panel(axes[0], points, probes)
     cosine_panel(fig, axes[1], gram)
-    for ax, letter in zip(axes, "ab"):
-        panel_letter(ax, letter)
     fig.tight_layout()
     return save_figure(fig, FIGURES / "fig1_direction_geometry", camera_ready)
 
