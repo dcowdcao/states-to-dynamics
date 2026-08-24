@@ -25,9 +25,9 @@ from pathlib import Path
 from matplotlib import pyplot as plt
 
 from spade.common.paths import repo_root
-from spade.figures.othello_board import CORNER, draw_board, mark_square, square_xy
-from spade.figures.paper_style import (DISC_EDGE, DISC_STYLE, INK, RULE_STYLE, VERDICT_STYLE,
-                                       apply_style, save_figure)
+from spade.figures.othello_board import (candidate, draw_board, mark_square, square_xy,
+                                          verdict)
+from spade.figures.paper_style import INK, RULE_STYLE, apply_style, save_figure
 from spade.othello.boards import rays, replay
 from spade.othello.games import collect_legal, stream_games
 from spade.othello.taxonomy import CATEGORIES, LEGAL, classify
@@ -37,7 +37,6 @@ from circuits.othello_engine_utils import to_string
 FIGURES = repo_root() / "figures" / "othello_rules"
 SEED = 42
 FIGURE_SIZE = (4.6, 4.6)
-CANDIDATE_SIZE = 6.5   # half a disc, so R1's occupying disc still reads under the candidate
 
 # Scanned t in [14, 26] over the first 800 games of the seed-42 stream for a position where
 # all three rules have a candidate, the played move flips several discs in more than one
@@ -70,33 +69,6 @@ def ray_line(ax, square: int, through: int, color: str, ls="-") -> None:
     """A thin line from a candidate square out to the square that decides its bracket."""
     (x0, y0), (x1, y1) = square_xy(square), square_xy(through)
     ax.plot([x0, x1], [y0, y1], color=color, ls=ls, lw=1.3, zorder=2, solid_capstyle="round")
-
-
-def verdict(ax, square: int, legal: bool) -> None:
-    """Tick or cross in the square's lower-right corner, opposite mark_square's rule marker.
-
-    The corner, not the centre: R1's square is occupied and the disc under it is the evidence.
-    """
-    x, y = square_xy(square)
-    color = VERDICT_STYLE["legal" if legal else "illegal"]["color"]
-    cx, cy = x + CORNER, y + CORNER
-    if legal:
-        ax.plot([cx - 0.14, cx - 0.05, cx + 0.14], [cy - 0.01, cy + 0.09, cy - 0.15],
-                color=color, lw=2.0, zorder=7, solid_capstyle="round")
-    else:
-        ax.plot(cx, cy, marker="x", ms=7, mew=2.2, color=color, zorder=7)
-
-
-def candidate(ax, square: int, mover: int) -> None:
-    """The disc the mover is trying to place, on all four candidate squares.
-
-    Centred and half-size: centred because that is where the disc would go, half-size because
-    R1's square is occupied and the disc already on it is why the move breaks the rule.
-    """
-    style = DISC_STYLE["black" if mover > 0 else "white"]
-    x, y = square_xy(square)
-    ax.plot(x, y, marker=style["marker"], ms=CANDIDATE_SIZE, lw=0, zorder=6,
-            markerfacecolor=style["color"], markeredgecolor=DISC_EDGE, markeredgewidth=0.8)
 
 
 def mover_note(ax, mover: int) -> None:

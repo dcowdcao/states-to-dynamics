@@ -1318,6 +1318,16 @@ since a per-game cumulative only rises but a mean over survivors loses the games
 most accumulated mass. That is the same survivorship the ratio's late-game dip is, one axis
 over. The in-figure title is gone (the caption is this README's).
 
+**`board_states` took the rules figure's formatting (2026-08-24).** Same board furniture on
+both: `candidate` and `verdict` moved from `figure_othello_rules` into `othello_board`, which
+is where the renderer that owns the board lives, and both take a `disc_size` so the five small
+panels scale the marks with their discs. The t0 panel's labels lost their square names (the
+README names them), the bracket lines went from grey to the legal class's black, the y label
+is bare `rank`, and the panel letters moved under the boards. The side to move stays on the x
+label here: these panels' rank-7 and rank-8 cells hold discs, so there is no empty corner for
+an in-axes note. `candidate`'s edge is `DISC_EDGE`, not white -- a white candidate on the
+empty white cell of a white-to-move panel does not exist without it.
+
 **The rules board and that panel became one figure (2026-08-24).**
 `figures/rules_and_generation/` — (a) the board, (b) the accumulated mass, letters underneath
 because (a)'s square names sit above its top rank and a title lands on them.

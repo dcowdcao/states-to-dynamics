@@ -66,7 +66,10 @@ overlap in *M*−1 steps.
 `board_states` — game 2498 at *t0* = 20. Rule codes are `docs/othello_rules.md`'s: **R1**
 placement-on-empty, **R2** bracketing, **R3** turn order. The four non-*t0* panels mark the
 move actually played, with the bracket lines that make it legal; the *t0* panel marks one
-illegal candidate per rule, boxed and bold-titled so the event is findable.
+illegal candidate per rule, boxed and framed so the event is findable. Every marked square
+carries the disc the mover would place and a verdict — a green tick on the legal move, a red
+cross on each illegal one. **Square names are not drawn on the *t0* panel**: the rule codes
+below name the squares, and a board with three names on it reads as three moves being played.
 
 **Each rule is drawn from the member category that is legible as that rule**, chosen by
 `select_game.py`'s `PREFERRED` table rather than by whichever branch came first: R1 is

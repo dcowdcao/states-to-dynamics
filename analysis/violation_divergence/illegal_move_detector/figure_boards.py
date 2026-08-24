@@ -12,7 +12,14 @@ game -- the reference row, the game as actually played -- and every move marked 
 is the legal move that game played there, drawn with the brackets that make it legal. The
 $t_0$ panel marks the three illegal moves the tree forks into instead, one per constraint
 rule, and is the only panel with more than one mark; it carries a full frame so the event is
-findable at a glance rather than by reading the panel titles.
+findable at a glance rather than by reading the panel labels.
+
+Every board is drawn the way `figure_othello_rules` draws its one board: the candidate disc
+centred on each marked square, a tick on the legal move and a cross on each illegal one, the
+rule code alone beside the square, and the panel's label under the panel rather than over it.
+The one departure is the side to move, which stays on the x label -- these panels are a fifth
+as wide and their rank-7 and rank-8 cells hold discs, so the in-axes note that figure puts on
+its empty rank 8 has nowhere to sit.
 
 Sizing: five 8x8 boards need ~1.9 in each before the discs, the algebraic ticks and a
 square's name stop being legible, which puts the figure at 12 in -- past NeurIPS full width
@@ -44,8 +51,9 @@ from matplotlib.patches import Rectangle
 
 from detector import FIGURES, load
 from spade.common.study import study_dir
-from spade.figures.othello_board import draw_board, mark_square, square_xy
-from spade.figures.paper_style import INK, MUTED, RULE_STYLE, apply_style, save_figure
+from spade.figures.othello_board import (candidate, draw_board, mark_square, square_xy,
+                                          verdict)
+from spade.figures.paper_style import INK, RULE_STYLE, apply_style, save_figure
 from spade.othello.boards import rays, replay
 from spade.othello.taxonomy import CATEGORIES, LEGAL, RULE_OF, classify
 
@@ -59,10 +67,10 @@ FIGURE_SIZE = (12.0, 3.3)
 # it: a disc that keeps ms=13 here fills three quarters of its cell and swallows the outlines.
 DISC_SIZE = 8.0
 NEIGHBOUR_TINT = 0.16   # R2's empty neighbourhood, shaded under the grid rather than outlined
-# Where each rule's square carries its name, in cells from the square's centre. a2 and a8 sit
-# on the board's edge, where a centred name hangs off it, and c3's own disc is the evidence
-# for R1, so nothing may sit on the square itself.
-# Where a rule's name goes, tried in order until one lands inside the board. Keying this on
+LABEL_STRIP = 0.11      # figure fraction reserved under the panels for their labels
+# Where a rule's code goes, in cells from the square's centre, tried in order until one lands
+# inside the board: the square itself is spoken for by the candidate disc and the verdict
+# cross, and a2 and a8 sit on the board's edge where a centred label hangs off it. Keying this on
 # the rule instead of on the square is what broke when `select_game.py` learned to prefer the
 # legible member of each rule: R2 moved to rank 8 and its below-the-square label fell off the
 # edge and was clipped away silently.
@@ -120,11 +128,14 @@ def played_panel(ax, board, played: int) -> None:
     """One ply as the game played it: the move, and every bracket that makes it legal."""
     assert classify(board, played) == LEGAL, f"{name(played)} is not legal for the mover"
     draw_board(ax, board.state.flatten(), DISC_SIZE)
-    for ray in rays(board.state, played, int(board.next_hand_color)):
+    mover = int(board.next_hand_color)
+    for ray in rays(board.state, played, mover):
         if ray.closed:
-            ray_line(ax, played, ray.terminator, MUTED)
+            ray_line(ax, played, ray.terminator, RULE_STYLE["legal"]["color"])
     # One marked square: the outline and the name carry it, and a marker would read as a disc.
     mark_square(ax, played, RULE_STYLE["legal"], label=name(played), marker=False)
+    candidate(ax, played, mover, DISC_SIZE)
+    verdict(ax, played, legal=True, disc_size=DISC_SIZE)
 
 
 def event_panel(ax, board, rules: dict[str, int]) -> None:
@@ -146,15 +157,18 @@ def event_panel(ax, board, rules: dict[str, int]) -> None:
                   if r.closed)
     ray_line(ax, rules["R3 turn"], theirs.terminator, RULE_STYLE["R3 turn"]["color"])
 
-    # No legend: each square carries its rule's colour, its rule's marker, and its own name,
+    # No legend: each square carries its rule's colour, its rule's marker and its rule's code,
     # placed in whichever empty cells sit beside it.
+    mover = int(board.next_hand_color)
     for rule, square in rules.items():
         mark_square(ax, square, RULE_STYLE[rule])
+        candidate(ax, square, mover, DISC_SIZE)
+        verdict(ax, square, legal=False, disc_size=DISC_SIZE)
         x, y = square_xy(square)
         dx, dy, ha, va = next((p for p in LABEL_AT
                                if -0.5 <= x + p[0] <= 7.5 and -0.5 <= y + p[1] <= 7.5),
                               LABEL_AT[0])
-        ax.annotate(f"{rule.split()[0]} {name(square)}", (x + dx, y + dy), ha=ha, va=va,
+        ax.annotate(rule.split()[0], (x + dx, y + dy), ha=ha, va=va,
                     fontsize=9, fontweight="bold", zorder=6,
                     color=RULE_STYLE[rule]["color"])
 
@@ -167,24 +181,30 @@ def frame(ax) -> None:
         spine.set_linewidth(1.2)
 
 
+def panel_label(fig, ax, text: str, bold: bool) -> None:
+    """The panel's letter and ply, under the board (figure_rules_and_generation's placement)."""
+    box = ax.get_position()
+    fig.text(box.x0 + box.width / 2, 0.012, text, ha="center", va="bottom",
+             color=INK, fontsize=plt.rcParams["axes.titlesize"],
+             fontweight="bold" if bold else "normal")
+
+
 def boards_figure(tokens: list[int], squares: dict[str, int], spec: dict,
                   camera_ready: bool) -> Path:
     fig, axes = plt.subplots(1, len(OFFSETS), figsize=FIGURE_SIZE)
-    for ax, offset, letter in zip(axes, OFFSETS, LETTERS):
-        t = spec["t0"] + offset
-        board = replay(tokens[:t])
+    for ax, offset in zip(axes, OFFSETS):
+        board = replay(tokens[:spec["t0"] + offset])
         if offset:
-            played_panel(ax, board, to_string(tokens[t]))
+            played_panel(ax, board, to_string(tokens[spec["t0"] + offset]))
         else:
             event_panel(ax, board, rule_squares(board, squares))
             frame(ax)
-        tag = "$t_0$" if offset == 0 else f"$t_0{offset:+d}$"
-        ax.set_title(f"({letter}) {tag}, move {t}", loc="left",
-                     fontweight="bold" if offset == 0 else "normal")
         side_to_move(ax, board)
-        if offset != OFFSETS[0]:
-            ax.set_ylabel("")
-    fig.tight_layout()
+        ax.set_ylabel("rank" if offset == OFFSETS[0] else "")
+    fig.tight_layout(rect=(0, LABEL_STRIP, 1, 1))
+    for ax, offset, letter in zip(axes, OFFSETS, LETTERS):
+        tag = "$t_0$" if offset == 0 else f"$t_0{offset:+d}$"
+        panel_label(fig, ax, f"({letter}) {tag}, move {spec['t0'] + offset}", offset == 0)
     return save_figure(fig, FIGURES / "board_states", camera_ready)
 
 
