@@ -243,8 +243,15 @@ seed 42 rather than averaging a game's categories, which would give it 1/√k of
 
 `raw_detection_auroc.png` is a bar per illegal arm of the AUROC at *t0* over an evaluation
 set of **1,000 source games split evenly and disjointly over the five conditions** — legal,
-illegal, R1, R2, R3, 200 games each — with *t0* spanning the full [10, 34] range inside every
-group. Bars read `illegal / legal`, `R1`, `R2`, `R3`; the y axis is AUROC.
+illegal, R1, R2, R3, 200 games each. Bars read `illegal / legal`, `R1`, `R2`, `R3`; the y
+axis is AUROC.
+
+**The split is stratified by *t0*, not merely randomised.** Eight games per condition are
+dealt at each of the 25 move indices in [10, 34], so the five groups carry an *identical*
+*t0* histogram — same n, same count at every value, and therefore the same median (22.0) and
+mean (22.00) exactly rather than in expectation. Move index is the strongest nuisance
+variable in this tree, so matching it removes it as a confound and a difference between bars
+reads as the rule rather than as when in the game the splice landed.
 
 **The even split costs the pairing.** Scoring an illegal branch against *the same game's*
 legal control at *the same* position held game identity and move index fixed, so the contrast
