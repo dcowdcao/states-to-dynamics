@@ -23,6 +23,7 @@ import numpy as np
 import torch
 
 from spade.figures.paper_style import sae_label
+from spade.l0_operating_point.checkpoints import matched
 from spade.saes.registry import seed42_entries
 from spade.spaces import EXCLUDED_SAE
 from spade.violation_divergence.compute_divergence import sae_encoder
@@ -43,12 +44,40 @@ def positions(t0: int, back: int = 0) -> np.ndarray:
     return p[(p - t0) % STRIDE == 0]
 
 
-def spaces() -> list[tuple[str, object]]:
+# The L0-matched roster, in the seed-42 grid's family order so the two grids read
+# cell for cell; the dict is both the trainer_class -> panel-name map and that order.
+L0_FAMILY = {"PAnnealTrainer": "PAnneal", "StandardTrainer": "Standard",
+             "GatedSAETrainer": "GatedSAE", "TrainerTopK": "TopK",
+             "GatedAnnealTrainer": "GatedAnneal", "BatchTopKTrainer": "BatchTopK",
+             "CosineSpaDETrainer": "CosineSpaDE", "SpaDETrainer": "SpaDE"}
+
+
+def spaces(l0_matched: bool = False) -> list[tuple[str, object]]:
     """(label, SAE entry or None) per grid cell -- raw layer 5 leads, then one
-    seed-42 SAE family each (FIGURE_GUIDELINES 4.6)."""
+    dictionary per SAE family (FIGURE_GUIDELINES 4.6).
+
+    The default roster is the seed-42 checkpoints, each sitting wherever its own
+    default hyperparameters put it on the sparsity axis, so a difference between two
+    cells confounds the architecture with its L0. `l0_matched` swaps in the eight
+    `l0_operating_point` picks instead -- one per family, each the nearest-L0 member
+    of its own grid to the shared target -- and puts the L0 in the panel name, since
+    matching it is the whole point of that roster.
+    """
+    if l0_matched:
+        picks = {m.trainer_class: m for m in matched()}
+        assert set(picks) == set(L0_FAMILY), f"picks.csv holds {sorted(picks)}"
+        return [(RAW_SPACE, None)] + [
+            (f"{name} ($L_0$ {picks[tc].l0:.0f})", picks[tc])
+            for tc, name in L0_FAMILY.items()]
     return [(RAW_SPACE, None)] + [
         (sae_label(e.config.replace("Trainer-othello", "")), e)
         for e in seed42_entries() if e.config not in EXCLUDED_SAE]
+
+
+def tag(variant: str = "", l0_matched: bool = False) -> str:
+    """The filename suffix a (branch set, roster) pair writes under, so an
+    L0-matched run can never overwrite the seed-42 figure it is read beside."""
+    return ("_" + variant if variant else "") + ("_l0_matched" if l0_matched else "")
 
 
 def pca2(X: np.ndarray, basis: np.ndarray | None = None):

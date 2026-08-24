@@ -20,6 +20,11 @@ activation-norm units and theta in degrees, so an unscaled PCA of R^21 reports
 whichever block is larger. Rescaling is diagonal, so zero displacement is still
 the origin and the reference is still the vertical line there.
 
+`--l0-matched` draws the same game through the eight `l0_operating_point` picks,
+one checkpoint per SAE type at the shared target L0, into `*_l0_matched` files. The
+seed-42 grid compares architectures at whatever sparsity each one's own defaults left
+it at; this one holds L0 fixed and lets the architecture be the only difference.
+
 `--variant rollout` draws the same game from the branch set whose suffixes are
 sampled from the model, into `*_rollout` files. A branch is then K=4 sampled
 continuations, averaged AFTER r21 -- the descriptor is nonlinear, so the mean of
@@ -29,7 +34,7 @@ rollouts of one branch differ by more than the branch differs from the
 reference, so every point drawn is past the horizon the branch survives.
 
 Usage: python analysis/violation_divergence/fork_expanding_curvature/make_figures.py
-       [--variant spliced|rollout] [--camera-ready]
+       [--variant spliced|rollout] [--l0-matched] [--camera-ready]
 """
 
 import argparse
@@ -42,6 +47,7 @@ import numpy as np
 from spade.figures.paper_style import (
     CATEGORY_STYLE, GRID, INK, MUTED, NULL, REFERENCE, apply_style, save_figure)
 from spade.othello.taxonomy import CATEGORIES
+from spade.violation_divergence.fork_plane import tag
 
 from cache_features import VARIANT_DIRS, load
 from window import (
@@ -52,6 +58,9 @@ ELEV, AZIM = 18, -58  # the fork figure's camera, so the two are comparable
 CONTROL_LABEL = {1: "control: another legal move (null)",
                  2: "control 2: a third legal move (null)"}
 UNDEFINED = "$R^{21}$ undefined\n(< 8 sampled positions since $t_0$)"
+# Every panel name carries its own L0; this one line says what seats them all near 220.
+L0_NOTE = ("\n$L_0$-matched roster: one checkpoint per SAE type, all at the shared "
+           "operating point — a cell-to-cell difference is architecture, not sparsity.")
 # The drawn window cannot carry this one: the figure's whole range is past the
 # horizon, so nothing about where it starts or stops tells a reader the branches
 # are already gone. One line, and the rest is README ("The rollout variant").
@@ -66,10 +75,6 @@ class Branches:
     rows: list[dict]
     groups: list[list[int]]
     ref: int
-
-
-def suffix(rollout: bool) -> str:
-    return "_rollout" if rollout else ""
 
 
 def branch_style(category: int, is_control: int) -> dict:
@@ -164,7 +169,9 @@ def fork_panel(ax, coords: np.ndarray, rows: list[dict], pos: np.ndarray,
         pane.pane.set_alpha(0.03)
 
 
-def space_grid(g: dict, b: Branches, k0: int, rollout: bool, camera_ready: bool) -> Path:
+def space_grid(g: dict, b: Branches, k0: int, variant: str, l0_matched: bool,
+               camera_ready: bool) -> Path:
+    rollout = bool(variant)
     ncol = 3
     nrow = int(np.ceil(len(g["names"]) / ncol))
     fig = plt.figure(figsize=(3.7 * ncol, 3.5 * nrow))
@@ -178,16 +185,20 @@ def space_grid(g: dict, b: Branches, k0: int, rollout: bool, camera_ready: bool)
         ax.set_ylabel("PC2 of $\\Delta_{21}$", labelpad=-8)
     # §4.6: a per-panel refit is not comparable cell to cell, and that has to be
     # said where the panels are. Everything else about the plane is README's.
-    ordered_legend(fig, fig.axes[0], 4, -0.06,
+    # The legend box grows upward from its anchor, so each line a note adds would climb
+    # into the bottom row's axis labels; drop the anchor by what the note gained.
+    ordered_legend(fig, fig.axes[0], 4, -0.06 - 0.011 * l0_matched,
         "uncentred PCA of $\\Delta_{21}$, refit per space: arb. units, not comparable "
         "across cells — only the shape of the fork is. One game (n=1): shape only, not "
-        "a claim." + (ROLLOUT_NOTE if rollout else ""))
+        "a claim." + (L0_NOTE if l0_matched else "") + (ROLLOUT_NOTE if rollout else ""))
     if not camera_ready:
         fig.suptitle("The fork in the curvature space $R^{21}$, expanding window anchored "
-                     f"at $t_0$ (game {g['game']})", fontsize=11)
+                     f"at $t_0$ (game {g['game']})"
+                     + (", $L_0$-matched SAEs" if l0_matched else ""), fontsize=11)
     fig.subplots_adjust(left=0.02, right=0.97, top=0.92, bottom=0.06, wspace=0.06, hspace=0.16)
-    return save_figure(fig, FIG_DIR / f"space_fork_grid_r21_expanding{suffix(rollout)}",
-                       camera_ready)
+    return save_figure(
+        fig, FIG_DIR / f"space_fork_grid_r21_expanding{tag(variant, l0_matched)}",
+        camera_ready)
 
 
 def magnitude_panel(ax, F: np.ndarray, b: Branches, pos: np.ndarray,
@@ -234,7 +245,9 @@ def motion_panel(ax, g: dict, b: Branches, k0: int) -> None:
     ax.set_ylim(bottom=0)
 
 
-def companion(g: dict, b: Branches, k0: int, rollout: bool, camera_ready: bool) -> Path:
+def companion(g: dict, b: Branches, k0: int, variant: str, l0_matched: bool,
+              camera_ready: bool) -> Path:
+    rollout = bool(variant)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9.0, 3.6),
                                    gridspec_kw={"width_ratios": [1, 1.3]})
     magnitude_panel(ax1, g["F"][0], b, g["pos"], k0, g["t0"])
@@ -245,25 +258,30 @@ def companion(g: dict, b: Branches, k0: int, rollout: bool, camera_ready: bool) 
     fig.tight_layout()
     # The legend's title grows upward from its anchor, so the rollout line has to
     # push the whole block down or it lands on panel (b)'s rotated tick labels.
-    drop = 0.035 if rollout else 0
+    drop = 0.035 * (rollout + l0_matched)
     ordered_legend(fig, [ax1, ax2], 4, -0.175 - drop,
         "one game (n=1), 8 non-reference branches — each marker in (b) is one branch."
-        + (ROLLOUT_NOTE if rollout else ""))
+        + (L0_NOTE if l0_matched else "") + (ROLLOUT_NOTE if rollout else ""))
     if not camera_ready:
-        fig.suptitle("What the $R^{21}$ curve can and cannot show", fontsize=11, y=1.04)
-    return save_figure(fig, FIG_DIR / f"r21_expanding_magnitude{suffix(rollout)}",
-                       camera_ready)
+        fig.suptitle("What the $R^{21}$ curve can and cannot show"
+                     + (" ($L_0$-matched SAEs)" if l0_matched else ""), fontsize=11, y=1.04)
+    return save_figure(
+        fig, FIG_DIR / f"r21_expanding_magnitude{tag(variant, l0_matched)}",
+        camera_ready)
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--variant", default="spliced", choices=list(VARIANT_DIRS))
+    parser.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                        help="the eight l0_operating_point picks instead of the seed-42 "
+                             "roster: one per SAE type, all at the shared target L0")
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    g = load(VARIANT_DIRS[args.variant])
-    rollout = args.variant == "rollout"
+    variant = VARIANT_DIRS[args.variant]
+    g = load(variant, args.l0_matched)
     groups = branch_groups(g["category"], g["is_control"])
     rows = [{"category": int(g["category"][ix[0]]), "is_control": int(g["is_control"][ix[0]])}
         for ix in groups]
@@ -271,8 +289,8 @@ def main():
                if r["category"] == 0 and not r["is_control"])
     b = Branches(rows, groups, ref)
     k0 = int(np.flatnonzero(g["pos"] == g["t0"])[0])
-    print(f"wrote {space_grid(g, b, k0, rollout, args.camera_ready)}")
-    print(f"wrote {companion(g, b, k0, rollout, args.camera_ready)}")
+    print(f"wrote {space_grid(g, b, k0, variant, args.l0_matched, args.camera_ready)}")
+    print(f"wrote {companion(g, b, k0, variant, args.l0_matched, args.camera_ready)}")
 
 
 if __name__ == "__main__":

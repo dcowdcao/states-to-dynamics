@@ -10,8 +10,12 @@ sampled from the model, which stores K rows per branch (36, not 9) and a
 an unscoped path would let a rollout run overwrite the spliced features and
 silently redraw every spliced figure.
 
+`--l0-matched` caches the same game through the eight `l0_operating_point` picks --
+one checkpoint per SAE type at the shared target L0 -- into `game_spaces_l0_matched.npz`,
+so the seed-42 cache and every figure drawn from it are untouched.
+
 Usage: python analysis/violation_divergence/fork_expanding_curvature/cache_features.py
-       [--variant spliced|rollout]
+       [--variant spliced|rollout] [--l0-matched]
 """
 
 import argparse
@@ -22,24 +26,22 @@ import torch
 
 from spade.common.device import select_device
 from spade.common.study import variant_dir
-from spade.figures.paper_style import sae_label
-from spade.saes.registry import seed42_entries
-from spade.spaces import EXCLUDED_SAE
 from spade.violation_divergence.branches import complete_games
 from spade.violation_divergence.compute_divergence import sae_encoder
+from spade.violation_divergence.fork_plane import spaces, tag
 
 from window import positions
 
 VARIANT_DIRS = {"spliced": "", "rollout": "rollout"}
-RAW_SPACE = "raw layer 5 (reference space)"
 
 
-def cache_path(variant: str) -> Path:
-    return variant_dir("divergence", variant=variant) / "fork_expanding" / "game_spaces.npz"
+def cache_path(variant: str, l0_matched: bool = False) -> Path:
+    return (variant_dir("divergence", variant=variant) / "fork_expanding"
+            / f"game_spaces{tag(l0_matched=l0_matched)}.npz")
 
 
-def load(variant: str = "") -> dict:
-    cache = cache_path(variant)
+def load(variant: str = "", l0_matched: bool = False) -> dict:
+    cache = cache_path(variant, l0_matched)
     if not cache.exists():
         raise FileNotFoundError(f"{cache} missing; run cache_features.py first")
     z = np.load(cache, allow_pickle=False)
@@ -55,6 +57,9 @@ def load(variant: str = "") -> dict:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--variant", default="spliced", choices=list(VARIANT_DIRS))
+    parser.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                        help="the eight l0_operating_point picks instead of the seed-42 "
+                             "roster: one per SAE type, all at the shared target L0")
     args = parser.parse_args()
 
     device = select_device()
@@ -74,11 +79,9 @@ def main():
     Z = acts[idx][:, pos, :].float().to(device)
     del acts
 
-    spaces = [(RAW_SPACE, None)] + \
-        [(sae_label(e.config.replace("Trainer-othello", "")), e)
-        for e in seed42_entries() if e.config not in EXCLUDED_SAE]
+    cells = spaces(args.l0_matched)
     out = {}
-    for j, (name, entry) in enumerate(spaces):
+    for j, (name, entry) in enumerate(cells):
         if entry is None:
             out[f"space_{j}"] = Z.cpu().numpy()
             continue
@@ -88,10 +91,10 @@ def main():
         print(f"{name}: {out[f'space_{j}'].shape}")
 
     extra = {"rollout": meta["rollout"][idx].numpy()} if "rollout" in meta else {}
-    cache = cache_path(variant)
+    cache = cache_path(variant, args.l0_matched)
     cache.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(
-        cache, names=np.array([n for n, _ in spaces]), pos=pos, t0=t0, game=game,
+        cache, names=np.array([n for n, _ in cells]), pos=pos, t0=t0, game=game,
         category=meta["category"][idx].numpy(),
         is_control=meta["is_control"][idx].numpy(), **extra, **out)
     print(f"wrote {cache}  game {game}, t0={t0}, positions {pos[0]}-{pos[-1]}, "

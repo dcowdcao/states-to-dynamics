@@ -32,6 +32,11 @@ quantities: `ratio_plane`/`ratio_space` measure the distance OF the mean field,
 which is what the drawn panel shows, while `game_plane`/`game_space` are the mean
 OF each game's own distance, which is what carries a CI.
 
+`--l0-matched` swaps the seed-42 roster for the eight `l0_operating_point` picks,
+one per SAE type at the shared target L0, so the eight dictionary cells are compared
+at matched sparsity instead of wherever each one's own defaults put it. It writes
+`{plane}_n{N}_l0_matched.npz` beside the seed-42 file, never over it.
+
 `--variant rollout` runs the same sweep over the rollout branch set, where every
 branch -- the reference included -- samples its own continuation from OthelloGPT
 instead of replaying the source game's. A branch is K rows there, so a mean over
@@ -42,7 +47,7 @@ both are nonlinear. It draws to ROLLOUT_RMAX and not to the study window's r = 2
 the window `../fork_and_board` set on this same branch set. The two variants read
 and write different trees, so neither can overwrite the other's npz.
 
-    $DIR[/rollout]/fork_population/{plane}_n{N}.npz
+    $DIR[/rollout]/fork_population/{plane}_n{N}[_l0_matched].npz
       game        [G]              source game ids, ascending
       n_pool      scalar           branch-complete games forking at t0, before the
                                    first G were taken
@@ -69,7 +74,7 @@ and write different trees, so neither can overwrite the other's npz.
       spread_game [S, G]           the same per game
 
 Usage: python analysis/violation_divergence/fork_population/measure.py
-       [--plane displacement|r21|d7] [--n_games 100]
+       [--plane displacement|r21|d7] [--n_games 100] [--l0-matched]
 """
 
 import argparse
@@ -85,7 +90,7 @@ from spade.othello.taxonomy import CATEGORIES
 from spade.violation_divergence.branches import FIGURE_GAME, games_at_t0
 from spade.violation_divergence.curvature_plane import (
     PLANE_COLUMNS, W, fit_plane, windowed)
-from spade.violation_divergence.fork_plane import positions, spaces
+from spade.violation_divergence.fork_plane import positions, spaces, tag
 from spade.violation_divergence.fork_r21 import top2
 from spade.violation_divergence.population import (
     C1, C2, REF, ROLES, encode, encoders, paired_mean, rows_at)
@@ -239,6 +244,9 @@ def main():
                     help="rollout: every branch samples its own continuation, K rows "
                          "per branch, paired on the rollout index and reduced after "
                          "the encode and phi")
+    ap.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                    help="the eight l0_operating_point picks instead of the seed-42 "
+                         "roster: one per SAE type, all at the shared target L0")
     args = ap.parse_args()
 
     variant = VARIANTS[args.variant]
@@ -266,7 +274,7 @@ def main():
         assert (meta["rollout"][rows] == torch.arange(K)).all(), \
             "rows are k-major: paired_mean would pair a branch with another rollout"
     names = []
-    G, S, B, T = len(games), len(spaces()), len(ROLES), len(pos)
+    G, S, B, T = len(games), len(spaces(args.l0_matched)), len(ROLES), len(pos)
     z = {"coords": np.zeros((S, B, T, 2)), "var": np.zeros((S, 2)),
          "coherence": np.zeros((S, B, T)), "coherence_rule": np.zeros((S, len(RULES), T)),
          "ratio_plane": np.zeros((S, B)),
@@ -275,7 +283,7 @@ def main():
          "spread_mean": np.zeros(S), "spread_game": np.zeros((S, G))}
 
     started = time.time()
-    for s, (name, enc) in enumerate(encoders(select_device())):
+    for s, (name, enc) in enumerate(encoders(select_device(), args.l0_matched)):
         names.append(name)
         total, seen = None, None
         for g, x in enumerate(fields(args.plane, acts, rows, enc, full)):
@@ -312,7 +320,7 @@ def main():
     assert all(np.isfinite(v).all() for v in z.values()), "a NaN reached the output"
     out = base / "fork_population"
     out.mkdir(parents=True, exist_ok=True)
-    path = out / f"{args.plane}_n{G}.npz"
+    path = out / f"{args.plane}_n{G}{tag(l0_matched=args.l0_matched)}.npz"
     np.savez_compressed(
         path, game=np.array(games), space=names, n_pool=len(pool), role=ROLES,
         category=[r["category"] for r in ROWS], is_control=[r["is_control"] for r in ROWS],

@@ -88,7 +88,16 @@ def pairs(meta: dict[str, torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor, to
 
 
 def sae_encoder(entry, device: str):
+    """`entry`'s encode function, standardized only if that is how it was trained.
+
+    Feeding either convention the other's is silently wrong rather than merely
+    inaccurate (`spade.spaces`), so the rule rides on the entry: every
+    `saes.registry.SAEEntry` is standardized, an `l0_operating_point` Karvonen pick
+    is not.
+    """
     ae, _ = load_karvonen_sae(str(entry.ckpt_dir), device=device)
+    if not entry.standardize:
+        return ae.to(device).encode
     params = load_standardization_params(str(entry.ckpt_dir), device=device)
     return StandardizedDictionary(
         ae, torch.tensor(params["mean"], device=device), params["scale"]).to(device).encode

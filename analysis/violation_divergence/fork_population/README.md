@@ -198,6 +198,34 @@ at *r* > 0 is the branch move plus everything the model chose to do about it.
 `branches.pt` stays the tensor the single-token claims rest on; neither variant is
 the other's replication.
 
+### `fork_population_displacement_l0_matched`, `..._r21_l0_matched`, `..._d7_l0_matched`
+
+**The same three planes and the same 100 games, with the eight dictionary cells
+seated at one shared L0.** `--l0-matched` swaps the seed-42 roster — whose members
+sit wherever their own default hyperparameters left them on the sparsity axis, L0 31
+to 1808 — for the `l0_operating_point` picks: one checkpoint per type, all within
+1.4x of the shared target. The roster, the eight L0s and the standardization rule
+are in
+[`../r21_shared_basis/README.md`](../r21_shared_basis/README.md), *The L0-matched roster*;
+`fork_plane.spaces()` is the switch and `population.encoders()` reads it.
+
+Cells keep the seed-42 grid's family order, so the two grids read panel for panel,
+and each panel name carries its own L0. Everything else — the games, the plane fit,
+the coherence annotation, the CSV's estimator and its bootstrap — is unchanged, so
+`fork_population_{plane}_l0_matched.csv` has the same columns as its seed-42 twin
+and the two may be diffed row for row. `raw layer 5` is in both rosters and is
+identical in both.
+
+**The verdict does not move; the spread across cells narrows.** Displacement plane,
+full space, mean over the 100 games: R1 placement is below the legal control in
+every cell under both rosters (0.90–0.93). What tightens is R2 bracketing, whose
+across-cell range goes from 0.977–1.059 on the seed-42 roster to 0.987–1.073 at
+matched L0, and whose count of cells below 1 falls from four to two — part of the
+seed-42 grid's cell-to-cell scatter was sparsity, not architecture. CosineSpaDE is
+the largest R2 excursion under both rosters and in both the displacement and R^21
+planes (1.059 → 1.073 and 1.298 → 1.302), which is the one ordering the L0 control
+leaves alone.
+
 ## What it says
 
 Raw layer 5, displacement plane, per game in the full 512-d space and in the

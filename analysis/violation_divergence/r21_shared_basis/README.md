@@ -200,6 +200,62 @@ plies of span. So the rollout grids are a **shape check on the reduction**, not
 a result: they show that the K-mean descriptor still fits one plane across nine
 spaces. Read the separation from the spliced figures.
 
+## The L0-matched roster — `--l0-matched`
+
+Every grid above compares eight dictionaries that sit wherever their own default
+hyperparameters left them on the sparsity axis (L0 31 to 1808), so a cell-to-cell
+difference confounds the architecture with its L0. `--l0-matched` swaps in the
+`l0_operating_point` picks instead: one checkpoint per type, each its own grid's
+nearest-L0 member to the shared target (`results/l0_operating_point/picks.csv`,
+`target_l0` 219.2), leaving a 1.4x spread instead of a 58x one.
+
+| panel | checkpoint | L0 |
+|---|---|---|
+| PAnneal | `p_anneal/trainer22` | 260.1 |
+| Standard | `standard/trainer25-v2` | 208.7 |
+| GatedSAE | `gated/trainer32` | 219.9 |
+| TopK | `top_k/trainer_61` | 220.0 |
+| GatedAnneal | `gated_anneal/trainer25` | 221.7 |
+| BatchTopK | `BatchTopK-k220` | 226.7 |
+| CosineSpaDE | `CosineSpaDE-beta1-gam0.05` | 183.8 |
+| SpaDE | `SpaDE-lam0.001-gam0.005` | 232.1 |
+
+Cells keep the seed-42 grid's family order, so the two grids read panel for panel,
+and each panel name carries its own L0. **Karvonen's five are fed the raw residual
+stream and ours the standardized one**, because that is how each was trained
+(`spade.l0_operating_point.checkpoints`); the two families' latents are therefore
+not on one input scale, and this is a comparison of architectures at matched L0
+rather than of one quantity measured eight ways.
+
+Every artifact carries an `_l0_matched` tag and nothing seed-42 is written over.
+`analysis/l0_operating_point/README.md` still describes the earlier min-max target
+(L0 116.7); `picks.csv` is the file of record and holds the consensus rule's 219.2.
+
+Nothing about the plane changes, so every claim above can be re-read off the twins.
+Panel (a) of `run_from_reference_l0_matched`, illegal ÷ control, against the
+seed-42 table in *How far a branch runs from the reference*:
+
+| space | activation refit | R²¹ refit | R²¹ shared | R²¹ named | **full R²¹** | control 2, full R²¹ |
+|---|---|---|---|---|---|---|
+| raw layer 5 | 1.20 | 2.10 | 1.80 | 1.82 | **0.97** | 1.13 |
+| PAnneal (L0 260) | 1.17 | 1.35 | 1.55 | 2.02 | **0.98** | 1.10 |
+| Standard (L0 209) | 1.09 | 2.14 | 1.88 | 3.05 | **1.11** | 1.18 |
+| GatedSAE (L0 220) | 1.06 | 0.86 | 0.80 | 0.98 | **0.68** | 1.00 |
+| TopK (L0 220) | 1.16 | 1.46 | 1.59 | 1.56 | **0.83** | 1.09 |
+| GatedAnneal (L0 222) | 1.15 | 0.48 | 0.83 | 1.22 | **0.52** | 0.79 |
+| BatchTopK (L0 227) | 1.13 | 1.26 | 1.43 | 1.41 | **0.78** | 1.01 |
+| CosineSpaDE (L0 184) | 1.32 | 2.15 | 2.23 | 2.88 | **1.79** | 1.87 |
+| SpaDE (L0 232) | 1.20 | 0.54 | 0.72 | 1.36 | **0.56** | 0.89 |
+
+**The headline survives the L0 control and gets slightly stronger.** Full R^21 is
+below 1 in **seven** of the nine spaces (seed-42: six) and below the third legal
+move's own ratio in **all nine**, as before. The three R^21 planes move it upward
+in the same **25 of 27** plane × space cells, by 0.92–2.75× with a median of 1.69
+(seed-42: 0.81–2.70×, median 1.64). Which cells lead does move: at matched L0 the
+largest excursion is CosineSpaDE (1.49 → 1.79) and Standard drops out of the top
+(1.42 → 1.11), while GatedAnneal becomes the *smallest* (0.88 → 0.52) — so the
+ordering of spaces in the seed-42 grid was partly reading their L0.
+
 ## Figure notes
 
 The lines the figures used to print under their panels, in their own wording.
