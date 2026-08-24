@@ -52,8 +52,8 @@ out of the baseline it is scored against.
 |---|---|
 | `board_states.png` | the board at *t0*−2 … *t0*+2 of game 3889: the legal move played at each of the four surrounding plies, and the illegal move the drawn branch plays at *t0* |
 | `detector_trace.png` | the detector score for that same game over moves *t0*−5 … *t0*+5, three rule arms against the matched legal control, with τ |
-| `auroc_by_rule.png` | AUROC at *t0*, illegal branch against the same game's legal control, pooled and per rule, n = 189 games |
-| `score_histograms.png` | the distributions that AUROC summarizes: the score at *t0* for legal, illegal, R1, R2, R3, the same 189 games, with τ |
+| `auroc_by_rule.png` | AUROC at *t0*, illegal branch against the same game's legal control, pooled and per rule, n = 200 games |
+| `score_histograms.png` | the distributions that AUROC summarizes: the score at *t0* for legal, illegal, R1, R2, R3, the same 200 games, with τ |
 
 Band semantics: every interval is a 95% percentile bootstrap over **source games** as
 clusters, 1,000 resamples, seed 42 — games and never positions, because one game's candidates
@@ -95,7 +95,8 @@ score at that game's own *t0*, one value per branch. `legal / illegal` is the po
 illegal branch per game); R1/R2/R3 are that same arm split by rule.
 
 **The evaluation set is flat over *t0*.** `detector.stratified` takes an equal quota of games
-at every *t0* in the scored range — **9 games at each of 14…34, n = 189** — because the tree
+at every *t0* in the scored range — **n = 200 over *t0* = 14…34**, 10 games at each of 14–24
+and 9 at each of 25–34 — because the tree
 is not balanced on move index: `extend_branches.py` forked 1,665 of its 2,278 eligible games at
 *t0* = 20 and about 30 at each other value, so any prefix of game ids is ~46% one position, and
 move index is the strongest nuisance variable this tree has. `move_legality.detection_auroc`
@@ -109,13 +110,13 @@ anywhere. The quota is the smallest stratum (22 games, at *t0* = 32 and 33), whi
 n: outside *t0* = 20 the whole tree holds 613 eligible games, 22 at the thinnest position, so
 the largest uniform sample this corpus supports is 22 × 21 = 462.
 
-**n is capped below that, at `detector.PER_T0` = 9 per position.** The cap exists so these
-panels carry the same per-class n as `move_legality.detection_auroc`'s bars, which are 200
-games each; 200 / 21 positions is not an integer, so 9 × 21 = 189 is the largest uniform sample
-at or under it. This is a comparability choice and it costs interval width — the pool would
-give 2.4× the games. Raise `PER_T0` to 22 to spend them.
+**n is capped below that, at `detector.N_EVAL` = 200**, so these panels carry the same
+per-class n as `move_legality.detection_auroc`'s bars. 200 does not divide 21 positions, so the
+lowest 11 take one game more than the rest — a spread of one game, against the 46% imbalance a
+prefix of game ids carries. This is a comparability choice and it costs interval width: the
+pool would give 462. Raise `N_EVAL` to spend them.
 
-`score_histograms` — same corpus, same eligibility, same statistic and the **same 189
+`score_histograms` — same corpus, same eligibility, same statistic and the **same 200
 games** as `auroc_by_rule`, on five arms held aligned game by game (asserted on `game_id` and
 on *t0*). So the panel is literally the distribution those bars summarize, which it was not
 while the two drew different prefixes of the tree.
@@ -147,10 +148,10 @@ judgement of those moves.
 
 **τ flags the legal control too, in this game.** At *t0* the control scores 1.654 against
 τ = 0.850. The three rule arms clear it by more, but the separation is in magnitude, not in
-whether the cut fires — and `score_histograms` shows the same thing at population scale: 29% of
+whether the cut fires — and `score_histograms` shows the same thing at population scale: 28% of
 legal controls sit above τ.
 
-**R2 ≫ R3 ≫ R1**, at 0.777 / 0.684 / 0.585 AUROC. Playing on an already-occupied square is
+**R2 ≫ R3 ≫ R1**, at 0.775 / 0.690 / 0.590 AUROC. Playing on an already-occupied square is
 the hardest violation for this score to see, barely clearing chance. That is the same ordering
 the supervised probe in `analysis/move_legality` finds by an unrelated route, where
 `occupied_opp` is likewise its worst cell.

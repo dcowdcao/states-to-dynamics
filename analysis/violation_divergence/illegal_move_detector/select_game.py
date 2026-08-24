@@ -15,7 +15,7 @@ order they bind:
 
 The last two criteria are selections over games and the figure caption has to say so: this is
 an illustrative game chosen to be legible, not a typical one. Figures 3 and 4 are the
-population, where 29% of legal positions sit above tau. MIN_CORRECT is 4, not 5, so the
+population, where 28% of legal positions sit above tau. MIN_CORRECT is 4, not 5, so the
 criterion does not hunt for a window with no false alarm in it; the current pick happens to
 have none.
 

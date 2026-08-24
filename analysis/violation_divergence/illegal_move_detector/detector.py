@@ -37,11 +37,11 @@ SEED = 42
 N_LEGAL = 2000                          # the straightness legal block
 RULES = ["R1", "R2", "R3"]
 ARMS = ["illegal", *RULES]
-# Games per t0 in the population figures. 9 x 21 positions = 189, the largest uniform sample
-# at or under the 200 games per condition of `move_legality.detection_auroc`, whose bar chart
-# these panels are read beside. The pool allows 22 (n = 462); the cap is comparability, not
-# availability, and it costs interval width.
-PER_T0 = 9
+# Games per class in the population figures: `move_legality.detection_auroc`'s per-bar n, so
+# the panels these are read beside carry the same weight of evidence. The pool would allow 462
+# (22 at every position); the cap is comparability, not availability, and it widens every
+# interval by about 1.6x.
+N_EVAL = 200
 
 # One game for the board panel and the trace beside it. Picked by `select_game.py`: all three
 # rules have a branch at its t0, t0 sits far enough inside the band that +-5 plies stay on the
@@ -99,7 +99,7 @@ def arms(data: dict, seed: int = SEED) -> dict[str, np.ndarray]:
     return {k: v.numpy() for k, v in localize.arms(meta, seed).items()}
 
 
-def stratified(data: dict, sel: dict, per_t0: int = PER_T0) -> np.ndarray:
+def stratified(data: dict, sel: dict, n_games: int = N_EVAL) -> np.ndarray:
     """Positions into every arm's index array: the same number of games at every t0.
 
     The tree is not balanced on move index -- `extend_branches` forked 1,666 of its games at
@@ -107,14 +107,17 @@ def stratified(data: dict, sel: dict, per_t0: int = PER_T0) -> np.ndarray:
     and move index is the strongest nuisance this tree has. An equal quota per t0 makes the
     sample flat across the range, the way `move_legality.detection_auroc` deals its groups.
 
-    The quota is `per_t0`, or the smallest stratum when that is smaller. Within a stratum the
+    `n_games` rarely divides the number of positions -- 200 over 21 does not -- so the lowest
+    `n_games % len(values)` positions take one game more than the rest. That is a spread of one
+    game, against the 46% imbalance the unstratified prefix carried. Within a position the
     games are the first by sorted game_id: a stated prefix that reproduces without a seed.
     """
     game, t0 = data["game_id"][sel["reference"]], data["t0"][sel["reference"]]
     values = np.unique(t0)
-    quota = min(per_t0, *(int((t0 == v).sum()) for v in values))
-    keep = [np.flatnonzero(t0 == v)[np.argsort(game[t0 == v], kind="stable")][:quota]
-            for v in values]
+    quota, extra = divmod(n_games, len(values))
+    assert quota + 1 <= min(int((t0 == v).sum()) for v in values), "a t0 cannot fill its quota"
+    keep = [np.flatnonzero(t0 == v)[np.argsort(game[t0 == v], kind="stable")]
+            [:quota + (i < extra)] for i, v in enumerate(values)]
     return np.sort(np.concatenate(keep))
 
 

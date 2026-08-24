@@ -15,23 +15,23 @@ layer 5 throughout, and **spliced only** -- every row keeps the source game's su
 
 Figure panels, not a new measurement: statistic, window and threshold rule all come from
 `changepoint_localization`. What is new is the population. `extract_geometry.py` re-extracts
-raw `d` for every eligible game (2207, against the 575 that study selected before
+raw `d` for every eligible game (2,278, against the 575 that study selected before
 `extend_branches`), writing to its own netscratch dir so `curvature_discriminant`'s artifacts
 stay untouched -- the byte-identity every `changepoint_localization` number is verified
 against depends on them. Raw needs no dictionary encode, so this is cheap and GPU-optional.
 
-**tau is refit here and moves 0.869 -> 0.850 (0.629 before the corpus floor widened).** Restricting
-this corpus to the same 575 games reproduces 0.8691 exactly, which is what validates the
-re-implementation. The rest is +0.110 from excluding scored games from the profile fit (a leak
-I shipped first and caught: the profile was fit on all 2000 straightness legal games, some of
-which ARE the games being scored) and -0.240 from the larger population. **The objective is
-nearly flat across that whole span** -- balanced accuracy 0.6721 at 0.629 against 0.6662 at
-0.869, so a 0.24 move in the cut buys 0.006. What tau selects is the TPR/TNR trade
-(0.664/0.680 vs 0.584/0.748), not accuracy. More evidence for the fold-spread caveat.
+**tau is refit here and lands at 0.850 against the parent study's 0.869.** Restricting this
+corpus to the same 575 games reproduced 0.8691 exactly, which is what validated the
+re-implementation; excluding the scored games from the profile fit was a leak I shipped first
+and caught (the profile was fit on all 2000 straightness legal games, some of which ARE the
+games being scored). **The objective is nearly flat across the whole span** -- balanced
+accuracy 0.6651 at 0.850, 0.6640 at 0.869, 0.6619 at 0.629, so a cut moved by 0.22 buys 0.003.
+What tau selects is the TPR/TNR trade (0.586/0.745 here, 0.643/0.681 at 0.629), not accuracy.
+More evidence for the fold-spread caveat.
 
 **The honest headline of these panels is that the cut sits inside the overlap.** 29% of legal
 controls score above tau, and in the illustrative game the legal control itself reads 1.654
-against tau 0.629. The rule arms clear it by more, but the separation is magnitude, not
+against tau 0.850. The rule arms clear it by more, but the separation is magnitude, not
 whether the cut fires. Figure 4 draws that rather than hiding it.
 
 **R2 > R3 > R1 at 0.764 / 0.661 / 0.599**, the same ordering `move_legality`'s supervised probe
@@ -48,17 +48,31 @@ longer exists.
 so a prefix is 46% one move index and the AUROC was largely a statement about move 20; the
 histogram, drawn on the first 200 ids, missed the t0 = 20 block entirely and was near-uniform.
 The two figures were therefore not the same sample, which the README had been claiming. Equal
-quota per t0 fixes both at once. It costs n: the quota is the smallest stratum (22 at t0 = 32
-and 33), so n = 22 x 19 = 418, and n = 1000 uniform is not reachable from this tree at all --
-outside t0 = 20 it holds 541 eligible games total. AUROCs move a little and the ordering does
-not: illegal 0.701 -> 0.711, R1 0.599 -> 0.591, R2 0.764 -> 0.782, R3 0.661 -> 0.673.
+quota per t0 fixes both at once. It costs n, and uniform n = 1000 is not reachable from this
+tree at all: outside t0 = 20 it holds 613 eligible games, 22 at the thinnest position, so the
+ceiling is 22 x 21 = 462. AUROCs move a little and the ordering does not.
+
+**Then the floor moved to t0 = 14 and n was capped at 189 (2026-08-24).** These panels are read
+beside `move_legality`'s bar chart, so they should scan its positions and carry its per-class n.
+`extract_geometry.py` stopped importing `branch_geometry`'s (16, 34) and states its own
+(14, 34); 2,207 eligible games -> 2,278 and tau refit 0.629 -> 0.850, which is mostly a
+statement about how flat the objective is. It cannot go lower: the score is a MOSUM over
+M_MAX = 12 steps either side, so nothing below move 14 has one, where the probe reads a single
+position and can be evaluated anywhere -- the one difference between the two evaluation sets
+that is not a choice. `detector.N_EVAL` = 200 then caps n at that chart's per-bar n -- its
+"n = 1000" is 1000 games dealt over five DISJOINT groups, 200 per bar, where these arms are
+paired and every game appears in all of them. 200 does not divide 21 positions, so the lowest
+11 take 10 games and the rest 9. The cap is comparability, not availability -- the corpus
+supports 462 and the intervals widen about 1.6x for it. Matching the disjoint design instead
+would cap us at 84 per group. Final: illegal 0.700, R1 0.590, R2 0.775, R3 0.690.
 
 **The game moved to 3889, and the t0 board to one move (2026-08-24).** `select_game.py` gained
 a criterion -- the detector has to be right about at least four of the five plies
 `board_states` draws -- because the old pick, 2498, false-alarmed on three of its four legal
 plies once the panels started reporting the detector's call. MIN_CORRECT is 4 and not 5 on
-purpose: 5/5 windows exist, and a figure that shows one reads as a cleaner detector than 34%
-false-alarm rate is. The t0 panel now draws ONE move, not three: a position has one move played
+purpose, so the criterion does not hunt for a window with no false alarm in it; after the
+corpus floor moved and tau went to 0.850 the same pick reads 5/5 anyway, against a 28%
+population false-alarm rate. The t0 panel now draws ONE move, not three: a position has one move played
 in it, and three marked squares read as three moves being played at once. Which one is drawn is
 the arm the trace's peak belongs to, so the two figures name the same move; the board labels it
 `illegal` and the rule it breaks is the README's to say.
