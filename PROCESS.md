@@ -1308,6 +1308,15 @@ since a per-game cumulative only rises but a mean over survivors loses the games
 most accumulated mass. That is the same survivorship the ratio's late-game dip is, one axis
 over. The in-figure title is gone (the caption is this README's).
 
+**The rules board and that panel became one figure (2026-08-24).**
+`figures/rules_and_generation/` — (a) the board, (b) the accumulated mass, letters underneath
+because (a)'s square names sit above its top rank and a title lands on them.
+`src/spade/figures/figure_rules_and_generation.py` is layout and nothing else: it calls the
+two panel functions. `cumulative_panel` and its helpers moved to
+`src/spade/figures/generation_panels.py` to be callable from outside the study, the way
+`straightness_panels` and `branch_panels` already are; both study figures re-render
+byte-identical.
+
 **The rollout population is now a bank, because it was being redrawn per study.**
 `sample_rollouts` was shared but nothing else was: `straightness` and `generation_legality`
 each spent a GPU pass at their own seed, so "the rollouts" named two populations and neither
