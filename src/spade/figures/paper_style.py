@@ -390,6 +390,21 @@ PROBE_HEAD_STYLE = {
 }
 
 
+def letters_below(fig, axes) -> None:
+    """(a) (b) under the panels, on one baseline measured off what they actually occupy.
+
+    A fixed axes-fraction offset lands in different places when the panels carry x labels of
+    different heights; sharing the lower edge of the tight boxes keeps the letters level.
+    """
+    fig.canvas.draw()
+    boxes = [ax.get_tightbbox(fig.canvas.get_renderer())
+               .transformed(fig.transFigure.inverted()) for ax in axes]
+    base = min(b.y0 for b in boxes) - 0.03
+    for i, b in enumerate(boxes):
+        fig.text((b.x0 + b.x1) / 2, base, f"({chr(97 + i)})", ha="center", va="top",
+                 color=INK, fontsize=10)
+
+
 def apply_style(camera_ready: bool = False) -> None:
     """Working PNG by default; camera_ready switches to vector PDF + serif."""
     mpl.rcParams.update({

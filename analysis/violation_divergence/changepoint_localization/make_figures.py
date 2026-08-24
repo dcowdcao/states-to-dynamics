@@ -50,7 +50,8 @@ import pandas as pd
 from matplotlib import pyplot as plt
 
 from spade.figures.paper_style import (
-    INK, MUTED, NULL, REFERENCE_SPACE, SPACE_STYLE, apply_style, save_figure)
+    INK, MUTED, NULL, REFERENCE_SPACE, SPACE_STYLE, apply_style, letters_below,
+    save_figure)
 from spade.l0_operating_point.roster import styles as l0_styles
 
 HERE = Path(__file__).resolve().parent
@@ -147,12 +148,11 @@ def draw_threshold(table: pd.DataFrame, styles: dict, camera_ready: bool,
     table = table.sort_values("auroc_position", ascending=False).reset_index(drop=True)
     fig, axes = plt.subplots(1, 2, figsize=(11.0, 3.6),
                              gridspec_kw={"width_ratios": [1.0, 0.92]})
-    panel(axes[0], table, "auroc_position", "AUROC", 0.5, None, 0, 1.05, "chance", styles)
+    panel(axes[0], table, "auroc_position", "AUROC", 0.5, None, None, 1.05, "chance", styles)
     n_games = histogram_panel(axes[1], table.space.iloc[0])
     assert (table.n_games == n_games).all(), "the two panels are not one evaluation set"
-    axes[1].text(0.0, 1.02, "(b)", va="bottom", transform=axes[1].transAxes, color=INK,
-                 fontsize=9)
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0.06, 1, 1))
+    letters_below(fig, axes)
     return save_figure(fig, HERE / "figures" / f"threshold_detection{suffix}", camera_ready)
 
 

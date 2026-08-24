@@ -22,7 +22,8 @@ from matplotlib.ticker import MaxNLocator, PercentFormatter
 from spade.figures.figure_othello_rules import mover_note
 from spade.figures.othello_board import draw_board, mark_square, square_xy
 from spade.figures.paper_style import (
-    INK, MUTED, NULL, PROBE_STYLE, SQUARE_ROLE_STYLE, apply_style, save_figure)
+    INK, MUTED, NULL, PROBE_STYLE, SQUARE_ROLE_STYLE, apply_style, letters_below,
+    save_figure)
 from spade.figures.straightness_panels import kde_ci
 
 HERE = Path(__file__).resolve().parent
@@ -36,22 +37,6 @@ BASIS = "relative"
 # occupied -- is in the README's figure notes, next to the probe that produces the logits.
 X_AXIS = r"$\ell_{\rm mine}-\ell_{\rm theirs}$ (logits)"
 Y_AXIS = r"$\frac{1}{2}(\ell_{\rm mine}+\ell_{\rm theirs})-\ell_{\rm empty}$"
-
-
-def letters_below(fig, axes) -> None:
-    """(a) (b) under the panels, on one baseline measured off what they actually occupy.
-
-    A fixed axes-fraction offset lands in different places here: the board carries a one-line
-    x label and the field panel a two-line one. Sharing the lower edge of the two tight boxes
-    keeps the letters level.
-    """
-    fig.canvas.draw()
-    boxes = [ax.get_tightbbox(fig.canvas.get_renderer())
-               .transformed(fig.transFigure.inverted()) for ax in axes]
-    base = min(b.y0 for b in boxes) - 0.03
-    for i, b in enumerate(boxes):
-        fig.text((b.x0 + b.x1) / 2, base, f"({chr(97 + i)})", ha="center", va="top",
-                 color=INK, fontsize=10)
 
 
 def panel_letter(ax, i: int) -> None:
