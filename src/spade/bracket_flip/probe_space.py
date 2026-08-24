@@ -37,7 +37,7 @@ from torch import Tensor
 from spade.common.config import MODEL_NAME
 from spade.common.device import select_device
 from spade.common.paths import add_karvonen_to_path, repo_root
-from spade.common.study import study_dir
+from spade.common.study import study_dir, variant_dir
 from spade.probes import load as probes
 from spade.probes.tpr import TPR
 from spade.probes.train import CLASSES, Board, fit
@@ -69,6 +69,13 @@ BASES = ("relative", "absolute")
 MAIN_LAYER = 5
 N_BOOT = 2000
 SEED = 42               # the canonical protocol's seed, and this study's data seed
+# The arrow panel's event set: a fixed quota per move index over the same [10, 34] window,
+# in the same unit steps, that `move_legality` and `changepoint_localization` evaluate on, so
+# the three figures rest on one t distribution. Move index is the strongest nuisance variable
+# in this tree, and taking whatever the corpus happens to hold lets it back in.
+FIELD_T_RANGE = (10, 34)
+FIELD_PER_T = 40        # 25 indices x 40 = the 1000 events the panel averages over
+FIELD_VARIANT = "field" # the larger corpus that quota needs, built by events.py --variant
 N_TRAIN = 8000          # rows 0:8000 = games 0-159; games 160-399 are the eval half
 VAL_GAMES = 0.15        # carved out of the training half, by game, to stop on
 BATCH = 512             # 6.8k fitting rows, so the canonical 8192 would be one step per epoch
@@ -79,8 +86,8 @@ RESULTS = repo_root() / "analysis" / "bracket_flip" / "results"
 
 # ---------------------------------------------------------------- data
 
-def events() -> pd.DataFrame:
-    return pd.read_csv(study_dir("bracket") / "events" / "events.csv")
+def events(variant: str = "") -> pd.DataFrame:
+    return pd.read_csv(variant_dir("bracket", variant=variant) / "events" / "events.csv")
 
 
 def role_codes(ev: pd.DataFrame) -> np.ndarray:
@@ -88,8 +95,9 @@ def role_codes(ev: pd.DataFrame) -> np.ndarray:
     return np.array([[int(c) for c in s] for s in ev.control_squares])
 
 
-def event_acts() -> dict[str, Tensor]:
-    return {c: torch.load(study_dir("bracket") / "events" / f"{c}.pt", weights_only=True)
+def event_acts(variant: str = "") -> dict[str, Tensor]:
+    d = variant_dir("bracket", variant=variant) / "events"
+    return {c: torch.load(d / f"{c}.pt", weights_only=True, map_location="cpu")
             for c in CONDITIONS}
 
 
@@ -374,6 +382,31 @@ def paired(name: str, diff: np.ndarray, denom: np.ndarray,
     return {name: diff.sum() / denom.sum(), f"{name}_lo": lo, f"{name}_hi": hi}
 
 
+def field_events(ev: pd.DataFrame, seed: int = SEED) -> np.ndarray:
+    """Strict-control events, FIELD_PER_T at every move index in FIELD_T_RANGE.
+
+    A fixed quota rather than "whatever the corpus holds": move index is the strongest
+    nuisance variable here, and the canonical 2,000-event corpus thins out past t = 30, so
+    taking it as-is would weight the panel toward the middle of the game. Meeting the quota
+    at every index needs the larger FIELD_VARIANT corpus; the assert names the shortfall
+    rather than quietly averaging over an uneven set.
+    """
+    low, high = FIELD_T_RANGE
+    strict = (ev.control_kind == "strict").to_numpy() & ev.t.between(low, high).to_numpy()
+    values = range(low, high + 1)
+    available = {t: int((strict & (ev.t == t).to_numpy()).sum()) for t in values}
+    short = {t: n for t, n in available.items() if n < FIELD_PER_T}
+    assert not short, f"corpus is short of {FIELD_PER_T} strict events at t={short}"
+    quota = FIELD_PER_T
+    rng = np.random.default_rng(seed)
+    keep = np.zeros(len(ev), dtype=bool)
+    for t in values:
+        at = np.flatnonzero(strict & (ev.t == t).to_numpy())
+        keep[rng.permutation(at)[:quota]] = True
+    assert keep.sum() == quota * len(values), "a move index came up short"
+    return keep
+
+
 def field(rel: Decode, abso: Decode, ev: pd.DataFrame,
           rng: np.random.Generator) -> pd.DataFrame:
     """Mean position per square role and condition, with paired-displacement CIs.
@@ -392,7 +425,7 @@ def field(rel: Decode, abso: Decode, ev: pd.DataFrame,
       confidently `mine` before and confidently `theirs` after), so an endpoint
       interval understates the arrow by ~2x there and overstates it on y.
     """
-    strict = (ev.control_kind == "strict").to_numpy()
+    strict = field_events(ev)
     mover = ev.mover.to_numpy()[strict, None]
     rows = []
     for basis, d, orient in (("relative", rel, 1), ("absolute", abso, mover)):
@@ -504,7 +537,15 @@ def main() -> None:
 
     per_event(main_decode, ev).to_csv(RESULTS / "m1_per_event.csv", index=False)
     absolute_decode = decode(MAIN_LAYER, ev, acts, input_acts, "absolute")
-    field(main_decode, absolute_decode, ev, rng).to_csv(RESULTS / "m2_field.csv", index=False)
+    # The arrow panel scores its own corpus: the quota it needs at every move index is more
+    # events than the canonical set holds past t = 30. Same miner, same stream, same seed, so
+    # it extends that set rather than replacing it, and nothing else here reads it.
+    ev_field = events(FIELD_VARIANT)
+    acts_field = event_acts(FIELD_VARIANT)
+    input_field = input_event_acts(ev_field)
+    field(decode(MAIN_LAYER, ev_field, acts_field, input_field),
+          decode(MAIN_LAYER, ev_field, acts_field, input_field, "absolute"),
+          ev_field, rng).to_csv(RESULTS / "m2_field.csv", index=False)
     lengths = displacements(main_decode)
     i, rule = canonical(ev, lengths)
     worked_example(main_decode, ev, i).to_csv(RESULTS / "f2_event.csv", index=False)
