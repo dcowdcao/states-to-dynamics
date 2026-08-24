@@ -16,9 +16,8 @@ findable at a glance rather than by reading the panel labels.
 
 **One board, one move.** A position has one move played in it, so the $t_0$ panel draws one --
 the branch whose arm the trace figure's peak belongs to, of the three `select_game.py` picked.
-Which rule that move breaks is this README's to say and the trace's, where all three arms are
-drawn as curves; on the board it is marked `illegal`, because that is what the position knows
-about it.
+It is labelled with the rule it breaks, in that rule's colour, so the board says which of R1,
+R2 and R3 the event is without the reader going to the trace for it.
 
 Every board is drawn the way `figure_othello_rules` draws its one board: the candidate disc
 centred on each marked square, a tick on the legal move and a cross on each illegal one, the
@@ -145,12 +144,10 @@ def played_panel(ax, board, played: int) -> None:
     for ray in rays(board.state, played, mover):
         if ray.closed:
             ray_line(ax, played, ray.terminator, RULE_STYLE["legal"]["color"])
-    # One marked square: the outline and the name carry it, and a marker would read as a disc.
-    # The name goes under the cell when the one above it holds a disc it would sit on.
-    above, below = played - 8, played + 8
-    occupied = lambda sq: 0 <= sq < 64 and board.state.flatten()[sq] != 0
-    mark_square(ax, played, RULE_STYLE["legal"], label=name(played), marker=False,
-                below=occupied(above) and not occupied(below))
+    # One marked square and no name on it: the outline, the candidate disc and the tick say
+    # everything a legal ply needs to, and a marker here would read as a disc. The t0 panel is
+    # the only one that names its square, because it is the only one making a claim about which.
+    mark_square(ax, played, RULE_STYLE["legal"], marker=False)
     candidate(ax, played, mover, DISC_SIZE)
     verdict(ax, played, legal=True, disc_size=DISC_SIZE)
 
@@ -271,7 +268,7 @@ def boards_figure(tokens: list[int], squares: dict[str, int], spec: dict,
         ax.set_ylabel("rank" if offset == OFFSETS[0] else "")
     fig.tight_layout(rect=(0, LABEL_STRIP, 1, 1))
     fig.canvas.draw()
-    label_move(fig, axes[OFFSETS.index(0)], played, rule, "illegal")
+    label_move(fig, axes[OFFSETS.index(0)], played, rule, drawn)
     for ax, offset, letter in zip(axes, OFFSETS, LETTERS):
         tag = "$t_0$" if offset == 0 else f"$t_0{offset:+d}$"
         panel_label(fig, ax, f"({letter}) {tag}, move {spec['t0'] + offset}", offset == 0,

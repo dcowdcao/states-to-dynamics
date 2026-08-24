@@ -71,13 +71,13 @@ overlap in *M*−1 steps.
 ### Figure notes
 
 `board_states` — game 3889 at *t0* = 20. The four non-*t0* panels mark the move actually
-played, named, with the bracket lines that make it legal. **A position has one move played in
+played, with the bracket lines that make it legal. They do not name their square: the *t0*
+panel is the only one whose square is a claim. **A position has one move played in
 it, so the *t0* panel marks one**: the branch the trace's peak belongs to, which for this game
 is the **R2 bracketing** branch at h4 (`empty_no_bracket` — a line of opponent discs out of the
-square that nothing of the mover's closes, drawn to the empty square that breaks it). It is
-labelled `illegal` rather than by its rule, because "illegal" is what the position knows about
-it; which rule it breaks is this file's to say, and the trace's, where all three branch arms
-are drawn as curves. That panel is framed so the event is findable. Every marked square carries
+square that nothing of the mover's closes, drawn to the empty square that breaks it). The label
+is that rule's code, in that rule's colour, so the board says which of R1, R2 and R3 the event
+is; the trace draws all three branch arms as curves beside it. That panel is framed so the event is findable. Every marked square carries
 the disc the mover would place and a verdict — a green tick on a legal move, a red cross on the
 illegal one.
 
