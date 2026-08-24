@@ -6,6 +6,46 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Eight SAEs at one L0, and the figures written alongside (2026-08-24)
+
+Every SAE-comparing figure in the tree read a roster of checkpoints picked at whatever
+sparsity each architecture happened to be trained at, so "GatedAnneal separates the illegal
+branch best" was a claim about architecture *and* L0 together. `results/l0_operating_point/`
+picks a shared L0 (219.16) and the nearest-L0 checkpoint per architecture; the roster now
+spans 183.8-260.1 instead of an order of magnitude.
+
+`src/spade/l0_operating_point/checkpoints.py` is the missing half: picks.csv names configs,
+not weights. It resolves them across three locations and two naming conventions, and carries
+the bit that is easy to get silently wrong -- **ours were trained on `scale*(x-mean)` and
+Karvonen's on the raw residual stream**, so each is fed what it was trained on rather than one
+convention applied to both.
+
+Matching is on parsed hyperparameter values, not config strings: picks.csv writes
+`lam0.001-gam0.005` where the checkpoint writes `lam1e-03-gam5e-03`. **beta needs its own
+rule** -- `beta1` is plain cosine, whose pre-beta checkpoints have no `beta` key at all
+(`DEFAULT_COSINE_BETA = 1.0`, on `karvonen/cosine-beta`), and matching gamma alone quietly
+resolved to the beta=5 model at the same gamma.
+
+Three loader failures worth knowing about, each silent or wrong rather than loud: a `/` in a
+Karvonen config name turned `l0_gated_anneal/trainer25.npz` into a nonexistent directory; the
+2024-05-23 configs predate `activation_dim`/`dict_size`, both recoverable exactly from
+`buffer.d_submodule` and the encoder weight shape; the 2024-07-10 top_k checkpoint predates
+the `k`/`threshold` buffers, which are constructor-set constants, so exactly those two may be
+absent and anything else missing still raises.
+
+`l0_matched_geometry.py` writes **`d` and `theta`** -- saving only `d` (which it did first)
+would have quietly restricted the matched roster to the step-length figures and left the R^21
+and curvature studies on the old one. It reads the row order from `meta.npz`'s stored `row`
+column: after `extend_branches`, `eval_games` no longer reproduces the branch-tree order
+(2207 games against 575) and recomputing it silently misaligns every row.
+
+**The L0-matched figures are written alongside the canonical ones, not over them** -- the
+canonical artifacts still regenerate byte-identically, which is how each study proves the
+addition changed nothing. Consolidating onto one roster is a separate decision and a separate
+commit.
+
+---
+
 ## Four panels of the illegal-move detector (2026-08-24)
 
 New `analysis/violation_divergence/illegal_move_detector/`: the board at t0-2..t0+2 with one
