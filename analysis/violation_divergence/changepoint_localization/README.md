@@ -212,7 +212,7 @@ every space: at 1-2% prevalence the accuracy-maximizing cut flags almost nothing
 against legal ones, over the nine spaces; (b) the five score distributions at *t0* that AUROC
 summarizes, in **GatedAnneal**, the space (a) ranks first. (b) is drawn by
 `illegal_move_detector.figure_histograms.panel` -- the same code that figure uses, so the two
-cannot drift -- and inherits its evaluation set: 189 games per class, nine at every *t0*.
+cannot drift -- and inherits its evaluation set: 200 games per class, dealt uniformly over `t0`.
 Reading them together is the point: the bar chart says which space orders positions best, and
 the densities say that even there the cut sits inside the overlap rather than between two
 separated classes.
