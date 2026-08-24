@@ -21,7 +21,13 @@ python -m spade.straightness.extract_traj      # W_E + resid_post_0..7 [N,59,512
 python -m spade.straightness.compute_geometry  # d/theta per space+variant -> $DIR/geometry/
 python -m spade.straightness.classify          # AUROCs -> results/straightness/
 python analysis/straightness/make_figures.py   # -> analysis/straightness/figures/
+PYTHONPATH=src python analysis/straightness/l0_matched_profile.py   # legal-block d per L0 pick
 ```
+
+`l0_matched_profile.py` is not part of this study's own chain. It writes `l0_<config>_legal.npz`
+beside the geometry above, because `changepoint_localization` and `illegal_move_detector` score
+against a per-move-index profile fit on these legal games and `compute_geometry.py` only ever
+wrote one for the seed-42 roster. Legal block only -- that is all the profile reads.
 
 `$DIR` = `$SPADE_STRAIGHTNESS_DIR` (default `/n/netscratch/ba_lab/Lab/$USER/spade_straightness`).
 One GPU job runs the whole chain:

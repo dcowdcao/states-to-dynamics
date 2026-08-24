@@ -77,6 +77,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--spaces", default="",
                         help="comma-separated SAE configs to add beside raw")
+    parser.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                        help="also encode the eight l0_operating_point picks, each fed the "
+                             "activations it was trained on")
     args = parser.parse_args()
     device = select_device()
     branches = study_dir("divergence") / "branches" / "branches.pt"
@@ -99,6 +102,22 @@ def main() -> None:
         d = step_lengths(acts, rows, device)
         np.savez(OUT / "d.npz", d=d)
         print(f"wrote {OUT}/d.npz  d {d.shape}", flush=True)
+
+    if args.l0_matched:
+        from spade.l0_operating_point.checkpoints import matched
+        import sys as _sys
+        _sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "curvature_discriminant"))
+        from l0_matched_geometry import encoder as l0_encoder
+        for entry in matched():
+            path = OUT / f"d_{entry.space}.npz"
+            if path.exists():
+                print(f"{path.name} present, skipping", flush=True)
+                continue
+            d = step_lengths(acts, rows, device, l0_encoder(entry, device))
+            np.savez(path, d=d, config=entry.config, l0=entry.l0,
+                     standardized=entry.standardize)
+            print(f"wrote {path.name}  d {d.shape}  ({entry.config}, L0 {entry.l0:.1f})",
+                  flush=True)
 
     wanted = [c for c in args.spaces.split(",") if c]
     entries = {e.config: e for e in seed42_entries()}

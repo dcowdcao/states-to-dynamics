@@ -137,6 +137,66 @@ scores time-series boundaries as `1 - NORM(kappa)` and proves curvature is *lowe
 point, and with this study's own finding that violations are straighter at L5-L7. The naive
 reading -- sharp turn implies anomaly -- is the wrong sign.
 
+## At matched L0: the ordering above is partly a sparsity ordering
+
+The nine spaces above are the seed-42 roster, and each of them sits wherever its own default
+hyperparameters put it on the sparsity axis. Their L0s (`results/acceptance/all_results.csv`)
+run **32.5 to 1,808, a 56x spread**: GatedAnneal 32.5, GatedSAE 50.6, TopK 79.9, BatchTopK
+80.2, CosineSpaDE 173.6, PAnneal 339.5, Standard 1,093, SpaDE 1,808. A gap between two of those
+bars is an architecture difference **and** an L0 difference, and this study cannot say which
+one it measured -- note that the winner of the table above is the sparsest of the nine.
+`results/l0_operating_point/picks.csv` fixes that: one checkpoint per architecture, each the
+nearest-L0 member of its own grid to a shared target of L0 219.16, spanning 184-260 in
+practice.
+
+`figures/changepoint_by_space_l0_matched.png` and
+`results/changepoint_localization_l0_matched.csv` are the same two panels over that roster.
+Everything else is held: same 575 games, same arms at seed 42, same MOSUM m = 4 read back from
+`window_selection.csv` rather than re-selected, same cluster bootstrap over source games. Only
+the dictionaries change.
+
+| space | L0 | AUROC vs legal splice | vs raw | vs clean game | hit@t0 | within ±1 |
+|---|---|---|---|---|---|---|
+| GatedSAE | 220 | **0.603** [0.578, 0.627] | **+0.042** [+0.021, +0.063] | 0.742 | **0.263** | 0.402 |
+| BatchTopK | 227 | 0.579 [0.555, 0.602] | +0.017 [+0.000, +0.038] | 0.698 | 0.125 | 0.329 |
+| TopK | 220 | 0.564 [0.539, 0.586] | +0.003 [-0.016, +0.021] | 0.665 | 0.153 | 0.306 |
+| SpaDE | 232 | 0.564 [0.541, 0.587] | +0.003 [-0.021, +0.030] | 0.610 | 0.101 | 0.263 |
+| raw layer 5 | — | 0.561 [0.538, 0.583] | — | 0.660 | 0.101 | 0.301 |
+| CosineSpaDE | 184 | 0.561 [0.540, 0.583] | -0.000 [-0.028, +0.028] | 0.621 | 0.043 | 0.125 |
+| GatedAnneal | 222 | 0.557 [0.534, 0.578] | -0.004 [-0.022, +0.012] | 0.654 | 0.139 | 0.299 |
+| PAnneal | 260 | 0.550 [0.526, 0.573] | -0.011 [-0.030, +0.009] | 0.620 | 0.106 | 0.228 |
+| Standard | 209 | 0.531 [0.510, 0.552] | **-0.030** [-0.054, -0.004] | 0.568 | 0.118 | 0.198 |
+
+**GatedAnneal does not survive the match.** It is the headline of the table above -- the best
+space on both panels, +0.055 [+0.030, +0.080] over raw -- and at matched L0 it lands seventh of
+nine on detection, at -0.004 [-0.022, +0.012] against raw, i.e. indistinguishable from the
+residual stream it is built on. Its localization halves, 0.343 to 0.139. **GatedSAE takes the
+top of both panels** and is the only space whose paired margin over raw excludes zero on the
+detection panel; BatchTopK's lower bound is +0.000.
+
+**The rest of the ordering largely survives, and the margins do not.** Over the eight
+dictionaries, Spearman between the canonical and matched rankings is 0.62 on
+`auroc_vs_control`, 0.76 on `hit@t0` and 0.83 on the per-position AUROC: Standard is last in
+both, and Standard, PAnneal and CosineSpaDE stay in the bottom half of both. The two moves are
+GatedAnneal falling from first to seventh and SpaDE rising from sixth to third. What collapses
+is the size of the effect. Four dictionaries cleared raw by a paired margin excluding zero above; **one
+does here**, and the spread across the eight shrinks from 0.511-0.616 to 0.531-0.603. Read the
+canonical table as ranking sparsity as much as it ranks architecture.
+
+The per-position cut tells the same story on a more sensitive read
+(`figures/threshold_detection_l0_matched.png`,
+`results/threshold_localization_l0_matched.csv`, 26,252 positions over the same 575 games):
+GatedSAE 0.818 [0.800, 0.835], TopK 0.758, BatchTopK 0.753, GatedAnneal 0.751, raw 0.744,
+PAnneal 0.716, SpaDE 0.690, Standard 0.669, CosineSpaDE 0.486 [0.461, 0.515] -- the one space
+that inverts. Panel (b) is drawn in GatedSAE, the space panel (a) now ranks first.
+
+Two caveats a reader is owed. **The two SAE families are not fed one input convention**: ours
+were trained on `scale*(x - mean)` and Karvonen's on the raw residual, so each is fed what it
+was trained on and the latents are not on one scale. The per-move-index standardization absorbs
+a global scale difference and not a difference in what a dictionary learned to reconstruct.
+**And the match is on L0 only** -- the picks differ in reconstruction quality (`picks.csv`
+carries `recon_f1` 0.46-0.94 across them), so "matched sparsity" is not "matched everything".
+
 ## The same score read as a detector, not as a forced choice
 
 `located()` names exactly one move per sequence. A legal game therefore cannot come back
@@ -265,6 +325,9 @@ the most (14.3 per legal rollout), not because it detects best.
 python analysis/violation_divergence/changepoint_localization/test_threshold.py   # no data, no GPU
 python analysis/violation_divergence/changepoint_localization/measure.py      # -> results/
 python analysis/violation_divergence/changepoint_localization/make_figures.py [--camera-ready]
+PYTHONPATH=src python analysis/straightness/l0_matched_profile.py                          # once
+PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/measure.py --l0-matched
+PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/make_figures.py --l0-matched
 PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/measure_regenerated.py
 PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/make_figures_regenerated.py
 PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/quantity_ablation.py --variant regenerated
@@ -280,6 +343,14 @@ does not survive. See `QUANTITY_ABLATION.md`.
 Each `measure` script writes two tables off one scan: the argmax one it always wrote, and the
 thresholded one. Adding the second moved no number in the first -- both `changepoint_*.csv`
 reproduce byte-identically.
+
+`--l0-matched` needs two inputs neither of which is on the canonical path.
+`curvature_discriminant/l0_matched_geometry.py` writes the branch tree's `d`/`theta` per pick,
+and `analysis/straightness/l0_matched_profile.py` writes the straightness **legal block** per
+pick -- the per-move-index profile that "normal" means, which `compute_geometry.py` only ever
+wrote for the seed-42 roster. Both are CPU-only. The window is *not* re-selected on the new
+roster: `measure.py --l0-matched` reads `window_selection.csv` back, because re-running the
+grid over the roster it then reports would tune the setting on its own result.
 
 `measure.py` is CPU-only and takes under a minute: it reads the cached `d` that
 `curvature_discriminant/branch_geometry.py` already wrote for all nine spaces, and the

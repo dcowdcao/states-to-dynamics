@@ -4098,3 +4098,44 @@ CosineSpaDE — the whole-user cgroup is ~8 GB and two sibling rollout sweeps we
 run then takes 234 s for 100 games x 9 spaces.
 
 
+
+
+## The by-space AUROC ordering was partly a sparsity ordering (2026-08-24)
+
+The canonical `changepoint_by_space` and `threshold_detection` bars run over the seed-42
+roster, whose L0s span **32.5 to 1,808** (`results/acceptance/all_results.csv`). GatedAnneal
+wins both panels there and is also the sparsest of the nine, so the figure could not separate
+architecture from sparsity. Redrawn over the eight `results/l0_operating_point/picks.csv`
+checkpoints — one per architecture, each the nearest-L0 member of its own grid to L0 219.16 —
+**GatedAnneal falls from first to seventh** (0.616 → 0.557 vs-control, +0.055 → −0.004 against
+raw) and **GatedSAE takes both panels** (0.603, the only paired margin over raw that excludes
+zero). Rank correlation between the two orderings over the eight dictionaries is 0.62 / 0.76 /
+0.83 (detection / localization / per-position), so the tail survives and the margins do not:
+four dictionaries cleared raw canonically, one does at matched L0.
+
+Written **alongside**, never over: `*_l0_matched.csv` / `*_l0_matched.png` beside every
+canonical artifact, one suffix across all studies, and `measure.py`, `make_figures.py` and
+`figure_auroc.py` all reproduce their canonical outputs byte-identically.
+
+**The blocker was the profile, not the branch geometry.** Both corpora's `d` was already on
+netscratch, but the score is `-(d − μ(t))/σ(t)` and μ/σ are fit on the *straightness* legal
+games, which `compute_geometry.py` only ever encoded for the seed-42 roster. New:
+`analysis/straightness/l0_matched_profile.py`, legal block only (2,000 games, all the profile
+reads), CPU, ~5 min for all eight.
+
+**The window is not re-selected.** `measure.py --l0-matched` reads `window_selection.csv` back
+and re-derives MOSUM m = 4 from it, rather than re-running the straightness grid over the new
+roster — re-selecting on a roster you then report would tune the setting on its own result.
+
+**`analysis/move_legality` was left alone, deliberately.** It has no AUROC-comparing-SAEs
+figure: `raw_detection_auroc.png` is one space split by rule, and `space_comparison.py` writes
+`localization_by_space.csv` and draws nothing. Its per-space numbers come from probe read-outs
+(`p_illegal_<space>.pt`), so an L0-matched version needs eight probe fits, not geometry that is
+already on disk.
+
+**Pre-existing, not caused here:** `changepoint_localization/figures/threshold_detection.png`
+no longer re-renders byte-identically, because its panel (b) reads the
+`illegal_move_detector` corpus, which was rebuilt on netscratch on 2026-08-24 (meta.npz 21,735
+rows). The committed `make_figures.py` fails the same check; panel (a) and every CSV are exact.
+`illegal_move_detector/d_sae_GatedAnnealTrainer-othello.npz` is stale against that rebuild
+(20,502 rows) and nothing in this change reads it.

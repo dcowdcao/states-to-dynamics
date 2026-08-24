@@ -30,8 +30,14 @@ both panels is what makes the two rankings comparable.
 No note under the axes: the estimator, n, seed and null semantics are the caption, and the
 caption is the paragraph under "Results" in README.md. These figures are not standalone.
 
+`--l0-matched` redraws both figures over the eight `l0_operating_point` picks, one checkpoint
+per architecture seated at the shared L0, so a difference between two bars is the architecture
+and not its sparsity. Same panels, same estimator, same styling -- a pick keeps its family's
+hue and hatch and its tick label carries the L0 it was seated at. The canonical figures are
+untouched by it.
+
 Usage: python analysis/violation_divergence/changepoint_localization/make_figures.py
-           [--camera-ready]
+           [--camera-ready] [--l0-matched]
 """
 
 import argparse
@@ -43,6 +49,7 @@ from matplotlib import pyplot as plt
 
 from spade.figures.paper_style import (
     INK, MUTED, NULL, REFERENCE_SPACE, SPACE_STYLE, apply_style, save_figure)
+from spade.l0_operating_point.roster import styles as l0_styles
 
 HERE = Path(__file__).resolve().parent
 BAR_WIDTH = 0.72
@@ -72,13 +79,14 @@ def panel_letter(ax, i: int) -> None:
 
 
 def panel(ax, table: pd.DataFrame, value: str, ylabel: str, chance: float,
-          band: tuple[float, float] | None, index: int, top: float,
-          chance_label: str) -> None:
+          band: tuple[float, float] | None, index: int | None, top: float,
+          chance_label: str, styles: dict = SPACE_STYLE) -> None:
+    """`index` is the panel letter; None on a standalone panel, which owns no grid."""
     if band is not None:
         ax.axhspan(*band, color=NULL["color"], alpha=0.28, lw=0, zorder=1)
     ax.axhline(chance, color=NULL["color"], ls=NULL["ls"], lw=1.2, zorder=2)
     for x, row in table.iterrows():
-        style = SPACE_STYLE[row.space]
+        style = styles[row.space]
         # SPACE_STYLE separates the two dictionaries of a family by line style, which a bar
         # cannot carry; the hatch is that same dimension, so the pairs stay separable in
         # grayscale and the hue keeps meaning "architecture family".
@@ -91,7 +99,7 @@ def panel(ax, table: pd.DataFrame, value: str, ylabel: str, chance: float,
         ax.text(x, row[f"{value}_hi"] + top * 0.02, f"{row[value]:.3f}", ha="center",
                 va="bottom", fontsize=6.6, color=MUTED, zorder=4, rotation=90)
 
-    label = lambda s: "raw L5 (ref.)" if s == REFERENCE_SPACE else SPACE_STYLE[s]["short"]
+    label = lambda s: "raw L5 (ref.)" if s == REFERENCE_SPACE else styles[s]["short"]
     ax.set_xticks(range(len(table)), [label(s) for s in table.space], fontsize=6.8,
                   rotation=35, ha="right", rotation_mode="anchor")
     ax.set_ylim(0, top)
@@ -99,19 +107,21 @@ def panel(ax, table: pd.DataFrame, value: str, ylabel: str, chance: float,
     ax.set_ylabel(ylabel)
     ax.text(len(table) - 0.35, chance, chance_label, color=NULL["color"], fontsize=6.8,
             ha="left", va="center", bbox={"fc": "white", "ec": "none", "pad": 1.2})
-    panel_letter(ax, index)
+    if index is not None:
+        panel_letter(ax, index)
     ax.grid(axis="x", visible=False)
     ax.tick_params(axis="x", length=0)
 
 
-def finish(fig, stem: str, camera_ready: bool) -> Path:
+def finish(fig, stem: str, camera_ready: bool, directory: Path | None = None) -> Path:
     fig.tight_layout(rect=(0, 0, 1, 0.94))
     fig.text(0.005, 0.985, "hue = architecture family, hatch = its second dictionary; "
              "raw layer 5 is the reference space", fontsize=7, color=MUTED, va="top")
-    return save_figure(fig, HERE / "figures" / stem, camera_ready)
+    return save_figure(fig, (directory or HERE / "figures") / stem, camera_ready)
 
 
-def draw_by_space(table: pd.DataFrame, camera_ready: bool) -> Path:
+def draw_by_space(table: pd.DataFrame, styles: dict, camera_ready: bool,
+                  suffix: str) -> Path:
     table = table.sort_values("auroc_vs_control", ascending=False).reset_index(drop=True)
     row = table.iloc[0]
     alarms = table[FALSE_ALARM]
@@ -120,40 +130,45 @@ def draw_by_space(table: pd.DataFrame, camera_ready: bool) -> Path:
     panel(axes[0], table, "auroc_vs_control",
           "AUROC, illegal vs matched legal splice\n($\\uparrow$ better)",
           0.5, (table.auroc_null.min(), table.auroc_null.max()), 0, 1.05,
-          "chance (empirical)")
+          "chance (empirical)", styles)
     panel(axes[1], table, "hit_illegal",
           "localization: argmax lands on $t_0$\n($\\uparrow$ better)",
           row.chance_uniform, (alarms.values.min(), alarms.values.max()), 1, 0.50,
-          "chance")
+          "chance", styles)
 
-    return finish(fig, "changepoint_by_space", camera_ready)
+    return finish(fig, f"changepoint_by_space{suffix}", camera_ready)
 
 
-def draw_threshold(table: pd.DataFrame, camera_ready: bool) -> Path:
+def draw_threshold(table: pd.DataFrame, styles: dict, camera_ready: bool,
+                   suffix: str) -> Path:
     """Sorted by (a); (b) is whichever space that puts first, so the panels cannot disagree."""
     table = table.sort_values("auroc_position", ascending=False).reset_index(drop=True)
     fig, axes = plt.subplots(1, 2, figsize=(11.0, 3.6),
                              gridspec_kw={"width_ratios": [1.0, 0.92]})
-    panel(axes[0], table, "auroc_position", "AUROC", 0.5, None, 0, 1.05, "chance")
+    panel(axes[0], table, "auroc_position", "AUROC", 0.5, None, 0, 1.05, "chance", styles)
     n_games = histogram_panel(axes[1], table.space.iloc[0])
     assert (table.n_games == n_games).all(), "the two panels are not one evaluation set"
     axes[1].text(0.0, 1.02, "(b)", va="bottom", transform=axes[1].transAxes, color=INK,
                  fontsize=9)
     fig.tight_layout()
-    return save_figure(fig, HERE / "figures" / "threshold_detection", camera_ready)
+    return save_figure(fig, HERE / "figures" / f"threshold_detection{suffix}", camera_ready)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
+    parser.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                        help="draw the tables measure.py --l0-matched wrote")
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
     results = HERE / "results"
-    print(draw_by_space(pd.read_csv(results / "changepoint_localization.csv"),
-                        args.camera_ready))
-    print(draw_threshold(pd.read_csv(results / "threshold_detection.csv"),
-                         args.camera_ready))
+    suffix = "_l0_matched" if args.l0_matched else ""
+    styles = l0_styles() if args.l0_matched else SPACE_STYLE
+    print(draw_by_space(pd.read_csv(results / f"changepoint_localization{suffix}.csv"),
+                        styles, args.camera_ready, suffix))
+    print(draw_threshold(pd.read_csv(results / f"threshold_detection{suffix}.csv"),
+                         styles, args.camera_ready, suffix))
 
 
 if __name__ == "__main__":

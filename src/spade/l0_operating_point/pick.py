@@ -46,8 +46,29 @@ def winners(df: pd.DataFrame, lo: float, hi: float, column: str = score.MINMAX) 
     return band.loc[band.groupby("trainer_class")[column].idxmax()]
 
 
+def per_type_best(df: pd.DataFrame, column: str = score.MINMAX) -> pd.DataFrame:
+    """Each type's own best config, ignoring every other type. Stage 1 of `consensus`."""
+    return df.loc[df.groupby("trainer_class")[column].idxmax()].sort_values("l0")
+
+
+def consensus_target(df: pd.DataFrame, column: str = score.MINMAX) -> tuple[float, pd.DataFrame]:
+    """The mean of the eight per-type optimal L0s.
+
+    Not searched, derived: every type first says where it would like to sit if nothing else
+    constrained it, and the shared target is the average of those eight answers. So the
+    target is a compromise the types themselves define, rather than the point that happens
+    to maximise a pooled objective -- which is what `search_target` does, and which lets a
+    type with a flat score curve drag the target toward a type with a peaked one.
+
+    Arithmetic mean, per the stated rule. Note it is not scale-free: on an axis this wide a
+    single dense optimum pulls the mean more than a sparse one, and `main` prints the eight
+    inputs so that pull is visible rather than buried in one number."""
+    best = per_type_best(df, column)
+    return float(best["l0"].mean()), best
+
+
 def nearest_winners(df: pd.DataFrame, target: float,
-                    max_width: float = MAX_WIDTH) -> pd.DataFrame:
+                    max_width: float | None = MAX_WIDTH) -> pd.DataFrame:
     """Each type's config whose L0 sits closest to `target`, in log space.
 
     The other rule: `winners` takes each type's best-scoring config anywhere in a band,
@@ -56,9 +77,15 @@ def nearest_winners(df: pd.DataFrame, target: float,
     matched-sparsity claim, and a worse-scoring one, because a type is not free to move to
     its own optimum.
 
-    Admissibility is the same as the band's: every type must have a config within
-    sqrt(max_width) of the target, so no type is seated by a config that is nowhere near it.
-    """
+    With max_width set, every type must have a config within sqrt(max_width) of the target
+    or the target is rejected, so no type is seated by something nowhere near it. With
+    max_width None the seating is unconditional -- `consensus` uses that, because its target
+    is derived from the types rather than searched, so there is no candidate to reject and a
+    type that cannot reach it is a finding. `l0_over_target` in the output is what exposes
+    that, and `main` sorts by it."""
+    if max_width is None:
+        distance = (np.log(df["l0"]) - np.log(target)).abs()
+        return df.loc[distance.groupby(df["trainer_class"]).idxmin()]
     reach = np.sqrt(max_width)
     band = df[(df["l0"] >= target / reach) & (df["l0"] <= target * reach)]
     if band["trainer_class"].nunique() < df["trainer_class"].nunique():
@@ -113,9 +140,11 @@ def main():
                     help="widest hi/lo the band may take; see the module docstring")
     ap.add_argument("--dict-size", type=int, default=8192,
                     help="0 to pool both of his expansion factors with our 16x points")
-    ap.add_argument("--rule", choices=("band", "nearest"), default="band",
-                    help="band: each type's best-scoring config inside a shared band. "
-                         "nearest: each type's config closest to one shared target L0.")
+    ap.add_argument("--rule", choices=("consensus", "band", "nearest"), default="consensus",
+                    help="consensus: target = mean of the eight per-type optimal L0s, then "
+                         "each type seats at its config nearest that. band: each type's "
+                         "best-scoring config inside a shared band. nearest: searches for "
+                         "the target that maximises the mean of the nearest-seated configs.")
     args = ap.parse_args()
 
     df = score.per_config(pd.read_csv(args.pooled))
@@ -125,7 +154,20 @@ def main():
 
     cols = ["family", "trainer_class", "config", "l0", "l0_std", *SCORED,
             score.MINMAX, score.RANK, "n_seeds", "eval_n_activations"]
-    if args.rule == "nearest":
+    if args.rule == "consensus":
+        target, best = consensus_target(df)
+        print("stage 1 - each type's own optimum, ignoring the others:\n")
+        print(best[["family", "trainer_class", "config", "l0", score.MINMAX, score.RANK]]
+              .to_string(index=False))
+        print(f"\nmean of those {len(best)} L0s -> shared target L0 {target:.1f}"
+              f"   (median {best['l0'].median():.1f}, range {best['l0'].min():.1f}"
+              f"-{best['l0'].max():.1f})\n")
+        won = nearest_winners(df, target, max_width=None)
+        won = won.assign(l0_over_target=won["l0"] / target)
+        cols.insert(5, "l0_over_target")
+        lo, hi = won["l0"].min(), won["l0"].max()
+        print("stage 2 - each type's config nearest that target:\n")
+    elif args.rule == "nearest":
         target, won = search_target(df, args.max_width)
         lo, hi = target / np.sqrt(args.max_width), target * np.sqrt(args.max_width)
         won = won.assign(l0_over_target=won["l0"] / target)
@@ -139,10 +181,17 @@ def main():
         print(f"band: L0 {lo:.1f} - {hi:.1f}  ({hi / lo:.2f}x, {n} configs "
               f"at dict {args.dict_size})\n")
 
-    print(won[cols].sort_values(score.MINMAX, ascending=False).to_string(index=False))
+    sort_by = "l0_over_target" if args.rule == "consensus" else score.MINMAX
+    print(won[cols].sort_values(sort_by, ascending=(sort_by != score.MINMAX))
+          .to_string(index=False))
     print(f"\nmean score across the eight: {won[score.MINMAX].mean():.4f}")
 
-    if args.rule == "nearest":
+    if args.rule == "consensus":
+        rank_target, rank_best = consensus_target(df, score.RANK)
+        rank_won = nearest_winners(df, rank_target, max_width=None) \
+            .set_index("trainer_class")["config"]
+        print(f"rank-mean twin derives target L0 {rank_target:.1f} (vs {target:.1f})")
+    elif args.rule == "nearest":
         rank_target, rank_frame = search_target(df, args.max_width, score.RANK)
         print(f"rank-mean twin puts the target at L0 {rank_target:.1f} (vs {target:.1f})")
         rank_won = rank_frame.set_index("trainer_class")["config"]
