@@ -218,6 +218,25 @@ What stays on the figures is the refit-per-space disclaimer (§4.6), `one game
 (n=1)`, and on the rollout twins one line about the horizon (below) — all three
 in the legend title.
 
+## The L0-matched roster — `--l0-matched`
+
+`--l0-matched` swaps the seed-42 dictionaries, which sit wherever their own default
+hyperparameters left them on the sparsity axis (L0 31 to 1808), for the
+`l0_operating_point` picks: one checkpoint per type, all within 1.4x of the shared
+target. The roster, the eight L0s and the standardization rule are in
+[`../r21_shared_basis/README.md`](../r21_shared_basis/README.md), *The L0-matched roster*;
+`fork_plane.spaces()` is the switch. Every artifact carries an `_l0_matched` tag and
+nothing seed-42 is written over.
+
+| file | what |
+|---|---|
+| `space_fork_grid_r21_expanding_l0_matched` | the grid over the eight picks |
+| `r21_expanding_magnitude_l0_matched` | its companion; panel (a) is raw layer 5 and is unchanged, since raw is in both rosters |
+
+The verdict does not move: the curve still cannot start until 14 plies after *t0*,
+and (b)'s observed medians still sit inside or barely above the time-shuffled null
+in every cell. n = 1 game, 8 non-reference branches, as above.
+
 ## Figure notes
 
 - `r21_expanding_magnitude`, panel (a): the shaded band from *t−t0* = 0 to 14 is

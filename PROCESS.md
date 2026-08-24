@@ -37,6 +37,43 @@ is `illegal_move_detector`'s own operating point and changing it would move
 fits land on the same observed score (1.082754); for raw layer 5 they do not (0.814 vs 0.618).
 
 ---
+## L0-matched twins of the three fork/PCA studies (2026-08-24)
+
+`r21_shared_basis`, `fork_expanding_curvature` and `fork_population` compared eight SAEs
+at uncontrolled sparsity -- the seed-42 roster spans L0 31 to 1808, so a cell-to-cell
+difference in any of those grids confounds the architecture with its L0. All three now take
+`--l0-matched`, which swaps in the `l0_operating_point` picks (one per type, 1.4x spread
+around the shared target) and writes every artifact with an `_l0_matched` tag. **Written
+alongside, not over**: the seed-42 figures and CSVs regenerate byte-identical.
+
+**One switch, not three.** `fork_plane.spaces(l0_matched)` is the whole change; the other
+two studies had copied its roster inline and now call it. `fork_plane.tag(variant,
+l0_matched)` is the matching filename rule, so a rollout run and an L0-matched run cannot
+collide on one path.
+
+**Standardization rides on the entry, not the caller.** Ours were trained on
+`scale*(x - mean)` and Karvonen's five on the raw residual stream, and feeding either the
+other's convention is silently wrong. `SAEEntry.standardize` is now a property (always True)
+beside `Matched.standardize`, and `compute_divergence.sae_encoder` reads it -- so one encoder
+serves both rosters and the third copy of that rule (in `l0_matched_geometry.encoder`) is
+gone. The consequence a reader is owed is unchanged: the two families' latents are not on one
+input scale, so these grids compare architectures at matched L0, not one quantity measured
+eight ways.
+
+**What moves.** `r21_shared_basis`: full R^21 is below the legal control in seven of nine
+spaces (was six) and below the *third legal move's* own ratio in all nine either way -- the
+headline survives and sharpens. The R^21 planes still lift the ratio in 25 of 27 cells.
+GatedAnneal 0.88 -> 0.52 and CosineSpaDE 1.49 -> 1.79 are the two cells that change
+character. `fork_expanding_curvature` and `fork_population`: verdicts unchanged.
+
+**Gotcha: `space_fork_grid_r21_isomap.png` is not reproducible byte-for-byte.** Two
+consecutive runs of the unmodified script differ by ~20 bytes -- sklearn's `Isomap` is
+seeded nowhere in `r21_shared_basis.isomap` and its eigensolver drifts. Every other figure
+and CSV in the three studies is byte-stable. Not fixed here.
+
+**Gotcha: worktrees have no `checkpoints/`.** `*.pt` is gitignored, so a fresh worktree fails
+`registry._verify` on `checkpoints/main/trainer_0/ae.pt`. Symlink them in from the
+`new-architecture` worktree before running anything that loads a dictionary.
 
 ## Four panels of the illegal-move detector (2026-08-24)
 

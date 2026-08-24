@@ -46,6 +46,14 @@ class SAEEntry:
     def name(self) -> str:
         return f"{self.config}_seed{self.seed}"
 
+    @property
+    def standardize(self) -> bool:
+        """Every checkpoint here was trained on scale*(x - mean). The field exists so a
+        roster can mix these with `l0_operating_point.checkpoints.Matched`, whose
+        Karvonen picks were trained on the raw residual stream, and one encoder reads
+        the rule off the entry instead of the caller knowing which family it holds."""
+        return True
+
 
 def _verify(entry: SAEEntry) -> SAEEntry:
     assert (entry.ckpt_dir / "ae.pt").exists(), f"missing ae.pt in {entry.ckpt_dir}"

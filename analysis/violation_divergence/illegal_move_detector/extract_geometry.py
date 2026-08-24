@@ -105,15 +105,12 @@ def main() -> None:
 
     if args.l0_matched:
         from spade.l0_operating_point.checkpoints import matched
-        import sys as _sys
-        _sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "curvature_discriminant"))
-        from l0_matched_geometry import encoder as l0_encoder
         for entry in matched():
             path = OUT / f"d_{entry.space}.npz"
             if path.exists():
                 print(f"{path.name} present, skipping", flush=True)
                 continue
-            d = step_lengths(acts, rows, device, l0_encoder(entry, device))
+            d = step_lengths(acts, rows, device, sae_encoder(entry, device))
             np.savez(path, d=d, config=entry.config, l0=entry.l0,
                      standardized=entry.standardize)
             print(f"wrote {path.name}  d {d.shape}  ({entry.config}, L0 {entry.l0:.1f})",

@@ -41,6 +41,12 @@ into its 11 step-length and 10 turning-angle components, which disagree. Isomap
 is in neither: it is not a linear image of R^21 and its reference is not at the
 origin, so a distance in it is not a share of anything.
 
+--l0-matched swaps the seed-42 roster for the eight l0_operating_point picks, one
+checkpoint per SAE type at the shared target L0. The seed-42 grid compares eight
+dictionaries sitting wherever their own defaults left them on the sparsity axis, so a
+cell-to-cell difference confounds the architecture with its L0; this roster holds L0
+fixed. Its files carry an _l0_matched tag and the spliced names are unchanged.
+
 --variant rollout reads the resampled-continuation copy of the study, where every
 branch INCLUDING the reference samples its own K=4 suffixes instead of replaying
 the source game's. A branch is then K rows, and the mean over them is taken AFTER
@@ -53,7 +59,7 @@ move index, so nothing in the drawn window shows that -- ROLLOUT_CAVEAT is the o
 line that does, and the rest of the caption is README.md's.
 
 Usage: python analysis/violation_divergence/r21_shared_basis/make_figures.py
-           [--variant {spliced,rollout}] [--camera-ready]
+           [--variant {spliced,rollout}] [--l0-matched] [--camera-ready]
 """
 
 import argparse
@@ -69,20 +75,21 @@ from spade.common.device import select_device
 from spade.common.study import variant_dir
 from spade.figures.paper_style import (
     CATEGORY_STYLE, FULL_STYLE, GRID, INK, MUTED, NULL, PLANE_STYLE, QUANTITY_STYLE,
-    REFERENCE, apply_style, sae_label, save_figure)
+    REFERENCE, apply_style, save_figure)
 from spade.othello.taxonomy import CATEGORIES
-from spade.saes.registry import seed42_entries
-from spade.spaces import EXCLUDED_SAE
 from spade.straightness.geometry import RESTRAV_FEATURE_NAMES
 from spade.violation_divergence.branches import complete_games
 from spade.violation_divergence.compute_divergence import sae_encoder
-from spade.violation_divergence.fork_plane import RAW_SPACE, positions, spaces
+from spade.violation_divergence.fork_plane import RAW_SPACE, positions, spaces, tag
 from spade.violation_divergence.fork_r21 import (
     BLOCKS, MEAN_D, MEAN_THETA, W, activation_plane, descriptors, displacement21,
     fold_rollouts, named_basis, run_ratio, top2)
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 VARIANTS = {"spliced": "", "rollout": "rollout"}   # CLI name -> variant_dir() suffix
+# Every SAE panel name carries its own L0; this says what seats them all near 220.
+L0_CAVEAT = ("\n$L_0$-matched roster: one checkpoint per SAE type, all at the shared "
+             "operating point — a cell-to-cell difference is architecture, not sparsity.")
 # Nothing in the drawn window says this: the anchors are labelled by move index t,
 # so a reader cannot see that every one of them is past the r >= 8 saturation the
 # rollout read-out found. One line; the numbers are in README.
@@ -101,13 +108,15 @@ RUN_TICKS = [0.25, 0.5, 1, 2, 4, 8]    # a ratio axis, so doubling steps
 
 # ---------------------------------------------------------------- features
 
-def cache_path(variant: str) -> Path:
-    """Variant-scoped: an unscoped path would let a rollout run overwrite the
-    spliced features and silently redraw every spliced figure."""
-    return variant_dir("divergence", variant=variant) / "fork_r21" / "game_features.npz"
+def cache_path(variant: str, l0_matched: bool = False) -> Path:
+    """Variant- and roster-scoped: an unscoped path would let a rollout or an
+    L0-matched run overwrite the spliced seed-42 features and silently redraw every
+    figure drawn from them."""
+    return (variant_dir("divergence", variant=variant) / "fork_r21"
+            / f"game_features{tag(l0_matched=l0_matched)}.npz")
 
 
-def build_cache(path: Path, device: str, variant: str) -> None:
+def build_cache(path: Path, device: str, variant: str, l0_matched: bool) -> None:
     """Game 0's branches in every space, at the study's sampled positions.
 
     Under --variant rollout a branch is K contiguous rows, so this caches all of
@@ -129,24 +138,22 @@ def build_cache(path: Path, device: str, variant: str) -> None:
              "is_control": np.array([int(meta["is_control"][i]) for i in idx])}
     if "rollout" in meta:
         blobs["rollout"] = meta["rollout"][idx].numpy()
-    for e in seed42_entries():
-        if e.config in EXCLUDED_SAE:
-            continue
+    for name, e in spaces(l0_matched)[1:]:
         with torch.no_grad():
             f = sae_encoder(e, device)(Z.flatten(0, 1).to(device)).unflatten(0, Z.shape[:2])
-        blobs[sae_label(e.config.replace("Trainer-othello", ""))] = f.cpu().numpy()
+        blobs[name] = f.cpu().numpy()
     path.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(path, **blobs)
 
 
-def space_names() -> list[str]:
-    return [name for name, _ in spaces()]
+def space_names(l0_matched: bool) -> list[str]:
+    return [name for name, _ in spaces(l0_matched)]
 
 
-def game_features(device: str, variant: str = "") -> dict:
-    path = cache_path(variant)
+def game_features(device: str, variant: str = "", l0_matched: bool = False) -> dict:
+    path = cache_path(variant, l0_matched)
     if not path.exists():
-        build_cache(path, device, variant)
+        build_cache(path, device, variant, l0_matched)
     z = np.load(path)
     return {k: z[k] for k in z.files}
 
@@ -434,14 +441,17 @@ def run_figure(coords: dict, X: dict, names: list[str], ill: np.ndarray,
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--variant", choices=list(VARIANTS), default="spliced")
+    parser.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                        help="the eight l0_operating_point picks instead of the seed-42 "
+                             "roster: one per SAE type, all at the shared target L0")
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    g = game_features(select_device(), VARIANTS[args.variant])
-    suffix = "" if args.variant == "spliced" else f"_{args.variant}"
+    g = game_features(select_device(), VARIANTS[args.variant], args.l0_matched)
+    suffix = tag(VARIANTS[args.variant], args.l0_matched)
     n_roll = int(g["rollout"].max()) + 1 if "rollout" in g else 1
-    names = space_names()
+    names = space_names(args.l0_matched)
     meta = {k: g[k] for k in ("game", "t0", "pos")}
     meta["category"], meta["is_control"] = g["category"][::n_roll], g["is_control"][::n_roll]
     meta["anchors"] = meta["pos"][W - 1:]
@@ -509,7 +519,8 @@ def main():
     # descriptor, the window, the camera and where the K-mean is taken are the
     # caption's, and live in README.md.
     n_state = f"\none game (n=1), {len(branches)} non-reference branches: shape only."
-    rollout_note = "" if n_roll == 1 else ROLLOUT_CAVEAT
+    caveats = ("" if n_roll == 1 else ROLLOUT_CAVEAT) + (
+        L0_CAVEAT if args.l0_matched else "")
     grids = {
         "refit": ("top-2 plane refit per space: arb. units, not comparable across "
                   "cells — only the shape of the fork is.", ("PC1", "PC2"), False,
@@ -531,7 +542,7 @@ def main():
                    {name: name for name in names}),
     }
     for plane, (note, labels, shared_lim, titles) in grids.items():
-        out = space_grid(plane, coords[plane], meta, f"{note}{n_state}{rollout_note}",
+        out = space_grid(plane, coords[plane], meta, f"{note}{n_state}{caveats}",
                          labels, titles, shared_lim, args.camera_ready, suffix)
         print(f"wrote {out}")
     # The spliced claim inverts here: with every branch resampling its future the
