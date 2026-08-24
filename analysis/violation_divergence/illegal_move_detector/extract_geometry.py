@@ -1,0 +1,63 @@
+"""Step 1: raw layer-5 step lengths for every eligible branch of the spliced tree.
+
+`curvature_discriminant/branch_geometry.py` already writes this, for nine spaces, but its
+committed npz holds the 575 games that study selected before `extend_branches` grew the tree,
+and these figures want ~1000. Raw layer 5 needs no dictionary encode, so re-extracting it for
+every eligible game is cheap and leaves that study's artifacts untouched -- which matters,
+because every number in `changepoint_localization` is verified byte-identical against them.
+
+Eligibility is `branch_geometry`'s own rule, imported rather than restated: branch-complete,
+t0 inside T0_RANGE, and an odd-parity source game so the per-move-index profile (fit on the
+even-index straightness legal games) never saw a scored trajectory.
+
+Writes study_dir("divergence")/illegal_move_detector/{d,meta}.npz.
+
+Usage: PYTHONPATH=src python analysis/violation_divergence/illegal_move_detector/extract_geometry.py
+"""
+
+import sys
+from pathlib import Path
+
+import numpy as np
+import torch
+
+from spade.common.device import select_device
+from spade.common.study import study_dir
+from spade.straightness.geometry import temporal_geometry
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "curvature_discriminant"))
+from branch_geometry import (  # noqa: E402  (sibling script, not an installed package)
+    GAME_BATCH, eval_games, straightness_legal_index)
+
+OUT = study_dir("divergence") / "illegal_move_detector"
+
+
+def main() -> None:
+    device = select_device()
+    branches = study_dir("divergence") / "branches" / "branches.pt"
+    meta = torch.load(branches, weights_only=True)
+    legal_index = straightness_legal_index(meta)
+    games = eval_games(meta, legal_index)
+    rows = torch.cat([(meta["game_id"] == g).nonzero().flatten() for g in games])
+    print(f"{len(games)} games, {len(rows)} branch rows", flush=True)
+
+    OUT.mkdir(parents=True, exist_ok=True)
+    # The straightness legal game each scored game IS, so the profile can exclude them: a
+    # trajectory must not contribute to the baseline it is scored against.
+    np.savez(OUT / "meta.npz", row=rows.numpy(),
+             held_out_legal=legal_index[np.array(games)],
+             **{k: meta[k][rows].numpy() for k in ("game_id", "t0", "category", "is_control")})
+
+    acts = torch.load(study_dir("divergence") / "acts" / "resid_post_5.pt",
+                      weights_only=True, mmap=True)
+    out = []
+    for start in range(0, len(rows), GAME_BATCH):
+        z = acts[rows[start:start + GAME_BATCH]][:, 1:, :].float().to(device)  # drop the sink
+        out.append(temporal_geometry(z)[0].cpu().numpy())
+    d = np.concatenate(out).astype(np.float32)
+    np.savez(OUT / "d.npz", d=d)
+    print(f"wrote {OUT}/d.npz  d {d.shape}")
+
+
+if __name__ == "__main__":
+    main()
