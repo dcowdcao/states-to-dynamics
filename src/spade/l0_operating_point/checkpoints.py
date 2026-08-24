@@ -48,6 +48,12 @@ KARVONEN_DIRS = {
 }
 
 
+def space_name(config: str) -> str:
+    """A filename-safe space name for a pick. Karvonen configs carry a `/` (`gated/trainer32`),
+    which silently becomes a directory component in any path built from it."""
+    return "l0_" + config.replace("/", "-")
+
+
 @dataclass(frozen=True)
 class Matched:
     """One SAE type at the shared L0."""
@@ -59,9 +65,7 @@ class Matched:
 
     @property
     def space(self) -> str:
-        """A filename-safe space name. Karvonen configs carry a `/` (`gated/trainer32`),
-        which silently becomes a directory component in any path built from it."""
-        return "l0_" + self.config.replace("/", "-")
+        return space_name(self.config)
 
 
 def _params(config: str) -> dict:

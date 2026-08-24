@@ -1,8 +1,9 @@
 """The legal/illegal move detector, as the four figures of this study read it.
 
 One score, one operating point, one game, shared so the panels cannot disagree with each
-other. Everything here is raw layer 5: the panels are about what the detector does, not about
-which dictionary does it best, which is `changepoint_localization`'s question.
+other. Raw layer 5 is the default and what four of the five panels draw: they are about what
+the detector does, not about which dictionary does it best. `figure_auroc_l0_matched.py` is
+the exception and passes a `space`, which is what `geometry_path` and `profile_path` are for.
 
 The score is `changepoint`'s: step length standardized per move index against legal games,
 then the paired MOSUM contrast over `M` steps either side of a candidate. `tau` is refit on
@@ -21,6 +22,7 @@ import numpy as np
 import torch
 
 from spade.common.study import study_dir
+from spade.l0_operating_point import roster
 from spade.move_legality import localize
 from spade.othello.taxonomy import CATEGORIES, LEGAL, RULE_OF
 
@@ -68,19 +70,30 @@ REFERENCE = "raw"
 
 
 def geometry_path(space: str):
-    return DIR / ("d.npz" if space == REFERENCE else f"d_sae_{space}.npz")
+    if space == REFERENCE:
+        return DIR / "d.npz"
+    return DIR / (f"d_{space}.npz" if space in roster.SPACES else f"d_sae_{space}.npz")
 
 
 def profile_path(space: str):
+    """The legal-game geometry `legal_profile` fits "normal at this move index" on.
+
+    An L0-matched pick has only the legal block, which is all this reads:
+    `analysis/straightness/l0_matched_profile.py` writes it, `compute_geometry.py` does not.
+    """
+    geometry = study_dir("straightness") / "geometry"
+    if space in roster.SPACES:
+        return geometry / f"{space}_legal.npz"
     stem = "resid_post_5" if space == REFERENCE else f"sae_{space}"
-    return study_dir("straightness") / "geometry" / f"{stem}_raw.npz"
+    return geometry / f"{stem}_raw.npz"
 
 
 def load(space: str = REFERENCE) -> dict:
     """d [n, 57] in one space and the branch metadata, from extract_geometry.py."""
     meta = dict(np.load(DIR / "meta.npz"))
     path = geometry_path(space)
-    assert path.exists(), f"no geometry for {space}: run extract_geometry.py --spaces {space}"
+    flag = "--l0-matched" if space in roster.SPACES else f"--spaces {space}"
+    assert path.exists(), f"no geometry for {space}: run extract_geometry.py {flag}"
     return {"d": np.load(path)["d"].astype(np.float64), "space": space, **meta}
 
 

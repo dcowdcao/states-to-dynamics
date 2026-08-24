@@ -1,7 +1,9 @@
 # The legal/illegal move detector, drawn
 
 Four panels of one claim: a reference-free score on the model's own trajectory reacts to an
-illegal move, at a stated operating point, and the reaction is graded rather than clean.
+illegal move, at a stated operating point, and the reaction is graded rather than clean. A
+fifth asks which dictionary reads that reaction best once every dictionary is held at the same
+sparsity.
 
 These are figure panels, not a new measurement. The statistic, the window and the threshold
 rule all come from `../changepoint_localization`; this study re-runs them on **every** eligible
@@ -54,6 +56,7 @@ out of the baseline it is scored against.
 | `detector_trace.png` | the detector score for that same game over moves *t0*−5 … *t0*+5, three rule arms against the matched legal control, with τ |
 | `auroc_by_rule.png` | AUROC at *t0*, illegal branch against the same game's legal control, pooled and per rule, n = 500 games |
 | `score_histograms.png` | the distributions that AUROC summarizes: the score at *t0* for legal, illegal, R1, R2, R3, the same 500 games, with τ |
+| `auroc_by_space_l0_matched.png` | the same AUROC, pooled illegal against the matched legal control, split by **representation space** instead of by rule: raw layer 5 and the eight L0-matched dictionaries, same 500 games |
 
 `results/eval_games.csv` is that evaluation set written down — the 500 game ids and their *t0*.
 `move_legality.detection_auroc` reads it for the paired bars of
@@ -124,6 +127,27 @@ games** as `auroc_by_rule`, on five arms held aligned game by game (asserted on 
 on *t0*). So the panel is literally the distribution those bars summarize, which it was not
 while the two drew different prefixes of the tree.
 
+`auroc_by_space_l0_matched` — the one panel here that is not raw layer 5. Its bars are the
+eight `results/l0_operating_point/picks.csv` checkpoints, one per architecture, each the
+nearest-L0 member of its own grid to a shared target of L0 219.16 (184-260 in practice), so a
+gap between two bars is the architecture and not its sparsity — which is not true of the
+seed-42 roster, whose L0s span 32.5 to 1,808. The statistic, the arms and the games are
+`auroc_by_rule`'s: pooled illegal branch against the same source game's legal control, ranked
+on the score at that game's own *t0*, over the 500 games of `results/eval_games.csv`, which
+this script **reads** rather than re-deals. Whiskers are 95% percentile bootstrap CIs over
+source games, 1,000 resamples, seed 42 — one branch per game per arm, so a game is a cluster of
+one here. The gray band is the empirical chance level, each space's own legal control scored
+against the second legal control the same game carries; it sits at 0.486-0.508. Bars sorted by
+height, raw layer 5 in reference styling wherever it lands, hue = architecture family and hatch
+= its second dictionary, drawn by `changepoint_localization.make_figures.panel` so it cannot
+drift from that study's by-space bars. Numbers in `results/auroc_by_space_l0_matched.csv`.
+
+**GatedSAE at 0.754 [0.731, 0.776] is the only dictionary clearly above raw's 0.681 [0.658,
+0.704]**; BatchTopK 0.710, TopK 0.708 and GatedAnneal 0.703 overlap raw, PAnneal 0.677 ties it,
+and SpaDE 0.634, Standard 0.612 and CosineSpaDE 0.498 sit below. On the same corpus at
+*unmatched* sparsity `changepoint_localization` calls GatedAnneal the best space, so that
+ranking was reading L0 as much as architecture — see that study's "At matched L0" section.
+
 `score_histograms` — the five series are Gaussian KDEs (Scott's rule), not bars. The y axis is
 still a count: each curve is its density × n × one 22nd of the pooled range, so its height is
 "games per slice of that width" and reads on the scale the binned version drew. One shared
@@ -169,6 +193,9 @@ PYTHONPATH=src python $PY/figure_boards.py     [--camera-ready]
 PYTHONPATH=src python $PY/figure_trace.py      [--camera-ready]
 PYTHONPATH=src python $PY/figure_auroc.py      [--camera-ready]
 PYTHONPATH=src python $PY/figure_histograms.py [--camera-ready]
+PYTHONPATH=src python $PY/extract_geometry.py --l0-matched   # eight dictionary encodes
+PYTHONPATH=src python analysis/straightness/l0_matched_profile.py   # their legal profile, once
+PYTHONPATH=src python $PY/figure_auroc_l0_matched.py [--camera-ready]
 ```
 
 `extract_geometry.py` writes `study_dir("divergence")/illegal_move_detector/{d,meta}.npz` and

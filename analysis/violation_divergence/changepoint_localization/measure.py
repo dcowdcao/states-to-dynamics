@@ -21,9 +21,17 @@ same score as a per-position detector: a cut on the score, applied to every cand
 arm that ground truth covers, so the unit of the row is a position and a legal game is free to
 come back with no flag at all.
 
-Writes results/changepoint_localization.csv and results/threshold_localization.csv.
+`--l0-matched` swaps the seed-42 roster for the eight `l0_operating_point` picks, one
+checkpoint per architecture seated at the shared L0, so a difference between two spaces is the
+architecture and not its sparsity. It writes the same two tables under a `_l0_matched` suffix
+and leaves the canonical ones alone, and it reads the window back out of
+`window_selection.csv` instead of re-running the selection grid over the new roster.
 
-Usage: python analysis/violation_divergence/changepoint_localization/measure.py [--seed 42]
+Writes results/changepoint_localization[_l0_matched].csv and
+results/threshold_localization[_l0_matched].csv.
+
+Usage: python analysis/violation_divergence/changepoint_localization/measure.py
+           [--seed 42] [--l0-matched]
 """
 
 import argparse
@@ -37,6 +45,7 @@ import torch
 
 from spade.common.study import study_dir
 from spade.figures.paper_style import DICTIONARIES, REFERENCE_SPACE
+from spade.l0_operating_point import roster
 from spade.move_legality import localize
 from spade.straightness.build_games import CLASSES
 
@@ -46,7 +55,6 @@ from changepoint import (  # noqa: E402  (sibling module, not an installed packa
     rates, resamples, scan, take, threshold)
 
 HERE = Path(__file__).resolve().parent
-SPACES = [REFERENCE_SPACE] + DICTIONARIES
 M_GRID = (4, 6, 8, 10, 12)
 N_LEGAL = 2000                       # the straightness legal block, and the violation block
 VIOLATION = CLASSES.index("violation")
@@ -59,11 +67,25 @@ LEGAL_ARMS = POOL_ARMS[1:]
 
 
 def npz_stem(space: str) -> str:
-    return "resid_post_5" if space == REFERENCE_SPACE else f"sae_{space}"
+    if space == REFERENCE_SPACE:
+        return "resid_post_5"
+    return space if space in roster.SPACES else f"sae_{space}"
 
 
 def steps(directory: Path, space: str, suffix: str = "") -> np.ndarray:
     return np.load(directory / f"{npz_stem(space)}{suffix}.npz")["d"].astype(np.float64)
+
+
+def legal_block(space: str) -> np.ndarray:
+    """The straightness legal games, which is what "normal at this move index" means.
+
+    An L0-matched pick has no full straightness geometry: `analysis/straightness/
+    l0_matched_profile.py` writes the legal block alone, which is all the profile reads.
+    """
+    geometry = study_dir("straightness") / "geometry"
+    if space in roster.SPACES:
+        return np.load(geometry / f"{space}_legal.npz")["d"].astype(np.float64)
+    return steps(geometry, space, "_raw")[:N_LEGAL]
 
 
 def selection_corpus(space: str, cand: np.ndarray):
@@ -99,7 +121,7 @@ def sweep(space: str, cand: np.ndarray) -> list[dict]:
 def scores(space: str, meta: dict, selection: dict, cand: np.ndarray, m: int,
            paired: bool) -> dict[str, np.ndarray]:
     """Per arm, the blind scan: [n_games, len(cand)]. Both tables read this."""
-    legal = steps(study_dir("straightness") / "geometry", space, "_raw")[:N_LEGAL]
+    legal = legal_block(space)
     held = set(meta["held_out_legal"].tolist())
     mu, sd = profile(legal[[i for i in range(N_LEGAL) if i not in held]])
 
@@ -216,14 +238,24 @@ def threshold_row(space: str, s: dict, p: Positions, m: int, paired: bool, seed:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                        help="score the eight l0_operating_point picks instead of the "
+                             "canonical seed-42 roster, so a difference between two spaces "
+                             "is the architecture and not its sparsity")
     args = parser.parse_args()
+    spaces = [REFERENCE_SPACE] + (roster.SPACES if args.l0_matched else DICTIONARIES)
+    suffix = "_l0_matched" if args.l0_matched else ""
 
     width = steps(study_dir("divergence") / "curvature_discriminant", REFERENCE_SPACE).shape[1]
     cand = candidates(width, max(M_GRID))
     print(f"scanning move indices {cand[0] + 2}..{cand[-1] + 2} "
           f"({len(cand)} candidates, uniform chance {1 / len(cand):.4f})")
 
-    picks = pd.DataFrame([r for space in SPACES for r in sweep(space, cand)])
+    # The window is picked once on the straightness violation corpus and applied untouched.
+    # The L0-matched roster reads that selection back instead of re-running it: re-selecting
+    # over a new roster would tune the setting on the thing it is then used to report.
+    picks = (pd.read_csv(HERE / "results" / "window_selection.csv") if args.l0_matched
+             else pd.DataFrame([r for space in spaces for r in sweep(space, cand)]))
     grid = picks.groupby(["paired", "m"])[["auroc", "hit_rate"]].mean()
     best = grid.sum(axis=1).idxmax()
     paired, m = bool(best[0]), int(best[1])
@@ -239,22 +271,23 @@ def main() -> None:
     draws = resamples(len(selection["reference"]), args.seed)
 
     t0 = meta["t0"][selection["reference"]]
-    computed = {s: scores(s, meta, selection, cand, m, paired) for s in SPACES}
+    computed = {s: scores(s, meta, selection, cand, m, paired) for s in spaces}
     ref_peak = peaks(computed[REFERENCE_SPACE])
     table = pd.DataFrame([row(s, computed[s], t0, ref_peak, draws, cand, m, paired)
-                          for s in SPACES])
+                          for s in spaces])
 
     pool = positions(meta, selection, cand, t0, args.seed)
     print(f"\nthresholded read-out: {len(pool.label)} positions over {len(POOL_ARMS)} arms, "
           f"{int(pool.label.sum())} illegal ({pool.label.mean():.4f} prevalence)")
     flagged = pd.DataFrame([threshold_row(s, computed[s], pool, m, paired, args.seed)
-                            for s in SPACES])
+                            for s in spaces])
 
     (HERE / "results").mkdir(exist_ok=True)
-    csv = HERE / "results" / "changepoint_localization.csv"
+    csv = HERE / "results" / f"changepoint_localization{suffix}.csv"
     table.to_csv(csv, index=False)
-    picks.to_csv(HERE / "results" / "window_selection.csv", index=False)
-    thresholds = HERE / "results" / "threshold_localization.csv"
+    if not args.l0_matched:
+        picks.to_csv(HERE / "results" / "window_selection.csv", index=False)
+    thresholds = HERE / "results" / f"threshold_localization{suffix}.csv"
     flagged.round(5).to_csv(thresholds, index=False)
     print(f"\nwrote {csv}")
     print(table[["space", "auroc_vs_control", "auroc_minus_raw", "auroc_minus_raw_lo",
