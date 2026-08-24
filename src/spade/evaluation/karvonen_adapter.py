@@ -45,8 +45,19 @@ def load_karvonen_sae(checkpoint_dir, device="cpu"):
 
     trainer_config = config.get("trainer", config)
 
-    activation_dim = trainer_config["activation_dim"]
-    dict_size = trainer_config["dict_size"]
+    # Karvonen's 2024-05-23 checkpoints predate these two keys (e.g. standard/trainer25-v2),
+    # and both are recoverable exactly rather than guessed: the buffer records the submodule
+    # width, and the encoder's own weight carries (dict_size, activation_dim). Only reached
+    # when the key is absent, which until now raised.
+    shape = None
+    if "activation_dim" not in trainer_config or "dict_size" not in trainer_config:
+        weights = torch.load(ae_path, map_location="cpu", weights_only=True)
+        key = next((k for k in ("encoder.weight", "W_enc") if k in weights), None)
+        assert key, f"{ae_path}: no encoder weight to read the dimensions off"
+        shape = tuple(weights[key].shape)
+    activation_dim = trainer_config.get("activation_dim") or (
+        config.get("buffer", {}).get("d_submodule") or shape[1])
+    dict_size = trainer_config.get("dict_size") or shape[0]
     if "trainer_class" in trainer_config:
         trainer_class = trainer_config["trainer_class"]
     elif "wandb_name" in trainer_config:
@@ -85,7 +96,14 @@ def load_karvonen_sae(checkpoint_dir, device="cpu"):
         )
 
     state_dict = torch.load(ae_path, map_location=device, weights_only=True)
-    ae.load_state_dict(state_dict)
+    # `k` and `threshold` are constructor-set buffers, not learned weights: k comes from
+    # config.json and threshold defaults to -1, which `encode` ignores unless asked for it.
+    # Karvonen's 2024-07-10 top_k checkpoints predate both being saved. Only these two may be
+    # absent -- anything else missing is a real weight and still raises.
+    DERIVED = {"k", "threshold"}
+    missing, unexpected = ae.load_state_dict(state_dict, strict=False)
+    assert not unexpected, f"{ae_path}: unexpected keys {unexpected}"
+    assert set(missing) <= DERIVED, f"{ae_path}: missing weights {sorted(set(missing) - DERIVED)}"
     ae.to(device)
     ae.eval()
 
