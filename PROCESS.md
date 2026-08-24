@@ -77,6 +77,15 @@ anything, `N_EVAL` = 500: 20 games at each of the 25 positions. The ceiling unde
 quota is 550 -- the thinnest position holds 22 -- and n = 1000 would need 40 at every position.
 Final: illegal 0.681, R1 0.595, R2 0.757, R3 0.662.
 
+**And the probe chart scores the same 500 games (2026-08-24).** Its paired bars were over all
+3,923 pairs, which is a different evaluation set from the two panels beside it. `figure_auroc`
+now writes `results/eval_games.csv` -- the game ids and their t0 -- and
+`move_legality.detection_auroc` reads it rather than re-deriving a set of its own: the detector
+study's eligibility carries a held-out rule the probe has no reason to reproduce, and a recipe
+copied into two files drifts. It asserts every id carries a full branch set there and that the
+t0 agree, which is what catches a stale file. Both paired forms stay in the CSV; README.md's
+numbers are still the 3,923-pair ones. Drawn: illegal 0.963, R1 0.889, R2 0.998, R3 0.999.
+
 **The game moved to 3889, and the t0 board to one move (2026-08-24).** `select_game.py` gained
 a criterion -- the detector has to be right about at least four of the five plies
 `board_states` draws -- because the old pick, 2498, false-alarmed on three of its four legal

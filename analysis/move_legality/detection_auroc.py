@@ -43,6 +43,12 @@ RULES = localize.RULES
 SEED = 42
 GAP = 0.8            # blank slot between the two heads
 EVAL_GAMES = 1000    # split evenly over the five conditions, so 200 games each
+# The paired bars the combined figure draws are over the SAME games `illegal_move_detector`'s
+# population figures score -- it writes them down, this reads them -- so the panels beside each
+# other are one evaluation set and not two. The full-corpus paired rows stay in the CSV: they
+# are what README.md quotes.
+EVAL_GAMES_CSV = (Path(__file__).resolve().parents[1] / "violation_divergence"
+                  / "illegal_move_detector" / "results" / "eval_games.csv")
 N_BOOT = 1000
 CONDITIONS = ["control", "illegal", *RULES]
 
@@ -110,21 +116,45 @@ def unpaired(score: torch.Tensor, meta: dict, rows: np.ndarray, legal: np.ndarra
             "n_games": len(rows), "n_legal": len(negative)}
 
 
+def shared_games(meta: dict, selection: dict) -> np.ndarray:
+    """The games `illegal_move_detector`'s population figures score, read from its results.
+
+    Not re-derived here. Those two panels and this one are read side by side, so the bars have
+    to be over one evaluation set rather than two sets built by the same recipe -- that study's
+    eligibility carries a held-out rule this one has no reason to reproduce, and a recipe
+    copied into two files drifts. Their t0 is asserted equal, which is what would catch a
+    stale file.
+    """
+    games = pd.read_csv(EVAL_GAMES_CSV)
+    game, t0 = meta["game_id"].numpy(), meta["t0"].numpy()
+    common = set.intersection(*(set(game[selection[c]].tolist()) for c in CONDITIONS))
+    missing = set(games.game_id) - common
+    assert not missing, f"{len(missing)} of the detector's games carry no full branch set here"
+    reference = selection["reference"].numpy()
+    at = dict(zip(game[reference].tolist(), t0[reference].tolist()))
+    assert all(at[g] == t for g, t in zip(games.game_id, games.t0)), "t0 disagrees; stale file"
+    return games.game_id.to_numpy()
+
+
 def bar(head: str, score: torch.Tensor, arm: str, meta: dict, split: dict) -> dict:
     """One condition's AUROC against the legal group of the same evaluation split."""
     return {"head": head, "arm": arm, "style": ARM_STYLE[arm], "pairing": "disjoint groups",
             **unpaired(score, meta, split[arm], split["control"])}
 
 
-def paired_bar(head: str, score: torch.Tensor, arm: str, meta: dict, selection: dict) -> dict:
-    """The same arm the way the study has always scored it: one pair per game, every game.
+def paired_bar(head: str, score: torch.Tensor, arm: str, meta: dict, selection: dict,
+               games: np.ndarray | None = None) -> dict:
+    """The arm the way the study has always scored it: one pair per game, same t0.
 
-    Kept because it is the number README.md quotes and the one the pairing argument is about.
-    Computed, written to the CSV, and not drawn.
+    `games` restricts it to a t0-stratified subset; without it, every game the tree carries,
+    which is the number README.md quotes.
     """
     rows = selection[arm]
+    if games is not None:
+        rows = rows[np.isin(meta["game_id"].numpy()[rows], games)]
     null = selection["control2" if arm == "control" else "control"]
-    return {"head": head, "arm": arm, "style": ARM_STYLE[arm], "pairing": "paired on game",
+    label = "paired on game" if games is None else f"paired on game, n = {len(games)}"
+    return {"head": head, "arm": arm, "style": ARM_STYLE[arm], "pairing": label,
             **localize.detection(score, meta, rows,
                                  localize.matched_control(meta, rows, null), seed=SEED)}
 
@@ -135,9 +165,11 @@ def bars(space: str, meta: dict, selection: dict, split: dict) -> list[dict]:
              ("4-class", 1.0 - localize.read(space, "proba4")[..., 0], RULES)]
     drawn = [bar(head, score, arm, meta, split)
              for head, score, illegal_arms in heads for arm in illegal_arms]
-    reference = [paired_bar(head, score, arm, meta, selection)
+    subset = shared_games(meta, selection)
+    reference = [paired_bar(head, score, arm, meta, selection, games)
                  for head, score, illegal_arms in heads
-                 for arm in [*illegal_arms, "control"]]
+                 for arm in [*illegal_arms, "control"]
+                 for games in (None, subset)]
     return drawn, reference
 
 

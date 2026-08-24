@@ -40,12 +40,14 @@ GEOMETRY = repo_root() / "analysis" / "probe_geometry" / "results"
 DETECTION = repo_root() / "analysis" / "move_legality" / "results"
 RULES = ["R1", "R2", "R3"]
 GAP = 0.8                    # blank slot between the two probe heads, as in the source figure
-# The paired rows: each illegal branch against the SAME game's legal control at the same t0,
-# 3,923 pairs. The CSV also holds the t0-stratified even split, which deals the corpus into
+# The paired rows over the 500 games `illegal_move_detector`'s population figures score --
+# `detection_auroc` reads that study's `eval_games.csv`, so the panels of this figure and those
+# two are one evaluation set. The CSV also holds those pairs over all 3,923 games, and the
+# t0-stratified even split, which deals the corpus into
 # five disjoint groups of 200 and pays about twice the interval width for mutual independence
 # between bars that nothing here tests. `control` is a row of both heads -- the legal-vs-legal
 # null -- and is not a bar: this panel draws the four arms the split one drew.
-DRAWN = "paired on game"
+DRAWN = "paired on game, n = 500"
 BARS = ["illegal", *RULES]
 
 BAR_STYLE = {"illegal": {**CLASS_STYLE["violation"], "label": "illegal / legal"},

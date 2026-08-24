@@ -55,6 +55,11 @@ out of the baseline it is scored against.
 | `auroc_by_rule.png` | AUROC at *t0*, illegal branch against the same game's legal control, pooled and per rule, n = 500 games |
 | `score_histograms.png` | the distributions that AUROC summarizes: the score at *t0* for legal, illegal, R1, R2, R3, the same 500 games, with τ |
 
+`results/eval_games.csv` is that evaluation set written down — the 500 game ids and their *t0*.
+`move_legality.detection_auroc` reads it for the paired bars of
+`figures/probe_directions_and_detection`, so those bars and these two panels score one set of
+games rather than two built by the same recipe.
+
 Band semantics: every interval is a 95% percentile bootstrap over **source games** as
 clusters, 1,000 resamples, seed 42 — games and never positions, because one game's candidates
 overlap in *M*−1 steps.
