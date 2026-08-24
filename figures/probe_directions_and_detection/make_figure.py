@@ -50,7 +50,7 @@ GAP = 0.8                    # blank slot between the two probe heads, as in the
 DRAWN = "paired on game, n = 500"
 BARS = ["illegal", *RULES]
 
-BAR_STYLE = {"illegal": {**CLASS_STYLE["violation"], "label": "illegal / legal"},
+BAR_STYLE = {"illegal": {**CLASS_STYLE["violation"], "label": "legal / illegal"},
              **{r: {**PROBE_CLASS_STYLE[r], "label": r} for r in RULES}}
 
 
