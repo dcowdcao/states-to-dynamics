@@ -92,12 +92,16 @@ def summary(x: dict[str, np.ndarray], tau: float) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def draw(x: dict[str, np.ndarray], tau: float, camera_ready: bool) -> Path:
+def panel(ax, x: dict[str, np.ndarray], tau: float) -> None:
+    """The five densities and the cut, on a caller's axes so another figure can reuse them.
+
+    Split out of `draw` so a panel of this figure elsewhere is the same code rather than a
+    copy that drifts: same grid, same bandwidth, same fills, same legend.
+    """
     pooled = np.concatenate([x[k] for k in SERIES])
     grid = np.linspace(pooled.min(), pooled.max(), GRID)
     slice_width = (pooled.max() - pooled.min()) / SLICES
 
-    fig, ax = plt.subplots(figsize=(5.5, 3.4))
     ax.set_axisbelow(True)
     ax.grid(False, axis="x")
     top = 0.0
@@ -120,15 +124,22 @@ def draw(x: dict[str, np.ndarray], tau: float, camera_ready: bool) -> Path:
     ax.set_ylabel("number of games")
     ax.legend(loc="upper center", ncol=2, fontsize=8.0, labelspacing=0.32, borderpad=0.2,
               columnspacing=1.4, handlelength=2.4, alignment="left")
-    return save_figure(fig, FIGURES / "score_histograms", camera_ready)
+
+
+def draw(x: dict[str, np.ndarray], tau: float, camera_ready: bool, stem: str) -> Path:
+    fig, ax = plt.subplots(figsize=(5.5, 3.4))
+    panel(ax, x, tau)
+    return save_figure(fig, FIGURES / stem, camera_ready)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
+    parser.add_argument("--space", default=detector.REFERENCE,
+                        help="representation space; needs extract_geometry.py --spaces first")
     args = parser.parse_args()
 
-    data = detector.load()
+    data = detector.load(args.space)
     cand = detector.band()
     s = detector.score(data, cand)
     sel = detector.arms(data)
@@ -138,10 +149,11 @@ def main() -> None:
 
     apply_style(args.camera_ready)
     RESULTS.mkdir(parents=True, exist_ok=True)
-    table = summary(x, tau)
-    table.to_csv(RESULTS / "score_histograms.csv", index=False)
+    stem = "score_histograms" + ("" if args.space == detector.REFERENCE else f"_{args.space}")
+    table = summary(x, tau).assign(space=args.space)
+    table.to_csv(RESULTS / f"{stem}.csv", index=False)
     print(table.to_string(index=False))
-    print(draw(x, tau, args.camera_ready))
+    print(draw(x, tau, args.camera_ready, stem))
 
 
 if __name__ == "__main__":

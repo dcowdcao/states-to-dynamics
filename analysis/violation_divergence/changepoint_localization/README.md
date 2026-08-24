@@ -208,10 +208,21 @@ every space: at 1-2% prevalence the accuracy-maximizing cut flags almost nothing
 
 ### Figure notes
 
-`threshold_detection.png` (spliced) and `threshold_detection_regenerated.png` (regenerated),
-one figure per corpus, two panels sharing one sort order so a space is the same column in
-both: (a) per-position AUROC, tie-averaged, illegal positions against legal ones; (b)
-out-of-fold balanced accuracy at the fitted cut. Every interval is a 95% percentile bootstrap
+`threshold_detection.png` (spliced): (a) per-position AUROC, tie-averaged, illegal positions
+against legal ones, over the nine spaces; (b) the five score distributions at *t0* that AUROC
+summarizes, in **GatedAnneal**, the space (a) ranks first. (b) is drawn by
+`illegal_move_detector.figure_histograms.panel` -- the same code that figure uses, so the two
+cannot drift -- and inherits its evaluation set: 200 games per class, dealt uniformly over `t0`.
+Reading them together is the point: the bar chart says which space orders positions best, and
+the densities say that even there the cut sits inside the overlap rather than between two
+separated classes.
+
+`threshold_detection_regenerated.png` still carries the older two-bar-panel layout, (a) AUROC
+beside (b) out-of-fold balanced accuracy. The balanced accuracy the spliced figure dropped is
+a column of `results/threshold_localization.csv`, and the caveat it carried -- a space can
+rank well and still have no cut that transfers -- is under "What the cut finds" above.
+
+Every interval is a 95% percentile bootstrap
 over **source games as clusters**, 1,000 resamples, seed 42 -- games and never positions,
 because one game's candidates overlap in `m - 1` steps. n is 575 games / 26,252 positions
 (spliced) and 1,000 games / 63,580 positions (regenerated). The dashed gray line is 0.5.
