@@ -37,6 +37,11 @@ SEED = 42
 N_LEGAL = 2000                          # the straightness legal block
 RULES = ["R1", "R2", "R3"]
 ARMS = ["illegal", *RULES]
+# Games per t0 in the population figures. 9 x 21 positions = 189, the largest uniform sample
+# at or under the 200 games per condition of `move_legality.detection_auroc`, whose bar chart
+# these panels are read beside. The pool allows 22 (n = 462); the cap is comparability, not
+# availability, and it costs interval width.
+PER_T0 = 9
 
 # One game for the board panel and the trace beside it. Picked by `select_game.py`: all three
 # rules have a branch at its t0, t0 sits far enough inside the band that +-5 plies stay on the
@@ -80,7 +85,7 @@ def arms(data: dict, seed: int = SEED) -> dict[str, np.ndarray]:
     return {k: v.numpy() for k, v in localize.arms(meta, seed).items()}
 
 
-def stratified(data: dict, sel: dict) -> np.ndarray:
+def stratified(data: dict, sel: dict, per_t0: int = PER_T0) -> np.ndarray:
     """Positions into every arm's index array: the same number of games at every t0.
 
     The tree is not balanced on move index -- `extend_branches` forked 1,666 of its games at
@@ -88,13 +93,12 @@ def stratified(data: dict, sel: dict) -> np.ndarray:
     and move index is the strongest nuisance this tree has. An equal quota per t0 makes the
     sample flat across the range, the way `move_legality.detection_auroc` deals its groups.
 
-    The quota is the smallest stratum, so n is that times the number of t0 values and grows
-    on its own if the tree is extended at the sparse positions. Within a stratum the games are
-    the first by sorted game_id: a stated prefix that reproduces without a seed.
+    The quota is `per_t0`, or the smallest stratum when that is smaller. Within a stratum the
+    games are the first by sorted game_id: a stated prefix that reproduces without a seed.
     """
     game, t0 = data["game_id"][sel["reference"]], data["t0"][sel["reference"]]
     values = np.unique(t0)
-    quota = min(int((t0 == v).sum()) for v in values)
+    quota = min(per_t0, *(int((t0 == v).sum()) for v in values))
     keep = [np.flatnonzero(t0 == v)[np.argsort(game[t0 == v], kind="stable")][:quota]
             for v in values]
     return np.sort(np.concatenate(keep))
