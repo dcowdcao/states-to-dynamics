@@ -43,7 +43,7 @@ right. Off $t_0$ the row scored is the reference game itself, whose move there i
 one it played, so anything over tau is a false alarm; at $t_0$ it is the drawn branch, which is
 illegal. `select_game.py` requires at least four of the five to come out right. The current
 pick comes out at five; it was four before the corpus widened to t0 >= 14 and moved tau, and
-one panel is one game either way -- 29% of legal positions sit above tau.
+one panel is one game either way -- 28% of legal positions sit above tau.
 
 The game, its $t_0$ and the three branch rows are `select_game.py`'s pick, read from
 figure_game.json; every square's category is re-derived with `taxonomy.classify`, so a corpus

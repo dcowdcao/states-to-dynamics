@@ -59,18 +59,19 @@ beside `move_legality`'s bar chart, so they should scan its positions and carry 
 statement about how flat the objective is. It cannot go lower: the score is a MOSUM over
 M_MAX = 12 steps either side, so nothing below move 14 has one, where the probe reads a single
 position and can be evaluated anywhere -- the one difference between the two evaluation sets
-that is not a choice. `detector.PER_T0` = 9 games per position then caps n at 189, because that
-chart's "n = 1000" is 1000 games dealt over five DISJOINT groups, 200 per bar, and 200/21 is
-not an integer. The cap is comparability, not availability -- the corpus supports 462 and the
-intervals widen about 1.6x for it. Matching the disjoint design instead would cap us at 84 per
-group. Final: illegal 0.702, R1 0.585, R2 0.777, R3 0.684.
+that is not a choice. `detector.N_EVAL` = 200 then caps n at that chart's per-bar n -- its
+"n = 1000" is 1000 games dealt over five DISJOINT groups, 200 per bar, where these arms are
+paired and every game appears in all of them. 200 does not divide 21 positions, so the lowest
+11 take 10 games and the rest 9. The cap is comparability, not availability -- the corpus
+supports 462 and the intervals widen about 1.6x for it. Matching the disjoint design instead
+would cap us at 84 per group. Final: illegal 0.700, R1 0.590, R2 0.775, R3 0.690.
 
 **The game moved to 3889, and the t0 board to one move (2026-08-24).** `select_game.py` gained
 a criterion -- the detector has to be right about at least four of the five plies
 `board_states` draws -- because the old pick, 2498, false-alarmed on three of its four legal
 plies once the panels started reporting the detector's call. MIN_CORRECT is 4 and not 5 on
 purpose, so the criterion does not hunt for a window with no false alarm in it; after the
-corpus floor moved and tau went to 0.850 the same pick reads 5/5 anyway, against a 29%
+corpus floor moved and tau went to 0.850 the same pick reads 5/5 anyway, against a 28%
 population false-alarm rate. The t0 panel now draws ONE move, not three: a position has one move played
 in it, and three marked squares read as three moves being played at once. Which one is drawn is
 the arm the trace's peak belongs to, so the two figures name the same move; the board labels it
