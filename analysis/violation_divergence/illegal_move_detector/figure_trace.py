@@ -70,7 +70,7 @@ def panel(ax, game: dict, move: np.ndarray, s: np.ndarray, tau: float) -> None:
     trace = s[list(rows.values())][:, take]
     ax.set_ylim(trace.min() - 0.55, trace.max() + 1.1)
     ax.set_xticks(window)
-    ax.set_xlabel(f"move position in the game   ($t_0 = {t0}$ is the spliced move)")
+    ax.set_xlabel(f"game move number $t$   ($t_0 = {t0}$ is the spliced move)")
     ax.set_ylabel("standardized norm of step length")
     for tick, text in zip(ax.get_xticks(), ax.get_xticklabels()):
         if tick == t0:
