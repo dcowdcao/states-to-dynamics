@@ -42,7 +42,7 @@ HALF = 5   # plies drawn either side of t0; select_game.py guaranteed they fit i
 RULE_DASH = {"R1": (0, (6, 1.5, 1, 1.5)), "R2": (0, (4, 2)), "R3": (0, (1, 1.6))}
 ARM_STYLE = {
     **{r: {**PROBE_CLASS_STYLE[r], "ls": RULE_DASH[r], "lw": 1.8, "zorder": 4} for r in RULES},
-    "control": {**NULL, "label": "matched legal control (baseline)"},
+    "control": {**NULL, "label": "legal control (baseline)"},
 }
 
 
@@ -84,7 +84,7 @@ def draw(game: dict, move: np.ndarray, s: np.ndarray, tau: float, camera_ready: 
     # The threshold line keeps its label in the legend rather than in-panel prose: at this
     # game's scale every clear stretch of the tau line is crossed by a curve.
     ax.plot([], [], color=MUTED, ls=(0, (1, 2)), lw=1.0,
-            label=f"detector threshold $\\tau$ = {tau:.3f}")
+            label=f"$\\tau$ = {tau:.3f} (threshold)")
     ax.legend(loc="upper left", fontsize=7, handlelength=2.0, labelspacing=0.4,
               borderaxespad=0.5)
     fig.tight_layout()

@@ -53,7 +53,7 @@ out of the baseline it is scored against.
 | file | what it shows |
 |---|---|
 | `board_states.png` | the board at *t0*−2 … *t0*+2 of game 3889: the legal move played at each of the four surrounding plies, and the illegal move the drawn branch plays at *t0* |
-| `detector_trace.png` | the detector score for that same game over moves *t0*−5 … *t0*+5, three rule arms against the matched legal control, with τ |
+| `detector_trace.png` | the detector score for that same game over moves *t0*−5 … *t0*+5, three rule arms against the legal control, with τ |
 | `auroc_by_rule.png` | AUROC at *t0*, illegal branch against the same game's legal control, pooled and per rule, n = 500 games |
 | `score_histograms.png` | the distributions that AUROC summarizes: the score at *t0* for legal, illegal, R1, R2, R3, the same 500 games, with τ |
 | `score_histograms_GatedAnnealTrainer-othello.png` | the same five distributions read through the GatedAnneal dictionary, same 500 games — panel (b) of `changepoint_localization/figures/threshold_detection.png`, whose panel (a) ranks that space first |
