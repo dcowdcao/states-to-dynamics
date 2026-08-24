@@ -37,11 +37,11 @@ SEED = 42
 N_LEGAL = 2000                          # the straightness legal block
 RULES = ["R1", "R2", "R3"]
 ARMS = ["illegal", *RULES]
-# Games per class in the population figures: `move_legality.detection_auroc`'s per-bar n, so
-# the panels these are read beside carry the same weight of evidence. The pool would allow 462
-# (22 at every position); the cap is comparability, not availability, and it widens every
-# interval by about 1.6x.
-N_EVAL = 200
+# Games per class in the population figures: everything the corpus affords under an equal
+# quota per t0. 22 is the thinnest position, over 25 positions. The cap used to be
+# `move_legality.detection_auroc`'s 200 per bar, which stopped meaning anything once that
+# chart went back to its paired rows and 3,923 pairs.
+N_EVAL = 550
 
 # One game for the board panel and the trace beside it. Picked by `select_game.py`: all three
 # rules have a branch at its t0, t0 sits far enough inside the band that +-5 plies stay on the
@@ -124,7 +124,8 @@ def stratified(data: dict, sel: dict, n_games: int = N_EVAL) -> np.ndarray:
     game, t0 = data["game_id"][sel["reference"]], data["t0"][sel["reference"]]
     values = np.unique(t0)
     quota, extra = divmod(n_games, len(values))
-    assert quota + 1 <= min(int((t0 == v).sum()) for v in values), "a t0 cannot fill its quota"
+    assert quota + bool(extra) <= min(int((t0 == v).sum()) for v in values), \
+        f"n = {n_games} over {len(values)} positions needs more games than the thinnest holds"
     keep = [np.flatnonzero(t0 == v)[np.argsort(game[t0 == v], kind="stable")]
             [:quota + (i < extra)] for i, v in enumerate(values)]
     return np.sort(np.concatenate(keep))

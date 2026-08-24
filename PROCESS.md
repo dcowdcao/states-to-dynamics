@@ -65,8 +65,17 @@ position; that is the trade, and it is written down rather than taken silently.
 2,207 eligible games -> 2,415, tau 0.629 -> 0.619, and `detector.N_EVAL` = 200 now divides the
 25 positions exactly: 8 games each, the same quota that chart deals per condition per t0. The
 cap is comparability, not availability -- the corpus supports 550 -- and the intervals widen
-for it. Final: illegal 0.696, R1 0.613, R2 0.777, R3 0.685; the illustrative game is unchanged
-and reads 4/5 again.
+for it. The illustrative game is unchanged and reads 4/5 again.
+
+**Then the cap came off, because the probe chart went paired (2026-08-24).** That chart was
+drawing its five disjoint groups of 200 and paying about twice the interval width for mutual
+independence between bars that nothing tests; its own CSV already held the paired rows, 3,923
+of them, which are the numbers `move_legality`'s README quotes. `DRAWN = "paired on game"` in
+`figures/probe_directions_and_detection/make_figure.py` -- bars only, no restyling -- and
+0.970/0.902 become 0.960/0.892 with the intervals a fifth as wide. With 200 no longer meaning
+anything, `N_EVAL` = 550: everything an equal quota affords, 22 games at each of 25 positions.
+n = 1000 would need 40 at every position and the thinnest holds 22. Final: illegal 0.679,
+R1 0.597, R2 0.755, R3 0.659.
 
 **The game moved to 3889, and the t0 board to one move (2026-08-24).** `select_game.py` gained
 a criterion -- the detector has to be right about at least four of the five plies

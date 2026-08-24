@@ -40,7 +40,13 @@ GEOMETRY = repo_root() / "analysis" / "probe_geometry" / "results"
 DETECTION = repo_root() / "analysis" / "move_legality" / "results"
 RULES = ["R1", "R2", "R3"]
 GAP = 0.8                    # blank slot between the two probe heads, as in the source figure
-DRAWN = "disjoint groups"    # the t0-stratified even split; the CSV also holds the paired form
+# The paired rows: each illegal branch against the SAME game's legal control at the same t0,
+# 3,923 pairs. The CSV also holds the t0-stratified even split, which deals the corpus into
+# five disjoint groups of 200 and pays about twice the interval width for mutual independence
+# between bars that nothing here tests. `control` is a row of both heads -- the legal-vs-legal
+# null -- and is not a bar: this panel draws the four arms the split one drew.
+DRAWN = "paired on game"
+BARS = ["illegal", *RULES]
 
 BAR_STYLE = {"illegal": {**CLASS_STYLE["violation"], "label": "illegal / legal"},
              **{r: {**PROBE_CLASS_STYLE[r], "label": r} for r in RULES}}
@@ -106,8 +112,9 @@ def main() -> None:
     gram = pd.read_csv(GEOMETRY / "type_cosines.csv", index_col=0).loc[
         list(DIRECTION_ORDER), list(DIRECTION_ORDER)]
     detection = pd.read_csv(DETECTION / "detection_auroc_raw.csv")
-    bars = detection[detection.pairing == DRAWN].reset_index(drop=True)
-    assert len(bars) == 4, f"expected 4 even-split bars, found {len(bars)}"
+    bars = detection[(detection.pairing == DRAWN)
+                     & detection.arm.isin(BARS)].reset_index(drop=True)
+    assert len(bars) == len(BARS), f"expected {len(BARS)} paired bars, found {len(bars)}"
 
     # (c) spans the width because its x axis is four bars and a sentence; the top row is two
     # square-ish panels. Heights favour the top row, where the MDS cloud needs the room.
