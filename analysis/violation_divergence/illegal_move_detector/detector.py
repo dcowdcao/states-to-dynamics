@@ -80,6 +80,26 @@ def arms(data: dict, seed: int = SEED) -> dict[str, np.ndarray]:
     return {k: v.numpy() for k, v in localize.arms(meta, seed).items()}
 
 
+def stratified(data: dict, sel: dict) -> np.ndarray:
+    """Positions into every arm's index array: the same number of games at every t0.
+
+    The tree is not balanced on move index -- `extend_branches` forked 1,666 of its games at
+    t0 = 20 and about 30 at each other value -- so a prefix of game ids is 46% one position,
+    and move index is the strongest nuisance this tree has. An equal quota per t0 makes the
+    sample flat across the range, the way `move_legality.detection_auroc` deals its groups.
+
+    The quota is the smallest stratum, so n is that times the number of t0 values and grows
+    on its own if the tree is extended at the sparse positions. Within a stratum the games are
+    the first by sorted game_id: a stated prefix that reproduces without a seed.
+    """
+    game, t0 = data["game_id"][sel["reference"]], data["t0"][sel["reference"]]
+    values = np.unique(t0)
+    quota = min(int((t0 == v).sum()) for v in values)
+    keep = [np.flatnonzero(t0 == v)[np.argsort(game[t0 == v], kind="stable")][:quota]
+            for v in values]
+    return np.sort(np.concatenate(keep))
+
+
 def at_t0(s: np.ndarray, cand: np.ndarray, t0: np.ndarray, rows: np.ndarray) -> np.ndarray:
     """The score of each row at its own t0 -- the value the histograms bin and AUROC ranks."""
     where = np.searchsorted(cand + CAND_OFFSET, t0[rows])

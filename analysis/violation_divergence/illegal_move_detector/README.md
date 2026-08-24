@@ -54,8 +54,8 @@ out of the baseline it is scored against.
 |---|---|
 | `board_states.png` | the board at *t0*−2 … *t0*+2 of game 3889: the legal move played at each of the four surrounding plies, and the illegal move the drawn branch plays at *t0* |
 | `detector_trace.png` | the detector score for that same game over moves *t0*−5 … *t0*+5, three rule arms against the matched legal control, with τ |
-| `auroc_by_rule.png` | AUROC at *t0*, illegal branch against the same game's legal control, pooled and per rule, n = 1,000 games |
-| `score_histograms.png` | the distributions that AUROC summarizes: the score at *t0* for legal, illegal, R1, R2, R3, n = 200 games each, with τ |
+| `auroc_by_rule.png` | AUROC at *t0*, illegal branch against the same game's legal control, pooled and per rule, n = 418 games |
+| `score_histograms.png` | the distributions that AUROC summarizes: the score at *t0* for legal, illegal, R1, R2, R3, the same 418 games, with τ |
 
 Band semantics: every interval is a 95% percentile bootstrap over **source games** as
 clusters, 1,000 resamples, seed 42 — games and never positions, because one game's candidates
@@ -88,6 +88,25 @@ R1 is `occupied_opp` (f5), R2 `empty_no_bracket` (h4) and R3 `opponent_only` (f1
 empty square with nothing to see, which is exactly why `figures/othello_rules` avoids it too.
 The pooled illegal arm's own draw for this game *is* that shallow member, which is why the
 board draws `PREFERRED`'s branch and not the pooled one.
+
+`auroc_by_rule` — what the bars compare, since the panel no longer prints it: each is the
+illegal branch against **the same source game's legal control at the same *t0***, ranked on the
+score at that game's own *t0*, one value per branch. `legal / illegal` is the pooled arm (one
+illegal branch per game); R1/R2/R3 are that same arm split by rule.
+
+**The evaluation set is flat over *t0*.** `detector.stratified` takes an equal quota of games
+at every *t0* in the scored range — **22 games at each of 16…34, n = 418** — because the tree
+is not balanced on move index: `extend_branches.py` forked 1,666 of its 2,207 eligible games at
+*t0* = 20 and about 30 at each other value, so any prefix of game ids is ~46% one position, and
+move index is the strongest nuisance variable this tree has. `move_legality.detection_auroc`
+deals its groups the same way. The quota is the smallest stratum, which is what caps n at 418:
+outside *t0* = 20 the whole tree holds only 541 eligible games. n grows on its own if the tree
+is extended at the sparse positions.
+
+`score_histograms` — same corpus, same eligibility, same statistic and now the **same 418
+games** as `auroc_by_rule`, on five arms held aligned game by game (asserted on `game_id` and
+on *t0*). So the panel is literally the distribution those bars summarize, which it was not
+while the two drew different prefixes of the tree.
 
 `score_histograms` — the five series are Gaussian KDEs (Scott's rule), not bars. The y axis is
 still a count: each curve is its density × n × one 22nd of the pooled range, so its height is

@@ -43,6 +43,16 @@ so the trace is illustrative and the other two panels are the population; and th
 half is off-support, because after t0 the branch replays the source suffix onto a board that no
 longer exists.
 
+**The two population figures went t0-uniform (2026-08-24).** `detector.stratified` replaces
+"the first N games by sorted id" in both. The tree is 1,666-of-2,207 games forked at t0 = 20,
+so a prefix is 46% one move index and the AUROC was largely a statement about move 20; the
+histogram, drawn on the first 200 ids, missed the t0 = 20 block entirely and was near-uniform.
+The two figures were therefore not the same sample, which the README had been claiming. Equal
+quota per t0 fixes both at once. It costs n: the quota is the smallest stratum (22 at t0 = 32
+and 33), so n = 22 x 19 = 418, and n = 1000 uniform is not reachable from this tree at all --
+outside t0 = 20 it holds 541 eligible games total. AUROCs move a little and the ordering does
+not: illegal 0.701 -> 0.711, R1 0.599 -> 0.591, R2 0.764 -> 0.782, R3 0.661 -> 0.673.
+
 **The game moved to 3889, and the t0 board to one move (2026-08-24).** `select_game.py` gained
 a criterion -- the detector has to be right about at least four of the five plies
 `board_states` draws -- because the old pick, 2498, false-alarmed on three of its four legal

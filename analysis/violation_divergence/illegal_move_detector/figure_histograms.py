@@ -9,9 +9,10 @@ the five series differ only in the move that was played. `illegal` is the pooled
 branch per game drawn from R1/R2/R3 at seed 42 -- and R1, R2, R3 are that same arm's
 components drawn separately, not four independent conditions.
 
-n = 200 source games per series: the first 200 game_ids in sorted order, a fixed reproducible
-subset of the 2,207 eligible games, with the five arms kept aligned game by game (asserted on
-game_id and on t0). Per-series n, mean, median and the fraction above tau, the last with a 95%
+The evaluation set is `detector.stratified`: the same number of games at every t0 in the
+scored range, so the curves are flat over move index rather than weighted toward whichever
+position the tree happens to hold most of. The five arms are kept aligned game by game
+(asserted on game_id and on t0), so all five curves are the same games at the same forks. Per-series n, mean, median and the fraction above tau, the last with a 95%
 bootstrap CI over the same 200 games, go to results/score_histograms.csv.
 
 **The curves are counts, not densities.** Each is `straightness_panels.kde_ci`'s Gaussian KDE
@@ -44,7 +45,7 @@ from spade.figures.straightness_panels import kde_ci
 
 FIGURES = Path(__file__).resolve().parent / "figures"
 RESULTS = Path(__file__).resolve().parent / "results"
-N_GAMES, SLICES = 200, 22   # SLICES sets the count scale: one slice of the pooled range
+SLICES = 22                 # sets the count scale: one slice of the pooled range
 GRID = 512                  # points the KDE is evaluated on
 
 SERIES = ["legal", "illegal", "R1", "R2", "R3"]
@@ -69,10 +70,10 @@ FILL = {"legal": 0.22, "illegal": 0.30, "R1": 0.0, "R2": 0.0, "R3": 0.0}
 LINE = {"legal": 2.0, "illegal": 2.0, "R1": 1.4, "R2": 1.4, "R3": 1.4}
 
 
-def subset(data: dict, sel: dict, n_games: int) -> dict[str, np.ndarray]:
-    """Row indices per series for the first `n_games` game_ids, arms still aligned by game."""
-    games = np.sort(np.unique(data["game_id"]))[:n_games]
-    keep = np.flatnonzero(np.isin(data["game_id"][sel["reference"]], games))
+def subset(data: dict, sel: dict) -> dict[str, np.ndarray]:
+    """Row indices per series over `detector.stratified`'s games, arms aligned game by game."""
+    keep = detector.stratified(data, sel)
+    games = data["game_id"][sel["reference"]][keep]
     rows = {k: sel[ARM_OF[k]][keep] for k in SERIES}
     for name, r in rows.items():
         assert (data["game_id"][r] == games).all(), f"{name} is not aligned to the game order"
@@ -81,7 +82,7 @@ def subset(data: dict, sel: dict, n_games: int) -> dict[str, np.ndarray]:
 
 
 def summary(x: dict[str, np.ndarray], tau: float) -> pd.DataFrame:
-    draws = resamples(N_GAMES, detector.SEED)
+    draws = resamples(len(next(iter(x.values()))), detector.SEED)
     rows = []
     for name, v in x.items():
         lo, hi = ci(lambda i: float((v[i] > tau).mean()), draws)
@@ -132,7 +133,7 @@ def main() -> None:
     s = detector.score(data, cand)
     sel = detector.arms(data)
     tau = detector.operating_point(s, cand, data, sel)
-    rows = subset(data, sel, N_GAMES)
+    rows = subset(data, sel)
     x = {k: detector.at_t0(s, cand, data["t0"], r) for k, r in rows.items()}
 
     apply_style(args.camera_ready)
