@@ -12,9 +12,16 @@ still looks like up close, which is a cut sitting inside the overlap rather than
 separated classes. (b) is drawn by `illegal_move_detector.figure_histograms.panel`, the same
 code its own figure uses, so the two cannot drift.
 
+Both panels are the SAME 500 games -- `illegal_move_detector/results/eval_games.csv`, 20 games
+at each of 25 positions -- which is why (a) reads `results/threshold_detection.csv` and not the
+`threshold_localization.csv` beside it. That table is the 575 games of `curvature_discriminant`
+at t0 in [16, 34], a different corpus from the one (b) draws, and two panels on two corpora are
+not two views of one dataset. `measure_detector.py` writes the one they share; both panels
+check their own draw against that file before anything is drawn.
+
 The out-of-fold balanced accuracy that used to be (b) is not lost: it is a column of
-`results/threshold_localization.csv`, and its caveat -- a space can rank well and still have
-no cut that transfers -- is in README.md.
+`results/threshold_detection.csv`, and its caveat -- a space can rank well and still have no
+cut that transfers -- is in README.md.
 
 Sorted by (a), because the ordering is the claim; raw layer 5 keeps reference styling wherever
 it lands, so the reader can see how many dictionaries clear it, and keeping one order across
@@ -40,14 +47,11 @@ from spade.figures.paper_style import (
 HERE = Path(__file__).resolve().parent
 BAR_WIDTH = 0.72
 FALSE_ALARM = ["hit_control", "hit_control2", "hit_reference"]
-# The space (a) ranks first. Its densities are what (b) draws, so the two panels are the same
-# claim at two magnifications rather than two unrelated read-outs.
-HISTOGRAM_SPACE = "GatedAnnealTrainer-othello"
 
 sys.path.insert(0, str(HERE.parent / "illegal_move_detector"))
 
 
-def histogram_panel(ax, space: str) -> None:
+def histogram_panel(ax, space: str) -> int:
     """(b): the five score distributions at t0, in `space`, drawn by their own figure's code."""
     import detector
     from figure_histograms import panel as densities, subset
@@ -59,6 +63,7 @@ def histogram_panel(ax, space: str) -> None:
     tau = detector.operating_point(score, cand, data, sel)
     rows = subset(data, sel)
     densities(ax, {k: detector.at_t0(score, cand, data["t0"], r) for k, r in rows.items()}, tau)
+    return detector.assert_eval_set(data["game_id"][rows["legal"]], data["t0"][rows["legal"]])
 
 
 def panel_letter(ax, i: int) -> None:
@@ -124,24 +129,14 @@ def draw_by_space(table: pd.DataFrame, camera_ready: bool) -> Path:
     return finish(fig, "changepoint_by_space", camera_ready)
 
 
-def threshold_table(table: pd.DataFrame) -> pd.DataFrame:
-    """Sorted by panel (a). Both corpora sort the same way, so a space is one column."""
-    return table.sort_values("auroc_position", ascending=False).reset_index(drop=True)
-
-
-def threshold_top(table: pd.DataFrame) -> float:
-    """One ceiling for both panels: two probability scales sharing a chance line at 0.5."""
-    hi = table[["auroc_position_hi", "balanced_accuracy_hi"]].to_numpy().max()
-    return max(1.05, float(hi) * 1.12)
-
-
 def draw_threshold(table: pd.DataFrame, camera_ready: bool) -> Path:
-    table = threshold_table(table)
+    """Sorted by (a); (b) is whichever space that puts first, so the panels cannot disagree."""
+    table = table.sort_values("auroc_position", ascending=False).reset_index(drop=True)
     fig, axes = plt.subplots(1, 2, figsize=(11.0, 3.6),
                              gridspec_kw={"width_ratios": [1.0, 0.92]})
-    panel(axes[0], table, "auroc_position", "AUROC", 0.5, None, 0, threshold_top(table),
-          "chance")
-    histogram_panel(axes[1], HISTOGRAM_SPACE)
+    panel(axes[0], table, "auroc_position", "AUROC", 0.5, None, 0, 1.05, "chance")
+    n_games = histogram_panel(axes[1], table.space.iloc[0])
+    assert (table.n_games == n_games).all(), "the two panels are not one evaluation set"
     axes[1].text(0.0, 1.02, "(b)", va="bottom", transform=axes[1].transAxes, color=INK,
                  fontsize=9)
     fig.tight_layout()
@@ -157,7 +152,7 @@ def main() -> None:
     results = HERE / "results"
     print(draw_by_space(pd.read_csv(results / "changepoint_localization.csv"),
                         args.camera_ready))
-    print(draw_threshold(pd.read_csv(results / "threshold_localization.csv"),
+    print(draw_threshold(pd.read_csv(results / "threshold_detection.csv"),
                          args.camera_ready))
 
 

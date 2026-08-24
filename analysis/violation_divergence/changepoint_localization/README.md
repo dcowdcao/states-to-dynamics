@@ -142,8 +142,9 @@ reading -- sharp turn implies anomaly -- is the wrong sign.
 `located()` names exactly one move per sequence. A legal game therefore cannot come back
 clean, `hit_control` is a pick-a-position rate rather than a false-alarm rate, a game with
 two illegal moves could score at most 1/2, and the 33 candidates that are not the argmax are
-never scored at all. `results/threshold_localization.csv` and
-`results/threshold_localization_regenerated.csv` read the same `s` through a **cut** instead:
+never scored at all. `results/threshold_localization.csv`,
+`results/threshold_detection.csv` and `results/threshold_localization_regenerated.csv` read the
+same `s` through a **cut** instead:
 `s >= tau` at every candidate of every arm that ground truth covers, so a sequence gets zero,
 one, or many flags. The unit of a row there is a *position*, not a game.
 
@@ -183,6 +184,16 @@ Raw layer 5 and the best space, both corpora:
 | regenerated | raw L5 | 0.155 | 0.761 [0.745, 0.777] | 0.782 | 0.704 [0.688, 0.720] | 8.17 |
 | regenerated | GatedAnneal | 0.434 | **0.894** [0.883, 0.905] | 0.960 | **0.819** [0.806, 0.831] | 6.15 |
 
+**The figure and this table are two populations, on purpose.** The table above is
+`threshold_localization.csv`: the 575 games `curvature_discriminant` selected, at *t0* ∈
+[16, 34] with 46% of them at *t0* = 20. `threshold_detection.png` reads
+`results/threshold_detection.csv` instead — `measure_detector.py`, the same estimator on
+`illegal_move_detector`'s corpus and its committed 500-game evaluation set, 20 games at each
+of *t0* = 10…34 — because that figure's second panel is drawn from that set, and two panels on
+two corpora are not two views of one dataset. It costs almost nothing: raw layer 5 goes 0.744
+→ 0.716 and GatedAnneal 0.855 → 0.851, and the space ordering is unchanged apart from a
+TopK / BatchTopK swap inside 0.004.
+
 **The space ordering is the argmax ordering.** Spearman 0.93 against `hit_illegal` on the
 spliced tree; the top six are identical and raw layer 5 is fifth in both. Only the three
 spaces at chance reshuffle. The cut is a more sensitive read of the same signal, not a
@@ -208,24 +219,36 @@ every space: at 1-2% prevalence the accuracy-maximizing cut flags almost nothing
 
 ### Figure notes
 
-`threshold_detection.png` (spliced): (a) per-position AUROC, tie-averaged, illegal positions
-against legal ones, over the nine spaces; (b) the five score distributions at *t0* that AUROC
-summarizes, in **GatedAnneal**, the space (a) ranks first. (b) is drawn by
-`illegal_move_detector.figure_histograms.panel` -- the same code that figure uses, so the two
-cannot drift -- and inherits its evaluation set: 200 games per class, dealt uniformly over `t0`.
-Reading them together is the point: the bar chart says which space orders positions best, and
-the densities say that even there the cut sits inside the overlap rather than between two
-separated classes.
+`threshold_detection.png` (spliced): **both panels are the same 500 games** —
+`illegal_move_detector/results/eval_games.csv`, 20 at each of *t0* = 10…34 — and the figure
+asserts that against the file before it draws either one. (a) per-position AUROC from
+`results/threshold_detection.csv`, tie-averaged, illegal positions against legal ones, over the
+nine spaces, n = 500 games / 34,000 positions, 500 positive (1.47% prevalence); (b) the five
+score distributions at *t0* that AUROC summarizes, in **GatedAnneal**, the space (a) ranks
+first. (b) is drawn by `illegal_move_detector.figure_histograms.panel` -- the same code that
+figure uses, so the two cannot drift -- and its τ = 1.083 is that study's operating point,
+refit on all 2,415 eligible games rather than on the 500 drawn here (for GatedAnneal the two
+fits land on the same observed score; for raw layer 5 they do not). Reading the panels together
+is the point: the bar chart says which space orders positions best, and the densities say that
+even there the cut sits inside the overlap rather than between two separated classes.
+
+This figure carries no strapline, so its keys are here. In (a), hue is the architecture family,
+hatch its second dictionary, and raw layer 5 keeps reference styling wherever it sorts. In (b),
+the curves are **counts, not densities** — a Gaussian KDE at Scott's rule times n times one
+22nd of the pooled range, so a curve reads as games per slice of the axis and one shared width
+keeps the five comparable; the bootstrap band `kde_ci` returns is not drawn, because five
+overlapping bands are unreadable.
 
 `threshold_detection_regenerated.png` still carries the older two-bar-panel layout, (a) AUROC
 beside (b) out-of-fold balanced accuracy. The balanced accuracy the spliced figure dropped is
-a column of `results/threshold_localization.csv`, and the caveat it carried -- a space can
-rank well and still have no cut that transfers -- is under "What the cut finds" above.
+a column of `results/threshold_detection.csv`, and the caveat it carried -- a space can rank
+well and still have no cut that transfers -- is under "What the cut finds" above.
 
 Every interval is a 95% percentile bootstrap
 over **source games as clusters**, 1,000 resamples, seed 42 -- games and never positions,
-because one game's candidates overlap in `m - 1` steps. n is 575 games / 26,252 positions
-(spliced) and 1,000 games / 63,580 positions (regenerated). The dashed gray line is 0.5.
+because one game's candidates overlap in `m - 1` steps. n per table is 575 games / 26,252
+positions (`threshold_localization.csv`), 500 / 34,000 (`threshold_detection.csv`, what the
+spliced figure draws) and 1,000 / 63,580 (regenerated). The dashed gray line is 0.5.
 Panel (a)'s axis label differs between the two figures on purpose: the regenerated corpus has
 no matched legal splice, so its negatives are moves in unspliced legal games.
 

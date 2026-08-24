@@ -54,6 +54,7 @@ out of the baseline it is scored against.
 | `detector_trace.png` | the detector score for that same game over moves *t0*−5 … *t0*+5, three rule arms against the matched legal control, with τ |
 | `auroc_by_rule.png` | AUROC at *t0*, illegal branch against the same game's legal control, pooled and per rule, n = 500 games |
 | `score_histograms.png` | the distributions that AUROC summarizes: the score at *t0* for legal, illegal, R1, R2, R3, the same 500 games, with τ |
+| `score_histograms_GatedAnnealTrainer-othello.png` | the same five distributions read through the GatedAnneal dictionary, same 500 games — panel (b) of `changepoint_localization/figures/threshold_detection.png`, whose panel (a) ranks that space first |
 
 `results/eval_games.csv` is that evaluation set written down — the 500 game ids and their *t0*.
 `move_legality.detection_auroc` reads it for the paired bars of

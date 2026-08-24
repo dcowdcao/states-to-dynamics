@@ -56,6 +56,11 @@ def eligible(meta: dict, legal_index: np.ndarray) -> list[int]:
             and T0_RANGE[0] <= t0[g] <= T0_RANGE[1]]
 
 
+def cached(path: Path, n_rows: int) -> bool:
+    """An npz written before the corpus widened holds fewer rows than meta and is stale."""
+    return path.exists() and np.load(path)["d"].shape[0] == n_rows
+
+
 def step_lengths(acts, rows, device, encode=None) -> np.ndarray:
     """Step length per branch row, optionally through a dictionary first."""
     out = []
@@ -90,7 +95,7 @@ def main() -> None:
 
     acts = torch.load(study_dir("divergence") / "acts" / "resid_post_5.pt",
                       weights_only=True, mmap=True)
-    if not (OUT / "d.npz").exists():
+    if not cached(OUT / "d.npz", len(rows)):
         d = step_lengths(acts, rows, device)
         np.savez(OUT / "d.npz", d=d)
         print(f"wrote {OUT}/d.npz  d {d.shape}", flush=True)
@@ -100,7 +105,7 @@ def main() -> None:
     for config in wanted:
         assert config in entries, f"unknown space {config}; have {sorted(entries)}"
         path = OUT / f"d_sae_{config}.npz"
-        if path.exists():
+        if cached(path, len(rows)):
             print(f"{path.name} present, skipping", flush=True)
             continue
         d = step_lengths(acts, rows, device, sae_encoder(entries[config], device))

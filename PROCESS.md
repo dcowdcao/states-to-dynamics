@@ -6,6 +6,38 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## threshold_detection's two panels were two corpora (2026-08-24)
+
+`changepoint_localization/figures/threshold_detection.png` drew (a) from
+`threshold_localization.csv` -- the 575 games `curvature_discriminant` selected, t0 in
+[16, 34], 46% of them at t0 = 20 -- beside (b) from `illegal_move_detector`, a different corpus
+and a different game set. Two panels of "the same claim at two magnifications" were not on the
+same data. New `changepoint_localization/measure_detector.py` runs `measure.threshold_row`
+unchanged over the detector corpus and its committed 500-game evaluation set, into
+`results/threshold_detection.csv`, and the figure reads that. Both panels now assert their own
+draw against `illegal_move_detector/results/eval_games.csv` before anything is drawn
+(`detector.assert_eval_set`), so a silent divergence fails loudly instead.
+
+The estimator did not move: per-space AUROC changes by -0.028 (raw layer 5) to +0.005
+(CosineSpaDE), and the ordering is unchanged apart from a TopK/BatchTopK swap inside 0.004.
+`changepoint_localization.csv`, `threshold_localization.csv`, `window_selection.csv`,
+`changepoint_by_space*.png`, `threshold_detection_regenerated.png`, `eval_games.csv`,
+`auroc_by_rule.*` and raw's `score_histograms.*` all re-render byte-identically.
+
+**`d_sae_GatedAnnealTrainer-othello.npz` had gone stale and nothing said so.** It held 20,502
+rows from the t0 >= 14 corpus while meta.npz held 21,735 after the window widened to t0 >= 10,
+and `extract_geometry.py`'s cache check was `path.exists()`. Panel (b) was drawing it. The
+check is now the row count against meta, and `detector.load` asserts the same thing, so the
+class of bug is closed at both ends. The eight SPACE_STYLE dictionaries are now encoded on the
+detector corpus (kempner_h100, ~3 min for all eight).
+
+**Panel (b)'s tau is still fitted on all 2,415 eligible games**, not on the 500 drawn -- that
+is `illegal_move_detector`'s own operating point and changing it would move
+`score_histograms.png`, which the figure exists to be consistent with. For GatedAnneal the two
+fits land on the same observed score (1.082754); for raw layer 5 they do not (0.814 vs 0.618).
+
+---
+
 ## Four panels of the illegal-move detector (2026-08-24)
 
 New `analysis/violation_divergence/illegal_move_detector/`: the board at t0-2..t0+2 with one

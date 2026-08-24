@@ -2,8 +2,10 @@
 after t0.
 
 Same panels, same nine spaces, same estimator, same sort order and styling as
-`make_figures.py` -- it imports that module's `panel`, `finish` and threshold helpers rather
-than restating the drawing rules, so the two sets of figures cannot drift apart.
+`make_figures.py` -- it imports that module's `panel` and `finish` rather than restating the
+drawing rules, so the two sets of figures cannot drift apart. The sort and the ceiling are its
+own: this figure keeps the two-panel AUROC + balanced-accuracy layout that the spliced one
+dropped, and a ceiling over both columns is meaningless once there is only one of them.
 
 One axis label had to change in each figure and it is not cosmetic. The straightness violation
 corpus carries no legal-alternative arm, so the contrast is the illegal game against **its own
@@ -27,8 +29,7 @@ from spade.figures.paper_style import apply_style
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-from make_figures import (  # noqa: E402  (sibling module)
-    FALSE_ALARM, finish, panel, threshold_table, threshold_top)
+from make_figures import FALSE_ALARM, finish, panel  # noqa: E402  (sibling module)
 
 
 def draw_by_space(table: pd.DataFrame, camera_ready: bool) -> Path:
@@ -53,9 +54,11 @@ def draw_by_space(table: pd.DataFrame, camera_ready: bool) -> Path:
 
 
 def draw_threshold(table: pd.DataFrame, camera_ready: bool) -> Path:
-    table = threshold_table(table)
+    table = table.sort_values("auroc_position", ascending=False).reset_index(drop=True)
     fig, axes = plt.subplots(1, 2, figsize=(7.6, 3.6))
-    top = threshold_top(table)
+    # One ceiling for both panels: two probability scales sharing a chance line at 0.5.
+    hi = table[["auroc_position_hi", "balanced_accuracy_hi"]].to_numpy().max()
+    top = max(1.05, float(hi) * 1.12)
 
     panel(axes[0], table, "auroc_position",
           "per-position AUROC, illegal move vs move in an\n"

@@ -81,7 +81,10 @@ def load(space: str = REFERENCE) -> dict:
     meta = dict(np.load(DIR / "meta.npz"))
     path = geometry_path(space)
     assert path.exists(), f"no geometry for {space}: run extract_geometry.py --spaces {space}"
-    return {"d": np.load(path)["d"].astype(np.float64), "space": space, **meta}
+    d = np.load(path)["d"].astype(np.float64)
+    assert len(d) == len(meta["game_id"]), \
+        f"{path.name} holds {len(d)} rows against meta's {len(meta['game_id'])}: re-extract it"
+    return {"d": d, "space": space, **meta}
 
 
 def legal_profile(held_out: np.ndarray, space: str = REFERENCE) -> tuple[np.ndarray, np.ndarray]:
@@ -129,6 +132,20 @@ def stratified(data: dict, sel: dict, n_games: int = N_EVAL) -> np.ndarray:
     keep = [np.flatnonzero(t0 == v)[np.argsort(game[t0 == v], kind="stable")]
             [:quota + (i < extra)] for i, v in enumerate(values)]
     return np.sort(np.concatenate(keep))
+
+
+def assert_eval_set(game: np.ndarray, t0: np.ndarray) -> int:
+    """Fail unless these are exactly the games results/eval_games.csv names. Returns n.
+
+    `figure_auroc.write_eval_games` writes that file out of `stratified`; every figure read
+    beside those bars -- here and in `changepoint_localization` -- checks its own draw against
+    it rather than trusting that two calls of `stratified` agree.
+    """
+    want = np.loadtxt(RESULTS / "eval_games.csv", delimiter=",", skiprows=1, dtype=int)
+    order = np.argsort(game, kind="stable")
+    assert np.array_equal(game[order], want[:, 0]) and np.array_equal(t0[order], want[:, 1]), \
+        f"{len(game)} games, not the {len(want)} of results/eval_games.csv"
+    return len(want)
 
 
 def at_t0(s: np.ndarray, cand: np.ndarray, t0: np.ndarray, rows: np.ndarray) -> np.ndarray:
