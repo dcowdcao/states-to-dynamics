@@ -3,7 +3,8 @@
 F1 `generation_legality` — two panels of one study on one canvas:
     (a) by move t, has the model played an illegal move yet? Games it generated itself.
     (b) at move t, how likely is an illegal move of each rule? Corpus prefixes.
-F2 `generation_legality_by_rule_rollout` — (b) on prefixes the model generated for itself
+F2 `generation_legality_by_rule_rollout` — by move t, how likely is it that the game has
+    taken an illegal move of each rule already? Prefixes the model generated for itself.
 
 (a) and (b) sit in one figure because neither answers the other's question: (a) says the
 model does emit illegal moves while it plays, (b) says which of the three constraint rules
@@ -15,15 +16,20 @@ accumulated, or (a) as a per-move rate, is the misreading the pair invites, so e
 states which it is on its y axis. Their prefix distributions differ too -- (a)'s games the
 model wrote, (b)'s games handed to it -- and that is what each panel title says.
 
-F2 is (b) exactly, drawn by the same function, and differs only in where the legal prefix
-came from. It is conditional on survival -- a rollout leaves the table at its first illegal
-move -- so its n falls along the move axis. (b) conditions on a legal prefix too, which is
-what makes the pair comparable; neither is P(illegal at ply t) unconditionally.
+F2 draws (b)'s mass on the model's own prefixes and **accumulated**: `cum_*` in
+`rollout_by_move.csv` is `1 - prod(1 - p)` composed per game along t, so it answers "has this
+game gone illegal yet", the same question (a) asks of sampled play, off the distribution
+rather than off sampled events. It is conditional on survival -- a rollout leaves the table at
+its first illegal move -- so its n falls along the move axis, and the curve dips where they
+leave: a per-game cumulative only rises, but a mean over survivors loses the games carrying
+the most accumulated mass. (b) conditions on a legal prefix too; neither is P(illegal at ply
+t) unconditionally.
 
-The rule series are **sums** over their taxonomy categories, not means, so the legend says
-`sum of 3` (FIGURE_GUIDELINES 1.7). The estimator, the falling n and each source's
-within-rule / between-rule spread are in README.md's "Figure notes"; `overall.csv` carries
-the spread itself.
+(b)'s rule series are **sums** over their taxonomy categories, not means, so its legend says
+`sum of 3` (FIGURE_GUIDELINES 1.7). F2's are not sums -- a composition over plies of a sum
+over categories is neither -- so they carry the rule name alone. The estimator, the falling n
+and each source's within-rule / between-rule spread are in README.md's "Figure notes";
+`overall.csv` carries the spread itself.
 
 Usage: python analysis/generation_legality/make_figures.py [--results DIR] [--camera-ready]
 """
@@ -46,9 +52,6 @@ RULES = {rule.split()[0]: (rule, members) for rule, members in RULE_MEMBERS.item
 MARKS = 8          # markers per curve; the move axis has 56 points
 SIZE = (6.4, 4.4)  # one panel, drawn at the width a two-column figure is printed at
 PAIR = (9.4, 4.4)  # two panels side by side (FIGURE_GUIDELINES 2)
-
-ROLLOUT_TITLE = ("Conditioning on the model's own prefixes barely moves it: the same\n"
-                 "R3 > R2 > R1 ordering, and the mass tracks the corpus scan to ~10%")
 
 
 def read(results: Path) -> dict[str, pd.DataFrame]:
@@ -97,6 +100,12 @@ def survival_panel(ax, survival: pd.DataFrame) -> float:
     return float(end.value)
 
 
+def log_y(ax) -> None:
+    ax.set_yscale("log")
+    ax.yaxis.set_major_formatter(
+        FuncFormatter(lambda v, _: f"$10^{{{int(round(np.log10(v)))}}}$"))
+
+
 def rules_panel(ax, tables: dict[str, pd.DataFrame], source: str) -> None:
     """Per move, split by the constraint rule the illegal move would break.
 
@@ -112,14 +121,33 @@ def rules_panel(ax, tables: dict[str, pd.DataFrame], source: str) -> None:
         rows = move_series(by_move, f"p_{key}")
         curve(ax, rows.t, rows, RULE_STYLE[rule], f"{rule} (sum of {len(members)})", zorder=5)
 
-    ax.set_yscale("log")
-    ax.yaxis.set_major_formatter(
-        FuncFormatter(lambda v, _: f"$10^{{{int(round(np.log10(v)))}}}$"))
+    log_y(ax)
     ax.set_xlabel("game move number $t$")
     ax.set_ylabel("P(illegal move at move $t$)\n↓ better")
     ax.set_xlim(left=0)
     # Lower right: the rules all rise, so the late-game floor is the only region a legend
     # does not sit on, and four entries do not fit beside the curves in half a canvas.
+    ax.legend(loc="lower right", fontsize=8)
+
+
+def cumulative_panel(ax, by_move: pd.DataFrame) -> None:
+    """The same mass, composed along t: has the game gone illegal by move t, and on what.
+
+    Rising by construction, and it does not fold into `rules_panel`: a cumulative curve is a
+    different quantity with a different label, and its series are compositions rather than
+    the per-ply sums that panel's legend names.
+    """
+    total = move_series(by_move, "cum_illegal")
+    curve(ax, total.t, total, GENERATION_STYLE["mass"], GENERATION_STYLE["mass"]["label"],
+          zorder=6, lw=2.2)
+    for key, (rule, _) in RULES.items():
+        rows = move_series(by_move, f"cum_{key}")
+        curve(ax, rows.t, rows, RULE_STYLE[rule], rule, zorder=5)
+
+    log_y(ax)
+    ax.set_xlabel("game move number $t$")
+    ax.set_ylabel("P(Illegal move in game so far up to $t$)")
+    ax.set_xlim(left=0)
     ax.legend(loc="lower right", fontsize=8)
 
 
@@ -141,12 +169,10 @@ def legality_figure(tables: dict[str, pd.DataFrame], camera_ready: bool) -> Path
 
 
 def rollout_figure(tables: dict[str, pd.DataFrame], camera_ready: bool) -> Path:
-    """(b) on the prefixes the model wrote itself. Standalone, so it owns its whole key and
-    drops the panel letter (FIGURE_GUIDELINES 5)."""
+    """Accumulated mass on the prefixes the model wrote itself. Standalone, so it owns its
+    whole key and drops the panel letter (FIGURE_GUIDELINES 5)."""
     fig, ax = plt.subplots(figsize=SIZE)
-    rules_panel(ax, tables, "rollout_by_move")
-    if not camera_ready:
-        ax.set_title(ROLLOUT_TITLE, fontsize=10)
+    cumulative_panel(ax, tables["rollout_by_move"])
     fig.tight_layout()
     return save_figure(fig, FIGURES / "generation_legality_by_rule_rollout", camera_ready)
 

@@ -156,10 +156,12 @@ CSVs and the prose above, not in a plot.
 
 `figures/generation_legality_by_rule_rollout.png` — **Conditioning on the model's own
 prefixes barely moves it: the same R3 > R2 > R1 ordering, and the mass tracks the corpus
-scan to ~10%.** Panel (b) exactly, drawn by the same function, on prefixes the model generated for
-itself instead of corpus games handed to it. Ratio of rollout to teacher-forced mass: median
-**0.996** over the move axis, **0.907** late (*t* ≥ 40), pooled **0.993**; the ordering and
-the R1 suppression are unchanged. The late deficit is **survivorship, not the model behaving
+scan to ~10%.** Panel (b)'s mass on prefixes the model generated for itself instead of corpus
+games handed to it, and **accumulated along the move axis** rather than read per move: each
+curve is P(the game has taken an illegal move of this rule by *t*). The ratio below is a
+per-move quantity and is read off the `p_*` columns, which the CSV still carries. Ratio of
+rollout to teacher-forced mass: median **0.996** over the move axis, **0.907** late
+(*t* ≥ 40), pooled **0.993**; the ordering and the R1 suppression are unchanged. The late deficit is **survivorship, not the model behaving
 better** — a rollout leaves the table at its first illegal move, and the games that leave are
 the ones carrying the most illegal mass. n falls 1000 → 891 across the axis. Its own
 within-rule ÷ between-rule spread is 0.89, the same story as (b)'s 0.95.
@@ -231,7 +233,11 @@ The estimator lines the panels used to print under themselves, in their own word
   Within-rule ÷ between-rule spread = 0.95 (SD of log₁₀ share over the 6 taxonomy
   categories): it is R2 that drives it, and R3 has a single member, so on this axis R2
   is closer to a label than a class.
-- `figures/generation_legality_by_rule_rollout.png` — per move, not cumulative; means over
-  the games still legal at each *t*, *n* falling 1000 → 891: a rollout leaves the table at
-  its first illegal move, so *n* falls along the axis. 95% bootstrap CIs are in
-  `results/rollout_by_move.csv`, not drawn. Within-rule ÷ between-rule spread = 0.89.
+- `figures/generation_legality_by_rule_rollout.png` — cumulative: the `cum_*` metrics of
+  `results/rollout_by_move.csv`, `1 - ∏(1 - p)` composed per game along *t*, so each curve
+  reads "has this game taken an illegal move of this rule by *t*". Means over the games still
+  legal at each *t*, *n* falling 1000 → 891: a rollout leaves the table at its first illegal
+  move, so *n* falls along the axis. **A per-game cumulative only rises; the mean over
+  survivors need not.** It dips at *t* = 13, 50 and 55 — the plies where games leave, and the
+  ones that leave are carrying the most accumulated mass. 95% bootstrap CIs are in the same
+  CSV, not drawn. Within-rule ÷ between-rule spread = 0.89.

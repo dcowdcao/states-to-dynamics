@@ -1298,6 +1298,16 @@ illegal mass. Everything in `rollout/positions.csv` is conditional on survival; 
 1000 -> 891 and the panel prints it. `scan.py`'s table conditions on a legal prefix too,
 which is what makes the pair comparable at all.
 
+**F2 went cumulative (2026-08-24).** The panel now draws `cum_*` — `1 - prod(1 - p)` composed
+per game along t, computed in `aggregate.py` beside the per-move metrics, so the figure stays
+drawing-only. It answers F1(a)'s question off the distribution instead of off sampled play:
+has this game gone illegal yet, and on which rule. Two things came with it. The legend drops
+`(sum of N)`, because a composition over plies of a sum over categories is neither. And the
+curve is not monotone — it dips at t = 13, 50, 55, the plies where games leave the table,
+since a per-game cumulative only rises but a mean over survivors loses the games carrying the
+most accumulated mass. That is the same survivorship the ratio's late-game dip is, one axis
+over. The in-figure title is gone (the caption is this README's).
+
 **The rollout population is now a bank, because it was being redrawn per study.**
 `sample_rollouts` was shared but nothing else was: `straightness` and `generation_legality`
 each spent a GPU pass at their own seed, so "the rollouts" named two populations and neither

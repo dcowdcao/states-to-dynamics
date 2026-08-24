@@ -119,12 +119,23 @@ def by_move(game: dict, w: np.ndarray) -> pd.DataFrame:
         for metric, point, lo, hi in rows for i, t in enumerate(POSITIONS)])
 
 
+def running_hit(p: np.ndarray) -> np.ndarray:
+    """P(at least one such move so far), composed along each game's alive prefix.
+
+    `survival`'s teacher-forced rule, `1 - prod(1 - p)`, run per game and left ragged: a dead
+    cell stays NaN, so the mean at t is over the games alive at t and the conditioning is the
+    per-move metrics' conditioning exactly.
+    """
+    return np.where(np.isfinite(p), 1 - np.cumprod(1 - np.nan_to_num(p), axis=1), np.nan)
+
+
 def rollout_by_move(frame: pd.DataFrame, w: np.ndarray) -> pd.DataFrame:
     """`by_move` over the self-generated prefixes of `rollout_scan`, with n alive per ply.
 
-    Same metrics and same estimator as `by_move`; only the prefix distribution differs. The
-    skew columns are not recomputed here -- the by-rule figure draws mass, and a matched-null
-    ratio conditional on survival is a different statistic that nothing plots.
+    Same metrics and same estimator as `by_move`; only the prefix distribution differs. Each
+    rule also gets its `cum_` composition along t, which is what the by-rule figure draws. The
+    skew columns are not recomputed here -- a matched-null ratio conditional on survival is a
+    different statistic that nothing plots.
     """
     n_games = len(w[0])
 
@@ -139,6 +150,8 @@ def rollout_by_move(frame: pd.DataFrame, w: np.ndarray) -> pd.DataFrame:
 
     values = {m: grid(m) for m in ["p_legal", *(f"p_{n}" for n in RULES + CATEGORIES[1:])]}
     values["p_illegal"] = sum(values[f"p_{r}"] for r in RULES)
+    values |= {f"cum_{name}": running_hit(values[f"p_{name}"])
+               for name in [*RULES, "illegal"]}
     alive = np.isfinite(values["p_legal"]).sum(0)
     rows = [(metric, *nan_mean_ci(value, w)) for metric, value in values.items()]
     return pd.DataFrame([
