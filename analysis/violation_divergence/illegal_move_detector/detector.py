@@ -37,11 +37,11 @@ SEED = 42
 N_LEGAL = 2000                          # the straightness legal block
 RULES = ["R1", "R2", "R3"]
 ARMS = ["illegal", *RULES]
-# Games per class in the population figures: everything the corpus affords under an equal
-# quota per t0. 22 is the thinnest position, over 25 positions. The cap used to be
-# `move_legality.detection_auroc`'s 200 per bar, which stopped meaning anything once that
-# chart went back to its paired rows and 3,923 pairs.
-N_EVAL = 550
+# Games per class in the population figures. 500 over the 25 scored positions is 20 games
+# each, and the thinnest position holds 22, so the quota is affordable everywhere. The corpus
+# ceiling under an equal quota is 550; the round number costs one interval width in the third
+# decimal and buys a figure whose n a caption can state without a footnote.
+N_EVAL = 500
 
 # One game for the board panel and the trace beside it. Picked by `select_game.py`: all three
 # rules have a branch at its t0, t0 sits far enough inside the band that +-5 plies stay on the

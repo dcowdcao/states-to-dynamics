@@ -73,9 +73,9 @@ independence between bars that nothing tests; its own CSV already held the paire
 of them, which are the numbers `move_legality`'s README quotes. `DRAWN = "paired on game"` in
 `figures/probe_directions_and_detection/make_figure.py` -- bars only, no restyling -- and
 0.970/0.902 become 0.960/0.892 with the intervals a fifth as wide. With 200 no longer meaning
-anything, `N_EVAL` = 550: everything an equal quota affords, 22 games at each of 25 positions.
-n = 1000 would need 40 at every position and the thinnest holds 22. Final: illegal 0.679,
-R1 0.597, R2 0.755, R3 0.659.
+anything, `N_EVAL` = 500: 20 games at each of the 25 positions. The ceiling under an equal
+quota is 550 -- the thinnest position holds 22 -- and n = 1000 would need 40 at every position.
+Final: illegal 0.681, R1 0.595, R2 0.757, R3 0.662.
 
 **The game moved to 3889, and the t0 board to one move (2026-08-24).** `select_game.py` gained
 a criterion -- the detector has to be right about at least four of the five plies

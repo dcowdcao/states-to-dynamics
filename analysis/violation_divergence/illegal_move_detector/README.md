@@ -52,8 +52,8 @@ out of the baseline it is scored against.
 |---|---|
 | `board_states.png` | the board at *t0*−2 … *t0*+2 of game 3889: the legal move played at each of the four surrounding plies, and the illegal move the drawn branch plays at *t0* |
 | `detector_trace.png` | the detector score for that same game over moves *t0*−5 … *t0*+5, three rule arms against the matched legal control, with τ |
-| `auroc_by_rule.png` | AUROC at *t0*, illegal branch against the same game's legal control, pooled and per rule, n = 550 games |
-| `score_histograms.png` | the distributions that AUROC summarizes: the score at *t0* for legal, illegal, R1, R2, R3, the same 550 games, with τ |
+| `auroc_by_rule.png` | AUROC at *t0*, illegal branch against the same game's legal control, pooled and per rule, n = 500 games |
+| `score_histograms.png` | the distributions that AUROC summarizes: the score at *t0* for legal, illegal, R1, R2, R3, the same 500 games, with τ |
 
 Band semantics: every interval is a 95% percentile bootstrap over **source games** as
 clusters, 1,000 resamples, seed 42 — games and never positions, because one game's candidates
@@ -94,7 +94,7 @@ score at that game's own *t0*, one value per branch. `legal / illegal` is the po
 illegal branch per game); R1/R2/R3 are that same arm split by rule.
 
 **The evaluation set is flat over *t0*.** `detector.stratified` takes an equal quota of games
-at every *t0* in the scored range — **n = 550 over *t0* = 10…34, 22 games at every one of the
+at every *t0* in the scored range — **n = 500 over *t0* = 10…34, 20 games at every one of the
 25 positions** — because the tree
 is not balanced on move index: `extend_branches.py` forked 1,665 of its 2,278 eligible games at
 *t0* = 20 and about 30 at each other value, so any prefix of game ids is ~46% one position, and
@@ -109,13 +109,12 @@ varies the window — it scores *M* = 4 and nothing else, which reaches moves 6�
 scoring what *M* reaches is that this candidate set is no longer the ablation's, so neither τ
 nor a peak position is comparable with that study position for position.
 
-**n is `detector.N_EVAL` = 550** — everything the corpus affords under an equal quota, 22
-games at each of the 25 positions, 22 being the thinnest position. It was capped at that
-chart's 200 per bar while that chart drew its five disjoint groups of 200; the cap stopped
-meaning anything when it went back to its paired rows and 3,923 pairs. n = 1000 is still not
-reachable under an equal quota: it would need 40 games at every position.
+**n is `detector.N_EVAL` = 500** — 20 games at each of the 25 positions. The corpus ceiling
+under an equal quota is 550, since the thinnest position (*t0* = 32, 33) holds 22; 500 spends
+all but that last 9% and states as a round number. n = 1000 is not reachable under an equal
+quota at all — it would need 40 games at every position.
 
-`score_histograms` — same corpus, same eligibility, same statistic and the **same 550
+`score_histograms` — same corpus, same eligibility, same statistic and the **same 500
 games** as `auroc_by_rule`, on five arms held aligned game by game (asserted on `game_id` and
 on *t0*). So the panel is literally the distribution those bars summarize, which it was not
 while the two drew different prefixes of the tree.
@@ -150,7 +149,7 @@ judgement of those moves.
 whether the cut fires — and `score_histograms` shows the same thing at population scale: 37% of
 legal controls sit above τ.
 
-**R2 ≫ R3 ≫ R1**, at 0.755 / 0.659 / 0.597 AUROC. Playing on an already-occupied square is
+**R2 ≫ R3 ≫ R1**, at 0.757 / 0.662 / 0.595 AUROC. Playing on an already-occupied square is
 the hardest violation for this score to see, barely clearing chance. That is the same ordering
 the supervised probe in `analysis/move_legality` finds by an unrelated route, where
 `occupied_opp` is likewise its worst cell.
