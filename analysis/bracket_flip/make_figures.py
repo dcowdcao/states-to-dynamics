@@ -32,10 +32,10 @@ FIGURES = HERE / "figures"
 ROLES = ["flipped", "unflipped_own", "unflipped_opp", "placed", "empty"]
 # m2_field.csv still carries both label bases; only the mover-relative one is drawn.
 BASIS = "relative"
-X_AXIS = (r"$\ell_{\rm mine}-\ell_{\rm theirs}$ (logits)"
-          "\n" r"$>0$: owned by the player to move")
-Y_AXIS = (r"$\frac{1}{2}(\ell_{\rm mine}+\ell_{\rm theirs})-\ell_{\rm empty}$"
-          "\n" r"$>0$: occupied")
+# The sign gloss each axis used to carry -- >0 is owned by the player to move, >0 is
+# occupied -- is in the README's figure notes, next to the probe that produces the logits.
+X_AXIS = r"$\ell_{\rm mine}-\ell_{\rm theirs}$ (logits)"
+Y_AXIS = r"$\frac{1}{2}(\ell_{\rm mine}+\ell_{\rm theirs})-\ell_{\rm empty}$"
 
 
 def letters_below(fig, axes) -> None:
