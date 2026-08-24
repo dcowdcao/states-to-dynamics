@@ -114,9 +114,22 @@ numbers are below and their CSVs are still in `results/`.
   (`acc_tpr_{relative,absolute}`, `ceiling_{relative,absolute}`); nothing in the
   figure carries them, so a caption or the text has to.
 
-  Arrows are means over the **1,596 strict-control events**, not all 2,000: the
-  control arrow is the panel's one contrast and a control move touching *s*'s
-  rays is not a clean one, so the whole panel is read off that population. Bars
+  Arrows are means over **1,000 strict-control events, 40 at every move index in
+  *t* ∈ [10, 34]** — the window and unit steps `move_legality` and
+  `changepoint_localization` evaluate on, so the three figures rest on one *t*
+  distribution and a difference between them cannot be when in the game it happened.
+  Only strict controls qualify: the control arrow is the panel's one contrast and a
+  control move touching *s*'s rays is not a clean one.
+
+  That quota needs more events than the canonical 2,000-event corpus holds past
+  *t* = 30, so the panel scores a second, larger event set (`--variant field`,
+  4,000 events, 3,194 strict). Same miner, same stream, same seed, so it *extends*
+  the canonical corpus rather than replacing it — and nothing else in the study
+  reads it: every other table here, and panel (a)'s worked example, is unchanged.
+
+  Per event there is exactly one flipped square and one placed disc, but ~12
+  unflipped mover's and ~13 unflipped opponent's squares, so those two arrows
+  average over ~11,900 and ~13,100 square-observations. Bars
   are 95% cluster-bootstrap intervals on the **paired displacement**
   (after − before within event), which is what an arrow asserts.
 - **Fig 2 — the direction and its causal use** (`make_figures.py`). (a) the

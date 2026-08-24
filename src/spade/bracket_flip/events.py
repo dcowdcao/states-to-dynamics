@@ -25,7 +25,7 @@ import pandas as pd
 import torch
 
 from spade.common.config import CTX_LEN
-from spade.common.study import study_dir
+from spade.common.study import study_dir, variant_dir
 from spade.othello.boards import flip_set, next_mover, rays_touch, regular_moves, replay
 from spade.othello.games import T_MAX, T_MIN, stream_games  # imports force_ipv4() + karvonen path
 
@@ -227,16 +227,45 @@ def parity_mismatch(probe: dict[str, torch.Tensor]) -> dict:
     }
 
 
+def mine_only(games, args, skips: Counter) -> None:
+    """A second event set, for a panel that needs a different t distribution than the study's.
+
+    Same miner, same stream and same seed, so it extends the canonical corpus rather than
+    replacing it: the first `n_events` of a larger draw are the smaller draw. Only the events
+    are built -- the probe set the decoder is fitted on is shared and a bigger event corpus
+    does not change it.
+    """
+    rows, yields = mine_events(games, args.n_events, Random(args.seed), skips)
+    events = pd.DataFrame(rows)
+    out_dir = variant_dir("bracket", variant=args.variant) / "events"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    events.to_csv(out_dir / "events.csv", index=False)
+    (out_dir / "manifest.json").write_text(json.dumps(
+        {"seed": args.seed, "dataset": args.dataset_name, "n_events": args.n_events,
+         "variant": args.variant, "one_event_per_game": True,
+         "t_histogram": events.t.value_counts().sort_index().to_dict(),
+         "control_kind": events.control_kind.value_counts().to_dict(),
+         **yields, "skips": dict(skips)}, indent=2))
+    print(f"{len(events)} events -> {out_dir}")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_events", type=int, default=2000)
     parser.add_argument("--n_probe_games", type=int, default=400)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--dataset_name", default="adamkarvonen/othello_45MB_games")
+    parser.add_argument("--variant", default="",
+                        help="write the event set to $DIR/<variant>/events and skip the "
+                             "probe set, which is shared and unchanged by a bigger corpus")
     args = parser.parse_args()
 
     games = stream_games(args.dataset_name, args.seed)
     probe_skips, event_skips = Counter(), Counter()
+
+    if args.variant:
+        mine_only(games, args, event_skips)
+        return
 
     probe = build_probe_set(games, args.n_probe_games, probe_skips)
     mismatch = parity_mismatch(probe)
@@ -270,7 +299,7 @@ def main():
     assert len(events) == args.n_events
     assert events["t"].min() >= T_MIN and events["t"].max() <= T_MAX
 
-    out_dir = study_dir("bracket") / "events"
+    out_dir = variant_dir("bracket", variant=args.variant) / "events"
     out_dir.mkdir(parents=True, exist_ok=True)
     events.to_csv(out_dir / "events.csv", index=False)
     (out_dir / "manifest.json").write_text(json.dumps({

@@ -8,6 +8,7 @@ is causal so the two agree exactly, which is checked on a sample.
 Usage: python -m spade.bracket_flip.extract_acts
 """
 
+import argparse
 import json
 
 import numpy as np
@@ -18,7 +19,7 @@ from spade.bracket_flip.events import PROBE_T_MAX, PROBE_T_MIN
 from spade.common.config import CTX_LEN, D_MODEL, MODEL_NAME
 from spade.common.device import select_device
 from spade.common.net import force_ipv4
-from spade.common.study import study_dir
+from spade.common.study import study_dir, variant_dir
 
 force_ipv4()
 
@@ -86,8 +87,14 @@ def extract_probe(model, tokens: torch.Tensor, device: str) -> torch.Tensor:
 def main():
     from transformer_lens import HookedTransformer
 
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--variant", default="",
+                        help="read $DIR/<variant>/events and write its acts there; the probe "
+                             "activations are shared and are only written for the main run")
+    args = parser.parse_args()
+
     device = select_device()
-    event_dir = study_dir("bracket") / "events"
+    event_dir = variant_dir("bracket", variant=args.variant) / "events"
     probe_dir = study_dir("bracket") / "probe"
     events = pd.read_csv(event_dir / "events.csv")
     assert events["t"].min() >= 5, "position 0 would be read as `before`"
@@ -111,6 +118,8 @@ def main():
         "dtype": "float32",
     }, indent=2))
     print(f"wrote {len(CONDITIONS)} event tensors {tuple(acts['before'].shape)} to {event_dir}")
+    if args.variant:
+        return
 
     probe_tokens = torch.load(probe_dir / "tokens.pt", weights_only=True)
     assert probe_tokens.shape[1] == CTX_LEN
