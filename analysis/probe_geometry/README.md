@@ -136,9 +136,11 @@ What the panels do not print, so a reader does not have to infer it:
   0.574 ± 0.007, SD over 5 draws, and it is *above* the embedding's own 0.504: the
   layout is evidence about families and never about individual squares. The committed
   probe is drawn open because it is not the family centroid — for R1 the two are 1.3
-  within-family radii apart — and for the board families that "committed" direction is
-  itself the mean of the per-square vectors, since the board probe has no pooled
-  direction of its own.
+  within-family radii apart. **The two board families are not drawn**, but the layout was
+  fit with them in it: the SMACOF configuration is over all 424 directions, so the hole in
+  the middle of the cloud is where `colour` and `occupancy` sat, and the rule families'
+  positions relative to each other are the ones that solved the full problem. Their cosines
+  are in `results/type_cosines.csv` and the tables.
 - `fig1_direction_geometry.png` / `.pdf` panel (b) — cosines are point estimates off the
   committed probes, with no interval; the game-level bootstrap for the same quantities is
   in `results/cross_probe_cosine.csv` and `results/TABLES.md`. Random unit directions in

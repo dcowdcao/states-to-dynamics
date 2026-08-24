@@ -693,7 +693,12 @@ geometry**, per its own instruction to add the rule with the figure type.
 
 ---
 
-**Fig 1 dropped the ring and the title (2026-08-24).** The dashed rule/board circle was a
+**Fig 1 dropped the board families, the ring and the title (2026-08-24).** `DIRECTION_ORDER`
+is the five rule directions now; `colour` and `occupancy` keep their `DIRECTION_STYLE` entries
+and every number in `results/`, they are just not drawn. The MDS is still *fit* on all 424
+directions -- the hole in the middle of the cloud is where the board families sat. Re-fitting
+SMACOF on the five families would move every point and invalidate the fidelity numbers, so it
+is a separate decision, not a side effect of a legend change. The dashed rule/board circle was a
 statistic wearing a contour's clothes: 82.2% balanced accuracy off a 0.42° mean-angle gap, in
 a layout whose radii `illegal`'s antipodal points already distort. It still lives in
 `embed_fidelity.csv` and in the README; the panel no longer asserts it.

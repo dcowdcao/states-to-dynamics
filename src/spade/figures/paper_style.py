@@ -243,7 +243,10 @@ DIRECTION_STYLE = {
     # only ones that interpenetrate, at a luminance gap of 0.019.
     "occupancy": {"color": "#E69F00", "marker": "v", "label": "board position"},
 }
-DIRECTION_ORDER = ("legal", "illegal", "R1", "R2", "R3", "colour", "occupancy")
+# What fig 1 draws, in order. The two board families are measured -- they are in
+# every results/ table and in the README -- and not drawn: the figure is about the
+# rule directions.
+DIRECTION_ORDER = ("legal", "illegal", "R1", "R2", "R3")
 
 # Probe family and label basis: two dimensions that cross in the depth sweep.
 # The linear probe is the capacity reference, so it takes REFERENCE's black; the
