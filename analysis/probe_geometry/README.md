@@ -60,16 +60,16 @@ non-duplicate points. The *committed* illegal probe is a separate fit — its co
 with the committed `legal` is −0.829, not −1 — so it is genuinely independent and
 carries its own entry in panel (b).
 
-**The dashed ring** splits the rule families from the board families at the radius
-that maximizes balanced accuracy (82.2%; AUC 0.897, p = 8×10⁻³⁸). It is drawn
-because the split is a property of the directions and not of the layout: a board
-contrast sits at a smaller mean angle to every other direction than a rule
-contrast does, 89.71° against 90.13°, and the drawn radius tracks that 512-d
-quantity at ρ = +0.505 per point. Two cautions. That 0.42° is the whole of the
-effect the ring renders as a visible boundary. And the ring was appreciably
-cleaner before `illegal` was drawn — 93.4% raw accuracy and ρ = +0.844 on the
-364-point layout — because antipodal pairs cannot be placed in a plane without
-distorting every radius around them.
+**The rule/board split is radial in the layout**, and it is measured rather than
+drawn — `results/embed_fidelity.csv` carries it, panel (a) does not. A radius
+separates the rule families from the board families at 82.2% balanced accuracy
+(AUC 0.897, p = 8×10⁻³⁸), and it tracks a 512-d quantity: a board contrast sits at
+a smaller mean angle to every other direction than a rule contrast does, 89.71°
+against 90.13°, ρ = +0.505 per point. Two cautions on reading anything into it.
+That 0.42° is the whole of the effect. And the radius is much cleaner without
+`illegal` — 93.4% raw accuracy, ρ = +0.844 on the 364-point layout — because
+antipodal pairs cannot be placed in a plane without distorting every radius
+around them.
 
 The colour and position contrasts span everything a 3-way per-square head identifies, so
 there is no third board axis to have missed. The four centre squares are never
@@ -131,10 +131,7 @@ What the panels do not print, so a reader does not have to infer it:
   **Distance is monotone in angle, not proportional to it** — nonmetric MDS fits only the
   rank order — so read which points are nearer than which, never how much. Rank fidelity
   is ρ = 0.50 against 0.57 for a family-means-only null, scored on the 364 points that
-  exclude `illegal`, which is exactly −`legal` per square. The dashed ring is the
-  rule/board boundary, not a contour of the data; it is placed at the
-  balanced-accuracy-optimal radius and 18% of points fall on its wrong side. The rule
-  codes are R1 placement,
+  exclude `illegal`, which is exactly −`legal` per square. The rule codes are R1 placement,
   R2 bracketing, R3 turn (`docs/othello_rules.md`). The null beside the fidelity is
   0.574 ± 0.007, SD over 5 draws, and it is *above* the embedding's own 0.504: the
   layout is evidence about families and never about individual squares. The committed

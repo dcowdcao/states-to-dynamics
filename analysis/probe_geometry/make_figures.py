@@ -13,15 +13,13 @@ import pandas as pd
 
 
 import matplotlib.pyplot as plt
-from matplotlib.patches import Circle
 
 from spade.figures.paper_style import (
-    DIRECTION_ORDER, DIRECTION_STYLE, INK, NULL, apply_style, save_figure)
+    DIRECTION_ORDER, DIRECTION_STYLE, INK, apply_style, save_figure)
 
 RESULTS = Path(__file__).resolve().parent / "results"
 FIGURES = Path(__file__).resolve().parent / "figures"
 DIVERGING = "RdBu_r"
-TITLE = "Similarity between probe directions across board state and rules"
 
 
 def panel_letter(ax, letter: str) -> None:
@@ -29,8 +27,7 @@ def panel_letter(ax, letter: str) -> None:
             color=INK, fontsize=9)
 
 
-def embed_panel(ax, points: pd.DataFrame, probes: pd.DataFrame,
-                fidelity: pd.DataFrame) -> None:
+def embed_panel(ax, points: pd.DataFrame, probes: pd.DataFrame) -> None:
     """Nonmetric MDS: distance is monotone in angle, not proportional to it.
 
     No origin line and no variance ratio -- SMACOF fixes a configuration only up to
@@ -38,11 +35,6 @@ def embed_panel(ax, points: pd.DataFrame, probes: pd.DataFrame,
     The committed probe is drawn open so it cannot be read as the family centroid: they
     are different objects, and for R1 they differ by more than a within-family radius.
     """
-    row = fidelity.iloc[0]
-    centre = points[["x", "y"]].to_numpy().mean(0)
-    ax.add_patch(Circle(centre, row.ring_radius, fill=False, color=NULL["color"],
-                        ls=(0, (5, 2)), lw=1.2, zorder=2,
-                        label="rule / board split"))
     for family in DIRECTION_ORDER:
         style, at = DIRECTION_STYLE[family], points[points.family == family]
         xy = at[["x", "y"]].to_numpy()
@@ -96,18 +88,15 @@ def cosine_panel(fig, ax, gram: pd.DataFrame) -> None:
 def figure(camera_ready: bool) -> Path:
     points = pd.read_csv(RESULTS / "embed_points.csv")
     probes = pd.read_csv(RESULTS / "embed_probes.csv")
-    fidelity = pd.read_csv(RESULTS / "embed_fidelity.csv")
     gram = pd.read_csv(RESULTS / "type_cosines.csv", index_col=0).loc[
         list(DIRECTION_ORDER), list(DIRECTION_ORDER)]
 
     fig, axes = plt.subplots(1, 2, figsize=(9.0, 4.3))
-    embed_panel(axes[0], points, probes, fidelity)
+    embed_panel(axes[0], points, probes)
     cosine_panel(fig, axes[1], gram)
     for ax, letter in zip(axes, "ab"):
         panel_letter(ax, letter)
-    fig.tight_layout(rect=(0, 0, 1, 1 if camera_ready else 0.93))
-    if not camera_ready:
-        fig.suptitle(TITLE, fontsize=11, y=0.995)
+    fig.tight_layout()
     return save_figure(fig, FIGURES / "fig1_direction_geometry", camera_ready)
 
 

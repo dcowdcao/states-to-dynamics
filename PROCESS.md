@@ -693,6 +693,11 @@ geometry**, per its own instruction to add the rule with the figure type.
 
 ---
 
+**Fig 1 dropped the ring and the title (2026-08-24).** The dashed rule/board circle was a
+statistic wearing a contour's clothes: 82.2% balanced accuracy off a 0.42° mean-angle gap, in
+a layout whose radii `illegal`'s antipodal points already distort. It still lives in
+`embed_fidelity.csv` and in the README; the panel no longer asserts it.
+
 ## The R1 deficit may be about the board delta, not about legality (2026-08-18)
 
 Raised by the `r21_run_population` author in the round that produced 8e3481a, against the
