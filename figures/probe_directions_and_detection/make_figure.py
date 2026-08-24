@@ -84,11 +84,6 @@ def detection_panel(ax, bars: pd.DataFrame) -> None:
         ax.text(pos, row.hi + 0.02, f"{row.auroc:.3f}", ha="center", va="bottom",
                 fontsize=7.5, color=MUTED, zorder=4)
 
-    for head in ["2-class", "4-class"]:
-        at = x[bars["head"].to_numpy() == head]
-        ax.text(at.mean(), 1.10, f"{head} probe", ha="center", va="bottom", fontsize=9)
-        ax.plot([at[0] - 0.45, at[-1] + 0.45], [1.07, 1.07], color=MUTED, lw=0.8, clip_on=False)
-
     ax.set_xticks(x, [BAR_STYLE[r.arm]["label"] for r in bars.itertuples()], fontsize=8.4)
     ax.set_xlim(x[0] - 0.7, x[-1] + 0.7)
     ax.set_ylim(0, 1.05)
