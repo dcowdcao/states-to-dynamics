@@ -35,7 +35,8 @@ overwrites the whole-tree figure. n = 100 takes ~2 min.
 · `figures/divergence_by_space_n100.png` ·
 `figures/divergence_by_space_r21_n100.{png,pdf}` ·
 `figures/divergence_by_space_rollout_n100.{png,pdf}` ·
-`figures/divergence_by_space_r21_rollout_n100.{png,pdf}`
+`figures/divergence_by_space_r21_rollout_n100.{png,pdf}` ·
+`figures/divergence_by_space_n100_l0_matched.png`
 
 **In the plane the fork panels draw, R2 and R3 run 6–24% further from the reference than
 a legal alternative does — and roughly half of that is the plane, not the branch.** One
@@ -85,6 +86,67 @@ between-rule spread of the displacements is a median 0.924 [IQR 0.842–0.983] o
 100 games, above 1 in 21% of them, against 0.945 [0.872–1.020] over the whole tree. The twin's sweep computes that
 statistic per game rather than quoting `rule_groups`' whole-tree number, and
 `make_figures.py` prints it for the population drawn.
+
+## The L0-matched twin
+
+`figures/divergence_by_space_n100_l0_matched.png` ·
+`figures/divergence_by_space_n100_raw_l0_matched.{png,pdf}`
+
+```
+python analysis/violation_divergence/divergence_by_space/measure.py      --n_games 100 --l0-matched  # ~4 min
+python analysis/violation_divergence/divergence_by_space/make_figures.py --n_games 100 --l0-matched [--raw]
+```
+
+The eight SAE cells above sit wherever each type's own default hyperparameters put it on
+the sparsity axis — TopK and BatchTopK at k = 80, Standard at L1 0.059, and so on — so a
+difference between two of those panels is the architecture *and* its L0, and there is no
+way to say which. `--l0-matched` swaps them for `results/l0_operating_point/picks.csv`:
+one checkpoint per type, each the nearest-L0 member of its own grid to the shared target
+**L0 = 219.2**. Panel order, colours, markers, axes, window and population are the
+canonical figure's, and each cell's title carries its own L0, so the two are read on top of
+each other. Raw layer 5 is not an SAE and is the same cell in both — its 136 CSV rows are
+identical to the canonical file's, which is the check that only the dictionaries moved.
+
+**Both qualitative claims survive.** The plane inflates the rule/control ratio in **27 of
+27 cells** here too, median **1.104** (range 1.070–1.325) against the canonical n = 100
+figure's 1.108 (1.084–1.309). And no rule ends up further from the reference than a legal
+alternative does by more than a few percent in the full space: R2 runs 0.987–1.073 and R3
+0.999–1.046, against 0.977–1.059 and 0.994–1.041 canonically, while **R1 sits 8–9% below
+the control in all nine spaces** (0.906–0.920) exactly as before.
+
+**What moves is the ranking of the dictionaries, and the two SpaDE codes lose their
+distinction.** Mean over r ≥ 0 in the plane, canonical n = 100 → L0-matched:
+
+| space | R1 | R2 | R3 |
+|---|---|---|---|
+| raw layer 5 | 0.989 → 0.989 | 1.157 → 1.157 | 1.130 → 1.130 |
+| PAnneal | 0.984 → 0.998 | 1.144 → 1.146 | 1.124 → 1.130 |
+| Standard | 1.011 → 1.000 | 1.223 → **1.140** | 1.198 → **1.128** |
+| GatedSAE | 1.000 → 1.002 | 1.088 → 1.089 | 1.096 → 1.097 |
+| TopK | 0.983 → 0.970 | 1.086 → 1.106 | 1.097 → 1.101 |
+| GatedAnneal | 0.998 → 0.987 | 1.097 → 1.134 | 1.104 → 1.107 |
+| BatchTopK | 1.003 → 0.995 | 1.110 → 1.149 | 1.115 → 1.134 |
+| CosineSpaDE | 1.009 → 0.995 | 1.387 → 1.421 | 1.305 → 1.311 |
+| SpaDE | 1.008 → 0.998 | 1.224 → **1.127** | 1.174 → **1.109** |
+
+By R2 the canonical order is CosineSpaDE > SpaDE > Standard > raw > PAnneal > BatchTopK >
+GatedAnneal > GatedSAE > TopK; at matched L0 it is CosineSpaDE > raw > BatchTopK > PAnneal
+> Standard > GatedAnneal > SpaDE > TopK > GatedSAE. **"The two SpaDE codes inflate most" is
+half an L0 effect**: SpaDE's R2 falls from 1.224 to 1.127 once it is seated at L0 232 rather
+than at its own default, which lands it below raw layer 5, and Standard falls the same way.
+What is left is CosineSpaDE, which is also the one pick *below* the target (L0 184) and is
+the loudest cell in every figure in this study for its own reasons.
+
+**Read the raw twin's magnitudes against the canonical one only inside a cell.** The five
+Karvonen picks are fed the raw residual stream (`Matched.standardize`) where the canonical
+seed-42 entries are all fed scale·(x − mean), so their latent scale changes for a reason
+that is not the L0: the legal control's full-space distance goes 6.38 → 12.5 in PAnneal,
+3.53 → 8.05 in Standard, 6.23 → 11.98 in GatedSAE, 6.62 → 13.04 in TopK and 7.19 → 11.78 in
+GatedAnneal, while our three (BatchTopK 6.83 → 6.98, CosineSpaDE 0.0820 → 0.0831, SpaDE
+0.0226 → 0.0688) move only as much as the checkpoint did. The span across the grid
+therefore narrows from 586× to **193×** in the full space, and that number is a change of
+input convention as much as of dictionary. The ratio figure divides all of it out, which is
+why it is the one a cross-panel claim is read off.
 
 ## The R^21 twin
 

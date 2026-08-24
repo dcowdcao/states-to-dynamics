@@ -4066,3 +4066,57 @@ CosineSpaDE — the whole-user cgroup is ~8 GB and two sibling rollout sweeps we
 run then takes 234 s for 100 games x 9 spaces.
 
 
+
+
+## The distance figures at a shared L0 (2026-08-24)
+
+The canonical fork-family figures compare eight SAE *types* at eight different sparsities —
+TopK and BatchTopK at k = 80, Standard at L1 0.059, PAnneal wherever its penalty landed — so
+every cell-to-cell reading in them confounds the architecture with its L0.
+`fork_plane.spaces(l0_matched=True)` swaps the eight SAE slots for
+`results/l0_operating_point/picks.csv` (one checkpoint per type, nearest-L0 to the shared
+target 219.2) and `--l0-matched` carries it through `divergence_by_space` and
+`step_length_fork`, both scripts each. Written **alongside**: every artifact takes an
+`_l0_matched` suffix and all 13 canonical PNGs/CSVs of the two studies re-render
+byte-identically.
+
+- **The population is n = 100, not the whole tree, and that was forced.** `extend_branches`
+  grew the tree after the whole-tree npz was written: `complete_games` now returns **3185**
+  games where `curves.npz` holds 1553, so a whole-tree L0 run would differ from the canonical
+  figure in the roster *and* the population. `games_at_t0(meta, 20, 100)` is stable — it
+  returns the committed npz's game list exactly — and it is the same 100 games
+  `step_length_fork` already draws, so the two twins are over one population.
+- **Raw layer 5 is the check.** It is not an SAE, stays as the reference cell, and its rows
+  in both new CSVs are identical to the canonical ones. Anything that moved is a dictionary.
+- **What survives in `divergence_by_space`.** The plane inflates the rule/control ratio in
+  27 of 27 cells (median 1.104 against 1.108), and in the full space no rule clears the legal
+  control by more than 7% while R1 sits 8–9% below it everywhere. What moves is the ranking:
+  SpaDE's in-plane R2 falls 1.224 → 1.127 and Standard's 1.223 → 1.140, so **"the two SpaDE
+  codes inflate most" was half an L0 effect** and what is left of it is CosineSpaDE alone.
+- **What reverses in `step_length_fork`.** R1's shortened step at r = 0 is resolved negative
+  in all nine spaces in both (−0.047 to −0.093 here). But the canonical figure's "R2/R3 do
+  nothing in the gated/TopK spaces" does not survive: paired against the legal control at
+  r = 0, TopK goes −0.027 → +0.053, GatedAnneal −0.027 → +0.045 (and its R3 from a resolved
+  **−0.030** to a resolved **+0.040**), BatchTopK −0.017 → +0.105. Standard goes the other
+  way, +0.103 → an unresolved +0.016. At their own defaults those four were four times
+  sparser than the rest; at L0 ≈ 220 they read the fork about as well as raw layer 5 does.
+- **The two families are not on one input scale, and the raw twin shows it.** Karvonen's
+  five picks are fed the raw residual stream and ours scale·(x − mean) (`Matched.standardize`),
+  so their latent magnitudes jump for a reason that is not the L0 — the legal control's
+  full-space distance goes 6.62 → 13.04 in TopK, 3.53 → 8.05 in Standard — and the grid's
+  span narrows 586× → 193×. The ratio figures divide it out; the `_raw` twin's absolute
+  numbers are comparable within a cell only.
+- **`curvature_discriminant` has no twin and cannot cheaply get one.** Its axis is
+  `curvature_axis.fit_axis`, fit per space on `$SPADE_STRAIGHTNESS_DIR/geometry/<space>_raw.npz`,
+  which exists for no L0-matched pick; `axis.sd` feeds every number in the bottom row.
+  Unblocking it is a straightness-geometry pass for eight dictionaries (10,000 games x 59
+  positions each, ~1.5 h on one core) plus eight new probe fits — a new experiment, not a
+  re-render. Its README says so.
+- **`Matched.encode(device)`** now owns the standardize-or-not rule; `l0_matched_geometry`
+  and `illegal_move_detector/extract_geometry` call it instead of carrying their own copy.
+- **Byte-identity, re-checked.** All 13 PNGs and 13 CSVs of the two studies, both
+  `curvature_discriminant`'s spliced figure, and 10 of the 12 PDFs re-render exactly under
+  `SOURCE_DATE_EPOCH=1`. The two that do not are `divergence_by_space{,_rollout}.pdf`,
+  which carry a wall-clock `/CreationDate` from before that convention — the same
+  pre-existing mismatch this file already records, and the differing bytes are the date
+  string and the xref offsets it shifts.

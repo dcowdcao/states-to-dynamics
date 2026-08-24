@@ -23,6 +23,7 @@ import numpy as np
 import torch
 
 from spade.figures.paper_style import sae_label
+from spade.l0_operating_point.checkpoints import Matched, matched
 from spade.saes.registry import seed42_entries
 from spade.spaces import EXCLUDED_SAE
 from spade.violation_divergence.compute_divergence import sae_encoder
@@ -32,6 +33,13 @@ STRIDE = 2               # one mover per curve; see the module docstring
 WINDOW = (-8, 24)        # the study's analysis window, r = t - t0
 FIRST_POS, LAST_POS = 1, 58  # position 0 is the attention sink
 RAW_SPACE = "raw layer 5 (reference space)"
+# picks.csv names a pick by its trainer class. The canonical roster's panel order and short
+# names are kept, so an L0-matched figure's cells sit where a reader already found them and
+# only the dictionary in each cell has changed.
+L0_FAMILY = {"PAnnealTrainer": "PAnneal", "StandardTrainer": "Standard",
+             "GatedSAETrainer": "GatedSAE", "TrainerTopK": "TopK",
+             "GatedAnnealTrainer": "GatedAnneal", "BatchTopKTrainer": "BatchTopK",
+             "CosineSpaDETrainer": "CosineSpaDE", "SpaDETrainer": "SpaDE"}
 
 
 def positions(t0: int, back: int = 0) -> np.ndarray:
@@ -43,12 +51,36 @@ def positions(t0: int, back: int = 0) -> np.ndarray:
     return p[(p - t0) % STRIDE == 0]
 
 
-def spaces() -> list[tuple[str, object]]:
+def spaces(l0_matched: bool = False) -> list[tuple[str, object]]:
     """(label, SAE entry or None) per grid cell -- raw layer 5 leads, then one
-    seed-42 SAE family each (FIGURE_GUIDELINES 4.6)."""
+    seed-42 SAE family each (FIGURE_GUIDELINES 4.6).
+
+    `l0_matched` swaps the eight SAE slots for `l0_operating_point`'s picks: one
+    checkpoint per type, each the nearest-L0 member of its own grid to the shared
+    target, so a difference between two cells is the architecture and not its
+    sparsity. Raw layer 5 is not an SAE and stays as the reference cell.
+    """
+    if l0_matched:
+        picks = {m.trainer_class: m for m in matched()}
+        assert set(picks) == set(L0_FAMILY), f"picks.csv holds {sorted(picks)}"
+        return [(RAW_SPACE, None)] + [
+            (f"{family} ($L_0$ {picks[cls].l0:.0f})", picks[cls])
+            for cls, family in L0_FAMILY.items()]
     return [(RAW_SPACE, None)] + [
         (sae_label(e.config.replace("Trainer-othello", "")), e)
         for e in seed42_entries() if e.config not in EXCLUDED_SAE]
+
+
+def encoder(entry, device: str):
+    """`entry`'s encode function; None is raw layer 5.
+
+    An `l0_operating_point` pick carries its own input convention -- Karvonen's five were
+    trained on the raw residual stream, ours on scale*(x - mean) -- so the pick decides how
+    it is fed, not the caller.
+    """
+    if entry is None:
+        return None
+    return entry.encode(device) if isinstance(entry, Matched) else sae_encoder(entry, device)
 
 
 def pca2(X: np.ndarray, basis: np.ndarray | None = None):
@@ -93,7 +125,7 @@ def space_features(Z: np.ndarray, entry, device: str) -> np.ndarray:
     if entry is None:
         return Z
     n, T, D = Z.shape
-    enc = sae_encoder(entry, device)
+    enc = encoder(entry, device)
     with torch.no_grad():
         f = enc(torch.tensor(Z.reshape(-1, D), device=device))
     return f.reshape(n, T, -1).cpu().numpy()

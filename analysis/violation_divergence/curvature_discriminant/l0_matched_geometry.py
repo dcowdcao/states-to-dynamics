@@ -35,23 +35,11 @@ import torch
 
 from spade.common.device import select_device
 from spade.common.study import study_dir
-from spade.evaluation.karvonen_adapter import (
-    StandardizedDictionary, load_karvonen_sae, load_standardization_params)
 from spade.l0_operating_point.checkpoints import matched
 from spade.straightness.geometry import temporal_geometry
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from branch_geometry import GAME_BATCH, out_dir  # noqa: E402  (sibling script)
-
-
-def encoder(entry, device: str):
-    """`entry`'s encode function, standardized only if that is how it was trained."""
-    ae, _ = load_karvonen_sae(str(entry.ckpt_dir), device=device)
-    if not entry.standardize:
-        return ae.to(device).encode
-    params = load_standardization_params(str(entry.ckpt_dir), device=device)
-    return StandardizedDictionary(
-        ae, torch.tensor(params["mean"], device=device), params["scale"]).to(device).encode
 
 
 def main() -> None:
@@ -67,7 +55,7 @@ def main() -> None:
         if path.exists() and "theta" in np.load(path):
             print(f"{path.name} present, skipping", flush=True)
             continue
-        encode = encoder(entry, device)
+        encode = entry.encode(device)
         ds, thetas = [], []
         for start in range(0, len(rows), GAME_BATCH):
             z = acts[rows[start:start + GAME_BATCH]][:, 1:, :].float().to(device)

@@ -14,8 +14,7 @@ import torch
 
 from spade.othello.taxonomy import CATEGORIES
 from spade.violation_divergence.branches import role
-from spade.violation_divergence.compute_divergence import sae_encoder
-from spade.violation_divergence.fork_plane import spaces
+from spade.violation_divergence.fork_plane import encoder, spaces
 
 ROLES = ["reference", "control_legal", "control_legal_2"] + CATEGORIES[1:]
 REF, C1, C2 = 0, 1, 2
@@ -52,15 +51,15 @@ def paired_mean(X: np.ndarray, ref: int, K: int) -> np.ndarray:
     return (Y - Y[ref]).mean(axis=1)
 
 
-def encoders(device: str):
+def encoders(device: str, l0_matched: bool = False):
     """(label, encode or None) per space, one checkpoint resident at a time.
 
     A generator, and consumed by a space-outer sweep, so every checkpoint is still
     loaded exactly once -- holding all nine at once is 0.7 GB beside the 0.5 GB of
     fields such a sweep holds, and the login node's cgroup does not have both.
     """
-    for label, e in spaces():
-        yield label, None if e is None else sae_encoder(e, device)
+    for label, e in spaces(l0_matched):
+        yield label, encoder(e, device)
 
 
 def encode(Z: torch.Tensor, fn) -> np.ndarray:

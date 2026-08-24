@@ -26,8 +26,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
+import torch
 
 from spade.common.paths import repo_root
+from spade.evaluation.karvonen_adapter import (
+    StandardizedDictionary, load_karvonen_sae, load_standardization_params)
 
 KARVONEN_ROOT = Path("/n/netscratch/ba_lab/Lab/dcao/karvonen_saes")
 GRID_ROOT = Path("/n/netscratch/ba_lab/Lab/dcao")
@@ -62,6 +65,20 @@ class Matched:
         """A filename-safe space name. Karvonen configs carry a `/` (`gated/trainer32`),
         which silently becomes a directory component in any path built from it."""
         return "l0_" + self.config.replace("/", "-")
+
+    def encode(self, device: str):
+        """This pick's encode function, standardized only if that is how it was trained.
+
+        The rule lives with the field that decides it: every caller that feeds a pick
+        activations has to get this right, and getting it wrong is silently wrong rather
+        than merely inaccurate (`spade.spaces`).
+        """
+        ae, _ = load_karvonen_sae(str(self.ckpt_dir), device=device)
+        if not self.standardize:
+            return ae.to(device).encode
+        params = load_standardization_params(str(self.ckpt_dir), device=device)
+        return StandardizedDictionary(
+            ae, torch.tensor(params["mean"], device=device), params["scale"]).to(device).encode
 
 
 def _params(config: str) -> dict:
