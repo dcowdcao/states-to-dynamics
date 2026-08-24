@@ -127,9 +127,10 @@ def board_panel(ax, event: pd.DataFrame, meta: pd.Series) -> None:
                                    color=SQUARE_ROLE_STYLE[r.role]["color"], alpha=0.16))
     draw_board(ax, event.sort_values("square").disc_before.to_numpy())
     ax.set_ylabel("rank")
-    for square, label, role, ls in [(s, "$s$", "flipped", "-"),
-                                    (m, "$m$", "placed", "-"),
-                                    (int(meta.square_m_prime), "$m'$", "flipped",
+    # `\boldsymbol`, not `mark_square`'s fontweight: mathtext has its own font and ignores it.
+    for square, label, role, ls in [(s, r"$\boldsymbol{s}$", "flipped", "-"),
+                                    (m, r"$\boldsymbol{m}$", "placed", "-"),
+                                    (int(meta.square_m_prime), r"$\boldsymbol{m}'$", "flipped",
                                      (0, (3, 2)))]:
         # A name above the cell falls off the board on rank 1, where m' sits in this event,
         # and matplotlib clips it away without saying so.
