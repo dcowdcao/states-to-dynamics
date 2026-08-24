@@ -241,12 +241,19 @@ resamples). A game's branches share `tokens[:t0]` and are not independent draws;
 rows would give intervals several times too tight. Every arm draws one branch per game at
 seed 42 rather than averaging a game's categories, which would give it 1/√k of its spread.
 
-`raw_detection_auroc.png` is a bar per illegal arm of the paired AUROC at *t0* — one illegal
-branch against the same game's legal control, one pair per game, threshold-free, so a head's
-hit rate and its false alarms are one number. The 2-class head is read as *P*(illegal), the
-4-class as 1 − *P*(legal). Above 0.5 the head scores the illegal move above the legal one,
-and AUROCs are never flipped here, so a bar *below* 0.5 would be the finding. Error bars are
-95% percentile bootstrap CIs over paired games (1,000 resamples).
+`raw_detection_auroc.png` is a bar per illegal arm of the AUROC at *t0* over an evaluation
+set of **1,000 source games split evenly and disjointly over the five conditions** — legal,
+illegal, R1, R2, R3, 200 games each — with *t0* spanning the full [10, 34] range inside every
+group. Bars read `illegal / legal`, `R1`, `R2`, `R3`; the y axis is AUROC.
+
+**The even split costs the pairing.** Scoring an illegal branch against *the same game's*
+legal control at *the same* position held game identity and move index fixed, so the contrast
+was the move alone. Disjoint groups reintroduce both as between-group variance, and 200 games
+per group widens every interval roughly fourfold — R1 is 0.876 [0.840, 0.906] split against
+0.892 [0.885, 0.899] paired. Both are in `detection_auroc_raw.csv` under a `pairing` column;
+the paired numbers are the ones quoted elsewhere in this README, and they are what the
+"AUROC 0.960" claim above refers to. The two agree to within their intervals on every arm,
+which is the check that the split is not doing anything strange.
 
 Its chance line is empirical rather than assumed: each head also scores that legal control
 against the second legal control the game carries, which lands at 0.502 (CI 0.491–0.512) for
