@@ -1169,6 +1169,14 @@ square moved — and that identity is the whole point of the pair. One figure, p
 side, one rule key under both. Each panel keeps its own "black to move" and its own note:
 they are two boards, and a panel read on its own must still say whose turn it is.
 
+**The two panels became one panel (2026-08-24).** The bracket panel was answering a question
+the taxonomy already answers in prose, and its rays and flip rings were the only gray marks
+left on the canvas. The played square now sits on the rules board itself, and legality reads
+off a green tick on it and a red cross on each of R1/R2/R3 before the rule hues do — the one
+red/green pair in the project, safe because the tick and the cross carry the verdict without
+the hue (`VERDICT_STYLE`). Titles are gone (the figure is one panel; the caption is in
+`docs/othello_rules.md`), the y label is bare `rank`, and the figure is square at 4.6 in.
+
 **Choices that are not arbitrary.** R2 is drawn as `empty_no_bracket`, not the shallower
 `empty_detached`: the taxonomy orders R2's members by the board computation a violation takes
 to detect, and only the deepest is *visible* as a rule — h3 has a real run of white discs

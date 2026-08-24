@@ -93,6 +93,15 @@ RULE_STYLE = {
     "R3 turn":       {"color": "#009E73", "marker": "D", "label": "R3 turn"},
 }
 
+# The legality verdict drawn on a board square: a tick on a legal move, a cross on an
+# illegal one. This is the one place the project spends a red/green pair; the shape carries
+# the verdict on its own, so a grayscale or CVD reader loses nothing by the hue. Both sit far
+# enough off RULE_STYLE's teal R3 and vermillion R2 that a mark never reads as a rule.
+VERDICT_STYLE = {
+    "legal":   {"color": "#1A7F37"},
+    "illegal": {"color": "#CF222E"},
+}
+
 # Keys and order follow othello.taxonomy.CATEGORIES, which is sorted by how much
 # board computation the violation takes to detect; the R2 triple is an ordered
 # variable, so it takes a light-to-dark ramp of one hue rather than three

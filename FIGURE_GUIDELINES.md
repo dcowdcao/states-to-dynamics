@@ -426,10 +426,17 @@ conditions:
   checked against the picture square by square.
 - One marked square needs no marker and no legend: the outline and its name carry
   it, and a spare marker on a board reads as another piece.
-- **Two boards of the same position are one figure, not two.** The claim is "same
-  board, one square different", and a reader holding a board in memory across two
-  files cannot check it. Panel them side by side under one key; each panel still
-  states its own side to move, because a panel gets read on its own.
+- **One board, not two panels of it.** The claim is "same board, one square
+  different"; every panel boundary a reader crosses is a board they hold in
+  memory instead. Squares whose overlays do not collide belong on one board —
+  panel only when they would, and then side by side under one key, each panel
+  stating its own side to move.
+- **A verdict is a shape, and it may be red/green.** Legal vs illegal is the one
+  binary the reader already has a symbol for: a tick and a cross (`VERDICT_STYLE`),
+  inset in the corner opposite the category marker. The shapes carry it in
+  grayscale and under CVD, so the hue is redundant and the pair is allowed here
+  and nowhere else. A verdict mark never replaces the category marker: which
+  rule broke and *that* it broke are two different readings.
 
 ### 4.10 Direction geometry (unit vectors: similarity matrices, PCA of directions)
 

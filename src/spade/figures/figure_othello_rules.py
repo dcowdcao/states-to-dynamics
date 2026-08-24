@@ -1,17 +1,13 @@
 """The three constraint rules of docs/othello_rules.md, drawn on one board.
 
-Two panels off ONE position of one corpus game, so a reader compares a legal move and the
-three ways a move can be illegal without the board changing under them:
+One panel off ONE position of one corpus game: the move the game actually played, and one
+illegal candidate per constraint rule at that same position. A tick marks the legal square
+and a cross each illegal one, so the verdict reads before the rule colours do. Nothing moves
+between the four squares -- the board is the same board -- which is the whole comparison.
 
-    (a)  the move the game actually played, and the brackets that make it legal -- every
-         disc it flips, and the mover's own disc that closes each line
-    (b)  one illegal candidate per constraint rule at that same position
-
-The panels sit in one figure because the comparison IS the figure: (b) is only readable as
-"the same board, one square moved", and two files make the reader hold a board in memory
-across them. Both keep the side to move in their own axes, because R3 is *legality is judged
-for the mover*: its square would bracket perfectly well for the opponent, and a panel read on
-its own is unreadable rather than merely terse without it.
+The panel keeps the side to move in its own axes, because R3 is *legality is judged for the
+mover*: its square would bracket perfectly well for the opponent, and the panel is unreadable
+rather than merely terse without it.
 
 R2 is drawn as `empty_no_bracket` rather than the shallower `empty_detached`. The taxonomy
 orders R2's members by the board computation a violation takes to detect, and only the
@@ -27,11 +23,10 @@ from collections import Counter
 from pathlib import Path
 
 from matplotlib import pyplot as plt
-from matplotlib.patches import Circle
 
 from spade.common.paths import repo_root
-from spade.figures.othello_board import draw_board, mark_square, square_xy
-from spade.figures.paper_style import INK, MUTED, RULE_STYLE, apply_style, save_figure
+from spade.figures.othello_board import CORNER, draw_board, mark_square, square_xy
+from spade.figures.paper_style import INK, RULE_STYLE, VERDICT_STYLE, apply_style, save_figure
 from spade.othello.boards import rays, replay
 from spade.othello.games import collect_legal, stream_games
 from spade.othello.taxonomy import CATEGORIES, LEGAL, classify
@@ -40,10 +35,7 @@ from circuits.othello_engine_utils import to_string
 
 FIGURES = repo_root() / "figures" / "othello_rules"
 SEED = 42
-FIGURE_SIZE = (8.0, 4.4)
-FLIP_RING = 0.36   # outside the disc, so the ring reads on a black one and a white one alike
-
-TITLE = "Move legality at one position: a legal move, and one illegal move per rule"
+FIGURE_SIZE = (4.6, 4.6)
 
 # Scanned t in [14, 26] over the first 800 games of the seed-42 stream for a position where
 # all three rules have a candidate, the played move flips several discs in more than one
@@ -60,7 +52,7 @@ def name(square: int) -> str:
 
 
 def position(dataset_name: str) -> tuple:
-    """The one board both panels draw, re-derived from the corpus and checked."""
+    """The board the panel draws, re-derived from the corpus and checked."""
     game = collect_legal(stream_games(dataset_name, SEED), FIGURE_GAME + 1,
                          Counter())[FIGURE_GAME]
     board = replay(game[:FIGURE_T])
@@ -78,6 +70,21 @@ def ray_line(ax, square: int, through: int, color: str, ls="-") -> None:
     ax.plot([x0, x1], [y0, y1], color=color, ls=ls, lw=1.3, zorder=2, solid_capstyle="round")
 
 
+def verdict(ax, square: int, legal: bool) -> None:
+    """Tick or cross in the square's lower-right corner, opposite mark_square's rule marker.
+
+    The corner, not the centre: R1's square is occupied and the disc under it is the evidence.
+    """
+    x, y = square_xy(square)
+    color = VERDICT_STYLE["legal" if legal else "illegal"]["color"]
+    cx, cy = x + CORNER, y + CORNER
+    if legal:
+        ax.plot([cx - 0.14, cx - 0.05, cx + 0.14], [cy - 0.01, cy + 0.09, cy - 0.15],
+                color=color, lw=2.0, zorder=7, solid_capstyle="round")
+    else:
+        ax.plot(cx, cy, marker="x", ms=7, mew=2.2, color=color, zorder=7)
+
+
 def mover_note(ax, mover: int) -> None:
     """Whose turn it is, in the axes rather than in a title: R3 is unreadable without it and
     a camera-ready figure drops its title (FIGURE_GUIDELINES 5). Rank 8 is empty here."""
@@ -85,27 +92,9 @@ def mover_note(ax, mover: int) -> None:
             fontsize=8.5, color=INK, ha="left", va="bottom", zorder=6)
 
 
-def legal_panel(ax, board, mover: int, played: int) -> None:
+def rules_panel(ax, board, mover: int, played: int) -> None:
     draw_board(ax, board.state.flatten())
-
-    brackets = [r for r in rays(board.state, played, mover) if r.closed]
-    flipped = [sq for r in brackets for sq in r.run]
-    for ray in brackets:
-        ray_line(ax, played, ray.terminator, MUTED)
-    for square in flipped:
-        x, y = square_xy(square)
-        ax.add_patch(Circle((x, y), FLIP_RING, fill=False, ls=(0, (3, 2)), lw=1.2,
-                            edgecolor=INK, zorder=5))
-    # One marked square, so nothing to tell it apart from: the outline and the name carry it,
-    # and a marker here would read as a fifth disc.
-    mark_square(ax, played, RULE_STYLE["legal"], label=name(played), marker=False)
-
-    mover_note(ax, mover)
-    ax.set_title("(a) the legal move", loc="left")
-
-
-def illegal_panel(ax, board, mover: int) -> None:
-    draw_board(ax, board.state.flatten())
+    ax.set_ylabel("rank")
 
     # R2: the one direction out of the square that holds opponent discs, drawn to the empty
     # square that breaks it. R3: the bracket that does close -- for the opponent.
@@ -121,20 +110,20 @@ def illegal_panel(ax, board, mover: int) -> None:
     ray_line(ax, ILLEGAL["R3 turn"], theirs.terminator, RULE_STYLE["R3 turn"]["color"])
 
     # No legend: each square is named on the board and carries its rule's colour and marker.
+    # The played move takes no marker -- the tick is its second cue.
+    mark_square(ax, played, RULE_STYLE["legal"], label=name(played), marker=False)
+    verdict(ax, played, legal=True)
     for rule, square in ILLEGAL.items():
         mark_square(ax, square, RULE_STYLE[rule], label=rule.split()[0],
                     below=square == ILLEGAL["R3 turn"])
+        verdict(ax, square, legal=False)
 
     mover_note(ax, mover)
-    ax.set_title("(b) one illegal move per rule", loc="left")
 
 
 def rules_figure(board, mover: int, played: int, camera_ready: bool) -> Path:
-    fig, (left, right) = plt.subplots(1, 2, figsize=FIGURE_SIZE)
-    legal_panel(left, board, mover, played)
-    illegal_panel(right, board, mover)
-    if not camera_ready:
-        fig.suptitle(TITLE)
+    fig, ax = plt.subplots(figsize=FIGURE_SIZE)
+    rules_panel(ax, board, mover, played)
     fig.tight_layout()
     return save_figure(fig, FIGURES / "rules_legal_and_illegal", camera_ready)
 
