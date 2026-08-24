@@ -184,11 +184,19 @@ does here**, and the spread across the eight shrinks from 0.511-0.616 to 0.531-0
 canonical table as ranking sparsity as much as it ranks architecture.
 
 The per-position cut tells the same story on a more sensitive read
-(`figures/threshold_detection_l0_matched.png`,
-`results/threshold_localization_l0_matched.csv`, 26,252 positions over the same 575 games):
-GatedSAE 0.818 [0.800, 0.835], TopK 0.758, BatchTopK 0.753, GatedAnneal 0.751, raw 0.744,
-PAnneal 0.716, SpaDE 0.690, Standard 0.669, CosineSpaDE 0.486 [0.461, 0.515] -- the one space
-that inverts. Panel (b) is drawn in GatedSAE, the space panel (a) now ranks first.
+(`figures/threshold_detection_l0_matched.png`, `results/threshold_detection_l0_matched.csv`,
+34,000 positions over the 500-game evaluation set): GatedSAE 0.816 [0.797, 0.835], TopK 0.745,
+BatchTopK 0.744, GatedAnneal 0.734, PAnneal 0.719, raw 0.716, SpaDE 0.712, Standard 0.654,
+CosineSpaDE 0.516 [0.487, 0.546] -- the one space at chance. Panel (b) is drawn in GatedSAE,
+the space panel (a) now ranks first.
+
+That table is the corpus `threshold_detection.csv` is on, so the matched figure and the
+canonical one are **one comparison**: raw layer 5 is the same 0.716 in both, and against the
+seed-42 roster on those same 500 games GatedAnneal goes 0.851 to 0.734 and gives up the lead,
+while five of the eight picks land within 0.03 of raw. Spearman between the two orderings over
+the eight dictionaries is 0.86. `results/threshold_localization_l0_matched.csv` is this same
+read-out on the 575-game branch tree, column-comparable with `threshold_localization.csv`; no
+figure draws it, because no histogram of the 500 games can be set beside it.
 
 Two caveats a reader is owed. **The two SAE families are not fed one input convention**: ours
 were trained on `scale*(x - mean)` and Karvonen's on the raw residual, so each is fed what it

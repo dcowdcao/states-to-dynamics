@@ -4228,3 +4228,33 @@ byte-identically.
   which carry a wall-clock `/CreationDate` from before that convention — the same
   pre-existing mismatch this file already records, and the differing bytes are the date
   string and the xref offsets it shifts.
+
+## `threshold_detection`'s two variants were on two corpora (2026-08-24)
+
+The canonical figure and its `--l0-matched` twin were built by two efforts that merged
+independently, and they did not meet in the middle. `make_figures.py --l0-matched` asked for
+`results/threshold_detection_l0_matched.csv`, which nothing wrote; what existed was
+`threshold_localization_l0_matched.csv`, `measure.py --l0-matched` on the 575-game
+`curvature_discriminant` tree (t0 16–34, 46% of it at t0 = 20). Panel (b) is always drawn from
+`illegal_move_detector`'s 500-game evaluation set, so pointing (a) at that table would have put
+575-game bars beside a 500-game histogram — which is what `draw_threshold`'s
+`n_games` assert exists to stop.
+
+- **`measure_detector.py` grew the `--l0-matched` flag** the other scripts already had, and
+  writes `threshold_detection_l0_matched.csv` on the same 500 games, with `measure.positions`
+  and `measure.threshold_row` untouched. Only the population and the space roster move, so
+  the matched bars are now comparable with the canonical bars and not merely with each other:
+  raw layer 5 is the same 0.7164 in both tables, by construction.
+- **No GPU pass was needed.** The eight `d_l0_<space>.npz` that `extract_geometry.py
+  --l0-matched` wrote into `$SPADE_DIVERGENCE_DIR/illegal_move_detector/` already cover the
+  whole 21,735-row corpus, aligned to `meta.npz`, and `detector.geometry_path` /
+  `profile_path` already resolve a roster space. The flag was the only thing missing.
+- **GatedAnneal's lead does not survive the match, on one population.** Canonical: 0.851
+  [0.832, 0.870], first of nine. Matched: 0.734 [0.713, 0.756], fourth, with raw layer 5 at
+  0.716 inside its interval. GatedSAE takes the top (0.816) and panel (b) is drawn there.
+  Spearman between the two orderings over the eight dictionaries is 0.86 and the spread
+  collapses: canonical 0.539–0.851, matched 0.516–0.816, with five of the eight picks within
+  0.03 of raw.
+- **`threshold_localization_l0_matched.csv` stays.** It is a valid measurement on the branch
+  tree and is column-comparable with `threshold_localization.csv`; it is simply no longer a
+  figure's input.
