@@ -75,7 +75,7 @@ def cosine_panel(fig, ax, gram: pd.DataFrame) -> None:
     for spine in ax.spines.values():
         spine.set_visible(False)
     bar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.02, ticks=[-1, 0, 1])
-    bar.set_label("cos  (+1 aligned, 0 orthogonal, $-$1 opposed)", fontsize=7.5)
+    bar.set_label("cos", fontsize=7.5)
     bar.ax.tick_params(labelsize=7.5, length=0)
     bar.outline.set_visible(False)
 
