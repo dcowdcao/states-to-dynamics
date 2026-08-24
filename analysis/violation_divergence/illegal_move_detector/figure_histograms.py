@@ -13,17 +13,17 @@ The evaluation set is `detector.stratified`: the same number of games at every t
 scored range, so the curves are flat over move index rather than weighted toward whichever
 position the tree happens to hold most of. The five arms are kept aligned game by game
 (asserted on game_id and on t0), so all five curves are the same games at the same forks. Per-series n, mean, median and the fraction above tau, the last with a 95%
-bootstrap CI over the same 200 games, go to results/score_histograms.csv.
+bootstrap CI over the same 500 games, go to results/score_histograms.csv.
 
 **The curves are counts, not densities.** Each is `straightness_panels.kde_ci`'s Gaussian KDE
 (Scott's rule) times n times BIN, so a curve reads as "games per BIN-wide slice of the axis"
-and its height is on the same scale the binned version drew. BIN is one shared width over the
-pooled range, as the shared bin edges were, or five curves off five bandwidths would not be
-comparable. The bootstrap band `kde_ci` also returns is not drawn: five overlapping curves
+and its height is on the same scale the binned version drew. BIN is one fixed width in score
+units -- shared by the five curves of a panel, as shared bin edges were, and by every space,
+so a peak read against another panel's is not really a difference in the bin. The bootstrap band `kde_ci` also returns is not drawn: five overlapping curves
 cannot each carry one and stay readable, the departure from FIGURE_GUIDELINES 1.2 that
 `straightness_panels.density_panel` documents for the same reason.
 
-Raw layer 5 only, on the spliced branch tree.
+`--space` picks the representation; raw layer 5 by default. Spliced branch tree only.
 
 Usage: PYTHONPATH=src:analysis/violation_divergence/illegal_move_detector python
            analysis/violation_divergence/illegal_move_detector/figure_histograms.py
@@ -45,7 +45,10 @@ from spade.figures.straightness_panels import kde_ci
 
 FIGURES = Path(__file__).resolve().parent / "figures"
 RESULTS = Path(__file__).resolve().parent / "results"
-SLICES = 22                 # sets the count scale: one slice of the pooled range
+# The count scale. Fixed in score units rather than derived from each space's own range,
+# because the y axis is read across panels: a per-space range put GatedAnneal's bin 30%
+# above raw's, which lifted every curve in that panel by 30% at an identical n = 500.
+BIN = 0.5
 GRID = 512                  # points the KDE is evaluated on
 
 SERIES = ["legal", "illegal", "R1", "R2", "R3"]
@@ -100,13 +103,12 @@ def panel(ax, x: dict[str, np.ndarray], tau: float) -> None:
     """
     pooled = np.concatenate([x[k] for k in SERIES])
     grid = np.linspace(pooled.min(), pooled.max(), GRID)
-    slice_width = (pooled.max() - pooled.min()) / SLICES
 
     ax.set_axisbelow(True)
     ax.grid(False, axis="x")
     top = 0.0
     for i, k in enumerate(SERIES):
-        curve = kde_ci(x[k], grid)[0] * len(x[k]) * slice_width
+        curve = kde_ci(x[k], grid)[0] * len(x[k]) * BIN
         if FILL[k]:
             ax.fill_between(grid, curve, color=COLOR[k], alpha=FILL[k], lw=0, zorder=2)
         ax.plot(grid, curve, color=COLOR[k], ls=DASH[k], lw=LINE[k], zorder=3 + i,
