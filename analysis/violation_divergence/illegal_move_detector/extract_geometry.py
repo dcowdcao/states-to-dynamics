@@ -17,21 +17,29 @@ match it exactly: that chart reads one position's activations, so its range is t
 not exist below t0 = 14. `branch_geometry`'s own range is left alone -- `changepoint_localization`
 verifies byte-identical against its artifacts.
 
-Writes study_dir("divergence")/illegal_move_detector/{d,meta}.npz.
+Raw layer 5 needs no dictionary encode; `--spaces` adds SAE spaces, which do, one npz each
+so a space can be added without recomputing the others.
+
+Writes study_dir("divergence")/illegal_move_detector/{meta,d}.npz and d_sae_<space>.npz.
 
 Usage: PYTHONPATH=src python analysis/violation_divergence/illegal_move_detector/extract_geometry.py
+           [--spaces GatedAnnealTrainer-othello]
 """
 
 import sys
 from pathlib import Path
 
 import numpy as np
+import argparse
+
 import torch
 
 from spade.common.device import select_device
 from spade.common.study import study_dir
 from spade.straightness.geometry import temporal_geometry
+from spade.saes.registry import seed42_entries
 from spade.violation_divergence.branches import complete_games
+from spade.violation_divergence.compute_divergence import sae_encoder
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "curvature_discriminant"))
 from branch_geometry import (  # noqa: E402  (sibling script, not an installed package)
@@ -49,7 +57,23 @@ def eligible(meta: dict, legal_index: np.ndarray) -> list[int]:
             and T0_RANGE[0] <= t0[g] <= T0_RANGE[1]]
 
 
+def step_lengths(acts, rows, device, encode=None) -> np.ndarray:
+    """Step length per branch row, optionally through a dictionary first."""
+    out = []
+    for start in range(0, len(rows), GAME_BATCH):
+        z = acts[rows[start:start + GAME_BATCH]][:, 1:, :].float().to(device)  # drop the sink
+        if encode is not None:
+            with torch.no_grad():
+                z = encode(z.reshape(-1, z.shape[-1])).reshape(*z.shape[:2], -1)
+        out.append(temporal_geometry(z)[0].cpu().numpy())
+    return np.concatenate(out).astype(np.float32)
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--spaces", default="",
+                        help="comma-separated SAE configs to add beside raw")
+    args = parser.parse_args()
     device = select_device()
     branches = study_dir("divergence") / "branches" / "branches.pt"
     meta = torch.load(branches, weights_only=True)
@@ -67,13 +91,22 @@ def main() -> None:
 
     acts = torch.load(study_dir("divergence") / "acts" / "resid_post_5.pt",
                       weights_only=True, mmap=True)
-    out = []
-    for start in range(0, len(rows), GAME_BATCH):
-        z = acts[rows[start:start + GAME_BATCH]][:, 1:, :].float().to(device)  # drop the sink
-        out.append(temporal_geometry(z)[0].cpu().numpy())
-    d = np.concatenate(out).astype(np.float32)
-    np.savez(OUT / "d.npz", d=d)
-    print(f"wrote {OUT}/d.npz  d {d.shape}")
+    if not (OUT / "d.npz").exists():
+        d = step_lengths(acts, rows, device)
+        np.savez(OUT / "d.npz", d=d)
+        print(f"wrote {OUT}/d.npz  d {d.shape}", flush=True)
+
+    wanted = [c for c in args.spaces.split(",") if c]
+    entries = {e.config: e for e in seed42_entries()}
+    for config in wanted:
+        assert config in entries, f"unknown space {config}; have {sorted(entries)}"
+        path = OUT / f"d_sae_{config}.npz"
+        if path.exists():
+            print(f"{path.name} present, skipping", flush=True)
+            continue
+        d = step_lengths(acts, rows, device, sae_encoder(entries[config], device))
+        np.savez(path, d=d)
+        print(f"wrote {path}  d {d.shape}", flush=True)
 
 
 if __name__ == "__main__":

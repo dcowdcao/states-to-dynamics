@@ -55,27 +55,41 @@ def band() -> np.ndarray:
     return candidates(load()["d"].shape[1], M_MAX)
 
 
-def load() -> dict:
-    """d [n, 57] and the branch metadata, from extract_geometry.py."""
+REFERENCE = "raw"
+
+
+def geometry_path(space: str):
+    return DIR / ("d.npz" if space == REFERENCE else f"d_sae_{space}.npz")
+
+
+def profile_path(space: str):
+    stem = "resid_post_5" if space == REFERENCE else f"sae_{space}"
+    return study_dir("straightness") / "geometry" / f"{stem}_raw.npz"
+
+
+def load(space: str = REFERENCE) -> dict:
+    """d [n, 57] in one space and the branch metadata, from extract_geometry.py."""
     meta = dict(np.load(DIR / "meta.npz"))
-    return {"d": np.load(DIR / "d.npz")["d"].astype(np.float64), **meta}
+    path = geometry_path(space)
+    assert path.exists(), f"no geometry for {space}: run extract_geometry.py --spaces {space}"
+    return {"d": np.load(path)["d"].astype(np.float64), "space": space, **meta}
 
 
-def legal_profile(held_out: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def legal_profile(held_out: np.ndarray, space: str = REFERENCE) -> tuple[np.ndarray, np.ndarray]:
     """Per-move-index mean and SD of raw step length over straightness legal games.
 
     Minus the ones that ARE scored games: `held_out_legal` names the straightness legal index
     of every game in this corpus, and a trajectory contributing to the baseline it is scored
     against would flatter every number here. Same rule as `changepoint_localization.measure`.
     """
-    d = np.load(study_dir("straightness") / "geometry" / "resid_post_5_raw.npz")["d"]
+    d = np.load(profile_path(space))["d"]
     keep = np.setdiff1d(np.arange(N_LEGAL), held_out[held_out >= 0])
     return profile(d[keep].astype(np.float64))
 
 
 def score(data: dict, cand: np.ndarray) -> np.ndarray:
     """[n_rows, len(cand)] detector score: standardized step-length drop, paired MOSUM."""
-    mu, sd = legal_profile(data["held_out_legal"])
+    mu, sd = legal_profile(data["held_out_legal"], data.get("space", REFERENCE))
     return scan(drop(data["d"], mu, sd), cand, M, PAIRED)
 
 

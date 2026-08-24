@@ -5,10 +5,16 @@ space is one column in both: (a) does the score know a game contains an illegal 
 (b) does its argmax say which ply. They are different questions and a space can be good at one
 and not the other, which is why they are two panels and not one number.
 
-`threshold_detection` -- the same score read as a detector that has to commit. (a) is the
-per-position AUROC, illegal move against legal move, so it asks whether the score orders
-positions at all; (b) is what a fitted cut actually buys out of fold. A space can rank well
-and still have no cut that transfers, which is why these are also two panels.
+`threshold_detection` -- (a) the per-position AUROC of illegal move against legal move, over
+every space, beside (b) the five score distributions that AUROC summarizes, in the space that
+tops it. The bar chart says which space orders positions best; the densities say what "best"
+still looks like up close, which is a cut sitting inside the overlap rather than between two
+separated classes. (b) is drawn by `illegal_move_detector.figure_histograms.panel`, the same
+code its own figure uses, so the two cannot drift.
+
+The out-of-fold balanced accuracy that used to be (b) is not lost: it is a column of
+`results/threshold_localization.csv`, and its caveat -- a space can rank well and still have
+no cut that transfers -- is in README.md.
 
 Sorted by (a), because the ordering is the claim; raw layer 5 keeps reference styling wherever
 it lands, so the reader can see how many dictionaries clear it, and keeping one order across
@@ -22,6 +28,7 @@ Usage: python analysis/violation_divergence/changepoint_localization/make_figure
 """
 
 import argparse
+import sys
 from pathlib import Path
 
 import pandas as pd
@@ -33,6 +40,25 @@ from spade.figures.paper_style import (
 HERE = Path(__file__).resolve().parent
 BAR_WIDTH = 0.72
 FALSE_ALARM = ["hit_control", "hit_control2", "hit_reference"]
+# The space (a) ranks first. Its densities are what (b) draws, so the two panels are the same
+# claim at two magnifications rather than two unrelated read-outs.
+HISTOGRAM_SPACE = "GatedAnnealTrainer-othello"
+
+sys.path.insert(0, str(HERE.parent / "illegal_move_detector"))
+
+
+def histogram_panel(ax, space: str) -> None:
+    """(b): the five score distributions at t0, in `space`, drawn by their own figure's code."""
+    import detector
+    from figure_histograms import panel as densities, subset
+
+    data = detector.load(space)
+    cand = detector.band()
+    score = detector.score(data, cand)
+    sel = detector.arms(data)
+    tau = detector.operating_point(score, cand, data, sel)
+    rows = subset(data, sel)
+    densities(ax, {k: detector.at_t0(score, cand, data["t0"], r) for k, r in rows.items()}, tau)
 
 
 def panel_letter(ax, i: int) -> None:
@@ -111,17 +137,15 @@ def threshold_top(table: pd.DataFrame) -> float:
 
 def draw_threshold(table: pd.DataFrame, camera_ready: bool) -> Path:
     table = threshold_table(table)
-    fig, axes = plt.subplots(1, 2, figsize=(7.6, 3.6))
-    top = threshold_top(table)
-
-    panel(axes[0], table, "auroc_position",
-          "per-position AUROC, illegal move vs legal move\n($\\uparrow$ better)",
-          0.5, None, 0, top, "chance")
-    panel(axes[1], table, "balanced_accuracy",
-          "balanced accuracy at the fitted cut, out of fold\n($\\uparrow$ better)",
-          0.5, None, 1, top, "chance")
-
-    return finish(fig, "threshold_detection", camera_ready)
+    fig, axes = plt.subplots(1, 2, figsize=(11.0, 3.6),
+                             gridspec_kw={"width_ratios": [1.0, 0.92]})
+    panel(axes[0], table, "auroc_position", "AUROC", 0.5, None, 0, threshold_top(table),
+          "chance")
+    histogram_panel(axes[1], HISTOGRAM_SPACE)
+    axes[1].text(0.0, 1.02, "(b)", va="bottom", transform=axes[1].transAxes, color=INK,
+                 fontsize=9)
+    fig.tight_layout()
+    return save_figure(fig, HERE / "figures" / "threshold_detection", camera_ready)
 
 
 def main() -> None:
