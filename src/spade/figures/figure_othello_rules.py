@@ -99,9 +99,9 @@ def rules_panel(ax, board, mover: int, played: int) -> None:
     theirs = next(r for r in rays(board.state, ILLEGAL["R3 turn"], -mover) if r.closed)
     ray_line(ax, ILLEGAL["R3 turn"], theirs.terminator, RULE_STYLE["R3 turn"]["color"])
 
-    # No legend: each square is named on the board and carries its rule's colour and marker.
-    # The played move takes no marker -- the tick is its second cue.
-    mark_square(ax, played, RULE_STYLE["legal"], label=name(played), marker=False)
+    # No legend: each square is labelled by its class and carries that class's colour and
+    # marker. The played move takes no marker -- the tick is its second cue.
+    mark_square(ax, played, RULE_STYLE["legal"], label="legal", marker=False)
     verdict(ax, played, legal=True)
     candidate(ax, played, mover)
     for rule, square in ILLEGAL.items():

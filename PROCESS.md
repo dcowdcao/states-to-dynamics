@@ -1510,6 +1510,13 @@ two panel functions. `cumulative_panel` and its helpers moved to
 `straightness_panels` and `branch_panels` already are; both study figures re-render
 byte-identical.
 
+**The legal square is labelled `legal`, not `b4` (2026-08-24).** The three illegal squares
+carry their rule (`R1`, `R2`, `R3`), so the one algebraic name on the board was the odd label
+out: it read as "the interesting thing about this square is where it is", when the panel's
+whole point is which class each square belongs to. Nothing on the board is named now — the
+caption names the position — and `name()` stays, because `position()`'s assertions print with
+it.
+
 **The rollout population is now a bank, because it was being redrawn per study.**
 `sample_rollouts` was shared but nothing else was: `straightness` and `generation_legality`
 each spent a GPU pass at their own seed, so "the rollouts" named two populations and neither

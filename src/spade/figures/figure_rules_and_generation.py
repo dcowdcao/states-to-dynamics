@@ -4,7 +4,7 @@
 by-rule mass, each drawn by the function that owns it. This module is layout: it places the
 two panels and their letters and sets nothing else.
 
-The letters go *under* the panels rather than over them, because (a)'s square names sit above
+The letters go *under* the panels rather than over them, because (a)'s square labels sit above
 its top rank and a title lands on them.
 
 Usage: python -m spade.figures.figure_rules_and_generation [--camera_ready]
