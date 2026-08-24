@@ -54,25 +54,38 @@ ARM_STYLE = {
 
 
 def evaluation_split(meta: dict, selection: dict, seed: int = SEED) -> dict[str, np.ndarray]:
-    """EVAL_GAMES games dealt evenly and disjointly to the five conditions.
+    """EVAL_GAMES games dealt evenly and disjointly to the five conditions, stratified by t0.
 
-    Only games carrying every condition are eligible, so the groups are the same size and a
-    missing R3 cannot silently shrink one of them. The deal is a seeded permutation and so is
-    independent of t0: every group spans the whole [10, 34] range rather than one phase of
-    the game.
+    Dealt *within* each t0 rather than over the pool: an equal quota per condition at every
+    move index, so the five groups carry an identical t0 distribution -- same n, same counts
+    at every value, and therefore the same median and mean -- rather than merely the same
+    distribution in expectation. Move index is the strongest nuisance variable this tree has
+    (score and probe output both move with it), so matching it exactly is what lets a
+    difference between bars be read as the rule rather than as when in the game it happened.
+
+    Only games carrying every condition are eligible, so a missing R3 cannot shrink a group.
     """
-    game = meta["game_id"].numpy()
+    game, t0 = meta["game_id"].numpy(), meta["t0"].numpy()
     common = set.intersection(*(set(game[selection[c]].tolist()) for c in CONDITIONS))
-    pool = np.array(sorted(common))[:EVAL_GAMES]
-    assert len(pool) == EVAL_GAMES, f"only {len(pool)} games carry all five conditions"
-    dealt = np.random.default_rng(seed).permutation(pool)
-    per = EVAL_GAMES // len(CONDITIONS)
+    reference = selection["reference"].numpy()
+    eligible = reference[np.isin(game[reference], list(common))]
+    values = np.unique(t0[eligible])
+    quota, rng = EVAL_GAMES // (len(CONDITIONS) * len(values)), np.random.default_rng(seed)
+
+    chosen = {c: [] for c in CONDITIONS}
+    for value in values:
+        at = game[eligible[t0[eligible] == value]]
+        assert len(at) >= quota * len(CONDITIONS), f"t0={value}: {len(at)} games, need {quota * len(CONDITIONS)}"
+        dealt = rng.permutation(np.sort(at))[:quota * len(CONDITIONS)]
+        for i, condition in enumerate(CONDITIONS):
+            chosen[condition].append(dealt[i * quota:(i + 1) * quota])
+
     out = {}
-    for i, condition in enumerate(CONDITIONS):
-        want = set(dealt[i * per:(i + 1) * per].tolist())
+    for condition, blocks in chosen.items():
+        want = set(np.concatenate(blocks).tolist())
         rows = selection[condition]
         out[condition] = rows[np.isin(game[rows], list(want))].numpy()
-        assert len(out[condition]) == per, condition
+        assert len(out[condition]) == quota * len(values), condition
     return out
 
 
