@@ -34,7 +34,9 @@ caption is the paragraph under "Results" in README.md. These figures are not sta
 per architecture seated at the shared L0, so a difference between two bars is the architecture
 and not its sparsity. Same panels, same estimator, same styling -- a pick keeps its family's
 hue and hatch and its tick label carries the L0 it was seated at. The canonical figures are
-untouched by it.
+untouched by it. Both variants of `threshold_detection` read the SAME 500 games, because
+`measure_detector.py --l0-matched` scores that roster on this corpus; the matched bars are
+therefore comparable with the canonical bars and not only with each other.
 
 Usage: python analysis/violation_divergence/changepoint_localization/make_figures.py
            [--camera-ready] [--l0-matched]
@@ -158,7 +160,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     parser.add_argument("--l0-matched", dest="l0_matched", action="store_true",
-                        help="draw the tables measure.py --l0-matched wrote")
+                        help="draw the tables measure.py --l0-matched and "
+                             "measure_detector.py --l0-matched wrote")
     args = parser.parse_args()
 
     apply_style(args.camera_ready)

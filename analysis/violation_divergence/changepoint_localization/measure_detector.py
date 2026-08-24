@@ -15,9 +15,9 @@ population is the same one, checked here rather than assumed.
 `--l0-matched` swaps the seed-42 roster for the eight `l0_operating_point` picks, one
 checkpoint per architecture seated at the shared L0, so a difference between two bars is the
 architecture and not its sparsity. Population, statistic and operating point are untouched, so
-the matched table is comparable with the canonical one row for row -- which it would not be if
-the matched figure kept reading `threshold_localization_l0_matched.csv`, a table on the other
-corpus that no histogram of these 500 games can be drawn beside.
+the matched table is comparable with the canonical one row for row -- which it was not while
+the matched figure read `threshold_localization_l0_matched.csv`, a table on the other corpus
+that no histogram of these 500 games can be drawn beside.
 
 Writes results/threshold_detection[_l0_matched].csv.
 
