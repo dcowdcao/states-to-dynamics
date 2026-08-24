@@ -235,7 +235,8 @@ def event(spec: dict) -> tuple[str, dict[int, tuple[str, bool]]]:
     return drawn, out
 
 
-def panel_label(fig, ax, text: str, bold: bool, call: tuple[str, bool]) -> None:
+def panel_label(fig, ax, text: str, bold: bool, call: tuple[str, bool],
+                y: float = 0.085, call_y: float = 0.02) -> None:
     """The panel's letter and ply under the board, and the detector's call under that.
 
     The call is coloured by whether it is right, in the same green/red the board's verdict
@@ -243,20 +244,23 @@ def panel_label(fig, ax, text: str, bold: bool, call: tuple[str, bool]) -> None:
     the detector.
     """
     x = ax.get_position().x0 + ax.get_position().width / 2
-    fig.text(x, 0.085, text, ha="center", va="bottom", color=INK,
+    fig.text(x, y, text, ha="center", va="bottom", color=INK,
              fontsize=plt.rcParams["axes.titlesize"], fontweight="bold" if bold else "normal")
-    fig.text(x, 0.02, call[0], ha="center", va="bottom", fontsize=8.0,
+    fig.text(x, call_y, call[0], ha="center", va="bottom", fontsize=8.0,
              color=VERDICT_STYLE["legal" if call[1] else "illegal"]["color"])
 
 
-def boards_figure(tokens: list[int], squares: dict[str, int], spec: dict,
-                  camera_ready: bool) -> Path:
+def boards_row(fig, axes, tokens: list[int], squares: dict[str, int], spec: dict,
+               letters: bool = True) -> tuple[str, dict]:
+    """The five boards onto `axes`, so a figure that stacks this row draws it and not a copy.
+
+    `letters` off for a figure that letters its own panels: two levels of (a)-(e) on one canvas
+    is one level too many, and the ply and the detector's call are what the row is for.
+    """
     drawn, calls = event(spec)
     board_at_t0 = replay(tokens[:spec["t0"]])
     rule = next(r for r in rule_squares(board_at_t0, squares) if r.startswith(drawn))
     played = squares[drawn]
-
-    fig, axes = plt.subplots(1, len(OFFSETS), figsize=FIGURE_SIZE)
     for ax, offset in zip(axes, OFFSETS):
         board = replay(tokens[:spec["t0"] + offset])
         if offset:
@@ -266,13 +270,20 @@ def boards_figure(tokens: list[int], squares: dict[str, int], spec: dict,
             frame(ax)
         side_to_move(ax, board)
         ax.set_ylabel("rank" if offset == OFFSETS[0] else "")
+    return drawn, {"calls": calls, "played": played, "rule": rule}
+
+
+def boards_figure(tokens: list[int], squares: dict[str, int], spec: dict,
+                  camera_ready: bool) -> Path:
+    fig, axes = plt.subplots(1, len(OFFSETS), figsize=FIGURE_SIZE)
+    drawn, made = boards_row(fig, axes, tokens, squares, spec)
     fig.tight_layout(rect=(0, LABEL_STRIP, 1, 1))
     fig.canvas.draw()
-    label_move(fig, axes[OFFSETS.index(0)], played, rule, drawn)
+    label_move(fig, axes[OFFSETS.index(0)], made["played"], made["rule"], drawn)
     for ax, offset, letter in zip(axes, OFFSETS, LETTERS):
         tag = "$t_0$" if offset == 0 else f"$t_0{offset:+d}$"
         panel_label(fig, ax, f"({letter}) {tag}, move {spec['t0'] + offset}", offset == 0,
-                    calls[offset])
+                    made["calls"][offset])
     return save_figure(fig, FIGURES / "board_states", camera_ready)
 
 

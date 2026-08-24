@@ -46,8 +46,8 @@ ARM_STYLE = {
 }
 
 
-def draw(game: dict, move: np.ndarray, s: np.ndarray, tau: float, camera_ready: bool) -> Path:
-    fig, ax = plt.subplots(figsize=(5.5, 3.4))   # NeurIPS full width, drawn at printed size
+def panel(ax, game: dict, move: np.ndarray, s: np.ndarray, tau: float) -> None:
+    """The trace itself, so a figure that puts it beside others draws this and not a copy."""
     t0 = game["t0"]
     window = np.arange(t0 - HALF, t0 + HALF + 1)
     take = np.searchsorted(move, window)
@@ -87,6 +87,11 @@ def draw(game: dict, move: np.ndarray, s: np.ndarray, tau: float, camera_ready: 
             label=f"$\\tau$ = {tau:.3f} (threshold)")
     ax.legend(loc="upper left", fontsize=7, handlelength=2.0, labelspacing=0.4,
               borderaxespad=0.5)
+
+
+def draw(game: dict, move: np.ndarray, s: np.ndarray, tau: float, camera_ready: bool) -> Path:
+    fig, ax = plt.subplots(figsize=(5.5, 3.4))   # NeurIPS full width, drawn at printed size
+    panel(ax, game, move, s, tau)
     fig.tight_layout()
     return save_figure(fig, FIGURES / "detector_trace", camera_ready)
 

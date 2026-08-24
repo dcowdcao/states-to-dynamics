@@ -185,6 +185,17 @@ anything, `N_EVAL` = 500: 20 games at each of the 25 positions. The ceiling unde
 quota is 550 -- the thinnest position holds 22 -- and n = 1000 would need 40 at every position.
 Final: illegal 0.681, R1 0.595, R2 0.757, R3 0.662.
 
+**The four panels also ship as one figure (2026-08-24).** `figure_overview.py` --
+`detector_overview.png`: the boards wide across the top as (a), then the trace, the AUROC bars
+and the densities as (b), (c), (d). It draws nothing itself. `panel()` came out of
+`figure_trace.draw` and `figure_auroc.draw` and `boards_row` out of `figure_boards`, the same
+split the GatedAnneal figure already made in `figure_histograms`, and all four standalone
+figures re-render byte-identical afterwards -- which is the check that the combined figure and
+the singles cannot disagree. Two layout notes worth keeping: the boards hold a fixed aspect,
+which `tight_layout` refuses, so the grid takes explicit margins; and one GridSpec of 15
+columns (5 boards at 3, 3 plots at 5) rather than nested subgridspecs. The boards drop their
+own (a)-(e) here -- two levels of letters on one canvas is one level too many.
+
 **And the probe chart scores the same 500 games (2026-08-24).** Its paired bars were over all
 3,923 pairs, which is a different evaluation set from the two panels beside it. `figure_auroc`
 now writes `results/eval_games.csv` -- the game ids and their t0 -- and

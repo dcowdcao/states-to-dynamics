@@ -52,6 +52,7 @@ out of the baseline it is scored against.
 
 | file | what it shows |
 |---|---|
+| `detector_overview.png` | the four panels below on one canvas: (a) the boards, (b) the trace, (c) AUROC by rule, (d) the distributions |
 | `board_states.png` | the board at *t0*−2 … *t0*+2 of game 3889: the legal move played at each of the four surrounding plies, and the illegal move the drawn branch plays at *t0* |
 | `detector_trace.png` | the detector score for that same game over moves *t0*−5 … *t0*+5, three rule arms against the legal control, with τ |
 | `auroc_by_rule.png` | AUROC at *t0*, illegal branch against the same game's legal control, pooled and per rule, n = 500 games |

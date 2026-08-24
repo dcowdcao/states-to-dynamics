@@ -81,8 +81,8 @@ def table() -> tuple[list[Bar], Path]:
             write_eval_games(data, sel, keep))
 
 
-def draw(rows: list[Bar], camera_ready: bool):
-    fig, ax = plt.subplots(figsize=(5.5, 3.4))
+def panel(ax, rows: list[Bar]) -> None:
+    """The bars themselves, so a figure that puts them beside others draws this and not a copy."""
     ax.axhline(0.5, color=NULL["color"], ls=NULL["ls"], lw=1.2, zorder=2,
                label="chance")
     for x, bar in enumerate(rows):
@@ -102,6 +102,11 @@ def draw(rows: list[Bar], camera_ready: bool):
               frameon=False, handlelength=2.4)
     ax.grid(axis="x", visible=False)
     ax.tick_params(axis="x", length=0)
+
+
+def draw(rows: list[Bar], camera_ready: bool):
+    fig, ax = plt.subplots(figsize=(5.5, 3.4))
+    panel(ax, rows)
     fig.tight_layout()
     return save_figure(fig, detector.FIGURES / "auroc_by_rule", camera_ready)
 
