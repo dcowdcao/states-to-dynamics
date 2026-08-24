@@ -6,6 +6,43 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Four panels of the illegal-move detector (2026-08-24)
+
+New `analysis/violation_divergence/illegal_move_detector/`: the board at t0-2..t0+2 with one
+illegal candidate per rule at t0, the detector trace over t0+-5 for that same game, the at-t0
+AUROC per rule over 1000 games, and the five score distributions those AUROCs summarize. Raw
+layer 5 throughout, and **spliced only** -- every row keeps the source game's suffix verbatim.
+
+Figure panels, not a new measurement: statistic, window and threshold rule all come from
+`changepoint_localization`. What is new is the population. `extract_geometry.py` re-extracts
+raw `d` for every eligible game (2207, against the 575 that study selected before
+`extend_branches`), writing to its own netscratch dir so `curvature_discriminant`'s artifacts
+stay untouched -- the byte-identity every `changepoint_localization` number is verified
+against depends on them. Raw needs no dictionary encode, so this is cheap and GPU-optional.
+
+**tau is refit here and moves 0.869 -> 0.629, and the decomposition is the point.** Restricting
+this corpus to the same 575 games reproduces 0.8691 exactly, which is what validates the
+re-implementation. The rest is +0.110 from excluding scored games from the profile fit (a leak
+I shipped first and caught: the profile was fit on all 2000 straightness legal games, some of
+which ARE the games being scored) and -0.240 from the larger population. **The objective is
+nearly flat across that whole span** -- balanced accuracy 0.6721 at 0.629 against 0.6662 at
+0.869, so a 0.24 move in the cut buys 0.006. What tau selects is the TPR/TNR trade
+(0.664/0.680 vs 0.584/0.748), not accuracy. More evidence for the fold-spread caveat.
+
+**The honest headline of these panels is that the cut sits inside the overlap.** 34% of legal
+controls score above tau, and in the illustrative game the legal control itself reads 1.219
+against tau 0.629. The rule arms clear it by more, but the separation is magnitude, not
+whether the cut fires. Figure 4 draws that rather than hiding it.
+
+**R2 > R3 > R1 at 0.764 / 0.661 / 0.599**, the same ordering `move_legality`'s supervised probe
+finds by an unrelated route -- an occupied square is the violation this score sees worst.
+
+Two things a reader has to be told and the README says both: game 2498 was *selected* because
+all three rule arms peak at t0 (`select_game.py` used that as a criterion), so the trace is
+illustrative and the other two panels are the population; and the trace's right half is
+off-support, because after t0 the branch replays the source suffix onto a board that no longer
+exists.
+
 ## A board-probe layer sweep that describes the probe anything actually loads (2026-08-22)
 
 New study `analysis/board_probe_sweep/`, one entry point, `layer_sweep.py`. It loads the
