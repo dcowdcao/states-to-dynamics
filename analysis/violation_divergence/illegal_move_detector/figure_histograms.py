@@ -39,7 +39,7 @@ from matplotlib import pyplot as plt
 import detector
 from changepoint import ci, resamples
 from spade.figures.paper_style import (
-    DIRECTION_STYLE, GENERATION_STYLE, MUTED, NULL, RULE_STYLE, apply_style, save_figure)
+    GENERATION_STYLE, NULL, RULE_STYLE, apply_style, save_figure)
 from spade.figures.straightness_panels import kde_ci
 
 FIGURES = Path(__file__).resolve().parent / "figures"
@@ -52,23 +52,16 @@ ARM_OF = {"legal": "control", "illegal": "illegal", "R1": "R1", "R2": "R2", "R3"
 # Hue: the rules taxonomy for legal and R1-R3; GENERATION_STYLE's aggregate hue for the pooled
 # arm, the one hue in the palette that already means "any illegal move, over R1-R3" and the
 # only one that collides with neither a rule nor REFERENCE's black.
-# Marker: DIRECTION_STYLE, the only dict keyed on exactly these five names, so no two series
-# share a shape on the median strip. GENERATION_STYLE's own marker is `o`, which is legal's.
-STYLE = {k: {"color": hue["color"], "marker": DIRECTION_STYLE[k]["marker"]}
-         for k, hue in [("legal", RULE_STYLE["legal"]),
-                        ("illegal", GENERATION_STYLE["mass"]),
-                        ("R1", RULE_STYLE["R1 placement"]),
-                        ("R2", RULE_STYLE["R2 bracketing"]),
-                        ("R3", RULE_STYLE["R3 turn"])]}
-# Five curves cannot separate by hue in grayscale and neither dict carries a line style, so
-# the dash is the second cue and the median markers are the third.
+COLOR = {"legal": RULE_STYLE["legal"]["color"],
+         "illegal": GENERATION_STYLE["mass"]["color"],
+         "R1": RULE_STYLE["R1 placement"]["color"],
+         "R2": RULE_STYLE["R2 bracketing"]["color"],
+         "R3": RULE_STYLE["R3 turn"]["color"]}
+# Five curves cannot separate by hue in grayscale, so the dash carries them there.
 DASH = {"legal": "-", "illegal": (0, (6, 1.6)), "R1": (0, (1, 1.3)),
         "R2": (0, (4, 1.4, 1, 1.4)), "R3": (0, (2.6, 1.3))}
-LABEL = {"legal": "legal control (baseline)",
-         "illegal": "illegal, pooled over R1-R3",
-         "R1": "R1 placement (in pooled)",
-         "R2": "R2 bracketing (in pooled)",
-         "R3": "R3 turn (in pooled)"}
+LABEL = {"legal": "legal control (baseline)", "illegal": "illegal",
+         "R1": "R1 placement", "R2": "R2 bracketing", "R3": "R3 turn"}
 # Five fills at one alpha is mud and unreadable in grayscale (FIGURE_GUIDELINES 4.4), so the
 # fill is spent on the contrast the panel is about -- baseline against pooled illegal -- and
 # the pooled arm's three components ride on their lines over a light wash.
@@ -108,22 +101,17 @@ def draw(x: dict[str, np.ndarray], tau: float, camera_ready: bool) -> Path:
     ax.grid(False, axis="x")
     top = 0.0
     for i, k in enumerate(SERIES):
-        color = STYLE[k]["color"]
         curve = kde_ci(x[k], grid)[0] * len(x[k]) * slice_width
         if FILL[k]:
-            ax.fill_between(grid, curve, color=color, alpha=FILL[k], lw=0, zorder=2)
-        ax.plot(grid, curve, color=color, ls=DASH[k], lw=LINE[k], zorder=3 + i, label=LABEL[k])
+            ax.fill_between(grid, curve, color=COLOR[k], alpha=FILL[k], lw=0, zorder=2)
+        ax.plot(grid, curve, color=COLOR[k], ls=DASH[k], lw=LINE[k], zorder=3 + i,
+                label=LABEL[k])
         top = max(top, curve.max())
 
-    strip, ceiling = top * 1.04, top * 1.46
-    for k in SERIES:
-        ax.plot(np.median(x[k]), strip, ls="none", marker=STYLE[k]["marker"],
-                color=STYLE[k]["color"], ms=9 if STYLE[k]["marker"] == "*" else 6.5,
-                mec="white", mew=0.7, zorder=9)
-    ax.text(grid[0], strip, "medians ", ha="left", va="center", fontsize=8.0, color=MUTED)
-    # Stopped just above the median strip: a full-height line runs through the legend.
-    ax.axvline(tau, ymax=strip * 1.06 / ceiling, color=NULL["color"], ls=NULL["ls"], lw=1.1,
-               zorder=1, label=f"$\\tau$ = {tau:.3f}, the fitted cut")
+    ceiling = top * 1.34
+    # Stopped below the legend: a full-height line runs through it.
+    ax.axvline(tau, ymax=top * 1.06 / ceiling, color=NULL["color"], ls=NULL["ls"], lw=1.1,
+               zorder=1, label=f"$\\tau$ = {tau:.3f} (threshold)")
 
     ax.set_xlim(grid[0], grid[-1])
     ax.set_ylim(0, ceiling)
