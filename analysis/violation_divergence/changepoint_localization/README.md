@@ -147,7 +147,19 @@ bars is an architecture difference **and** an L0 difference, and this study cann
 one it measured -- note that the winner of the table above is the sparsest of the nine.
 `results/l0_operating_point/picks.csv` fixes that: one checkpoint per architecture, each the
 nearest-L0 member of its own grid to a shared target of L0 219.16, spanning 184-260 in
-practice.
+practice. The tick labels name the architecture only; the L0 each pick was seated at is the
+`l0` column of every `_l0_matched` CSV, and is:
+
+| pick | L0 | | pick | L0 |
+|---|---:|---|---|---:|
+| `standard/trainer25-v2` | 208.7 | | `BatchTopK-k220` | 226.7 |
+| `gated/trainer32` | 219.9 | | `SpaDE-lam0.001-gam0.005` | 232.1 |
+| `top_k/trainer_61` | 220.0 | | `p_anneal/trainer22` | 260.1 |
+| `gated_anneal/trainer25` | 221.7 | | `CosineSpaDE-beta1-gam0.05` | 183.8 |
+
+Matched on **sparsity only**: the eight still differ in reconstruction quality (`recon_f1`
+0.46-0.94), and Karvonen's five are fed the raw residual stream where ours take
+`scale*(x - mean)`, each as it was trained.
 
 `figures/changepoint_by_space_l0_matched.png` and
 `results/changepoint_localization_l0_matched.csv` are the same two panels over that roster.

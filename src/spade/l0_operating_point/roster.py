@@ -54,10 +54,9 @@ L0 = {s.name: s.l0 for s in ROSTER}
 def styles() -> dict[str, dict]:
     """`SPACE_STYLE` plus one entry per L0-matched space.
 
-    The tick label carries the L0 the checkpoint was seated at, because "matched" is the
-    claim the figure makes and a reader has to be able to check how well it holds.
+    The tick label is the family name alone. Each pick's L0 is in `L0` here and in every
+    figure's CSV, which is where a reader checks how well "matched" holds -- on the axis it
+    is nine numbers competing with the nine the figure is actually about.
     """
-    matched = {s.name: {**SPACE_STYLE[s.family],
-                        "short": f"{SPACE_STYLE[s.family]['short']} ($L_0$ {s.l0:.0f})"}
-               for s in ROSTER}
+    matched = {s.name: dict(SPACE_STYLE[s.family]) for s in ROSTER}
     return SPACE_STYLE | matched
