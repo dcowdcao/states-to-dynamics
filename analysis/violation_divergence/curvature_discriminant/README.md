@@ -74,6 +74,35 @@ training split's per-column SD before projection, following
 `spade.straightness.classify.lr_auc`. The z-scoring *mean* cancels in the
 difference; only the scale survives.
 
+## Why there is no L0-matched twin of this figure
+
+`l0_matched_geometry.py` writes `d`/`theta` for the eight `l0_operating_point` picks, and
+`../divergence_by_space` and `../step_length_fork` both draw an `_l0_matched` twin off the
+same picks. This figure cannot, and the blocker is the axis, not the geometry.
+
+Axis 1 is `curvature_axis.fit_axis(space, ...)`, fit **per space** on the straightness
+study's violation/source-legal pairs — it reads
+`$SPADE_STRAIGHTNESS_DIR/geometry/<space>_raw.npz`, which exists for the nine canonical
+spaces and for no L0-matched pick. `axis.sd`, the per-column training scale every number
+in the bottom row divides by, comes from the same fit, so `control_test`,
+`random_direction_null`, `magnitude_only` and the landing panel are all downstream of it.
+There is no version of this figure at matched L0 that does not first fit eight new probes.
+
+The cost of unblocking it is one straightness-geometry pass for the eight picks — 10,000
+games x 59 positions per dictionary, about an hour and a half on one core against the
+~3 minutes each of the two divergence sweeps costs — and it is a new experiment rather
+than a re-render: the probes, their held-out AUROCs and the whole honesty table would be
+new numbers. Scoring the picks on the *existing* per-space scale is not an alternative;
+z-scoring a descriptor by another dictionary's column SDs is the units error the
+"Scaling" note above exists to prevent.
+
+What can be said without it: the `d` half of the L0-matched descriptor is already drawn,
+in `../step_length_fork`'s twin, and the finding there is that the four gated/TopK
+dictionaries' apparent weakness on R2/R3 was their default sparsity rather than their
+architecture. The r = 0 table below orders the same four *above* raw layer 5 on
+illegal-vs-control AUROC, so whether that ordering is architecture or L0 is open, and this
+figure does not settle it.
+
 ## The honesty guard
 
 A direction fit on legal-vs-violation separates legal from violation by

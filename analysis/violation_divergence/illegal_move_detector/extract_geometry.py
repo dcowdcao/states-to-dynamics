@@ -110,7 +110,7 @@ def main() -> None:
             if path.exists():
                 print(f"{path.name} present, skipping", flush=True)
                 continue
-            d = step_lengths(acts, rows, device, sae_encoder(entry, device))
+            d = step_lengths(acts, rows, device, entry.encode(device))
             np.savez(path, d=d, config=entry.config, l0=entry.l0,
                      standardized=entry.standardize)
             print(f"wrote {path.name}  d {d.shape}  ({entry.config}, L0 {entry.l0:.1f})",

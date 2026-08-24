@@ -44,8 +44,16 @@ because a member there is itself a mean over games and would read as
 game-to-game spread. The reduction and the interval are the whole difference;
 the quantity, the panel and the grid are shared.
 
+`--l0-matched` swaps the eight SAE cells for `l0_operating_point`'s picks -- one
+checkpoint per type at the shared L0, so a difference between two cells is the
+architecture and not how sparse that type's default happens to be. Nothing else
+about the figure changes, and every file it writes carries an `_l0_matched`
+suffix, so the canonical artifacts are untouched. Each cell's title carries its
+own L0, which is what the panels are matched on.
+
 Usage: python analysis/violation_divergence/step_length_fork/make_figures.py
-       [--game 1235 | --n_games 100] [--variant spliced|rollout] [--camera-ready]
+       [--game 1235 | --n_games 100] [--variant spliced|rollout] [--l0-matched]
+       [--camera-ready]
 """
 
 import argparse
@@ -72,7 +80,7 @@ from spade.violation_divergence.rule_groups import rule_rows, spread_ratio
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 RESULTS = (Path(__file__).resolve().parents[3] / "results" / "violation_divergence")
-CSV = RESULTS / "step_length_fork.csv"
+L0_SUFFIX = "_l0_matched"
 VARIANTS = {"spliced": "", "rollout": "rollout"}
 NCOL = 3
 CELL_W, CELL_H = 3.2, 2.6
@@ -96,6 +104,13 @@ ROLLOUT_NOTE = (
     "uniform stream — and averaged over the {K} afterwards, never\nratio-of-means. Two "
     "branches now differ at every position after $t_0$ and not at $t_0$ alone, so the "
     "single-token attribution the spliced twin carries is gone (README).")
+L0_NOTE = ("the eight SAE cells are the l0_operating_point picks: one checkpoint per type, "
+           "the nearest-$L_0$ member of its own grid to the shared target $L_0$ = 219.2, and "
+           "each cell's own $L_0$ is in its title.\nThe canonical figure seats each type at "
+           "its own default sparsity instead, where a difference between two cells confounds "
+           "the architecture with its $L_0$. Karvonen's five were trained on the raw\n"
+           "residual stream and ours on scale·(x − mean); each is fed the activations it was "
+           "trained on, so the two families' latents are not on one input scale (README).")
 NULL_NOTE = ("the two grey curves are two draws of one null — a different legal token at "
              "$t_0$, measured exactly as the illegal branches are. Neither is a divisor "
              "here (the reference is), so the gap\nbetween them is the size of a "
@@ -192,7 +207,7 @@ def panel_grid(fig, cell, names: list[str], pos: np.ndarray, t0: int, draw) -> l
 
 def figure(g: Game, pos: np.ndarray,
            measured: list[tuple[str, np.ndarray, np.ndarray]], spread: float,
-           camera_ready: bool) -> Path:
+           l0_matched: bool, camera_ready: bool) -> Path:
     nrow = -(-len(measured) // NCOL)
     fig = plt.figure(figsize=(CELL_W * NCOL, CELL_H * nrow + BAND_H))
     gs = fig.add_gridspec(2, 1, height_ratios=[CELL_H * nrow, BAND_H],
@@ -220,8 +235,9 @@ def figure(g: Game, pos: np.ndarray,
     # Each note hangs off the bottom of the one above it: how many lines the legend
     # and each note wrapped to is what moves everything under them.
     y = below(fig, leg, 0.012)
-    y = below(fig, fig.text(0.005, y, SAMPLING_NOTE, ha="left", va="top", fontsize=7.5,
-                            color=MUTED, linespacing=1.5), 0.006)
+    for note in ([SAMPLING_NOTE, L0_NOTE] if l0_matched else [SAMPLING_NOTE]):
+        y = below(fig, fig.text(0.005, y, note, ha="left", va="top", fontsize=7.5,
+                                color=MUTED, linespacing=1.5), 0.006)
     y = below(fig, fig.text(0.005, y, spread_note(spread), ha="left", va="top",
                             fontsize=7.5, color=MUTED, linespacing=1.5), 0.006)
     if g.game == FIGURE_GAME:
@@ -231,11 +247,13 @@ def figure(g: Game, pos: np.ndarray,
 
     if not camera_ready:
         fig.suptitle(f"Step Length at the Fork in Each Representation Space — "
-                     f"game {g.game}, layer 5", fontsize=12)
-    return save_figure(fig, FIG_DIR / f"game_{g.game}_step_length_fork", camera_ready)
+                     f"game {g.game}, layer 5"
+                     + (", SAEs at a shared $L_0$" if l0_matched else ""), fontsize=12)
+    return save_figure(fig, FIG_DIR / f"game_{g.game}_step_length_fork"
+                       f"{L0_SUFFIX if l0_matched else ''}", camera_ready)
 
 
-def one_game(game: int, camera_ready: bool) -> None:
+def one_game(game: int, l0_matched: bool, camera_ready: bool) -> None:
     device = select_device()
     base = study_dir("divergence")   # the spliced tree; the rollout set forks its suffix too
     meta = torch.load(base / "branches" / "branches.pt", weights_only=True)
@@ -253,7 +271,7 @@ def one_game(game: int, camera_ready: bool) -> None:
 
     post = pos[1:] >= g.t0
     measured, spread = [], {}
-    for space, entry in spaces():
+    for space, entry in spaces(l0_matched):
         s, ratio = step_ratio(space_features(Z, entry, device), pos, g.t0, ref)
         measured.append((space, s, ratio))
         spread[space] = spread_ratio(ratio[:, post], g.rows)
@@ -271,12 +289,13 @@ def one_game(game: int, camera_ready: bool) -> None:
                           for _, m in drawn))
 
     rows = table(g, pos, measured)
-    with CSV.open("w", newline="") as fh:
+    out_csv = RESULTS / f"step_length_fork{L0_SUFFIX if l0_matched else ''}.csv"
+    with out_csv.open("w", newline="") as fh:
         out = csv.DictWriter(fh, list(rows[0]))
         out.writeheader()
         out.writerows(rows)
-    out_fig = figure(g, pos, measured, spread[RAW_SPACE], camera_ready)
-    print(f"wrote {out_fig}\nwrote {CSV}")
+    out_fig = figure(g, pos, measured, spread[RAW_SPACE], l0_matched, camera_ready)
+    print(f"wrote {out_fig}\nwrote {out_csv}")
 
 
 def rows_of(z) -> list[dict]:
@@ -319,13 +338,14 @@ def annotate_contrast(ax, x: np.ndarray, draws: np.ndarray, at: int,
             ha="right", va="top", fontsize=7, color=MUTED)
 
 
-def tagged(name: str, variant: str) -> str:
+def tagged(name: str, variant: str, l0_matched: bool = False) -> str:
     """The spliced names are the study's; a variant renders beside them, never over
     them."""
-    return name if variant == "spliced" else f"{name}_{variant}"
+    return (name if variant == "spliced" else f"{name}_{variant}") + (
+        L0_SUFFIX if l0_matched else "")
 
 
-def population_notes(z, n_games: int, variant: str) -> list[str]:
+def population_notes(z, n_games: int, variant: str, l0_matched: bool) -> list[str]:
     """What the population is, and what its spread ratio says (§1.7).
 
     The spread is raw layer 5's, the space `rule_groups` measures the study's own
@@ -345,12 +365,15 @@ def population_notes(z, n_games: int, variant: str) -> list[str]:
               f"Near 1 the three curves are a label rather than a finding; the nine "
               f"spaces' values are in README.md.")
     notes = [spread, NULL_NOTE, pop + " (README)."]
+    if l0_matched:
+        notes = [L0_NOTE, *notes]
     if variant == "spliced":
         return notes
     return [ROLLOUT_NOTE.format(K=int(z["n_rollouts"])), *notes]
 
 
-def population_figure(z, draws: np.ndarray, variant: str, camera_ready: bool) -> Path:
+def population_figure(z, draws: np.ndarray, variant: str, l0_matched: bool,
+                      camera_ready: bool) -> Path:
     rows, names = rows_of(z), list(z["space"])
     rules = list(rule_rows(rows))
     pos, t0, n_games = z["pos"], int(z["t0"]), len(z["game"])
@@ -382,7 +405,7 @@ def population_figure(z, draws: np.ndarray, variant: str, camera_ready: bool) ->
     band.axis("off")
     leg = ordered_legend(band, axes[0], 3, loc="upper left", bbox_to_anchor=(0.0, 1.05))
     y = below(fig, leg, 0.012)
-    for note in [SAMPLING_NOTE, *population_notes(z, n_games, variant)]:
+    for note in [SAMPLING_NOTE, *population_notes(z, n_games, variant, l0_matched)]:
         y = below(fig, fig.text(0.005, y, note, ha="left", va="top", fontsize=7.5,
                                 color=MUTED, linespacing=1.5), 0.006)
     rule_member_key(fig, x=0.005, y=y)
@@ -390,10 +413,11 @@ def population_figure(z, draws: np.ndarray, variant: str, camera_ready: bool) ->
     if not camera_ready:
         fig.suptitle(f"Step Length at the Fork in Each Representation Space — "
                      f"{n_games} games at $t_0$ = {t0}, layer 5"
-                     + ("" if variant == "spliced" else f", {variant} branches"),
+                     + ("" if variant == "spliced" else f", {variant} branches")
+                     + (", SAEs at a shared $L_0$" if l0_matched else ""),
                      fontsize=12)
-    return save_figure(fig, FIG_DIR / tagged(f"n{n_games}_step_length_fork", variant),
-                       camera_ready)
+    return save_figure(fig, FIG_DIR / tagged(f"n{n_games}_step_length_fork", variant,
+                                             l0_matched), camera_ready)
 
 
 def population_table(z, draws: np.ndarray) -> list[dict]:
@@ -484,21 +508,23 @@ def report(z, draws: np.ndarray) -> None:
               f"{np.percentile(g, 75):.3f}]  {(g > 1).mean():.0%}")
 
 
-def population(n_games: int, variant: str, camera_ready: bool) -> None:
+def population(n_games: int, variant: str, l0_matched: bool, camera_ready: bool) -> None:
     base = variant_dir("divergence", variant=VARIANTS[variant])
-    npz = base / "step_length_fork" / f"n{n_games}.npz"
+    npz = base / "step_length_fork" / (
+        f"n{n_games}{L0_SUFFIX if l0_matched else ''}.npz")
     z = dict(np.load(npz))
     assert len(z["game"]) == n_games, f"{npz.name} holds {len(z['game'])} games"
     draws = np.random.default_rng(BOOT_SEED).integers(n_games, size=(BOOT, n_games))
 
     report(z, draws)
-    out = RESULTS / f"{tagged(f'step_length_fork_n{n_games}', variant)}.csv"
+    out = RESULTS / f"{tagged(f'step_length_fork_n{n_games}', variant, l0_matched)}.csv"
     rows = population_table(z, draws)
     with out.open("w", newline="") as fh:
         w = csv.DictWriter(fh, list(rows[0]))
         w.writeheader()
         w.writerows(rows)
-    print(f"\nwrote {population_figure(z, draws, variant, camera_ready)}\nwrote {out}")
+    print(f"\nwrote {population_figure(z, draws, variant, l0_matched, camera_ready)}\n"
+          f"wrote {out}")
 
 
 def main():
@@ -507,6 +533,9 @@ def main():
     parser.add_argument("--n_games", type=int, default=None,
                         help="draw measure.py's population twin instead of one game")
     parser.add_argument("--variant", default="spliced", choices=list(VARIANTS))
+    parser.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                        help="draw measure.py --l0-matched's sweep, where the eight SAE "
+                             "cells sit at one shared L0")
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()
     assert args.n_games or args.variant == "spliced", \
@@ -515,9 +544,9 @@ def main():
     apply_style(args.camera_ready)
     RESULTS.mkdir(parents=True, exist_ok=True)
     if args.n_games:
-        population(args.n_games, args.variant, args.camera_ready)
+        population(args.n_games, args.variant, args.l0_matched, args.camera_ready)
     else:
-        one_game(args.game, args.camera_ready)
+        one_game(args.game, args.l0_matched, args.camera_ready)
 
 
 if __name__ == "__main__":

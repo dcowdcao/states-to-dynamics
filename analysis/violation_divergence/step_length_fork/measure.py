@@ -37,8 +37,13 @@ exactly 1 branch by branch.
       spread_game [S, G]        rule_groups.spread_ratio on the drawn ratio over
                                 t >= t0, per game
 
+`--l0-matched` swaps the eight SAE cells for `l0_operating_point`'s picks -- one
+checkpoint per type at the shared L0, so a cell-to-cell difference is the
+architecture and not its sparsity -- and writes `n{N}_l0_matched.npz` beside the
+canonical file. Raw layer 5 is not an SAE and stays the reference cell.
+
 Usage: python analysis/violation_divergence/step_length_fork/measure.py
-       [--n_games 100] [--variant spliced|rollout]
+       [--n_games 100] [--variant spliced|rollout] [--l0-matched]
 """
 
 import argparse
@@ -95,6 +100,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--n_games", type=int, default=100)
     ap.add_argument("--variant", default="spliced", choices=list(VARIANTS))
+    ap.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                    help="seat the eight SAE cells at the shared l0_operating_point "
+                         "target instead of at each type's own default sparsity")
     args = ap.parse_args()
 
     base = variant_dir("divergence", variant=VARIANTS[args.variant])
@@ -111,7 +119,7 @@ def main():
     acts = torch.load(base / "acts" / "resid_post_5.pt", weights_only=True, mmap=True)
     Z = acts[rows.flatten()][:, POS, :].float()
 
-    G, S, B, T = len(games), len(spaces()), len(ROLES), len(DRAWN)
+    G, S, B, T = len(games), len(spaces(args.l0_matched)), len(ROLES), len(DRAWN)
     chunk = max(1, CHUNK // K)
     free = DRAWN < POPULATION_T0
     post = DRAWN >= POPULATION_T0
@@ -120,7 +128,7 @@ def main():
          "spread_game": np.zeros((S, G))}
 
     names, started = [], time.time()
-    for si, (name, enc) in enumerate(encoders(select_device())):
+    for si, (name, enc) in enumerate(encoders(select_device(), args.l0_matched)):
         names.append(name)
         for lo in range(0, G, chunk):
             X = Z[lo * B * K:(lo + chunk) * B * K]
@@ -138,7 +146,7 @@ def main():
     assert all(np.isfinite(v).all() for v in z.values()), "a NaN reached the output"
     out = base / "step_length_fork"
     out.mkdir(parents=True, exist_ok=True)
-    path = out / f"n{G}.npz"
+    path = out / (f"n{G}" + ("_l0_matched" if args.l0_matched else "") + ".npz")
     np.savez_compressed(
         path, game=np.array(games), n_pool=len(pool), space=names, role=ROLES,
         n_rollouts=K,

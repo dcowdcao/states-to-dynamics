@@ -47,9 +47,16 @@ Reads `measure.py`'s npz. Writes the figure and one tidy CSV of every drawn
 point. Prose belongs in README.md (FIGURE_GUIDELINES 2, 5); what stays inside
 the figure is what a reader cannot decode while looking at it.
 
+`--l0-matched` draws `measure.py --l0-matched`'s sweep: the same nine cells with
+the eight SAE slots seated at `l0_operating_point`'s shared L0 rather than at each
+type's own default sparsity, so a difference between two cells is the architecture
+and not how sparse it happens to be. Every file it writes carries an `_l0_matched`
+suffix, so the canonical figures and CSVs are untouched. Each cell's title carries
+its own L0, which is what the panels are matched on.
+
 Usage: python analysis/violation_divergence/divergence_by_space/make_figures.py
        [--plane displacement|r21] [--variant spliced|rollout] [--raw [--shared-y]]
-       [--camera-ready]
+       [--l0-matched] [--camera-ready]
 """
 
 import argparse
@@ -226,8 +233,14 @@ RAW_TITLE = {
 }
 
 
+# A variant figure's title says what changed, not what the canonical one claims: the
+# roster moved, and whether the claim survives is the thing the reader is here to check.
+L0_TITLE = ("Each SAE type seated at the shared operating point $L_0$ = 219.2 — "
+            "architecture and sparsity no longer confounded")
+
+
 def figure(z, plane: str, variant: str, suffix: str, raw: bool, shared_y: bool,
-           camera_ready: bool) -> Path:
+           l0_matched: bool, camera_ready: bool) -> Path:
     w = z["window"]
     rollout = variant == "rollout"
     n_games = z["plane"].shape[1]
@@ -294,11 +307,13 @@ def figure(z, plane: str, variant: str, suffix: str, raw: bool, shared_y: bool,
                         title=f"mean over n = {n_games} source games, band = 95% CI")
     legend.get_title().set_fontsize(8)
     if not camera_ready:
-        fig.suptitle((RAW_TITLE if raw else TITLE)[(plane, variant)],
+        fig.suptitle(L0_TITLE if l0_matched
+                     else (RAW_TITLE if raw else TITLE)[(plane, variant)],
                      fontsize=11, y=0.995)
     name = ("divergence_by_space" + ("" if plane == "displacement" else f"_{plane}")
             + (f"_{variant}" if rollout else "") + suffix
-            + ("_raw" if raw else "") + ("_sharedy" if shared_y else ""))
+            + ("_raw" if raw else "") + ("_sharedy" if shared_y else "")
+            + ("_l0_matched" if l0_matched else ""))
     return save_figure(fig, HERE / "figures" / name, camera_ready)
 
 
@@ -314,6 +329,9 @@ def main():
     ap.add_argument("--shared-y", dest="shared_y", action="store_true",
                     help="--raw --plane displacement on one autoscaled linear y instead "
                          "of a per-panel one")
+    ap.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                    help="draw measure.py --l0-matched's sweep, where the eight SAE cells "
+                         "sit at one shared L0")
     ap.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = ap.parse_args()
     if args.shared_y and not args.raw:
@@ -321,9 +339,10 @@ def main():
     apply_style(args.camera_ready)
 
     suffix = f"_n{args.n_games}" if args.n_games else ""
+    l0 = "_l0_matched" if args.l0_matched else ""
     tag = "" if args.plane == "displacement" else f"_{args.plane}"
     base = variant_dir("divergence", variant=VARIANTS[args.variant])
-    z = dict(np.load(base / "divergence_by_space" / f"curves{tag}{suffix}.npz"))
+    z = dict(np.load(base / "divergence_by_space" / f"curves{tag}{suffix}{l0}.npz"))
     z["space"], z["role"] = list(z["space"]), list(z["role"])
 
     out = results_dir("violation_divergence")
@@ -331,7 +350,7 @@ def main():
     # --shared-y is the same numbers on a different axis, so it writes no second CSV.
     csv = out / (f"divergence_by_space{tag}"
                  f"{'_' + args.variant if args.variant != 'spliced' else ''}"
-                 f"{suffix}{'_raw' if args.raw else ''}.csv")
+                 f"{suffix}{'_raw' if args.raw else ''}{l0}.csv")
     df = table(z, args.variant, args.raw)
     df.to_csv(csv, index=False, float_format="%.6g")
 
@@ -346,7 +365,7 @@ def main():
     if "spread" in z:
         print(spread_note(z))
     png = figure(z, args.plane, args.variant, suffix, args.raw, args.shared_y,
-                 args.camera_ready)
+                 args.l0_matched, args.camera_ready)
     print(f"wrote {png} and {csv}")
 
 

@@ -14,8 +14,7 @@ import torch
 
 from spade.othello.taxonomy import CATEGORIES
 from spade.violation_divergence.branches import role
-from spade.violation_divergence.compute_divergence import sae_encoder
-from spade.violation_divergence.fork_plane import spaces
+from spade.violation_divergence.fork_plane import encoder, spaces
 
 ROLES = ["reference", "control_legal", "control_legal_2"] + CATEGORIES[1:]
 REF, C1, C2 = 0, 1, 2
@@ -60,7 +59,7 @@ def encoders(device: str, l0_matched: bool = False):
     fields such a sweep holds, and the login node's cgroup does not have both.
     """
     for label, e in spaces(l0_matched):
-        yield label, None if e is None else sae_encoder(e, device)
+        yield label, encoder(e, device)
 
 
 def encode(Z: torch.Tensor, fn) -> np.ndarray:

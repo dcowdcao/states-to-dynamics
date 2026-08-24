@@ -56,7 +56,7 @@ def main() -> None:
         if path.exists() and "theta" in np.load(path):
             print(f"{path.name} present, skipping", flush=True)
             continue
-        encode = sae_encoder(entry, device)
+        encode = entry.encode(device)
         ds, thetas = [], []
         for start in range(0, len(rows), GAME_BATCH):
             z = acts[rows[start:start + GAME_BATCH]][:, 1:, :].float().to(device)

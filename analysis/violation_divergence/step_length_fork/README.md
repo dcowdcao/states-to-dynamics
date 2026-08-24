@@ -39,6 +39,9 @@ python analysis/violation_divergence/step_length_fork/make_figures.py \
 | `figures/n100_step_length_fork_rollout.{png,pdf}` | the population grid over the **rollout** branch set, same 100 games (below) |
 | `$SPADE_DIVERGENCE_DIR/rollout/step_length_fork/n100.npz` | its sweep output, `n_rollouts` = 4; it never renders over the spliced npz |
 | `results/violation_divergence/step_length_fork_n100_rollout.csv` | its table, columns identical to the spliced one |
+| `figures/n100_step_length_fork_l0_matched.{png,pdf}` | the population grid with the eight SAE cells seated at one shared $L_0$ (below) |
+| `$SPADE_DIVERGENCE_DIR/step_length_fork/n100_l0_matched.npz` | its sweep output; it never renders over the canonical npz |
+| `results/violation_divergence/step_length_fork_n100_l0_matched.csv` | its table, columns identical to the canonical one |
 
 The default is the spliced set (`$SPADE_DIVERGENCE_DIR/branches`): every branch
 replays the source game's `tokens[t0+1:]`, so a difference at *r* > 0 descends
@@ -287,6 +290,69 @@ rule against `control_legal` at *r* = 0, taken inside each game. Within ÷
 between-rule spread over *t* ≥ *t₀*, per game, raw layer 5: median 0.866 [IQR
 0.728–1.021]. The population is the first 100 of the 1696 branch-complete games
 forking at *t₀* = 20, ascending by game id, with no game-level criterion.
+
+## The L0-matched twin
+
+`figures/n100_step_length_fork_l0_matched.{png,pdf}` ·
+`results/violation_divergence/step_length_fork_n100_l0_matched.csv`
+
+```
+python analysis/violation_divergence/step_length_fork/measure.py      --n_games 100 --l0-matched  # ~3 min
+python analysis/violation_divergence/step_length_fork/make_figures.py --n_games 100 --l0-matched
+```
+
+The eight SAE cells above are each type at its own default sparsity — TopK and BatchTopK
+at k = 80, Standard at L1 0.059 — so "R2/R3 do nothing in the gated/TopK spaces" is a
+statement about four dictionaries that are also four times sparser than the rest, and the
+architecture cannot be told from the L0. `--l0-matched` seats them at
+`results/l0_operating_point/picks.csv` instead: one checkpoint per type, the nearest-L0
+member of its own grid to the shared target **L0 = 219.2**. Same 100 games, same axis,
+same panel order, same styling; each cell's title carries its own L0. Raw layer 5 is not an
+SAE and is the same cell in both — its 192 CSV rows are identical to the canonical file's.
+
+**R1 shortens the step, and that is what survives.** At *r* = 0 R1 is 0.900–0.936 with
+every interval clear of 1 in all nine spaces, and paired against `control_legal` it is
+resolved negative in all nine, **−0.047 to −0.093** (canonically −0.032 to −0.117). Same
+rule, same sign, same order of magnitude. The control still does nothing: 0.979–1.000 at
+*r* = 0, every interval straddling 1.
+
+**The result that does not survive is "R2 and R3 are absent in the gated/TopK spaces", and
+it reverses.** Paired against the legal control at *r* = 0, canonical → L0-matched:
+
+| space | R2 − control | R3 − control |
+|---|---|---|
+| raw layer 5 | +0.104 → +0.104 | +0.080 → +0.080 |
+| PAnneal | +0.094 → +0.065 | +0.072 → +0.047 |
+| Standard | +0.103 → **+0.016 [−0.008, +0.042]** | +0.083 → **+0.016 [−0.009, +0.041]** |
+| GatedSAE | −0.034 [−0.063, −0.003] → −0.017 [−0.044, +0.012] | −0.019 → −0.010 |
+| TopK | −0.027 [−0.055, +0.002] → **+0.053 [+0.027, +0.079]** | −0.012 → **+0.051 [+0.023, +0.079]** |
+| GatedAnneal | −0.027 [−0.056, +0.002] → **+0.045 [+0.021, +0.069]** | **−0.030 [−0.057, −0.000]** → **+0.040 [+0.015, +0.065]** |
+| BatchTopK | −0.017 [−0.046, +0.012] → **+0.105 [+0.076, +0.136]** | −0.005 → **+0.076 [+0.044, +0.109]** |
+| CosineSpaDE | +0.372 → +0.430 | +0.304 → +0.305 |
+| SpaDE | +0.124 → +0.053 | +0.097 → +0.036 |
+
+TopK, GatedAnneal and BatchTopK go from unresolved (GatedAnneal's R3 from resolved
+**negative**) to resolved positive on both rules, at 0.7–1.0× raw layer 5's gap. Only
+GatedSAE stays without a resolved excess, and its point estimate halves toward zero. In the
+other direction Standard's +0.103/+0.083 collapse to an unresolved +0.016 and SpaDE's halve.
+**At their own default sparsity the four gated/TopK dictionaries were too sparse to show the
+fork's step-length change; at L0 ≈ 220 they show it about as well as the raw residual
+stream does.** The canonical figure's "resolved positive in five spaces, negative in
+GatedAnneal" is an L0 ordering, not an architecture ordering.
+
+CosineSpaDE is again the loudest cell (+0.430 on R2) and it is again the pick furthest from
+the target on the low side (L0 184); read it against its own control, as always.
+
+**The rule grouping stays weak.** Within ÷ between-rule spread of the drawn ratio over
+*t* ≥ *t₀*, per game, raw layer 5: median 0.866 [IQR 0.728–1.021] — the same cell, so the
+same number — and 0.848 (CosineSpaDE) to 0.965 (GatedSAE) across the eight dictionaries,
+against the canonical 0.778–0.969.
+
+**One caveat the figure carries in its note block.** Karvonen's five picks were trained on
+the raw residual stream and ours on scale·(x − mean); each is fed the activations it was
+trained on, so the two families' latents are not on one input scale. The ratio is a
+within-game, within-cell contrast, so it is unaffected — but the absolute `step_length`
+column in the CSV is not comparable between the two files for those five cells.
 
 ## The rollout twin
 

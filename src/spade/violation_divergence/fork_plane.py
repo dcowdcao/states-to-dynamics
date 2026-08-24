@@ -23,7 +23,7 @@ import numpy as np
 import torch
 
 from spade.figures.paper_style import sae_label
-from spade.l0_operating_point.checkpoints import matched
+from spade.l0_operating_point.checkpoints import Matched, matched
 from spade.saes.registry import seed42_entries
 from spade.spaces import EXCLUDED_SAE
 from spade.violation_divergence.compute_divergence import sae_encoder
@@ -33,8 +33,6 @@ STRIDE = 2               # one mover per curve; see the module docstring
 WINDOW = (-8, 24)        # the study's analysis window, r = t - t0
 FIRST_POS, LAST_POS = 1, 58  # position 0 is the attention sink
 RAW_SPACE = "raw layer 5 (reference space)"
-
-
 def positions(t0: int, back: int = 0) -> np.ndarray:
     """The study's window at t0's parity, clipped to the usable board and extended
     `back` sampled positions earlier -- a trailing descriptor window needs context
@@ -79,6 +77,17 @@ def tag(variant: str = "", l0_matched: bool = False) -> str:
     L0-matched run can never overwrite the seed-42 figure it is read beside."""
     return ("_" + variant if variant else "") + ("_l0_matched" if l0_matched else "")
 
+def encoder(entry, device: str):
+    """`entry`'s encode function; None is raw layer 5.
+
+    An `l0_operating_point` pick carries its own input convention -- Karvonen's five were
+    trained on the raw residual stream, ours on scale*(x - mean) -- so the pick decides how
+    it is fed, not the caller.
+    """
+    if entry is None:
+        return None
+    return entry.encode(device) if isinstance(entry, Matched) else sae_encoder(entry, device)
+
 
 def pca2(X: np.ndarray, basis: np.ndarray | None = None):
     """(scores [n, 2], variance ratio [2], basis) — pass `basis` to reuse a fit.
@@ -122,7 +131,7 @@ def space_features(Z: np.ndarray, entry, device: str) -> np.ndarray:
     if entry is None:
         return Z
     n, T, D = Z.shape
-    enc = sae_encoder(entry, device)
+    enc = encoder(entry, device)
     with torch.no_grad():
         f = enc(torch.tensor(Z.reshape(-1, D), device=device))
     return f.reshape(n, T, -1).cpu().numpy()

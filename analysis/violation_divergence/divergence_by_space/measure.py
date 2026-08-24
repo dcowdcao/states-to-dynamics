@@ -37,8 +37,13 @@ across the grid and are not a quantity nine panels share.
       plane  [S,G,B,T]  in-plane distance from the reference
       full   [S,G,B,T]  same-space distance from the reference
 
+`--l0-matched` swaps the eight SAE cells for `l0_operating_point`'s picks -- one
+checkpoint per type at the shared L0 -- and writes `curves..._l0_matched.npz`
+beside the canonical file. Raw layer 5 is not an SAE and stays the reference cell.
+
 Usage: python analysis/violation_divergence/divergence_by_space/measure.py
        [--plane displacement|r21] [--variant spliced|rollout] [--n_games N]
+       [--l0-matched]
 """
 
 import argparse
@@ -52,9 +57,8 @@ from spade.common.study import variant_dir
 from spade.othello.taxonomy import CATEGORIES
 from spade.violation_divergence.branches import (
     POPULATION_T0, complete_games, games_at_t0, load_game, role)
-from spade.violation_divergence.compute_divergence import sae_encoder
 from spade.violation_divergence.curvature_plane import W, fit_plane, windowed
-from spade.violation_divergence.fork_plane import positions, spaces
+from spade.violation_divergence.fork_plane import encoder, positions, spaces
 from spade.violation_divergence.rule_groups import spread_ratio
 
 VARIANTS = {"spliced": "", "rollout": "rollout"}
@@ -160,14 +164,13 @@ def curvature_distances(F: np.ndarray, ref: int, K: int,
     return np.linalg.norm(p.project(dphi), axis=-1), np.linalg.norm(scaled, axis=-1), scaled
 
 
-def encoders(device: str) -> list[tuple[str, object]]:
+def encoders(device: str, l0_matched: bool) -> list[tuple[str, object]]:
     """(label, encode or None) per grid cell, built once.
 
     `fork_plane.space_features` rebuilds the encoder on every call, which costs a
     checkpoint load per game; a population sweep cannot pay that 1553 times.
     """
-    return [(label, None if e is None else sae_encoder(e, device))
-            for label, e in spaces()]
+    return [(label, encoder(e, device)) for label, e in spaces(l0_matched)]
 
 
 def features(Z: torch.Tensor, encode) -> np.ndarray:
@@ -194,6 +197,9 @@ def main():
     ap.add_argument("--n_games", type=int, default=None,
                     help=f"the shared n-game population at t0 = {POPULATION_T0}; "
                          "the whole branch-complete tree when omitted")
+    ap.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                    help="seat the eight SAE cells at the shared l0_operating_point "
+                         "target instead of at each type's own default sparsity")
     args = ap.parse_args()
 
     device = select_device()
@@ -204,7 +210,7 @@ def main():
     K = int(meta["rollout"].max()) + 1 if "rollout" in meta else 1
     games = (games_at_t0(meta, POPULATION_T0, args.n_games) if args.n_games
              else complete_games(meta))
-    cells = encoders(device)
+    cells = encoders(device, args.l0_matched)
     ref = ROLES.index("reference")
 
     window = sampling(args.plane, load_game(meta, games[0]).t0)[1]
@@ -251,7 +257,8 @@ def main():
     # The n-game sweep is a different population, not a shorter run of the same one:
     # it writes beside the whole-tree curves rather than over them.
     tag = "" if args.plane == "displacement" else f"_{args.plane}"
-    name = f"curves{tag}" + (f"_n{args.n_games}" if args.n_games else "") + ".npz"
+    name = (f"curves{tag}" + (f"_n{args.n_games}" if args.n_games else "")
+            + ("_l0_matched" if args.l0_matched else "") + ".npz")
     np.savez_compressed(out / name, space=[name for name, _ in cells],
                         window=window.astype(np.int16), role=ROLES,
                         game=np.array(games), plane=plane, full=full, spread=spread)
