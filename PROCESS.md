@@ -52,19 +52,21 @@ quota per t0 fixes both at once. It costs n, and uniform n = 1000 is not reachab
 tree at all: outside t0 = 20 it holds 613 eligible games, 22 at the thinnest position, so the
 ceiling is 22 x 21 = 462. AUROCs move a little and the ordering does not.
 
-**Then the floor moved to t0 = 14 and n was capped at 189 (2026-08-24).** These panels are read
+**Then the range became [10, 34], the whole fork window (2026-08-24).** These panels are read
 beside `move_legality`'s bar chart, so they should scan its positions and carry its per-class n.
-`extract_geometry.py` stopped importing `branch_geometry`'s (16, 34) and states its own
-(14, 34); 2,207 eligible games -> 2,278 and tau refit 0.629 -> 0.850, which is mostly a
-statement about how flat the objective is. It cannot go lower: the score is a MOSUM over
-M_MAX = 12 steps either side, so nothing below move 14 has one, where the probe reads a single
-position and can be evaluated anywhere -- the one difference between the two evaluation sets
-that is not a choice. `detector.N_EVAL` = 200 then caps n at that chart's per-bar n -- its
-"n = 1000" is 1000 games dealt over five DISJOINT groups, 200 per bar, where these arms are
-paired and every game appears in all of them. 200 does not divide 21 positions, so the lowest
-11 take 10 games and the rest 9. The cap is comparability, not availability -- the corpus
-supports 462 and the intervals widen about 1.6x for it. Matching the disjoint design instead
-would cap us at 84 per group. Final: illegal 0.700, R1 0.590, R2 0.775, R3 0.690.
+Two things were in the way. `extract_geometry.py` imported `branch_geometry`'s (16, 34); it now
+states its own (10, 34). And `detector.band` passed the ablation's M_MAX = 12 to `candidates`,
+which is what put the floor at move 14 -- that margin buys one chance level across every window
+size `changepoint_localization` compares, and this study never varies the window: it scores
+M = 4 and nothing else, which reaches moves 6-55. Scoring what M reaches costs the shared
+candidate set, so neither tau nor a peak position is comparable with that study position for
+position; that is the trade, and it is written down rather than taken silently.
+
+2,207 eligible games -> 2,415, tau 0.629 -> 0.619, and `detector.N_EVAL` = 200 now divides the
+25 positions exactly: 8 games each, the same quota that chart deals per condition per t0. The
+cap is comparability, not availability -- the corpus supports 550 -- and the intervals widen
+for it. Final: illegal 0.696, R1 0.613, R2 0.777, R3 0.685; the illustrative game is unchanged
+and reads 4/5 again.
 
 **The game moved to 3889, and the t0 board to one move (2026-08-24).** `select_game.py` gained
 a criterion -- the detector has to be right about at least four of the five plies

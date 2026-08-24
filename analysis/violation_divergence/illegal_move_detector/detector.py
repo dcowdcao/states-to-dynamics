@@ -32,7 +32,7 @@ from changepoint import (  # noqa: E402  (sibling module, not an installed packa
 DIR = study_dir("divergence") / "illegal_move_detector"
 FIGURES = Path(__file__).resolve().parent / "figures"
 RESULTS = Path(__file__).resolve().parent / "results"
-M, PAIRED, M_MAX = 4, True, 12          # the window changepoint_localization selected
+M, PAIRED = 4, True                     # the window changepoint_localization selected
 SEED = 42
 N_LEGAL = 2000                          # the straightness legal block
 RULES = ["R1", "R2", "R3"]
@@ -51,8 +51,17 @@ FIGURE_GAME = None                      # set by select_game.py, written into fi
 
 
 def band() -> np.ndarray:
-    """Candidate step indices, the same 33-ply window the ablation scans."""
-    return candidates(load()["d"].shape[1], M_MAX)
+    """Candidate step indices: every position an M-step window can score, moves 6-55.
+
+    The ablation passes its M_MAX = 12 here instead, so that one chance level serves every
+    window size it compares. This study never varies the window -- it scores M = 4 and nothing
+    else -- and that margin cost it 16 positions at each end, which is why its t0 floor used to
+    sit at 14. Scoring what M can actually reach is what lets these panels scan the same
+    [10, 34] as `move_legality.detection_auroc`'s bars. The price is that this candidate set is
+    no longer the ablation's, so neither its chance level nor a peak position is comparable
+    with that study's position for position.
+    """
+    return candidates(load()["d"].shape[1], M)
 
 
 REFERENCE = "raw"

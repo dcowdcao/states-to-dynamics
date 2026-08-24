@@ -8,14 +8,13 @@ because every number in `changepoint_localization` is verified byte-identical ag
 
 Eligibility is `branch_geometry`'s rule with one change: branch-complete, an odd-parity source
 game so the per-move-index profile (fit on the even-index straightness legal games) never saw a
-scored trajectory, and t0 inside T0_RANGE -- which here is (14, 34), not that module's (16, 34).
+scored trajectory, and t0 inside T0_RANGE -- which here is (10, 34), not that module's (16, 34).
 
-The wider floor is so this study's population figures scan the same move indices as
-`move_legality.detection_auroc`'s bar chart, which they are read beside. They still cannot
-match it exactly: that chart reads one position's activations, so its range is the tree's whole
-[10, 34], while this score is a MOSUM over M_MAX = 12 steps either side of a candidate and does
-not exist below t0 = 14. `branch_geometry`'s own range is left alone -- `changepoint_localization`
-verifies byte-identical against its artifacts.
+The wider range is the whole of the tree's own fork window, and it is so this study's
+population figures scan the same move indices as `move_legality.detection_auroc`'s bar chart,
+which they are read beside. It costs nothing at the estimator: `detector.band` scores every
+position an M = 4 window reaches, moves 6-55. `branch_geometry`'s own range is left alone --
+`changepoint_localization` verifies byte-identical against its artifacts.
 
 Raw layer 5 needs no dictionary encode; `--spaces` adds SAE spaces, which do, one npz each
 so a space can be added without recomputing the others.
@@ -46,7 +45,7 @@ from branch_geometry import (  # noqa: E402  (sibling script, not an installed p
     GAME_BATCH, straightness_legal_index)
 
 OUT = study_dir("divergence") / "illegal_move_detector"
-T0_RANGE = (14, 34)   # the floor is the MOSUM's, see above
+T0_RANGE = (10, 34)   # the tree's whole fork window, see above
 
 
 def eligible(meta: dict, legal_index: np.ndarray) -> list[int]:
