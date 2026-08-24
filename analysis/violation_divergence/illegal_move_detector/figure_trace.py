@@ -75,10 +75,6 @@ def draw(game: dict, move: np.ndarray, s: np.ndarray, tau: float, camera_ready: 
         if tick == t0:
             text.set(color=INK, fontweight="bold", fontsize=9.5)
 
-    ax.text(left + 0.15, ax.get_ylim()[0] + 0.15,
-            f"$t \\leq t_0 - {M}$: score reads no post-splice step, identical in every branch",
-            color=MUTED, fontsize=7.2, ha="left", va="bottom")
-
     top = max(RULES, key=lambda r: s[rows[r], take[HALF]])
     ax.annotate("peak at $t_0$",
                 xy=(t0, s[rows[top], take[HALF]]), xytext=(0.99, 1.03),
