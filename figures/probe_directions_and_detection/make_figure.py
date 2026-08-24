@@ -62,7 +62,7 @@ def letters(fig, rows: list[list]) -> None:
         boxes = [box(ax) for ax in row]
         base = min(b.y0 for b in boxes) - 0.018
         for b in boxes:
-            fig.text((b.x0 + b.x1) / 2, base, f"{chr(97 + i)})", ha="center", va="top",
+            fig.text((b.x0 + b.x1) / 2, base, f"({chr(97 + i)})", ha="center", va="top",
                      color=INK, fontsize=10)
             i += 1
 
