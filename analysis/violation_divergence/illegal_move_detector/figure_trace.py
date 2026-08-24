@@ -70,8 +70,7 @@ def draw(game: dict, move: np.ndarray, s: np.ndarray, tau: float, camera_ready: 
     ax.set_ylim(trace.min() - 0.55, trace.max() + 1.1)
     ax.set_xticks(window)
     ax.set_xlabel(f"move position in the game   ($t_0 = {t0}$ is the spliced move)")
-    ax.set_ylabel("paired MOSUM of standardized step-length drop\n"
-                  f"($M = {M}$ steps, SD units) — higher $=$ more illegal")
+    ax.set_ylabel("standardized norm of step length")
     for tick, text in zip(ax.get_xticks(), ax.get_xticklabels()):
         if tick == t0:
             text.set(color=INK, fontweight="bold", fontsize=9.5)
@@ -81,8 +80,7 @@ def draw(game: dict, move: np.ndarray, s: np.ndarray, tau: float, camera_ready: 
             color=MUTED, fontsize=7.2, ha="left", va="bottom")
 
     top = max(RULES, key=lambda r: s[rows[r], take[HALF]])
-    ax.annotate(f"peak at $t_0$, score {s[rows[top], take[HALF]]:.2f}\n"
-                f"({ARM_STYLE[top]['label']})",
+    ax.annotate("peak at $t_0$",
                 xy=(t0, s[rows[top], take[HALF]]), xytext=(0.99, 1.03),
                 textcoords="axes fraction", ha="right", va="bottom", fontsize=8.5, color=INK,
                 arrowprops={"arrowstyle": "->", "color": MUTED, "lw": 0.9, "shrinkB": 4})
@@ -90,9 +88,8 @@ def draw(game: dict, move: np.ndarray, s: np.ndarray, tau: float, camera_ready: 
     # game's scale every clear stretch of the tau line is crossed by a curve.
     ax.plot([], [], color=MUTED, ls=(0, (1, 2)), lw=1.0,
             label=f"detector threshold $\\tau$ = {tau:.3f}")
-    ax.legend(title=f"game {game['game_id']}, one branch per arm (illustrative)",
-              loc="upper left", fontsize=7, title_fontsize=7, handlelength=2.0,
-              labelspacing=0.4, borderaxespad=0.5)
+    ax.legend(loc="upper left", fontsize=7, handlelength=2.0, labelspacing=0.4,
+              borderaxespad=0.5)
     fig.tight_layout()
     return save_figure(fig, FIGURES / "detector_trace", camera_ready)
 
