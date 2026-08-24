@@ -93,9 +93,9 @@ def detection_panel(ax, bars: pd.DataFrame) -> None:
     ax.set_xlim(x[0] - 0.7, x[-1] + 0.7)
     ax.set_ylim(0, 1.05)
     ax.set_ylabel("AUROC")
-    n = int(bars["n_games"].iloc[0])
-    ax.set_xlabel(f"at $t_0$, {n * 5} games split evenly over the five conditions and "
-                  f"stratified by $t_0$ ($n$ = {n} per group)", fontsize=8)
+    # No x label: the evaluation set (1000 games split evenly over the five conditions and
+    # stratified by t0, 200 per group) is the caption's job, and it is stated in
+    # analysis/move_legality/README.md next to the numbers it describes.
     ax.grid(axis="x", visible=False)
     ax.tick_params(axis="x", length=0)
 
