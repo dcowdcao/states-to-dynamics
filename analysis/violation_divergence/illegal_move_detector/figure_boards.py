@@ -62,9 +62,14 @@ NEIGHBOUR_TINT = 0.16   # R2's empty neighbourhood, shaded under the grid rather
 # Where each rule's square carries its name, in cells from the square's centre. a2 and a8 sit
 # on the board's edge, where a centred name hangs off it, and c3's own disc is the evidence
 # for R1, so nothing may sit on the square itself.
-LABEL_AT = {"R1 placement":  (-0.5, -0.55, "left", "bottom"),
-            "R2 bracketing": (-0.46, 0.55, "left", "top"),
-            "R3 turn":       (0.6, 0.0, "left", "center")}
+# Where a rule's name goes, tried in order until one lands inside the board. Keying this on
+# the rule instead of on the square is what broke when `select_game.py` learned to prefer the
+# legible member of each rule: R2 moved to rank 8 and its below-the-square label fell off the
+# edge and was clipped away silently.
+LABEL_AT = ((-0.5, -0.55, "left", "bottom"),    # above, left-aligned
+            (-0.46, 0.55, "left", "top"),       # below, left-aligned
+            (0.6, 0.0, "left", "center"),       # to the right
+            (-0.6, 0.0, "right", "center"))     # to the left
 
 
 def name(square: int) -> str:
@@ -145,8 +150,10 @@ def event_panel(ax, board, rules: dict[str, int]) -> None:
     # placed in whichever empty cells sit beside it.
     for rule, square in rules.items():
         mark_square(ax, square, RULE_STYLE[rule])
-        dx, dy, ha, va = LABEL_AT[rule]
         x, y = square_xy(square)
+        dx, dy, ha, va = next((p for p in LABEL_AT
+                               if -0.5 <= x + p[0] <= 7.5 and -0.5 <= y + p[1] <= 7.5),
+                              LABEL_AT[0])
         ax.annotate(f"{rule.split()[0]} {name(square)}", (x + dx, y + dy), ha=ha, va=va,
                     fontsize=9, fontweight="bold", zorder=6,
                     color=RULE_STYLE[rule]["color"])

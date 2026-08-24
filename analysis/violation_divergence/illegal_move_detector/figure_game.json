@@ -1,11 +1,16 @@
 {
   "game_id": 2498,
   "t0": 20,
-  "margin": 0.43349826179835693,
+  "margin": 0.4376518787617911,
   "rows": {
-    "R1": 8994,
-    "R2": 8996,
+    "R1": 8995,
+    "R2": 8998,
     "R3": 8999
+  },
+  "categories": {
+    "R1": "occupied_opp",
+    "R2": "empty_no_bracket",
+    "R3": "opponent_only"
   },
   "control_row": 8992,
   "reference_row": 8991
