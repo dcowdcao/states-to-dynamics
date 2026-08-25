@@ -52,7 +52,7 @@ from matplotlib import pyplot as plt
 
 from spade.common.study import study_dir
 from spade.figures.paper_style import (
-    INK, MUTED, NULL, OKABE_ITO, REFERENCE_SPACE, apply_style, save_figure)
+    INK, MUTED, NULL, OKABE_ITO, REFERENCE_SPACE, apply_style, letters_below, save_figure)
 from spade.l0_operating_point import roster
 from spade.move_legality import localize
 
@@ -200,7 +200,6 @@ def panel(ax, table, value: str, ylabel: str, chance: float, index: int, top: fl
     ax.set_ylabel(ylabel)
     ax.text(len(spaces) - 0.45, chance, "chance", color=NULL["color"], fontsize=6.8,
             ha="left", va="center", bbox={"fc": "white", "ec": "none", "pad": 1.2})
-    ax.set_title(f"({chr(97 + index)})", y=-0.32, color=INK, fontsize=9)
     ax.grid(axis="x", visible=False)
     ax.tick_params(axis="x", length=0)
 
@@ -217,6 +216,7 @@ def draw(table: pd.DataFrame, variant: str, camera_ready: bool, suffix: str = ""
     ax.legend(loc="upper right", fontsize=6.8, frameon=False, handlelength=1.4,
               labelspacing=0.3)
     fig.tight_layout()
+    letters_below(fig, [ax])
     return save_figure(fig, HERE / "figures" / f"quantity_ablation_{variant}{suffix}",
                        camera_ready)
 
