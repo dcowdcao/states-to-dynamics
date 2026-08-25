@@ -85,12 +85,18 @@ def table() -> pd.DataFrame:
     return out.sort_values("auroc", ascending=False).reset_index(drop=True)
 
 
-def draw(table: pd.DataFrame, camera_ready: bool) -> Path:
-    fig, ax = plt.subplots(figsize=(5.6, 3.6))
+def bars(ax, table: pd.DataFrame) -> None:
+    """The by-space bars, on a caller's axes, so a figure that pairs them with the score
+    distributions draws this and not a copy of its argument list."""
     panel(ax, table, "auroc",
           "AUROC at $t_0$, illegal vs matched legal splice\n($\\uparrow$ better)",
           0.5, (table.auroc_null.min(), table.auroc_null.max()), None, 1.05,
           "chance (empirical)", roster.styles())
+
+
+def draw(table: pd.DataFrame, camera_ready: bool) -> Path:
+    fig, ax = plt.subplots(figsize=(5.6, 3.6))
+    bars(ax, table)
     return finish(fig, "auroc_by_space_l0_matched", camera_ready, detector.FIGURES)
 
 

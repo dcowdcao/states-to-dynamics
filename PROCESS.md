@@ -1510,6 +1510,17 @@ two panel functions. `cumulative_panel` and its helpers moved to
 `straightness_panels` and `branch_panels` already are; both study figures re-render
 byte-identical.
 
+**The SAE detector figure now asks (c)'s question (2026-08-24).** Its panel (a) was
+`threshold_detection_l0_matched`'s, which is the **per-position** AUROC -- every candidate in
+the band against the 500 t0 positions -- so raw layer 5 read 0.716 there against 0.681 in
+`detector_overview` (c), and two figures a paper puts in consecutive sections disagreed about
+the same space. They are different questions, not two estimates: (c)'s negative is the matched
+legal control at the same t0, the per-position one's negatives are mostly positions nowhere
+near a splice, which is why it scores higher. `figure_sae_overview.py` pairs
+`figure_auroc_l0_matched.bars` -- already the at-t0 paired statistic, and already the same 500
+games via `eval_games.csv` -- with the same histogram panel, so raw is 0.681 in both and the
+two figures read on one axis. `threshold_detection` keeps its own question and its own figure.
+
 **The legal square is labelled `legal`, not `b4` (2026-08-24).** The three illegal squares
 carry their rule (`R1`, `R2`, `R3`), so the one algebraic name on the board was the odd label
 out: it read as "the interesting thing about this square is where it is", when the panel's

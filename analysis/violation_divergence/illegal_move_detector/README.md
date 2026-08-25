@@ -59,6 +59,7 @@ out of the baseline it is scored against.
 | `score_histograms.png` | the distributions that AUROC summarizes: the score at *t0* for legal, illegal, R1, R2, R3, the same 500 games, with τ |
 | `score_histograms_GatedAnnealTrainer-othello.png` | the same five distributions read through the GatedAnneal dictionary, same 500 games — panel (b) of `changepoint_localization/figures/threshold_detection.png`, whose panel (a) ranks that space first |
 | `auroc_by_space_l0_matched.png` | the same AUROC, pooled illegal against the matched legal control, split by **representation space** instead of by rule: raw layer 5 and the eight L0-matched dictionaries, same 500 games |
+| `sae_detector_overview.png` | `detector_overview`'s SAE counterpart: (a) `auroc_by_space_l0_matched`'s bars, (b) the score distributions in whichever space (a) ranks first. **(a) is the at-*t0* paired statistic**, so raw layer 5 reads 0.681 here and in `detector_overview` (c); `changepoint_localization`'s `threshold_detection` panel (a) asks the per-position question instead and reads 0.716 |
 
 `results/eval_games.csv` is that evaluation set written down — the 500 game ids and their *t0*.
 `move_legality.detection_auroc` reads it for the paired bars of
