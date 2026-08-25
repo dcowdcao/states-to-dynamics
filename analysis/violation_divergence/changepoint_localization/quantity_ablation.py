@@ -24,6 +24,13 @@ changes.
 (`branch_norms.py`). If that has not been run, the spliced figure carries d and theta and says
 so, rather than silently dropping a variant.
 
+`--l0-matched` swaps the seed-42 roster for the eight `l0_operating_point` picks, one
+checkpoint per architecture at the shared L0. The canonical roster's L0s span 32.5 to 1,808,
+so its space ORDERING confounds the architecture with its sparsity -- which is what the
+by-space figures in this directory were redrawn for. It does not touch the ablation's own
+claim: d vs norm vs theta is a within-space comparison, three bars in one group off one
+corpus, and matching L0 across architectures cannot move it.
+
 Both signs are run and the better is reported. That is not a free parameter: a label-free
 detector has to fix the direction in advance, so a quantity whose sign moves across spaces is
 unusable however well it scores, and `sign` is a column for exactly that reason.
@@ -45,7 +52,8 @@ from matplotlib import pyplot as plt
 
 from spade.common.study import study_dir
 from spade.figures.paper_style import (
-    INK, MUTED, NULL, OKABE_ITO, REFERENCE_SPACE, SPACE_STYLE, apply_style, save_figure)
+    INK, MUTED, NULL, OKABE_ITO, REFERENCE_SPACE, apply_style, save_figure)
+from spade.l0_operating_point import roster
 from spade.move_legality import localize
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -71,8 +79,13 @@ BAR = 0.26
 
 
 def legal_geometry(space: str, key: str) -> np.ndarray:
-    """The straightness legal block, which is the per-move-index profile for both regimes."""
-    stem = "resid_post_5" if space == REFERENCE_SPACE else f"sae_{space}"
+    """The straightness geometry: the profile for both regimes, and the regenerated series.
+
+    A pick's twin is written by `analysis/straightness/l0_matched_profile.py` and carries the
+    same five-class row layout as the canonical file, so the corpus indices are shared.
+    """
+    stem = ("resid_post_5" if space == REFERENCE_SPACE else
+            space if space in roster.SPACES else f"sae_{space}")
     return np.load(study_dir("straightness") / "geometry" /
                    f"{stem}_raw.npz")[key].astype(np.float64)
 
@@ -178,7 +191,8 @@ def panel(ax, table, value: str, ylabel: str, chance: float, index: int, top: fl
                     yerr=[block[value] - block[f"{value}_lo"], block[f"{value}_hi"] - block[value]],
                     color=MUTED, elinewidth=0.8, capsize=1.6, ls="none", zorder=4)
 
-    name = lambda s: "raw L5 (ref.)" if s == REFERENCE_SPACE else SPACE_STYLE[s]["short"]
+    styles = roster.styles()
+    name = lambda s: "raw L5 (ref.)" if s == REFERENCE_SPACE else styles[s]["short"]
     ax.set_xticks(range(len(spaces)), [name(s) for s in spaces], fontsize=6.8, rotation=35,
                   ha="right", rotation_mode="anchor")
     ax.set_ylim(0, top)
@@ -192,7 +206,7 @@ def panel(ax, table, value: str, ylabel: str, chance: float, index: int, top: fl
     ax.tick_params(axis="x", length=0)
 
 
-def draw(table: pd.DataFrame, variant: str, camera_ready: bool) -> Path:
+def draw(table: pd.DataFrame, variant: str, camera_ready: bool, suffix: str = "") -> Path:
     keys = [k for k in BANDS if (table.quantity == k).any()]
     order = (table[table.quantity == "d"].sort_values("auroc_position", ascending=False)
              .space.tolist())
@@ -210,16 +224,21 @@ def draw(table: pd.DataFrame, variant: str, camera_ready: bool) -> Path:
     fig.text(0.005, 0.985, "hue and hatch = the scored quantity; spaces are ordered by $d$'s "
              f"per-position AUROC, raw layer 5 wherever it lands ({variant} suffix)",
              fontsize=7, color=MUTED, va="top")
-    return save_figure(fig, HERE / "figures" / f"quantity_ablation_{variant}", camera_ready)
+    return save_figure(fig, HERE / "figures" / f"quantity_ablation_{variant}{suffix}",
+                       camera_ready)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--variant", choices=("regenerated", "spliced"), default="regenerated")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                        help="the eight l0_operating_point picks instead of the seed-42 roster")
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()
 
+    spaces = [REFERENCE_SPACE] + roster.SPACES if args.l0_matched else SPACES
+    suffix = "_l0_matched" if args.l0_matched else ""
     build = regenerated_corpus if args.variant == "regenerated" else spliced_corpus
     corpus = build(args.seed)
     corpus["fit"] = np.asarray(corpus["fit"])
@@ -227,7 +246,7 @@ def main() -> None:
           f"{sum(len(r) for r in corpus['legal'])} legal rows, {len(MOVES)} plies "
           f"(moves {MOVES[0]}..{MOVES[-1]}), chance hit {1 / len(MOVES):.4f}", flush=True)
 
-    rows = [r for s in SPACES for k in BANDS
+    rows = [r for s in spaces for k in BANDS
             if (r := row(s, k, args.variant, corpus, args.seed)) is not None
             or print(f"  {s} / {k}: not computed on this tree", flush=True)]
     table = pd.DataFrame([r for r in rows if r])
@@ -237,12 +256,12 @@ def main() -> None:
               f"-- run curvature_discriminant/branch_norms.py to add them")
 
     (HERE / "results").mkdir(exist_ok=True)
-    csv = HERE / "results" / f"quantity_ablation_{args.variant}.csv"
+    csv = HERE / "results" / f"quantity_ablation_{args.variant}{suffix}.csv"
     table.round(5).to_csv(csv, index=False)
     apply_style(args.camera_ready)
-    print(f"\nwrote {csv}\nwrote {draw(table, args.variant, args.camera_ready)}")
+    print(f"\nwrote {csv}\nwrote {draw(table, args.variant, args.camera_ready, suffix)}")
     print(table.pivot(index="space", columns="quantity",
-                     values=["auroc_position", "hit", "sign"]).loc[SPACES].round(3).to_string())
+                     values=["auroc_position", "hit", "sign"]).loc[spaces].round(3).to_string())
 
 
 if __name__ == "__main__":

@@ -91,6 +91,49 @@ README's open question is whether it *explains* `d` — `d_t` regresses on
 still accounting for most of `d`'s variance. That partial-correlation check is still unrun,
 and it is the one that decides whether "geometry" is the right word for the study at all.
 
+## At matched L0
+
+The roster above is the seed-42 one, whose L0s span 32.5 to 1,808, so its **space ordering**
+confounds the architecture with its sparsity — the confound the by-space figures in this
+directory were redrawn for. `--l0-matched` re-runs everything over the eight
+`l0_operating_point` picks, one checkpoint per architecture near L0 220. Figures:
+`quantity_ablation_{regenerated,spliced}_l0_matched.png`.
+
+Per-position AUROC, regenerated regime, ordered by `d`:
+
+| space | `d` | `norm` | `theta` |
+|---|---|---|---|
+| GatedSAE | 0.848 | 0.809 | 0.570 |
+| BatchTopK | 0.779 | 0.577 | 0.588 |
+| TopK | 0.778 | 0.515 | 0.578 |
+| raw L5 (ref.) | 0.761 | 0.544 | 0.577 |
+| GatedAnneal | 0.758 | 0.510 | 0.585 |
+| PAnneal | 0.717 | 0.558 | 0.570 |
+| SpaDE | 0.662 | 0.531 | 0.517 |
+| Standard | 0.645 | 0.556 | 0.524 |
+| CosineSpaDE | 0.528 | 0.619 | 0.506 |
+| **mean** | **0.719** | 0.580 | 0.557 |
+
+**The ablation's three findings survive.** `d` beats `norm` in 8 of 9 spaces and `theta` in
+all 9 (8 of 9 spliced); the means barely move (0.726 → 0.719 for `d`). `norm` still flips
+sign, 5 spaces positive against 4 negative, which is the argument that rules it out. And
+curvature is still weak-but-real and still *not* inverted: ρ(`d`, `theta`) is +0.767
+regenerated and +0.733 spliced, the same sign as on the seed-42 roster. That is what a
+within-space comparison should do — three bars in one group off one corpus cannot be moved by
+seating the architectures at a common L0.
+
+**The space ordering does not survive, exactly as expected.** GatedAnneal was first at 0.893
+and is now fifth at 0.758, *below* raw layer 5 at 0.761 — its lead was its sparsity, not its
+architecture, which is the same reversal `36f452c` found for the by-space bars. GatedSAE takes
+the top. Read the seed-42 figure for the quantity comparison and this one for anything about
+which dictionary is better.
+
+**One thing gets worse, and it is worth saying.** On the seed-42 roster `d` keeps one
+direction in all nine spaces. Here it flips positive on CosineSpaDE — the one space where `d`
+is at chance (0.528 regenerated, 0.514 spliced), so the direction is being fit on noise rather
+than on a signal that reversed. The sign argument against `norm` is unaffected: `norm` flips
+between spaces that *do* detect.
+
 ## Reproducing
 
 ```
@@ -99,6 +142,10 @@ sbatch scripts/slurm/studies/violation_divergence/submit_branch_norms.sbatch
 
 PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/quantity_ablation.py --variant regenerated
 PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/quantity_ablation.py --variant spliced
+
+# the L0-matched roster needs two more GPU steps, then the same two runs with --l0-matched
+sbatch scripts/slurm/studies/violation_divergence/submit_branch_norms.sbatch --l0-matched
+sbatch scripts/slurm/studies/straightness/submit_l0_matched_profile.sbatch
 ```
 
 The ablation itself is CPU-only. `branch_norms.py` is the one GPU step, and it is
@@ -108,5 +155,11 @@ is not bitwise reproducible and every committed number here is byte-identical ag
 current files. Its rows come from the committed `meta.npz`'s `row` column, never re-derived --
 `extend_branches` grew the tree after that npz was written, so re-deriving now yields 2,207
 games where the npz holds 575.
+
+`--l0-matched` needs two artifacts the picks did not have: `l0_<config>_norm.npz` on the
+branch tree (`branch_norms.py --l0-matched`) and `l0_<config>_raw.npz` on the straightness
+corpus (`analysis/straightness/l0_matched_profile.py`, all five classes so the row layout
+matches the canonical file — the regenerated regime scores the *violation* block, which the
+profile-only `_legal.npz` does not carry). Neither rewrites a file already on disk.
 
 This supersedes `theta_ablation.py`, which measured only the argmax half of this.

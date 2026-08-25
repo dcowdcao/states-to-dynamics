@@ -15,11 +15,17 @@ grew the tree after that npz was written -- re-deriving through `eval_games` now
 games where the npz holds 575 -- so the stored column is the only thing that keeps
 `<space>_norm.npz` aligned with `<space>.npz`.
 
-Usage: python analysis/violation_divergence/curvature_discriminant/branch_norms.py [--variant spliced]
+`--l0-matched` writes the same file for the eight `l0_operating_point` picks instead, whose
+step lengths `l0_matched_geometry.py` already wrote; the reference space is shared between the
+two rosters and is not redone.
+
+Usage: python analysis/violation_divergence/curvature_discriminant/branch_norms.py
+           [--variant spliced] [--l0-matched]
 """
 
 import argparse
 import sys
+from functools import partial
 from pathlib import Path
 
 import numpy as np
@@ -27,6 +33,7 @@ import torch
 
 from spade.common.device import select_device
 from spade.common.study import variant_dir
+from spade.l0_operating_point.checkpoints import matched
 from spade.saes.registry import seed42_entries
 from spade.spaces import EXCLUDED_SAE
 from spade.violation_divergence.compute_divergence import sae_encoder
@@ -49,6 +56,8 @@ def norms(Z: torch.Tensor, encode, device: str) -> np.ndarray:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--variant", choices=list(VARIANTS), default="spliced")
+    parser.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                        help="the eight l0_operating_point picks instead of the seed-42 roster")
     args = parser.parse_args()
     variant = VARIANTS[args.variant]
 
@@ -58,8 +67,11 @@ def main() -> None:
     assert (out / "meta.npz").exists(), "run branch_geometry.py first; this aligns to its rows"
     rows = torch.from_numpy(np.load(out / "meta.npz")["row"])
 
-    spaces = [("resid_post_5", None)] + [(f"sae_{e.config}", e)
-        for e in seed42_entries() if e.config not in EXCLUDED_SAE]
+    # Each entry pairs a name with `make(device) -> encode`; a pick standardizes only if that
+    # is how it was trained, which is why the two rosters do not share one encoder call.
+    spaces = ([(e.space, e.encode) for e in matched()] if args.l0_matched else
+              [("resid_post_5", None)] + [(f"sae_{e.config}", partial(sae_encoder, e))
+                  for e in seed42_entries() if e.config not in EXCLUDED_SAE])
     todo = [s for s in spaces if not (out / f"{s[0]}_norm.npz").exists()]
     if not todo:
         print("all norms present")
@@ -69,8 +81,8 @@ def main() -> None:
     Z = acts[rows][:, 1:, :]        # drop the attention sink, as branch_geometry does
     del acts
     print(f"{len(rows)} rows, {Z.shape[1]} positions", flush=True)
-    for space, entry in todo:
-        norm = norms(Z, None if entry is None else sae_encoder(entry, device), device)
+    for space, make in todo:
+        norm = norms(Z, None if make is None else make(device), device)
         expected = np.load(out / f"{space}.npz")["d"].shape
         assert norm.shape == (expected[0], expected[1] + 1), \
             f"{space}: norm {norm.shape} does not match d {expected}"

@@ -6,6 +6,31 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The quantity ablation now has an L0-matched twin (2026-08-25)
+
+`quantity_ablation.py --l0-matched` re-runs both suffix regimes over the eight
+`l0_operating_point` picks. It was the one by-space figure `36f452c` missed: it predates the
+picks by two days and still ranked spaces on the seed-42 roster, whose L0s span 32.5 to 1,808.
+
+**Ordering flips, the finding does not.** GatedAnneal drops from first (0.893) to fifth
+(0.758), below raw layer 5 at 0.761 -- the same "its lead was sparsity" reversal the by-space
+bars showed -- and GatedSAE takes the top. But `d` still beats `norm` in 8 of 9 spaces and
+`theta` in all 9, and rho(d, theta) stays positive at +0.767, so the within-space comparison
+the ablation exists for is untouched. Worth knowing: `d`'s sign is no longer stable across all
+nine spaces, flipping on CosineSpaDE -- the one space where `d` is at chance, so the direction
+is fit on noise.
+
+**Two inputs had to be built.** `branch_norms.py` grew `--l0-matched`, and
+`analysis/straightness/l0_matched_profile.py` now writes `l0_<config>_raw.npz` with d, theta
+and norm over all five classes -- the regenerated regime scores the *violation* block, which
+the profile-only `_legal.npz` never carried. `_legal.npz` is left alone: a GPU encode is not
+bitwise reproducible and `changepoint_localization`'s committed L0-matched numbers are pinned
+to it, so the two files overlap on `d` by design.
+
+**That script was broken and nobody noticed.** It imported `encoder` from
+`l0_matched_geometry`, a name that refactor deleted, so it had been unrunnable since `36f452c`
+-- the committed `_legal.npz` files predate the break. Fixed to `entry.encode(device)`.
+
 ## Karvonen's Figure 4 composites now carry our type (2026-08-25)
 
 `figures/l0_operating_point/figure4_othello_{karvonen_only,with_spade}` are serif with bare
