@@ -6,6 +6,31 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The rollout arm has L0-matched twins now (2026-08-25)
+
+`36f452c` redrew the by-space figures over `picks.csv` on the spliced tree only, so every
+`_l0_matched` figure in the repo was spliced and the rollout arm had none. Twelve now
+exist: `fork_population` (3 planes), `r21_shared_basis` (6), `fork_expanding_curvature`
+(2) and `step_length_fork` (1), all from `--variant rollout --l0-matched`, which every
+one of those CLIs already accepted. No plumbing was added -- `fork_plane.tag()` composes
+the `_rollout_l0_matched` suffix, so nothing canonical could be written over.
+
+**The two controls separate, and that is what the twins say.** R1's deficit survives
+both: below its own legal control in 9 of 9 spaces on the rollout displacement
+(0.942-0.973, every upper bound under 1) and resolved negative in 9 of 9 at *r* = 0 on
+the step length. What moves the descriptor results is the branch set and not the roster
+-- `r21_shared_basis`'s activation plane clears its permutation null by 2.3-3.3x at
+matched L0, the same as at seed-42 sparsities, where spliced it sits *at* its null.
+
+**A latent GPU bug had to be fixed first, and it is in shared code.**
+`population.encoders` returned an encoder holding weights on `device` while both sweeps
+that use it feed mmap'd CPU activations; on CPU the two agreed and it never showed, and
+the first H100 run would have died on a device mismatch. It now yields a host-in,
+host-out wrapper. All twelve figures were measured on one H100
+(`scripts/slurm/submit_gpu.sbatch`), one job per study, deliberately not mixed with the
+login node: raw layer 5 is in both rosters, and its CSV rows come back byte-identical to
+the seed-42 rollout run's everywhere except the R^21 plane, whose per-column scaling
+agrees to 8 significant figures instead.
 ## The fork grid gets its L0-matched arm; game_trajectory cannot have one (2026-08-25)
 
 `fork_and_board/make_figures.py --l0-matched` redraws all five of its figures over the eight

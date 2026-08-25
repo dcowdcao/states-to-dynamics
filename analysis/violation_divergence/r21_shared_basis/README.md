@@ -12,7 +12,7 @@ layer 5 and in CosineSpaDE, and one plane can be applied to all nine cells.
 
 ```
 python analysis/violation_divergence/r21_shared_basis/make_figures.py \
-    [--variant {spliced,rollout}] [--camera-ready]
+    [--variant {spliced,rollout}] [--l0-matched] [--camera-ready]
 ```
 
 The first run encodes game 0 through the eight seed-42 dictionaries and caches
@@ -48,7 +48,8 @@ comparability claim below.
 | `separation_by_plane` | what each plane costs, against an exact permutation null |
 | `run_from_reference` | how far a branch runs from the reference, and how much of that each plane keeps |
 
-Each has a `*_rollout` twin from `--variant rollout`.
+Each has a `*_rollout` twin from `--variant rollout`, an `*_l0_matched` twin from
+`--l0-matched`, and a `*_rollout_l0_matched` twin from the two together.
 
 **The caption, which is here and not on the grids.** Game 0, *t0* = 10; a point
 is the ReStraV descriptor of the W = 8 sampled positions (every 2nd ply) ending
@@ -255,6 +256,25 @@ in the same **25 of 27** plane × space cells, by 0.92–2.75× with a median of
 largest excursion is CosineSpaDE (1.49 → 1.79) and Standard drops out of the top
 (1.42 → 1.11), while GatedAnneal becomes the *smallest* (0.88 → 0.52) — so the
 ordering of spaces in the seed-42 grid was partly reading their L0.
+
+### The two controls together — `--variant rollout --l0-matched`
+
+`*_rollout_l0_matched`, one per figure above: game 0 at *t0* = 10, the same W = 8
+descriptor and the same four planes, drawn from the rollout branch set through the
+eight picks. n = 1 game — 9 branches × K = 4 rollouts = 36 rows per space, 10 anchors
+*t − t0* = 6…24, the mean over K taken after φ as everywhere in this study. The anchor
+caveat above applies unchanged, so these are a **shape check on the reduction and not
+a separation**. Rendered on one H100 (`scripts/slurm/submit_gpu.sbatch`).
+
+**The rollout inversion is a property of the branch set, not of the roster.** Gap ÷
+that plane's own exact permutation-null median, anchors *t* ≥ *t0*: the activation
+refit clears its null in all nine cells, 2.3–3.3× (seed-42 rollout: 2.5–4.7×), where
+spliced it sat *at* its null; shared R²¹ is 1.3–3.5× (seed-42 rollout: 1.1–3.4×). No
+plane reaches significance against the exact 28-way null, whose floor on *p* is 0.04.
+`run_from_reference_rollout_l0_matched` panel (a), illegal ÷ control 1 in full R²¹:
+0.85 (SpaDE) to 1.72 (CosineSpaDE), raw layer 5 at 1.19 — above 1 in seven of nine
+cells, against below 1 in seven of nine on the spliced L0-matched twin. Resampling the
+future is what moves that column; matching L0 is not.
 
 ## Figure notes
 

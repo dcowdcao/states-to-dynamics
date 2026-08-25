@@ -51,6 +51,14 @@ def paired_mean(X: np.ndarray, ref: int, K: int) -> np.ndarray:
     return (Y - Y[ref]).mean(axis=1)
 
 
+def _on_host(fn, device: str):
+    """`fn` taking and returning host tensors: a sweep mmaps its activations on the
+    CPU and accumulates in numpy, while the weights live on `device`."""
+    def run(x: torch.Tensor) -> torch.Tensor:
+        return fn(x.to(device)).cpu()
+    return run
+
+
 def encoders(device: str, l0_matched: bool = False):
     """(label, encode or None) per space, one checkpoint resident at a time.
 
@@ -59,7 +67,8 @@ def encoders(device: str, l0_matched: bool = False):
     fields such a sweep holds, and the login node's cgroup does not have both.
     """
     for label, e in spaces(l0_matched):
-        yield label, encoder(e, device)
+        fn = encoder(e, device)
+        yield label, fn if fn is None else _on_host(fn, device)
 
 
 def encode(Z: torch.Tensor, fn) -> np.ndarray:

@@ -6,9 +6,9 @@ R^21 — 7 raw step lengths, 6 raw turning angles, 4 moments of *d*, 4 moments o
 *θ* — instead of through a PCA of the raw activation displacement.
 
 ```
-python analysis/violation_divergence/fork_expanding_curvature/cache_features.py [--variant spliced|rollout]   # once each
+python analysis/violation_divergence/fork_expanding_curvature/cache_features.py [--variant spliced|rollout] [--l0-matched]   # once each
 python analysis/violation_divergence/fork_expanding_curvature/feasibility.py      # the numbers (spliced only)
-python analysis/violation_divergence/fork_expanding_curvature/make_figures.py [--variant spliced|rollout] [--camera-ready]
+python analysis/violation_divergence/fork_expanding_curvature/make_figures.py [--variant spliced|rollout] [--l0-matched] [--camera-ready]
 ```
 
 ## Verdict
@@ -232,10 +232,19 @@ nothing seed-42 is written over.
 |---|---|
 | `space_fork_grid_r21_expanding_l0_matched` | the grid over the eight picks |
 | `r21_expanding_magnitude_l0_matched` | its companion; panel (a) is raw layer 5 and is unchanged, since raw is in both rosters |
+| `space_fork_grid_r21_expanding_rollout_l0_matched` | the grid over the eight picks on the rollout branch set, a branch being the mean over its K = 4 sampled continuations taken after `r21` |
+| `r21_expanding_magnitude_rollout_l0_matched` | its companion, same branch set |
 
 The verdict does not move: the curve still cannot start until 14 plies after *t0*,
 and (b)'s observed medians still sit inside or barely above the time-shuffled null
 in every cell. n = 1 game, 8 non-reference branches, as above.
+
+`--variant rollout --l0-matched` puts both controls on at once and is the strictest
+reading of the verdict: game 0, *t0* = 10, the eight picks, and every branch resampling
+its own future, so the horizon caveat below and the L0 caveat above both apply to those
+two figures. Same n = 1 game and 8 non-reference branches; the (b) null is still 20
+shuffles of the post-*t0* positions. Cached and rendered on one H100
+(`scripts/slurm/submit_gpu.sbatch`).
 
 ## Figure notes
 

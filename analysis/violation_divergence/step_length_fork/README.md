@@ -24,9 +24,9 @@ difference between them, so they are one script.
 
 ```
 python analysis/violation_divergence/step_length_fork/measure.py [--n_games 100] \
-    [--variant spliced|rollout]
+    [--variant spliced|rollout] [--l0-matched]
 python analysis/violation_divergence/step_length_fork/make_figures.py \
-    [--game 1235 | --n_games 100] [--variant spliced|rollout] [--camera-ready]
+    [--game 1235 | --n_games 100] [--variant spliced|rollout] [--l0-matched] [--camera-ready]
 ```
 
 | file | what it is |
@@ -42,6 +42,9 @@ python analysis/violation_divergence/step_length_fork/make_figures.py \
 | `figures/n100_step_length_fork_l0_matched.{png,pdf}` | the population grid with the eight SAE cells seated at one shared $L_0$ (below) |
 | `$SPADE_DIVERGENCE_DIR/step_length_fork/n100_l0_matched.npz` | its sweep output; it never renders over the canonical npz |
 | `results/violation_divergence/step_length_fork_n100_l0_matched.csv` | its table, columns identical to the canonical one |
+| `figures/n100_step_length_fork_rollout_l0_matched.{png,pdf}` | the population grid with both controls on: the rollout branch set through the eight picks (below) |
+| `$SPADE_DIVERGENCE_DIR/rollout/step_length_fork/n100_l0_matched.npz` | its sweep output, `n_rollouts` = 4; it never renders over either single-control npz |
+| `results/violation_divergence/step_length_fork_n100_rollout_l0_matched.csv` | its table, columns identical to the other three |
 
 The default is the spliced set (`$SPADE_DIVERGENCE_DIR/branches`): every branch
 replays the source game's `tokens[t0+1:]`, so a difference at *r* > 0 descends
@@ -482,6 +485,39 @@ The two grey curves are the two legal controls, two draws of one empirical null.
 Each panel prints the paired contrast of its largest rule against `control_legal`
 at *r* = 0, taken inside each game. Everything at *r* ≤ 0 is bitwise identical to
 the spliced twin, since the step ending at *t₀* precedes the resampling.
+
+## The rollout twin at matched L0
+
+`figures/n100_step_length_fork_rollout_l0_matched.{png,pdf}` ·
+`results/violation_divergence/step_length_fork_n100_rollout_l0_matched.csv`
+
+```
+python analysis/violation_divergence/step_length_fork/measure.py      --n_games 100 --variant rollout --l0-matched
+python analysis/violation_divergence/step_length_fork/make_figures.py --n_games 100 --variant rollout --l0-matched
+```
+
+Both controls at once. Same 100 source games all forking at *t₀* = 20, same nine
+panels, same axis; the branch set is the rollout tree (K = 4 sampled continuations per
+branch, temperature 1, the ratio formed within a rollout index and meaned over the four
+afterwards) and the eight SAE cells are `picks.csv`'s, one per type at L0 ≈ 219.2. Bands
+are 95% percentile bootstrap CIs of the mean over source games (2000 resamples, seed 0,
+resampling games and never branches or rollouts). Measured on one H100
+(`scripts/slurm/submit_gpu.sbatch`).
+
+**At *r* = 0 it is the spliced L0-matched twin, and that is the check.** Everything at
+*r* ≤ 0 precedes the resampling, so the two tables agree there to their printed
+precision (≤ 6e-6 relative on `step_length`): R1 paired against `control_legal` at
+*r* = 0 is −0.047 (CosineSpaDE) to −0.093 (GatedSAE), resolved negative in **9 of 9**
+spaces — the same nine numbers *The L0-matched twin* quotes. Raw layer 5 is in both
+rosters and its rows are byte-identical to `step_length_fork_n100_rollout.csv`'s.
+
+**What the rollout adds after the fork survives the L0 control.** Meaned over *r* ≥ 0,
+R2 − control is resolved positive in 8 of 9 spaces (GatedSAE, −0.001 [−0.006, +0.005],
+the exception) and R1 − control is resolved negative in 5, so the ~1% lift both nulls
+carry does not swallow the rules once the dictionaries sit at one sparsity. The rule
+grouping stays weak, as everywhere in this study: within ÷ between-rule spread per game,
+raw layer 5 median 0.896 [IQR 0.829–1.014], and 0.901 (BatchTopK) to 0.969 (GatedSAE)
+across the eight dictionaries.
 
 ## Reading it honestly
 

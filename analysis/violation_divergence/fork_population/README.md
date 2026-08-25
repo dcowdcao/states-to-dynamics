@@ -46,9 +46,10 @@ branches *are* is that figure's panel **(b)**; read it there, on the one game.
 
 ```
 python analysis/violation_divergence/fork_population/measure.py \
-    [--plane displacement|r21|d7] [--n_games 100] [--variant spliced|rollout]
+    [--plane displacement|r21|d7] [--n_games 100] [--variant spliced|rollout] [--l0-matched]
 python analysis/violation_divergence/fork_population/make_figures.py \
-    [--plane displacement|r21|d7] [--n_games 100] [--variant spliced|rollout] [--camera-ready]
+    [--plane displacement|r21|d7] [--n_games 100] [--variant spliced|rollout] [--l0-matched] \
+    [--camera-ready]
 ```
 
 `measure.py` writes `$SPADE_DIVERGENCE_DIR/[rollout/]fork_population/{plane}_n100.npz`.
@@ -225,6 +226,33 @@ seed-42 grid's cell-to-cell scatter was sparsity, not architecture. CosineSpaDE 
 the largest R2 excursion under both rosters and in both the displacement and R^21
 planes (1.059 → 1.073 and 1.298 → 1.302), which is the one ordering the L0 control
 leaves alone.
+
+### `fork_population_displacement_rollout_l0_matched`, `..._r21_rollout_l0_matched`, `..._d7_rollout_l0_matched`
+
+**Both controls at once**: `--variant rollout --l0-matched`, the rollout branch set
+drawn over the eight `l0_operating_point` picks. Everything in the two sections above
+carries over — the K = 4 paired reduction taken after the encode and after φ, the
+*r* ≤ +8 window, the picks in the seed-42 grid's family order with each cell's own L0
+in its name — and `fork_population_{plane}_rollout_l0_matched.csv` has the same columns
+as both of its parents, so it diffs row for row against either. n = 100 source games,
+the first branch-complete ones forking at *t0* = 20 by game id, no game-level criterion;
+the quoted estimator is the `full space` row, each game's distance from its own reference
+over the drawn *r* ≥ 0 divided by that cell's legal control, meaned over games with a 95%
+percentile bootstrap CI (2000 resamples, seed 0, resampling games and never branches or
+rollouts). Measured on one H100 (`scripts/slurm/submit_gpu.sbatch`).
+
+**Raw layer 5 is in both rosters, and it is the check.** Its rows are byte-identical to
+`fork_population_{displacement,d7}_rollout.csv`'s and agree to 8 significant figures in
+R²¹, where the plane's per-column scaling picks up float noise.
+
+**R1's deficit — the one spliced conclusion the rollout kept — also survives the L0
+control.** Displacement plane, full space: R1 is below its cell's legal control in
+**9 of 9** spaces with every upper bound under 1, 0.942 (TopK) to 0.973 (CosineSpaDE)
+against raw layer 5's 0.956. **The rollout's reversal on the other two rules is now
+grid-wide.** R2 runs further than the second legal move's own ratio in **8 of 9** cells
+— GatedSAE, 1.008 against 1.016, is the only exception — where at seed-42 sparsities
+the four TopK/Gated cells sat on zero. CosineSpaDE is again the largest excursion
+(R2 1.192 ± 0.034) and again the pick furthest below the target L0.
 
 ## What it says
 
