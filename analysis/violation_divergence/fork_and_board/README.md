@@ -20,7 +20,7 @@ below is what a reader has to know before reading a bar off it.
 ```
 python analysis/violation_divergence/fork_and_board/make_figures.py \
     [--game 1235] [--plane displacement|r21|d7] [--embedding pca|isomap] \
-    [--variant spliced|rollout] [--camera-ready]
+    [--variant spliced|rollout] [--l0-matched] [--camera-ready]
 ```
 
 | file | plane (a) is drawn in | branch set |
@@ -30,6 +30,21 @@ python analysis/violation_divergence/fork_and_board/make_figures.py \
 | `game_1235_fork_and_board_d7_pca` | PCA of the same `Δφ(t)` cut to R²¹'s **7 raw step lengths** `d1…d7` | spliced |
 | `game_1235_fork_and_board_displacement_pca_rollout` | same displacement plane | rollout |
 | `game_1235_fork_and_board_r21_pca_rollout` | same R²¹ plane | rollout |
+
+**`--l0-matched`** redraws any of the five over the `l0_operating_point` picks —
+one checkpoint per SAE type at the shared target *L0* = 219.2 — instead of the
+seed-42 roster, and writes it under an `_l0_matched` suffix. All five twins are
+committed; the section
+*[The L0-matched twins](#game_1235_fork_and_board__l0_matched)* under Captions is
+what they say.
+
+| file | plane (a) is drawn in | branch set |
+|---|---|---|
+| `game_1235_fork_and_board_displacement_pca_l0_matched` | displacement | spliced |
+| `game_1235_fork_and_board_r21_pca_l0_matched` | R²¹ | spliced |
+| `game_1235_fork_and_board_d7_pca_l0_matched` | `d1…d7` | spliced |
+| `game_1235_fork_and_board_displacement_pca_rollout_l0_matched` | displacement | rollout |
+| `game_1235_fork_and_board_r21_pca_rollout_l0_matched` | R²¹ | rollout |
 
 Both panels draw the same game, which is what makes the pairing mean anything.
 The default is **game 1235** (*t0* = 20); `--game` asserts the game it is given
@@ -281,6 +296,59 @@ CosineSpaDE against its own control, not against raw layer 5's bars. The rest of
 (c) here reads as elsewhere: R1 below 1 in eight of nine cells, R3 above 1 in
 all nine, and the bar below its marker for R1 in eight of nine — the plane
 understating, where the spliced figures have it overstating.
+
+### `game_1235_fork_and_board_*_l0_matched`
+
+**The same game and the same five figures, with the eight dictionary cells
+seated at one shared L0.** The canonical five seat each type at its own default
+sparsity, *L0* 31 to 1808, where a difference between two cells confounds the
+architecture with its L0. `--l0-matched` swaps that roster for the
+`l0_operating_point` picks: one checkpoint per type, each the nearest-*L0* member
+of its own grid to the shared target *L0* = 219.2, and all eight inside 184–260. The roster, its L0s and the
+standardization rule — Karvonen's five were trained on the raw residual stream
+and ours on `scale·(x − mean)`, and each pick is fed the convention it was
+trained on — are in
+[`../r21_shared_basis/README.md`](../r21_shared_basis/README.md), *The L0-matched
+roster*. `fork_plane.spaces()` is the switch, and each panel name carries its own
+*L0*.
+
+**Nothing on the canvas says which roster a cell came from.** The only mark of it
+is the *L0* in each panel title, so a matched figure read on its own is a fork
+grid whose cells happen to be labelled with numbers near 220 — that they are one
+checkpoint per type at a shared operating point, and that the seed-42 grid
+confounds architecture with sparsity, is here and nowhere else. This paragraph is
+the caption these five are published with.
+
+Cells keep the seed-42 grid's family order, so the two grids read panel for
+panel. Everything else — the game, the branch set, the planes, the board, the
+camera, (c)'s estimator and its drawn window — is unchanged, and `raw layer 5`
+is in both rosters and reports **identical numbers in all five figures**, which
+is the check that only the dictionary cells moved. The within ÷ between-rule
+spread ratio is measured in raw layer 5 at full width, so it too is unchanged
+(0.885 / 0.902 / 0.753 spliced, 0.887 / 0.714 rollout).
+
+**`raw layer 5` is the control that says only the dictionary cells moved**, and
+it holds in all five. What follows is what the roster change did.
+
+**One thing moves in every one of the five, and it is GatedAnneal.** In all five
+seed-42 figures GatedAnneal has the *smallest* R3 excursion in the full space of
+the nine cells; at matched *L0* it has the smallest in none of them —
+displacement spliced 1.34 → 1.47, R²¹ spliced 1.69 → 2.20, `d7` 1.29 → 2.28,
+displacement rollout 1.11 → 1.30, R²¹ rollout 1.06 → 2.09. The seed-42
+GatedAnneal is the sparsest cell in the grid, so what read as an architecture
+that flattens the fork was its L0 — the same reversal `../fork_population` and
+`../changepoint_localization` report on their own corpora. Read it as a
+direction, not a measurement: n = 1, and a selected game.
+
+**CosineSpaDE's R²¹-rollout outlier is not sparsity.** The cell that sets the
+whole y scale in `..._r21_pca_rollout` still sets it in the twin — R3 12.33 →
+9.88 in the plane and 5.06 → 5.16 in the space — so the caveat above, read
+CosineSpaDE against its own control and not against raw layer 5's bars, carries
+over unchanged.
+
+Everything else — n = 1, the selection of game 1235, one control, per-space
+refits, the not-comparable-across-cells disclaimer, the fixed camera — reads
+exactly as for the seed-42 figures above.
 
 ## (c): the fork as a number, and why it is a ratio
 

@@ -39,6 +39,15 @@ member category separately and the rule mean is taken afterwards, in the plane;
 the projection is linear, so mean-then-project and project-then-mean agree, while
 phi-of-a-mean would be a different quantity.
 
+`--l0-matched` swaps the seed-42 roster for the eight l0_operating_point picks,
+one checkpoint per SAE type at the shared target L0. The seed-42 cells sit
+wherever each type's own defaults left it on the sparsity axis, so a difference
+between two of them confounds the architecture with its L0; this roster holds L0
+fixed. Its files carry an _l0_matched tag and the canonical names are unchanged.
+Nothing on the canvas says which roster a cell came from except the L0 in its
+title, so the matched grid is only readable beside README.md (FIGURE_GUIDELINES
+2, 5).
+
 `--variant rollout` draws the same eight branches out of the rollout branch set,
 where every branch -- the reference included -- samples its own continuation from
 OthelloGPT rather than replaying the source game's. A branch is K rows there, so
@@ -56,7 +65,7 @@ line saying the game was selected, without which the panels read as a result.
 
 Usage: python analysis/violation_divergence/fork_and_board/make_figures.py
        [--game 1235] [--plane displacement|r21|d7] [--embedding pca|isomap]
-       [--variant spliced|rollout] [--camera-ready]
+       [--variant spliced|rollout] [--l0-matched] [--camera-ready]
 """
 
 import argparse
@@ -81,7 +90,7 @@ from spade.violation_divergence.branches import (
 from spade.violation_divergence.curvature_plane import (
     PLANE_COLUMNS, W, fit_plane, windowed)
 from spade.violation_divergence.fork_plane import (
-    EMBEDDINGS, positions, space_features, spaces)
+    EMBEDDINGS, positions, space_features, spaces, tag)
 from spade.violation_divergence.population import paired_mean
 from spade.violation_divergence.rule_groups import rule_rows, spread_ratio
 
@@ -109,7 +118,6 @@ ROLLOUT_RMAX = 8
 SELECTION_NOTE = (f"game {FIGURE_GAME} is selected, not typical: the argmax over 1550 "
                   f"branch-complete games of its illegal branches' mutual separation "
                   f"(README)")
-
 
 @dataclass(frozen=True)
 class Projection:
@@ -235,8 +243,9 @@ def metric_panel(ax, cells: list[tuple[str, np.ndarray, np.ndarray]],
 
 
 def figure(g: Game, Z: np.ndarray, pos: np.ndarray, plane: str, method: str,
-           variant: str, K: int, device: str, camera_ready: bool) -> Path:
-    cells = spaces()
+           variant: str, K: int, device: str, l0_matched: bool,
+           camera_ready: bool) -> Path:
+    cells = spaces(l0_matched)
     ref = reference_row(g.rows)
     k = int(np.flatnonzero(pos == g.t0)[0])
     nrow = int(np.ceil(len(cells) / NCOL))
@@ -325,11 +334,11 @@ def figure(g: Game, Z: np.ndarray, pos: np.ndarray, plane: str, method: str,
     if not camera_ready:
         fig.suptitle(f"Fork Trajectory ({PLANE_NAME[plane]} {METHOD_NAME[method]}) in "
                      f"Each Representation Space"
-                     + (f" — {variant} branches" if variant else ""), fontsize=12)
-    suffix = f"_{variant}" if variant else ""
+                     + (f" — {variant} branches" if variant else "")
+                     + (", $L_0$-matched SAEs" if l0_matched else ""), fontsize=12)
     return save_figure(
-        fig, FIG_DIR / f"game_{g.game}_fork_and_board_{plane}_{method}{suffix}",
-        camera_ready)
+        fig, FIG_DIR / f"game_{g.game}_fork_and_board_{plane}_{method}"
+                       f"{tag(variant, l0_matched)}", camera_ready)
 
 
 def main():
@@ -340,6 +349,9 @@ def main():
     parser.add_argument("--variant", default="spliced", choices=list(VARIANTS),
                         help="rollout: every branch samples its own continuation, "
                              "K rows per branch, averaged over K")
+    parser.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                        help="the eight l0_operating_point picks instead of the seed-42 "
+                             "roster: one per SAE type, all at the shared target L0")
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()
     assert args.plane == "displacement" or args.embedding == "pca", \
@@ -377,7 +389,7 @@ def main():
     print(f"within/between rule spread ratio, game {g.game}, {args.plane}, "
           f"{args.variant}: {spread_ratio(field, g.rows):.3f}")
     out = figure(g, Z, pos, args.plane, args.embedding, variant, K, device,
-                 args.camera_ready)
+                 args.l0_matched, args.camera_ready)
     print(f"wrote {out}")
 
 
