@@ -214,7 +214,7 @@ gives $\tau = 1.245$.
 \subsection{Sparse autoencoders}
 
 We compare eight architectures at expansion factor 16, giving 8192 latents on
-$d_{\mathrm{model}} = 512$, on layer-5 activations: Standard (ReLU) [4], $p$-Anneal [8], Gated [11],
+$d_{\mathrm{model}} = 512$, on layer-5 activations: Standard (ReLU) [4], $p$-Anneal [8], Gated [12],
 Gated+$p$-Anneal [8], TopK [6], BatchTopK [5], the prototype-distance architecture SpaDE [7],
 and CosineSpaDE, a variant of it we introduce here.
 
@@ -225,7 +225,7 @@ share a standardization and no comparison is confounded by data order. Activatio
 them, $x' = \sigma (x - \mu)$ with $\mu$ the mean over the first 100 calibration batches and
 $\sigma = \sqrt{d_{\mathrm{model}} / \mathbb{E}\|x - \mu\|^2}$, so $\mathbb{E}\|x'\|^2 = d_{\rm
 model}$. The same transform is applied at encode time. SpaDE scores prototypes by
-$-\lambda\|x - Ae_i\|^2$ with $\lambda$ trainable through a softplus, encodes with sparsemax [12],
+$-\lambda\|x - Ae_i\|^2$ with $\lambda$ trainable through a softplus, encodes with sparsemax [11],
 and adds the distance-weighted regularizer of K-Deep Simplex [13],
 $\gamma \sum_j \|x - Ad_j\|^2 f_j$; CosineSpaDE scores
 by cosine similarity with no $\lambda$ and regularizes with $\sum_j (1 - \cos(x, Ad_j)) f_j$,

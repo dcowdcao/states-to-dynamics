@@ -294,6 +294,7 @@ Denison, C., Askell, A., Lasenby, R., Wu, Y., Kravec, S., Schiefer, N., Maxwell,
 Hatfield-Dodds, Z., Tamkin, A., Nguyen, K., McLean, B., Burke, J.E., Hume, T., Carter, S.,
 Henighan, T.\ \& Olah, C.\ (2023) Towards monosemanticity: decomposing language models with
 dictionary learning. {\it Transformer Circuits Thread}.
+\url{https://transformer-circuits.pub/2023/monosemantic-features/index.html}.
 
 
 [5] Bussmann, B., Leask, P.\ \& Nanda, N.\ (2024) BatchTopK sparse autoencoders. {\it arXiv
@@ -306,14 +307,16 @@ International Conference on Learning Representations}.
 
 
 [7] Hindupur, S.S.R., Lubana, E.S., Fel, T.\ \& Ba, D.\ (2025) Projecting assumptions: the duality
-between sparse autoencoders and concept geometry. In {\it Advances in Neural Information
-Processing Systems 38}.
+between sparse autoencoders and concept geometry. In D.\ Belgrave, C.\ Zhang, H.\ Lin,
+R.\ Pascanu, P.\ Koniusz, M.\ Ghassemi \& N.\ Chen (eds.), {\it Advances in Neural Information
+Processing Systems 38}, pp.\ 11649--11699. Red Hook, NY: Curran Associates, Inc.
 
 
 [8] Karvonen, A., Wright, B., Rager, C., Angell, R., Brinkmann, J., Smith, L., Mayrink Verdun, C.,
 Bau, D.\ \& Marks, S.\ (2024) Measuring progress in dictionary learning for language model
-interpretability with board game models. In {\it Advances in Neural Information Processing
-Systems 37}.
+interpretability with board game models. In A.\ Globerson, L.\ Mackey, D.\ Belgrave, A.\ Fan,
+U.\ Paquet, J.\ Tomczak \& C.\ Zhang (eds.), {\it Advances in Neural Information Processing
+Systems 37}, pp.\ 83091--83118. Red Hook, NY: Curran Associates, Inc.
 
 
 [9] Lee, A., Vi\'egas, F.\ \& Wattenberg, M.\ (2026) Tensor product representation probes reveal
@@ -325,19 +328,21 @@ world representations: exploring a sequence model trained on a synthetic task. I
 International Conference on Learning Representations}.
 
 
-[11] Rajamanoharan, S., Conmy, A., Smith, L., Lieberum, T., Varma, V., Kram\'ar, J., Shah, R.\ \&
+[11] Martins, A.F.T.\ \& Astudillo, R.F.\ (2016) From softmax to sparsemax: a sparse model of
+attention and multi-label classification. In M.F.\ Balcan \& K.Q.\ Weinberger (eds.), {\it
+Proceedings of the 33rd International Conference on Machine Learning}, vol.\ 48, pp.\ 1614--1623.
+New York, NY: PMLR.
+
+
+[12] Rajamanoharan, S., Conmy, A., Smith, L., Lieberum, T., Varma, V., Kram\'ar, J., Shah, R.\ \&
 Nanda, N.\ (2024) Improving dictionary learning with gated sparse autoencoders. {\it arXiv
 preprint arXiv:2404.16014}.
-
-
-[12] Martins, A.F.T.\ \& Astudillo, R.F.\ (2016) From softmax to sparsemax: a sparse model of
-attention and multi-label classification. In {\it Proceedings of the 33rd International
-Conference on Machine Learning}, pp.\ 1614--1623.
 
 
 [13] Tasissa, A., Tankala, P., Murphy, J.M.\ \& Ba, D.\ (2023) K-Deep Simplex: manifold learning
 via local dictionaries. {\it IEEE Transactions on Signal Processing} {\bf 71}:3741--3754.
 }
+
 
 
 %%%%%%%%%%% APPENDIX %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -561,7 +566,7 @@ gives $\tau = 1.245$.
 \subsection{Sparse autoencoders}
 
 We compare eight architectures at expansion factor 16, giving 8192 latents on
-$d_{\mathrm{model}} = 512$, on layer-5 activations: Standard (ReLU) [4], $p$-Anneal [8], Gated [11],
+$d_{\mathrm{model}} = 512$, on layer-5 activations: Standard (ReLU) [4], $p$-Anneal [8], Gated [12],
 Gated+$p$-Anneal [8], TopK [6], BatchTopK [5], the prototype-distance architecture SpaDE [7],
 and CosineSpaDE, a variant of it we introduce here.
 
@@ -572,7 +577,7 @@ share a standardization and no comparison is confounded by data order. Activatio
 them, $x' = \sigma (x - \mu)$ with $\mu$ the mean over the first 100 calibration batches and
 $\sigma = \sqrt{d_{\mathrm{model}} / \mathbb{E}\|x - \mu\|^2}$, so $\mathbb{E}\|x'\|^2 = d_{\rm
 model}$. The same transform is applied at encode time. SpaDE scores prototypes by
-$-\lambda\|x - Ae_i\|^2$ with $\lambda$ trainable through a softplus, encodes with sparsemax [12],
+$-\lambda\|x - Ae_i\|^2$ with $\lambda$ trainable through a softplus, encodes with sparsemax [11],
 and adds the distance-weighted regularizer of K-Deep Simplex [13],
 $\gamma \sum_j \|x - Ad_j\|^2 f_j$; CosineSpaDE scores
 by cosine similarity with no $\lambda$ and regularizes with $\sum_j (1 - \cos(x, Ad_j)) f_j$,
