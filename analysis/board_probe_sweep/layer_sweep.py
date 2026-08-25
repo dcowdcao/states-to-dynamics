@@ -1,9 +1,10 @@
 """Where the board state is linearly readable, under the canonical probe.
 
-One bar per residual-stream layer: the accuracy of `probes.load.board(layer)` on the
-canonical corpus's test games, 3-way {empty, theirs, mine} over all 64 squares. The
-saved cards already carry a test accuracy; this re-measures it to attach an interval
-and a null, neither of which a single scalar per layer can supply.
+One bar per residual-stream layer: the accuracy of `probes.load.board(layer)` on 1,000
+of the canonical corpus's test games, 3-way {empty, theirs, mine} over all 64 squares.
+The saved cards already carry a test accuracy over the whole test split; this
+re-measures it to attach an interval and a null, neither of which a single scalar per
+layer can supply.
 
 Positions inside a game share a board, so the interval is a cluster bootstrap over
 test GAMES, not over rows. The null is the per-square majority class, fit on the train
@@ -32,6 +33,7 @@ from spade.probes.train import BATCH, activations, corpus, game_split, rows
 HERE = Path(__file__).resolve().parent
 LAYERS = range(8)
 SEED = 42
+N_TEST_GAMES = 1000     # of the split's 3000; the head of a permutation, so still uniform
 N_BOOT = 1000
 
 
@@ -68,6 +70,7 @@ def majority_null(y: torch.Tensor, train: torch.Tensor, test: torch.Tensor,
 def measure(device: str) -> pd.DataFrame:
     y, games, n_games = corpus()
     fit_games, _, test_games = game_split(n_games, SEED)
+    test_games = test_games[:N_TEST_GAMES]
     train, test = rows(games, fit_games), rows(games, test_games)
     game_of_row, uniq = pd.factorize(games[test].numpy())
     totals = np.bincount(game_of_row, weights=np.full(len(test), y.shape[1]),
@@ -117,20 +120,16 @@ def draw(table: pd.DataFrame, camera_ready: bool) -> Path:
         ax.text(r.layer, r.hi + 0.0012, f"{r.accuracy:.4f}", ha="center", va="bottom",
                 fontsize=7.2, color=MUTED, zorder=4)
 
-    best = bars.loc[bars.accuracy.idxmax()]
-    ax.text(best.layer, 1.0032, "best", ha="center", va="center", fontsize=8, color=INK)
     ax.text(probes.LAYER, bars.accuracy.min() * 0.5 + 0.5 * bars.accuracy.max(),
-            "hook point", rotation=90, ha="center", va="center", fontsize=7.5,
+            "chosen layer", rotation=90, ha="center", va="center", fontsize=7.5,
             color="white", zorder=5)
 
     ax.set_ylim(0.90, 1.0055)
     ax.set_xticks(list(LAYERS))
-    ax.set_xlabel("layer (resid_post; layer 0 is the first block)")
-    ax.set_ylabel("board accuracy, held-out games")
+    ax.set_xlabel("layer")
+    ax.set_ylabel("board state accuracy")
     ax.grid(axis="x", visible=False)
     ax.tick_params(axis="x", length=0)
-    if not camera_ready:
-        ax.set_title("Board-probe accuracy by layer, canonical corpus")
     fig.tight_layout()
     return save_figure(fig, HERE / "figures" / "board_layer_sweep", camera_ready)
 

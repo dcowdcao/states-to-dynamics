@@ -6,6 +6,21 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## board_layer_sweep is now n = 1,000 games, and the panel carries no title (2026-08-25)
+
+`analysis/board_probe_sweep/` scored all 3,000 test games; it now scores the first 1,000
+(`N_TEST_GAMES`, the head of a permuted split, so still a uniform subsample). Accuracies move
+by 2.5-3.5 x 10^-4 -- layer 5 0.99367 -> 0.99397, layer 6 0.99452 -> 0.99478 -- and the CIs
+widen by ~sqrt(3); layer 6 still leads layer 5 by ~0.0008 and the ordering is unchanged, so
+nothing downstream reads differently. The two-thirds of held-out data dropped bought no
+statistical gain; the smaller n was asked for.
+
+**The panel stopped self-describing.** Title deleted, axes cut to "layer" and "board state
+accuracy", the "best" annotation on layer 6 removed, "hook point" -> "chosen layer". That
+strips the indexing base, the corpus, and the argmax off the canvas, so
+`board_probe_sweep/README.md` opens with them and says it is the caption -- consistent with
+"no gray note blocks on figures", but it means the PNG alone no longer states its own n.
+
 ## threshold_detection's two panels were two corpora (2026-08-24)
 
 `changepoint_localization/figures/threshold_detection.png` drew (a) from
