@@ -179,7 +179,9 @@ and point sizes and change only the typeface and its sizes:
   rescaled to 10in is 17 and 16, so at equal printed width these panels carry the same apparent
   type as every other figure in the repo. His 18/18/16 was marginally larger.
 - **Subcaptions.** `(a)`–`(d)`, nothing more. His wording ("Coverage of Board State vs. $L_0$")
-  restated axis labels the panels already carry.
+  restated axis labels the panels already carry. Their size is derived, not chosen: a panel is
+  drawn into a cell about half its authored width, so `combine_figure` scales the subcaption by
+  the same factor and it lands on the panels' own label size (~8 pt) instead of twice it.
 
 Two consequences worth stating. Point sizes are still his `s=100`, tuned for a 10in canvas, so
 the markers read larger than a house figure's. And a composite is two panels wide: place it at

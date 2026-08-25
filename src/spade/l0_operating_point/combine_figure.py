@@ -26,7 +26,7 @@ import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 
 from spade.common.paths import repo_root
-from spade.l0_operating_point.plot_pareto import OUR_FONTS
+from spade.l0_operating_point.plot_pareto import OUR_FONTS, OUR_TYPE
 
 RENDERS = repo_root() / "figures/l0_operating_point"
 
@@ -37,9 +37,7 @@ PANELS = [
     ("othello_3var_reconstruct.png", "(c)"),
     ("othello_2var_reconstruct.png", "(d)"),
 ]
-# The composite is ~9.7in wide and prints at NeurIPS's 5.5in, so 17 pt lands near 10 pt --
-# a size the panels' own 32 pt type also lands near. Sizes here are canvas pt, not final pt.
-CAPTION_PT = 17
+PANEL_WIDTH_IN = 10   # plot_pareto's figsize; each panel lands in a cell narrower than that
 
 # Which panel directory each combined figure is built from. The his-SAEs-only figure takes
 # the styled render, not the byte-identical one verify_match checks.
@@ -56,6 +54,10 @@ def _compose(panel_dir: Path, out_stem: Path, dpi: int) -> Path:
     images = [(mpimg.imread(panel_dir / name), caption) for name, caption in PANELS]
     cell_w = max(im.shape[1] for im, _ in images)
     cell_h = max(im.shape[0] for im, _ in images)
+    # A panel is authored PANEL_WIDTH_IN wide and drawn into a cell of cell_w/dpi, so its
+    # 17 pt type appears at about 8 pt here. Set the subcaption from the same scale, or it
+    # reads at twice the size of everything it labels.
+    caption_pt = OUR_TYPE["axes.labelsize"] * (cell_w / dpi) / PANEL_WIDTH_IN
 
     fig, axes = plt.subplots(
         2, 2, figsize=(2 * cell_w / dpi, 2 * cell_h / dpi), dpi=dpi
@@ -65,7 +67,7 @@ def _compose(panel_dir: Path, out_stem: Path, dpi: int) -> Path:
         ax.set_xlim(-(cell_w - im.shape[1]) / 2, im.shape[1] + (cell_w - im.shape[1]) / 2)
         ax.set_ylim(im.shape[0] + (cell_h - im.shape[0]) / 2, -(cell_h - im.shape[0]) / 2)
         ax.axis("off")
-        ax.set_title(caption, fontsize=CAPTION_PT, y=-0.11)
+        ax.set_title(caption, fontsize=caption_pt, y=-0.11)
 
     fig.subplots_adjust(wspace=0.02, hspace=0.16, left=0.01, right=0.99, top=0.99, bottom=0.05)
     out_stem.parent.mkdir(parents=True, exist_ok=True)
