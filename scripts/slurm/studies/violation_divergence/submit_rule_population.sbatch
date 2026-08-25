@@ -35,4 +35,4 @@ mkdir -p logs/violation_divergence
 # One array task per tree: they read different tensors and share nothing, so
 # running them in sequence only doubled the wall clock.
 TREE=(branches rollout)
-python -m spade.violation_divergence.rule_curvature --tree "${TREE[$SLURM_ARRAY_TASK_ID]}"
+python -m spade.violation_divergence.rule_curvature --tree "${TREE[$SLURM_ARRAY_TASK_ID]}" "$@"

@@ -37,9 +37,17 @@ rules both times, so the difference between the two figures is attributable to
 the suffix and to nothing else. What the spliced tree's suffix costs the reader is
 in README.md under Captions, and it is not optional.
 
+**`--l0-matched` is the by-space arm, and it is the two combined figures only.**
+The seed-42 roster's L0s span 32.5 to 1,808, so a cell-to-cell reading of either
+combined figure confounds the architecture with its sparsity; the eight
+`l0_operating_point` picks remove that. The per-space files are not twinned: panel
+(c) is the same board in all nine, and (a) and (b) are reproduced cell for cell by
+`_population_combined` and `_combined`, so nine more files per tree would carry no
+claim the pair does not.
+
 Usage: python analysis/violation_divergence/rule_curvature/make_figures.py
        [--tree branches|rollout] [--game 1235] [--t0 20|all]
-       [--space raw|<family>|all] [--camera-ready]
+       [--space raw|<family>|all] [--l0-matched] [--camera-ready]
 """
 
 import argparse
@@ -61,7 +69,7 @@ from spade.figures.straightness_panels import (
 from spade.othello.boards import flip_set, replay
 from spade.othello.taxonomy import LEGAL
 from spade.violation_divergence import rule_curvature as rc
-from spade.violation_divergence.fork_plane import spaces
+from spade.violation_divergence.fork_plane import spaces, tag
 from spade.violation_divergence.rule_groups import rule_rows
 
 FIG_DIR = Path(__file__).resolve().parent / "figures"
@@ -109,6 +117,11 @@ def rule_n(pop: rc.Population) -> str:
     each = f"$n$ = {n[0]}" if len(n) == 1 else f"$n$ = {n[0]}-{n[-1]}"
     per = "" if pop.n_rollouts == 1 else f" $\\times$ {pop.n_rollouts} rollouts"
     return f"forked branches, {each} games{per} at {where}"
+
+
+def roster(l0_matched: bool) -> str:
+    """Only the matched roster names itself: the seed-42 suptitles are committed."""
+    return ", $L_0$-matched roster" if l0_matched else ""
 
 
 def t0_line(ax, t0: int) -> None:
@@ -238,7 +251,7 @@ def per_space(fork: rc.Fork, entry, label: str, tree: str, blocks: dict,
 
 
 def combined(forks: list[tuple[str, object, rc.Fork]], tree: str,
-             camera_ready: bool) -> Path:
+             l0_matched: bool, camera_ready: bool) -> Path:
     """The violation-locked panel in every representation space, shared axes.
 
     Only the violation-locked panel: it is the measurement, and nine copies of the
@@ -277,12 +290,14 @@ def combined(forks: list[tuple[str, object, rc.Fork]], tree: str,
     apparatus(fig, gs[1], forks[0][2], axes[0], NCOL, "b")
     if not camera_ready:
         fig.suptitle(f"Curvature response to a rule violation across nine spaces "
-                     f"(layer 5, raw, {TREE_TITLE[tree]})", fontsize=12)
-    return save_figure(fig, FIG_DIR / f"curvature_rules_{tree}_combined", camera_ready)
+                     f"(layer 5, raw, {TREE_TITLE[tree]}{roster(l0_matched)})", fontsize=12)
+    return save_figure(fig, FIG_DIR / f"curvature_rules_{tree}_combined"
+                       f"{tag(l0_matched=l0_matched)}", camera_ready)
 
 
 def combined_population(forks: list[tuple[str, object, rc.Fork]], tree: str,
-                        blocks: dict, t0: int | None, camera_ready: bool) -> Path:
+                        blocks: dict, t0: int | None, l0_matched: bool,
+                        camera_ready: bool) -> Path:
     """The population clock in every representation space, shared axes.
 
     The companion to `combined`: that one carries the violation-locked response of
@@ -318,9 +333,10 @@ def combined_population(forks: list[tuple[str, object, rc.Fork]], tree: str,
 
     if not camera_ready:
         fig.suptitle(f"The curvature clock across nine spaces "
-                     f"(layer 5, {rule_n(pop)}, {TREE_TITLE[tree]})", fontsize=12)
-    return save_figure(fig, FIG_DIR / f"curvature_rules_{tree}_population_combined",
-                       camera_ready)
+                     f"(layer 5, {rule_n(pop)}, {TREE_TITLE[tree]}"
+                     f"{roster(l0_matched)})", fontsize=12)
+    return save_figure(fig, FIG_DIR / f"curvature_rules_{tree}_population_combined"
+                       f"{tag(l0_matched=l0_matched)}", camera_ready)
 
 
 def main():
@@ -331,6 +347,8 @@ def main():
                         help="(a)'s fork position, or 'all' to pool every position")
     parser.add_argument("--space", default="all",
                         help="'all', 'raw', or an SAE family (e.g. TopK)")
+    parser.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                        help="the l0_operating_point picks; the combined figures only")
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()
     t0 = None if args.t0 == "all" else int(args.t0)
@@ -341,7 +359,7 @@ def main():
                      weights_only=True)["cls"]
     blocks = {c: b for c, b in class_blocks(len(cls)).items() if c in CLASSES}
 
-    cells = [(label, entry) for label, entry in spaces()
+    cells = [(label, entry) for label, entry in spaces(args.l0_matched)
              if args.space == "all" or space_stem(entry).startswith(
                  "raw" if args.space == "raw" else args.space)]
     assert cells, f"no representation space matches --space {args.space!r}"
@@ -351,8 +369,9 @@ def main():
         fork = rc.load_fork(args.tree, args.game, entry, device)
         rc.check_prefix(fork)
         forks.append((label, entry, fork))
-        written.append(per_space(fork, entry, label, args.tree, blocks, t0,
-                                 args.camera_ready))
+        if not args.l0_matched:
+            written.append(per_space(fork, entry, label, args.tree, blocks, t0,
+                                     args.camera_ready))
         # Printed, not drawn: the README quotes these, and they have to be
         # re-derivable without measuring a figure by eye (as ../fork_and_board does).
         rels, rules = rc.rule_locked(fork)
@@ -379,9 +398,9 @@ def main():
                           f"+-{1.96 * pop.sem[j, k[j]]:.2f}"
                           for j, r in enumerate(rc.RULES)))
     if len(cells) > 1:
-        written.append(combined(forks, args.tree, args.camera_ready))
+        written.append(combined(forks, args.tree, args.l0_matched, args.camera_ready))
         written.append(combined_population(forks, args.tree, blocks, t0,
-                                           args.camera_ready))
+                                           args.l0_matched, args.camera_ready))
     print("\n".join(f"wrote {p}" for p in written))
 
 

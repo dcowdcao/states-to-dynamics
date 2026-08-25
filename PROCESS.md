@@ -6,6 +6,38 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
+
+`curvature_rules_{tree}_combined` and `curvature_rules_{tree}_population_combined` read cell to
+cell across nine representation spaces on the seed-42 roster, whose L0s span 32.5 to 1,808, so
+neither could separate an architecture from its sparsity. `--l0-matched` on
+`spade.violation_divergence.rule_curvature` and on the study's `make_figures.py` redraws both
+over the eight `l0_operating_point` picks (L0 184-260). Four new PNGs; the 22 canonical figures
+are untouched, verified with `git status` rather than by regeneration -- a GPU re-render of an
+unchanged figure moves ~1e-4 of its pixels by 1-2/255, which is device noise, not a change.
+
+**Left out on purpose: the nine per-space files per tree.** Panel (c) is the same board in all
+nine of them, panel (a) is a cell of `_population_combined` and panel (b) a cell of
+`_combined`, so eighteen more PNGs would be larger renderings of what the pair already carries.
+The 21-D rule descriptors are not built for this roster either -- straightness `feature_pca` is
+their only reader and it draws seed-42 -- so `--l0-matched` builds the population alone and
+skips the expensive product.
+
+**The roster reorders the spaces; the suffix does not.** On panel (a)'s R2 peak below the legal
+class the two trees rank the eight SAE spaces identically within a roster, and between rosters
+SpaDE falls from second to seventh while BatchTopK rises from fifth to second -- the same "its
+lead was sparsity" reversal. CosineSpaDE is the extreme and GatedSAE the mildest in all four
+panels, R2 > R3 > R1 holds in all 36 cells, and only CosineSpaDE beats raw layer 5 by more than
+0.3 deg on either roster. The n = 1 spread ratio is where matching bites hardest: 0.858-0.956
+seed-42 against 0.734-1.059 matched, with three picks now above 1.
+
+**One name was the whole missing input**, not a measurement: the class profiles the picks are
+drawn against already existed as `l0_<config>_raw.npz`, and what was missing was
+`rc.space_key` returning a pick's own `l0_<config>` stem instead of `sae_<config>`. **Not
+fixed, and flagged in the study README:** its Captions and tree-comparison sections still quote
+n = 80 and the numbers that went with it, which `af73625` superseded when it re-rendered every
+figure on the 2000-game population.
+
 ## The quantity ablation is spliced-only, and its L0-matched bar IS the detector's (2026-08-25)
 
 Two changes, both asked for. The regenerated regime is gone -- every arm now keeps the source

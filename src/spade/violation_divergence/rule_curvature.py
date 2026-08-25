@@ -50,7 +50,7 @@ so `main` selects the population inside the pass. They are written to
 scripts only read them.
 
 Usage: python -m spade.violation_divergence.rule_curvature
-       [--tree branches|rollout] [--t0 20|all]
+       [--tree branches|rollout] [--t0 20|all] [--l0-matched]
 """
 
 import argparse
@@ -65,6 +65,7 @@ from spade.common.config import LAYER
 from spade.common.device import select_device
 from spade.common.study import variant_dir
 from spade.figures.straightness_panels import TURN_OFFSET, align_to_event
+from spade.l0_operating_point.checkpoints import Matched
 from spade.othello.taxonomy import RULE_MEMBERS
 from spade.straightness.geometry import restrav_features, temporal_geometry
 from spade.violation_divergence.branches import (
@@ -384,8 +385,15 @@ def build(tree: str, entry, games: list[int], device: str = "cpu",
 
 def space_key(entry) -> str:
     """One space's file stem: this study's cache, and the straightness geometry npz
-    the class baselines drawn beside it are read from."""
-    return f"resid_post_{LAYER}" if entry is None else f"sae_{entry.config}"
+    the class baselines drawn beside it are read from.
+
+    An `l0_operating_point` pick carries its own stem (`l0_<config>`), which is what
+    `l0_matched_profile.py` wrote its class geometry under, so the two rosters cannot
+    collide in either directory.
+    """
+    if entry is None:
+        return f"resid_post_{LAYER}"
+    return entry.space if isinstance(entry, Matched) else f"sae_{entry.config}"
 
 
 def t0_key(t0: int | None) -> str:
@@ -430,13 +438,19 @@ def main():
     parser.add_argument("--tree", default="branches", choices=list(TREE_VARIANT))
     parser.add_argument("--t0", default=str(FIGURE_T0),
                         help="fork position of the population, or 'all' to pool")
+    parser.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                        help="the l0_operating_point picks instead of the seed-42 roster")
     args = parser.parse_args()
     t0 = None if args.t0 == "all" else int(args.t0)
 
     device = select_device()
-    for label, entry in spaces():
-        paths = {"rule_population": population_path(args.tree, entry, t0),
-                 "rule_descriptors": descriptor_path(args.tree, entry)}
+    for label, entry in spaces(args.l0_matched):
+        paths = {"rule_population": population_path(args.tree, entry, t0)}
+        # The descriptors are the seed-42 roster's product -- the straightness study's
+        # `feature_pca` is their only reader and it draws that roster -- so the
+        # L0-matched pass builds the population alone and stays on `forks_at`.
+        if not args.l0_matched:
+            paths["rule_descriptors"] = descriptor_path(args.tree, entry)
         missing = [k for k, p in paths.items() if not p.exists()]
         if not missing:
             print(f"{label:34} cached")
