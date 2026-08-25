@@ -17,10 +17,11 @@ squares, which are the board minus the four center squares -- those start occupi
 never played.
 
 Unless stated otherwise activations are the residual stream after block 5,
-\texttt{blocks.5.hook\_resid\_post}, so $z_t \in \mathbb{R}^{512}$. We read at layer 5 because the
-linear board probe peaks there (0.9919, with layers 5--7 within 0.001 of each other). Position 0
-is an attention sink whose norm is $\approx 300$ against the $\sqrt{512} \approx 22.6$ of
-every other position, so every trajectory measurement drops it: a game contributes 58
+\texttt{blocks.5.hook\_resid\_post}, so $z_t \in \mathbb{R}^{512}$. We read at layer 5 because the board probe is
+flat across the top of the stack -- 0.9937 at layer 5 against 0.9945 at layer 6 and 0.9940 at
+layer 7, a spread of 0.0009 -- so the choice costs nothing and every study shares it. Position 0
+is an attention sink whose norm is $\approx 300$ against the $\approx 23$ of every other
+position, so every trajectory measurement drops it: a game contributes 58
 positions and 57 steps.
 
 \subsection{Game corpus}
@@ -34,21 +35,23 @@ rejects at $p < 10^{-3}$.
 Two properties of the corpus reach every number below. First, games are drawn with
 \texttt{shuffle(seed=42, buffer\_size=10{,}000)} over a streaming split that is a single shard,
 so the shuffle permutes only a 10,000-row reservoir and drawing $N$ games reads the first
-$N + 10{,}000$ rows. It is a window on the corpus, not a sample of it. Every study therefore walks the same leading $\approx 1.6\%$ of the
+$N + 10{,}000$ rows. It is a window on the corpus, not a sample of it. Every study therefore walks the same leading percent or two of the
 corpus in the same order, and their game sets are nested prefixes rather than independent
 draws; a different seed replaces $\approx 80\%$ of the games but stays inside that same slice. A
 different seed is not a replication.
 Where two studies must not share games we exclude by exact token match rather than by
 reseeding, and say so below. Second, the corpus is lexicographically sorted and truncated to
 its 45\,MB byte budget, which cuts one opening: \texttt{e6} holds 10.78\% of games where the
-board's symmetry group requires 25\% ($\chi^2 = 85{,}412$ on 3 df). Nothing in the corpus is
+board's symmetry group requires 25\% ($\chi^2 = 106{,}901$ on 3 df over the pooled corpus). Nothing in the corpus is
 illegal and play off that branch is uniform random-legal, but a per-square aggregate can
 inherit an asymmetry that has nothing to do with the model.
 
-Forfeits are unmarked in the move stream -- the same color moves twice -- so whose turn
-it is always comes from engine replay, never from the parity of the move index.
+Forfeits are unmarked in the move stream -- the same color moves twice -- so whose turn it
+is always comes from replay through Li et al.'s board implementation [10], never from the
+parity of the move index.
 
-The sparse autoencoders are trained on a separate stream, \texttt{taufeeque/othellogpt}.
+The sparse autoencoders are trained on the separate stream Karvonen's pipeline uses [8],
+\texttt{taufeeque/othellogpt}.
 
 \subsection{The illegal-move taxonomy}
 
@@ -73,8 +76,7 @@ split \emph{over games}, so no game straddles a split.
 $\mathrm{logit}(s, c) = r_s^\top M(h) f_c$, at role dimension 52 and filler dimension 2 over the
 64 squares and the three mover-relative colors $\{$empty, theirs, mine$\}$: a $[512, 52, 2]$
 binding map, a $[64, 52]$ role table and a $[3, 2]$ filler table, 56,582 parameters in total,
-57.6\% of the 98,304 of the per-square linear read-out it is measured against. Architecture and
-loss are the original authors'; the recipe is ours, and both probes run behind one protocol so
+57.6\% of the 98,304 of the per-square linear read-out it is measured against. Architecture and loss are [9]'s; the recipe is ours, and both probes run behind one protocol so
 that a head-to-head compares probe class and nothing else. Both are fit on 20,000 corpus games at
 58 positions each, 1,160,000 rows, split $70/15/15$ into 812,000 training and 174,000 validation
 and test rows. We use AdamW at learning rate $10^{-2}$, batch 8192, at most 400 epochs, stopping
@@ -104,7 +106,7 @@ candidate, and the binary head draws one illegal row per item. Fitting is multin
 regression with an $\ell_2$ penalty, optimized full-batch by L-BFGS (300 iterations,
 strong-Wolfe line search) on features standardized by the training split's mean and standard
 deviation. The penalty is chosen from $\{10^{-4}, \ldots, 1\}$ on validation macro-F1, selecting
-$10^{-4}$ for both heads. On the held-out test split the binary head reaches accuracy 0.8896 and
+$10^{-4}$ for both heads in the raw space. On the held-out test split the binary head reaches accuracy 0.8896 and
 AUROC 0.9418, and the four-way head accuracy 0.7760 and macro-F1 0.7734, with R1 its weakest
 class (F1 0.6402).
 
@@ -168,9 +170,9 @@ The population read-out is 1000 strict-control events, 40 at each of the 25 move
 [10, 34]$, sampled at seed 42. We use a fixed quota per move index rather than whatever the
 corpus holds, because move index is the strongest nuisance variable here and it is the window the
 legality and detector studies also rest on. Meeting that quota needs a larger mining run -- 4000
-events, of which 3194 have a strict control -- from the same miner, stream and seed. That draw is
-a separate one, not a superset of the 2000-event corpus every other measurement uses, so the
-population panel and the single-game panel beside it share no events. Each event has exactly one
+events, of which 3194 have a strict control -- from the same miner, stream and seed. That run scans a longer prefix of
+the same stream than the 2000-event corpus every other measurement uses, and mines it
+independently, so the event drawn for the single-game panel is not among these 1000. Each event has exactly one
 flipped and one placed square but about 12 unflipped mover's and 13 unflipped opponent's squares,
 so the five role markers average over 1000, 1000, 11,935, 13,065 and 37,000 square-observations.
 Open markers are the state before $m$, filled markers the state after, and the cross is where
@@ -180,14 +182,15 @@ frame alternates with the ply, so every unflipped disc crossing $x = 0$ is a con
 convention rather than a finding about the model. The claim the panel supports is the gap between
 the two heads at $s$: $13.98$ logits [13.86, 14.10].
 
-\textbf{The spliced branch tree.} Each source game is forked once at $t_0$ into nine branches
+\textbf{The spliced branch tree.} Each source game is forked once at $t_0$ into up to nine branches
 that share \texttt{tokens[:$t_0$]} and \texttt{tokens[$t_0$+1:]} and differ only at $t_0$: the
 move actually played, two further legal moves, and one move per available illegal category, drawn
 uniformly within its category at seed 42. There are two legal controls rather than one because a
 second is what supplies the legal-versus-legal null. Nothing is regenerated after $t_0$ -- the
 suffix is kept verbatim -- so a difference downstream comes from that one token and nothing
 else. Fork points are round-robin over $t_0 \in [10, 34]$, and a later pass appended
-games forked at $t_0 = 20$. The tree holds 3923 games and 34,546 branches. After $t_0$ a branch
+games forked at $t_0 = 20$. The tree holds 3923 games and 34,546 branches, 8.81 per game: a game contributes a branch
+only for the illegal categories its board admits. After $t_0$ a branch
 replays the source game's suffix onto a board that no longer exists, so a trajectory's right half
 shows the score decaying and is not a legality judgment of those moves.
 
@@ -200,48 +203,52 @@ the sink dropped a game yields 57 steps, and the candidate move index is the ste
 so an $m = 4$ window reaches moves 6--55: 50 candidates.
 
 \textbf{Operating point.} The threshold $\tau = 0.618$ is the cut maximizing balanced accuracy,
-found by an exact sweep of the breakpoints and refit on the scored population, pooling every
+found by an exact sweep of the breakpoints over all 2415 scored games rather than the 500 the
+population panels draw, pooling every
 scored position up to $t_0$ across all four branch blocks with positives only at $t_0$ of the
-illegal arm. It gives TPR 0.658 and TNR 0.683. The objective is nearly flat -- balanced accuracy
-is 0.6644 at $\tau = 0.869$ -- so $\tau$ names a trade-off rather than a sharp optimum, and 37\%
-of legal controls sit above it. The same procedure refit in the best-ranked dictionary space
+illegal arm. It gives TPR 0.658 and TNR 0.683 there. The objective is nearly flat -- balanced accuracy is
+0.6644 at $\tau = 0.869$ -- so $\tau$ names a trade-off rather than a sharp optimum. Scored at
+$t_0$ on the 500-game set, 37\% of legal controls still sit above it. The same procedure refit in the best-ranked dictionary space
 gives $\tau = 1.245$.
 
 \subsection{Sparse autoencoders}
 
 We compare eight architectures at expansion factor 16, giving 8192 latents on
 $d_{\mathrm{model}} = 512$, on layer-5 activations: Standard (ReLU) [4], $p$-Anneal [8], Gated [11],
-Gated+$p$-Anneal [8], TopK [6], BatchTopK [5], and the two prototype-distance variants SpaDE
-and CosineSpaDE [7].
+Gated+$p$-Anneal [8], TopK [6], BatchTopK [5], the prototype-distance architecture SpaDE [7],
+and CosineSpaDE, a variant of it we introduce here.
 
-\textbf{Training.} Our own dictionaries train through one loop off a single activation stream,
-so no comparison is confounded by data order: 300M tokens at batch 8192, i.e. 36,621 steps,
-learning rate $3\times10^{-4}$ ($2.83\times10^{-4}$ for the TopK family), 1000 warmup steps and
-2000 sparsity-warmup steps, at seed 42. Activations are standardized before any autoencoder sees
+\textbf{Training.} Our own dictionaries see 300M tokens at batch 8192, i.e. 36,621 steps, at
+learning rate $3\times10^{-4}$ ($2.83\times10^{-4}$ for the TopK family), with 1000 warmup steps
+and seed 42. Calibration is deterministic at a fixed seed, so runs launched separately still
+share a standardization and no comparison is confounded by data order. Activations are standardized before any autoencoder sees
 them, $x' = \sigma (x - \mu)$ with $\mu$ the mean over the first 100 calibration batches and
 $\sigma = \sqrt{d_{\mathrm{model}} / \mathbb{E}\|x - \mu\|^2}$, so $\mathbb{E}\|x'\|^2 = d_{\rm
 model}$. The same transform is applied at encode time. SpaDE scores prototypes by
-$-\lambda\|x - Ae_i\|^2$ with $\lambda$ trainable through a softplus, encodes with sparsemax,
-and adds a distance-weighted regularizer $\gamma \sum_j \|x - Ad_j\|^2 f_j$; CosineSpaDE scores
+$-\lambda\|x - Ae_i\|^2$ with $\lambda$ trainable through a softplus, encodes with sparsemax [12],
+and adds the distance-weighted regularizer of K-Deep Simplex [13],
+$\gamma \sum_j \|x - Ad_j\|^2 f_j$; CosineSpaDE scores
 by cosine similarity with no $\lambda$ and regularizes with $\sum_j (1 - \cos(x, Ad_j)) f_j$,
 which is bounded in $[0, 2]$ because sparsemax sums to one, so its natural $\gamma$ scale is
-roughly $500\times$ larger.
+orders of magnitude larger.
 
-\textbf{Matching sparsity.} At each family's own default hyperparameters the eight land anywhere
-on the sparsity axis -- their $L_0$ spans 32.5 to 1808 -- so a gap between two spaces confounds
+\textbf{Matching sparsity.} Trained at each family's own default hyperparameters our eight land anywhere on the sparsity
+axis, $L_0$ 32.5 to 1808, so a gap between two spaces confounds
 architecture with sparsity. For the dictionary comparison we instead hold every family at one
 operating point. Each type first names its own best-scoring configuration on an equal-weight mean
-of four min--max normalized metrics (coverage, reconstruction F$_1$, loss recovered, variance
-explained) over a pooled grid of 516 checkpoints at dictionary size 8192; the mean of those
+of four min--max normalized metrics from Karvonen's board-game suite [8] (coverage,
+reconstruction F$_1$, loss recovered, variance explained) over the 8192-latent half of a 516-checkpoint grid, seed-collapsed to 257
+configurations; the mean of those
 eight $L_0$ values, \textbf{219.16}, becomes a shared target, and each type is then re-seated at
 whichever member of its own grid is nearest that target in $\log L_0$ -- by sparsity, not by
-score. Realized $L_0$ runs from 183.79 to 260.13, a $1.42\times$ band. CosineSpaDE sits at its
-grid maximum: it cannot leave $L_0 \in [19.4, 178.4]$ at any $\gamma$, which is what kept the
-target from going higher.
+score. Realized $L_0$ runs from 183.79 to 260.13, a $1.42\times$ band. CosineSpaDE sits at the top of its own grid: a bounded cosine score with no inverse
+temperature cannot leave $L_0 \in [16.1, 183.2]$ at any $\gamma$, which is what kept the target
+from going higher.
 
 \textbf{The roster.} Five of the eight seated checkpoints are Karvonen's released ones [8] (Standard \texttt{trainer25-v2}, $p$-Anneal \texttt{trainer22},
 Gated \texttt{trainer32}, Gated+$p$-Anneal \texttt{trainer25}, TopK \texttt{trainer\_61}) and
-three are ours (BatchTopK at $k = 220$, SpaDE at $\lambda = 10^{-3}, \gamma = 5\times10^{-3}$,
+three are ours (BatchTopK at $k = 220$, SpaDE at $\lambda$ initialized to $10^{-3}$ and
+$\gamma = 5\times10^{-3}$,
 CosineSpaDE at $\beta = 1, \gamma = 0.05$). Those five are trained on the raw residual stream
 where ours are trained on the standardized one, so each is encoded under the convention it was trained
 in, and the two families' latents are not on one input scale: the roster compares architectures
@@ -257,8 +264,9 @@ same held-out legal block. Same 500 games, same statistic, same profile construc
 
 \subsection{Evaluation protocol}
 
-\textbf{Scored populations.} We score every branch-complete game with $t_0 \in [10, 34]$ whose
-source game has odd parity in the legal corpus: 2415 games, 21,735 branch rows. The
+\textbf{Scored populations.} We score every branch-complete game with $t_0 \in [10, 34]$ that is
+either absent from the legal corpus below or sits at an odd index in it, which is what keeps a
+scored trajectory out of the profile it is scored against: 2415 games, 21,735 branch rows. The
 per-move-index profile $\mu_t, \sigma_t$ is fit on a block of 2000 legal games, minus the 778
 that are themselves scored here -- a trajectory must not contribute to the baseline it is scored
 against -- leaving \textbf{1222}. The evaluation set for the population panels is 500 games, an
@@ -281,20 +289,22 @@ which is why raw reads 0.681 in both the residual and the dictionary panel.
 
 \textbf{Chance.} Chance is measured rather than assumed: a game's legal control scored against
 the second legal control the same game carries. For the probe heads this gives 0.4875 [0.4587,
-0.5144], which licenses the 0.5 line; across dictionary spaces it lands in $[0.486, 0.508]$.
+0.5144], which licenses the 0.5 line; across dictionary spaces it lands in $[0.485, 0.508]$.
 
 \textbf{Density panels.} Class distributions are Gaussian kernel density estimates (Scott's rule)
 rescaled to a count axis on one slice width shared across all five series and across spaces, so a
 curve's height is comparable between panels. The dictionary density panel is structurally forced
 to draw the winner of the ranking above.
 
-\textbf{Uncertainty.} All intervals and bars are 95\% percentile bootstrap. The resampling unit
+\textbf{Uncertainty.} Every interval is a 95\% percentile bootstrap, computed and written out
+even where the panel does not draw it -- the rollout curve carries five series and reads better
+without bands. The resampling unit
 is the source game, except for the bracket-flip population, where it is the event, and for the
 probe-head AUROC bars, where it is the game pair. The rollout curve uses 2000 resamples at seed
 0; the bracket-flip bars use 2000 resamples at seed 42; every AUROC bar uses 1000 resamples at
 seed 42. The bracket-flip bars are a cluster bootstrap on the \emph{paired} displacement within
-event, which is what an arrow asserts -- the two endpoints are strongly anticorrelated on $x$, so
-an endpoint interval understates the arrow by about $2\times$ there.
+event, which is what an arrow asserts -- the endpoints move together, so an endpoint interval
+understates the arrow by 1.4 to 1.8$\times$ on $x$.
 
 \subsection{Illustrative positions}
 
