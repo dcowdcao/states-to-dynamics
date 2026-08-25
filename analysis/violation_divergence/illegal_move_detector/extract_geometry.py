@@ -19,7 +19,13 @@ position an M = 4 window reaches, moves 6-55. `branch_geometry`'s own range is l
 Raw layer 5 needs no dictionary encode; `--spaces` adds SAE spaces, which do, one npz each
 so a space can be added without recomputing the others.
 
-Writes study_dir("divergence")/illegal_move_detector/{meta,d}.npz and d_sae_<space>.npz.
+`--quantities` writes `theta` and `norm` for the same rows, beside the `d` files rather than
+into them: `quantity_ablation.py` compares the three on this corpus, and rewriting `d.npz`
+would recompute a number every committed figure here is pinned to through an encode that is
+not bitwise reproducible.
+
+Writes study_dir("divergence")/illegal_move_detector/{meta,d}.npz, d_<space>.npz, and with
+`--quantities` theta_norm.npz / theta_norm_<space>.npz.
 
 Usage: PYTHONPATH=src python analysis/violation_divergence/illegal_move_detector/extract_geometry.py
            [--spaces GatedAnnealTrainer-othello]
@@ -73,6 +79,20 @@ def step_lengths(acts, rows, device, encode=None) -> np.ndarray:
     return np.concatenate(out).astype(np.float32)
 
 
+def theta_norm(acts, rows, device, encode=None) -> tuple[np.ndarray, np.ndarray]:
+    """Turning angle and representation norm per branch row, on `step_lengths`' rows."""
+    thetas, norms = [], []
+    for start in range(0, len(rows), GAME_BATCH):
+        z = acts[rows[start:start + GAME_BATCH]][:, 1:, :].float().to(device)
+        if encode is not None:
+            with torch.no_grad():
+                z = encode(z.reshape(-1, z.shape[-1])).reshape(*z.shape[:2], -1)
+        thetas.append(temporal_geometry(z)[1].cpu().numpy())
+        norms.append(z.norm(dim=-1).cpu().numpy())
+    return (np.concatenate(thetas).astype(np.float32),
+            np.concatenate(norms).astype(np.float32))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--spaces", default="",
@@ -80,6 +100,8 @@ def main() -> None:
     parser.add_argument("--l0-matched", dest="l0_matched", action="store_true",
                         help="also encode the eight l0_operating_point picks, each fed the "
                              "activations it was trained on")
+    parser.add_argument("--quantities", action="store_true",
+                        help="also write theta and norm beside every d file this run covers")
     args = parser.parse_args()
     device = select_device()
     branches = study_dir("divergence") / "branches" / "branches.pt"
@@ -103,6 +125,11 @@ def main() -> None:
         np.savez(OUT / "d.npz", d=d)
         print(f"wrote {OUT}/d.npz  d {d.shape}", flush=True)
 
+    if args.quantities and not (OUT / "theta_norm.npz").exists():
+        theta, norm = theta_norm(acts, rows, device)
+        np.savez(OUT / "theta_norm.npz", theta=theta, norm=norm)
+        print(f"wrote theta_norm.npz  theta {theta.shape} norm {norm.shape}", flush=True)
+
     if args.l0_matched:
         from spade.l0_operating_point.checkpoints import matched
         for entry in matched():
@@ -115,6 +142,17 @@ def main() -> None:
                      standardized=entry.standardize)
             print(f"wrote {path.name}  d {d.shape}  ({entry.config}, L0 {entry.l0:.1f})",
                   flush=True)
+
+        if args.quantities:
+            for entry in matched():
+                path = OUT / f"theta_norm_{entry.space}.npz"
+                if path.exists():
+                    print(f"{path.name} present, skipping", flush=True)
+                    continue
+                theta, norm = theta_norm(acts, rows, device, entry.encode(device))
+                np.savez(path, theta=theta, norm=norm, config=entry.config, l0=entry.l0,
+                         standardized=entry.standardize)
+                print(f"wrote {path.name}  theta {theta.shape} norm {norm.shape}", flush=True)
 
     wanted = [c for c in args.spaces.split(",") if c]
     entries = {e.config: e for e in seed42_entries()}

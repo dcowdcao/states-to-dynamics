@@ -6,6 +6,33 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The quantity ablation is spliced-only, and its L0-matched bar IS the detector's (2026-08-25)
+
+Two changes, both asked for. The regenerated regime is gone -- every arm now keeps the source
+game's own suffix after t0 -- and `--l0-matched` no longer scores the branch tree per position.
+It scores `illegal_move_detector`'s 500 t0-stratified games with that study's at-t0 paired
+statistic, so `quantity_ablation_l0_matched.png`'s `d` bars are the same numbers as panel (a)
+of `sae_detector_overview.png`. `assert_matches_detector` reads
+`auroc_by_space_l0_matched.csv` on every run and fails if they drift; it currently agrees to
+4e-6, which is that CSV's rounding.
+
+**Two things had to give to make them equal, and both are stated in the figure's doc.** The
+profile for `d` comes from the detector's own `_legal.npz` rather than the `_raw` twin beside
+it -- a pick's two legal-block files differ by encode noise, worth 4.4e-3 of AUROC. And `d`'s
+sign is held at the direction this study fixed (shorter is illegal) rather than freed like the
+challengers'; freeing it moves exactly one space, CosineSpaDE, 0.498 -> 0.502, both chance.
+
+**The result is stronger on this corpus.** `d` beats both challengers in 8 of 9 spaces, the
+exception being the one space where `d` is at chance. `norm`'s better sign is positive in 6
+spaces and negative in 3, so no fixed direction serves it -- the sign argument, on a third
+corpus.
+
+**Deleted:** `quantity_ablation_regenerated{,_l0_matched}` and
+`quantity_ablation_spliced_l0_matched`, figures and CSVs. The first two are the regime that
+was dropped; the third is what the new L0-matched figure replaces. The seed-42 per-position
+figure stays -- it is the evidence the curvature correction rests on, and its CSV is unchanged
+except for a constant `variant` column that no longer has anything to distinguish.
+
 ## The quantity ablation is one panel now (2026-08-25)
 
 All four `quantity_ablation_*` figures lost the gray note strip, lost panel (b) (argmax hit
