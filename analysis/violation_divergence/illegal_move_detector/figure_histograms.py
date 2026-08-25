@@ -122,7 +122,7 @@ def panel(ax, x: dict[str, np.ndarray], tau: float) -> None:
 
     ax.set_xlim(grid[0], grid[-1])
     ax.set_ylim(0, ceiling)
-    ax.set_xlabel("standardized norm of step length")
+    ax.set_xlabel("$S_t$ (standardized norm of step length)")
     ax.set_ylabel("number of games")
     ax.legend(loc="upper center", ncol=2, fontsize=8.0, labelspacing=0.32, borderpad=0.2,
               columnspacing=1.4, handlelength=2.4, alignment="left")
