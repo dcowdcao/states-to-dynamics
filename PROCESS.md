@@ -6,6 +6,47 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## divergence_by_space's L0-matched arm covers all eight cells, and a device bug was in the way (2026-08-25)
+
+The L0-matched roster only ever ran on {displacement} x {spliced} x {ratio, raw}, 2 of the
+study's 8 cells. The other six are now measured and drawn, so the L0-matched grid is the
+canonical grid cell for cell. Neither script needed wiring: `--l0-matched` was already
+orthogonal to `--plane` and `--variant`, since it only picks the roster
+(`fork_plane.spaces`) and the filename suffix. Also filled the two camera-ready PDFs the
+`_n100` displacement-spliced pair was missing.
+
+**The finding reproduces on all four arms.** At matched L0 Standard and SpaDE's R2 fall
+(Standard 1.309 -> 1.122 in R^21 spliced, 1.276 -> 1.187 rollout, 1.445 -> 1.318 in R^21
+rollout; SpaDE similarly), TopK and BatchTopK rise, and CosineSpaDE stays the loudest cell.
+So "the two SpaDE codes inflate most is half an L0 effect" is a statement about the grid,
+not about one figure. The plane still inflates in 27 of 27 cells in every arm.
+
+**`measure.py` could not run on a GPU at all, and nobody had noticed.** `features()` fed
+`encode` a slice of the mmap'd CPU activation tensor while `encoder(e, device)` had moved
+the weights to cuda, so the first GPU run died with a device mismatch. Every previous run
+of this sweep was CPU, which masked it completely. Fixed by threading `device` in and
+`.to(device)` on the input; the result was already brought back with `.cpu()`.
+
+**The whole L0-matched grid is deliberately CPU-measured.** CPU and GPU float arithmetic
+differ in the last digits, and the two pre-existing cells were measured on CPU and must be
+checked with git rather than regenerated. Measuring the six new cells on CPU gives all
+eight one device; a GPU grid would have been six-plus-two, with a device term nobody could
+separate from the dictionary. Since this sweep is CPU- and I/O-bound anyway, slurm is worth
+using for the dedicated cores, not the accelerator: `submit_gpu.sbatch` with
+`env CUDA_VISIBLE_DEVICES=` in front of the command.
+
+**Gotcha: the login node silently reaps long CPU processes.** A `--variant rollout` measure
+run started there died with no traceback, no npz and a log frozen at `0/100 games, 10s` --
+indistinguishable from "still running" if you are only tailing the log. The same command
+under slurm finished in 2m38s. These passes belong on slurm, and a job leaving the queue is
+not proof it succeeded: check the log and the written artifact.
+
+**One asymmetry worth knowing.** Raw layer 5 is the same cell in both rosters, so its CSV
+rows are the check that only the dictionaries moved. Exactly identical in three arms; in
+R^21 rollout the drawn `ratio` column matches but `ratio_hi` differs on 1 of 120 rows by
+1e-5 (npz differs 3.3e-6 on values ~12). `curvature_plane.fit_plane`'s SVD does not
+reproduce bitwise across thread counts; the displacement arm's Gram route does.
+
 ## The quantity ablation is spliced-only, and its L0-matched bar IS the detector's (2026-08-25)
 
 Two changes, both asked for. The regenerated regime is gone -- every arm now keeps the source

@@ -32,11 +32,11 @@ overwrites the whole-tree figure. n = 100 takes ~2 min.
 ## The figures
 
 `figures/divergence_by_space.{png,pdf}` · `figures/divergence_by_space_rollout.{png,pdf}`
-· `figures/divergence_by_space_n100.png` ·
+· `figures/divergence_by_space_n100.{png,pdf}` ·
 `figures/divergence_by_space_r21_n100.{png,pdf}` ·
 `figures/divergence_by_space_rollout_n100.{png,pdf}` ·
 `figures/divergence_by_space_r21_rollout_n100.{png,pdf}` ·
-`figures/divergence_by_space_n100_l0_matched.png`
+`figures/divergence_by_space_n100_l0_matched.{png,pdf}`
 
 **In the plane the fork panels draw, R2 and R3 run 6–24% further from the reference than
 a legal alternative does — and roughly half of that is the plane, not the branch.** One
@@ -89,13 +89,45 @@ statistic per game rather than quoting `rule_groups`' whole-tree number, and
 
 ## The L0-matched twin
 
-`figures/divergence_by_space_n100_l0_matched.png` ·
-`figures/divergence_by_space_n100_raw_l0_matched.{png,pdf}`
+The roster swap runs over all four arms of the study, so the L0-matched grid is the
+canonical grid cell for cell: {displacement, R²¹} × {spliced, rollout} × {ratio, raw}.
+
+`figures/divergence_by_space_n100_l0_matched.{png,pdf}` ·
+`figures/divergence_by_space_n100_raw_l0_matched.{png,pdf}` ·
+`figures/divergence_by_space_r21_n100_l0_matched.{png,pdf}` ·
+`figures/divergence_by_space_r21_n100_raw_l0_matched.{png,pdf}` ·
+`figures/divergence_by_space_rollout_n100_l0_matched.{png,pdf}` ·
+`figures/divergence_by_space_rollout_n100_raw_l0_matched.{png,pdf}` ·
+`figures/divergence_by_space_r21_rollout_n100_l0_matched.{png,pdf}` ·
+`figures/divergence_by_space_r21_rollout_n100_raw_l0_matched.{png,pdf}`
+
+Every one of the eight: **n = 100** source games, the study's shared population at t₀ = 20
+(`branches.games_at_t0`); the **roster** is `results/l0_operating_point/picks.csv`, one
+checkpoint per SAE type at the shared **L0 = 219.2**, with raw layer 5 leading as the
+reference cell; the **corpus** is the branch tree the arm names — `spliced` replays the
+source game's own suffix after t₀, `rollout` samples every branch's continuation from
+OthelloGPT (K = 4); the **estimator** is the mean over games of the branch's distance from
+the reference, in the refit 2-D plane and in the full space, each divided by that cell and
+game's own legal control (the raw twins skip the divisor), with a 95% CI over the 100 games.
 
 ```
-python analysis/violation_divergence/divergence_by_space/measure.py      --n_games 100 --l0-matched  # ~4 min
-python analysis/violation_divergence/divergence_by_space/make_figures.py --n_games 100 --l0-matched [--raw]
+python analysis/violation_divergence/divergence_by_space/measure.py --n_games 100 --l0-matched                            # ~4 min
+python analysis/violation_divergence/divergence_by_space/measure.py --n_games 100 --l0-matched --plane r21                # ~20 min
+python analysis/violation_divergence/divergence_by_space/measure.py --n_games 100 --l0-matched --variant rollout          # ~5 min
+python analysis/violation_divergence/divergence_by_space/measure.py --n_games 100 --l0-matched --plane r21 --variant rollout
+python analysis/violation_divergence/divergence_by_space/make_figures.py --n_games 100 --l0-matched \
+    [--plane r21] [--variant rollout] [--raw] [--camera-ready]
 ```
+
+**The whole L0-matched grid is measured on CPU, and that is a choice worth keeping.** CPU
+and GPU float arithmetic differ in the last digits, so the same sweep re-run on the other
+device moves a figure slightly. The two spliced-displacement cells were measured on CPU
+before the other six existed and must not be regenerated to check them, so measuring the
+six new cells on CPU too is what gives all eight one device; measuring them on GPU would
+have left a six-plus-two grid whose cross-arm differences carry a device term nobody can
+separate from the dictionary. `measure.py` is CPU-bound and I/O-bound, not GPU-bound, so
+this costs nothing — run it under slurm (`scripts/slurm/submit_gpu.sbatch` with
+`env CUDA_VISIBLE_DEVICES=`) for the dedicated cores, not for the accelerator.
 
 The eight SAE cells above sit wherever each type's own default hyperparameters put it on
 the sparsity axis — TopK and BatchTopK at k = 80, Standard at L1 0.059, and so on — so a
@@ -147,6 +179,94 @@ GatedAnneal, while our three (BatchTopK 6.83 → 6.98, CosineSpaDE 0.0820 → 0.
 therefore narrows from 586× to **193×** in the full space, and that number is a change of
 input convention as much as of dictionary. The ratio figure divides all of it out, which is
 why it is the one a cross-panel claim is read off.
+
+### The other three arms
+
+Mean over r ≥ 0 in the plane, canonical n = 100 → L0-matched, for the three arms the
+spliced-displacement table above does not cover. Raw layer 5 is not an SAE and is the same
+cell in both columns of every arm.
+
+**R²¹, spliced.** Plane inflation stays 27 of 27 with the same median, 1.134, and a wider
+range (1.051–1.309 → 1.032–1.363).
+
+| space | R1 | R2 | R3 |
+|---|---|---|---|
+| raw layer 5 | 1.040 → 1.040 | 1.228 → 1.228 | 1.204 → 1.204 |
+| PAnneal | 1.063 → 1.035 | 1.284 → 1.248 | 1.246 → 1.166 |
+| Standard | 1.053 → 1.030 | 1.309 → **1.122** | 1.294 → **1.114** |
+| GatedSAE | 1.092 → 1.036 | 1.216 → 1.166 | 1.134 → 1.171 |
+| TopK | 1.032 → 1.016 | 1.128 → 1.201 | 1.076 → 1.182 |
+| GatedAnneal | 1.076 → 1.012 | 1.164 → 1.165 | 1.126 → 1.143 |
+| BatchTopK | 1.062 → 1.014 | 1.168 → 1.280 | 1.168 → 1.232 |
+| CosineSpaDE | 1.089 → 1.003 | 1.832 → 1.977 | 1.625 → 1.541 |
+| SpaDE | 1.048 → 1.057 | 1.266 → **1.148** | 1.237 → 1.177 |
+
+**Displacement, rollout.** 27 of 27, median 1.106 → 1.115, range 1.039–1.373 → 1.040–1.386.
+
+| space | R1 | R2 | R3 |
+|---|---|---|---|
+| raw layer 5 | 1.035 → 1.035 | 1.224 → 1.224 | 1.161 → 1.161 |
+| PAnneal | 1.023 → 1.029 | 1.201 → 1.192 | 1.142 → 1.137 |
+| Standard | 1.031 → 1.028 | 1.276 → **1.187** | 1.200 → **1.143** |
+| GatedSAE | 1.018 → 1.023 | 1.112 → 1.112 | 1.087 → 1.086 |
+| TopK | 1.020 → 1.025 | 1.118 → 1.170 | 1.092 → 1.123 |
+| GatedAnneal | 1.015 → 1.025 | 1.106 → 1.185 | 1.082 → 1.134 |
+| BatchTopK | 1.022 → 1.032 | 1.125 → 1.196 | 1.089 → 1.142 |
+| CosineSpaDE | 1.026 → 1.026 | 1.488 → 1.517 | 1.363 → 1.367 |
+| SpaDE | 1.042 → 1.029 | 1.319 → **1.206** | 1.224 → **1.155** |
+
+**R²¹, rollout.** 27 of 27, median 1.146 → 1.155, range 1.057–1.453 → 1.039–1.551.
+
+| space | R1 | R2 | R3 |
+|---|---|---|---|
+| raw layer 5 | 1.150 → 1.150 | 1.425 → 1.425 | 1.262 → 1.262 |
+| PAnneal | 1.118 → 1.130 | 1.454 → 1.424 | 1.251 → 1.240 |
+| Standard | 1.111 → 1.173 | 1.445 → **1.318** | 1.363 → **1.198** |
+| GatedSAE | 1.205 → 1.180 | 1.312 → 1.260 | 1.180 → 1.140 |
+| TopK | 1.186 → 1.136 | 1.263 → 1.370 | 1.130 → 1.222 |
+| GatedAnneal | 1.250 → 1.138 | 1.324 → 1.350 | 1.200 → 1.222 |
+| BatchTopK | 1.177 → 1.115 | 1.210 → 1.454 | 1.102 → 1.272 |
+| CosineSpaDE | 1.253 → 1.122 | 2.387 → **2.678** | 2.074 → 2.150 |
+| SpaDE | 1.171 → 1.197 | 1.490 → **1.322** | 1.334 → 1.230 |
+
+**The L0 confound reverses the same four dictionaries in all four arms.** On R2, Standard
+and SpaDE fall once they are seated at the shared L0 (Standard 1.309 → 1.122, 1.276 → 1.187,
+1.445 → 1.318 across the three arms here; SpaDE 1.266 → 1.148, 1.319 → 1.206, 1.490 → 1.322),
+while TopK and BatchTopK rise, and CosineSpaDE stays the loudest cell in every arm. That is
+the same reversal the spliced-displacement twin reports, now on three more arms and two more
+estimators, so **"the two SpaDE codes inflate most" is half an L0 effect** is a statement
+about the grid and not about one figure. What does *not* move is the qualitative reading:
+the plane inflates in 27 of 27 cells in each of the four arms, and the median inflation
+changes by at most 0.01 in any of them.
+
+The legal control's distance, mean over r ≥ 0 in each cell's own units, n = 100 — the
+divisor the ratio figures remove, for the three new raw twins:
+
+| space | R²¹ spliced plane \| full | rollout plane \| full | R²¹ rollout plane \| full |
+|---|---|---|---|
+| raw layer 5 | 3.123 \| 5.405 | 7.512 \| 14.53 | 2.849 \| 4.987 |
+| PAnneal | 3.172 \| 5.448 | 6.825 \| 13.27 | 2.948 \| 5.090 |
+| Standard | 3.241 \| 5.506 | 3.960 \| 8.201 | 2.861 \| 5.064 |
+| GatedSAE | 3.322 \| 5.549 | 6.765 \| 12.73 | 2.948 \| 5.149 |
+| TopK | 3.192 \| 5.505 | 7.623 \| 14.23 | 2.933 \| 5.116 |
+| GatedAnneal | 3.258 \| 5.547 | 6.041 \| 12.15 | 2.902 \| 5.082 |
+| BatchTopK | 3.107 \| 5.376 | 4.001 \| 7.559 | 2.846 \| 4.978 |
+| CosineSpaDE | 2.388 \| 4.371 | 0.0307 \| 0.0810 | 1.918 \| 3.722 |
+| SpaDE | 3.191 \| 5.378 | 0.0285 \| 0.0648 | 2.938 \| 5.018 |
+
+The rollout displacement span narrows from the canonical roster's 782×/664× (plane/full) to
+**263×/224×**, for the input-convention reason the previous section gives: Karvonen's five
+picks are fed the raw residual stream and our three are not. The R²¹ columns are column-scaled
+per game and span 1.7× and 1.5×, so nothing there is comparable to an activation length.
+
+**The raw-layer-5 invariance check.** Raw layer 5 is the same cell in the canonical and the
+L0-matched sweep, so its CSV rows should be identical — the check that only the dictionaries
+moved. They are, exactly, in three of the four arms (136, 136 and 120 rows). In R²¹ rollout
+the drawn `ratio` column is identical too, and only `ratio_hi` differs, on 1 of 120 rows by
+1e-5, which is the sixth significant digit `%.6g` prints; the underlying npz differs by
+3.3e-6 on values of ~12, i.e. float32 rounding in `curvature_plane.fit_plane`'s SVD. That
+path does not reproduce bitwise across thread counts the way the displacement arm's Gram
+route does.
 
 ## The R^21 twin
 
@@ -407,7 +527,7 @@ ones: bottom at −0.045 × top, which is the −0.09/2.0 the ratio panels use, 
 4.31% up the axis in every panel of every figure and the shared-prefix region reads as
 visibly zero instead of resting on the spine.
 
-CSVs are `results/violation_divergence/divergence_by_space[_r21][_rollout]_n100_raw.csv`,
+CSVs are `results/violation_divergence/divergence_by_space[_r21][_rollout]_n100_raw[_l0_matched].csv`,
 the same shape as the ratio ones with `ratio*` renamed `distance*`. Ground truth computed
 independently from the npz is in `verification/`.
 
