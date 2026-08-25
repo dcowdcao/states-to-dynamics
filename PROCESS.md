@@ -6,6 +6,78 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Three more per-SAE studies got an L0-matched arm, and one was refused (2026-08-25)
+
+`curvature_discriminant/space_fork_grid_discriminant`, `fork_curvature_space`'s four
+`fork_r21_*` grids and `r21_run_population/run_from_reference_population` had no L0-matched
+arm at all, so every cross-cell reading in them confounded architecture with sparsity --
+the seed-42 roster's L0s span 32.5 to 1,808. All six figures now have an `_l0_matched` twin
+over the eight `picks.csv` checkpoints, spliced only. Every canonical figure was re-rendered
+and is byte-identical; `r21_run_population.csv` and `evaluation.csv` reproduce too.
+
+**The blocker curvature_discriminant documented had already been removed and nobody
+noticed.** Its README carried a section "Why there is no L0-matched twin of this figure",
+arguing that `fit_axis` reads `straightness/geometry/<space>_raw.npz` and no pick had one.
+`analysis/straightness/l0_matched_profile.py` grew exactly that file -- `d`, `theta` and
+`norm` over all five classes, canonical row layout -- for the quantity ablation two entries
+below. So the twin cost nothing but wiring, and the section is now the result instead of the
+excuse.
+
+**And that twin is the biggest reversal in this group.** Three of the four dictionaries the
+canonical table calls best are best because they are the four sparsest of the nine.
+GatedAnneal goes 0.859 (first) -> 0.706 (fourth), Standard goes 0.553 (last, below raw)
+-> 0.716 (third), BatchTopK 0.803 -> 0.640; GatedSAE holds the top at 0.812 and is the only
+leader that is an architecture. Two of the study's three "what does not hold" findings soften
+with it: the fitted axis now clears the random-direction 95th percentile in 8 of 9 spaces
+rather than 6, and the plain norm beats it in 1 of 9 rather than 3, so "most of the
+separation is magnitude, not direction" was itself partly a sparsity statement. What does
+NOT survive is the R1 out-of-distribution result -- canonically +1.26 to +2.16 in the four
+sparse dictionaries, at matched L0 only GatedSAE reproduces it (+1.40) and BatchTopK and
+CosineSpaDE go negative.
+
+**The other two studies are unmoved, which is worth as much.** `r21_run_population`'s two
+claims both survive: full R^21 stays below 1 in every cell (0.81-0.94 against CIs of +-0.05)
+and the plane inflation is +0.22/+0.16/+0.13/+0.11 against the canonical +0.22/+0.17/+0.12/
++0.11. `fork_curvature_space`'s strip keeps plane / full R^21 at a median 1.41 (1.31 fixed)
+and lands nearer the theta block in 15 of 27 cells (16 fixed), against 1.31/1.27 and 14/17.
+Only which dictionary sits where moves.
+
+**`sae_spaces/sae_feature_recurrence` was refused, on purpose.** It is the one figure in the
+group whose x axis is spaces but whose evidence is not a comparison between them: its claim
+is within-dictionary -- one feature carries the divergence in *each* dictionary, against that
+cell's own legal-control null -- replicated eight times, and the 43-99% spread is reported as
+a range and never ranked. Feature indices compound it: a family reseated at another L0 is a
+different dictionary with fresh features, and panel (a)'s most-recurrent feature is refit per
+cell either way, so the match has nothing to hold constant. Reasoning is in
+`violation_divergence/README.md` beside the figure's caption.
+
+**`r21_run_population` also gets no rollout twin, for a separate reason.** Eight of its ten
+anchors sit past `r = 8`, where `fork_curvature_space` measured a branch's K rollouts to
+differ from each other by more than the branch differs from the reference. `measure.py`
+already asserted `"rollout" not in meta`; the README now carries the number behind the
+assert.
+
+**Wiring, so the next one is cheap.** `curvature_axis.spaces(l0_matched)` and
+`curvature_plane.{stream,figure_game}(l0_matched)` take the flag; the latter's feature cache
+is now scoped by roster as well as variant, because an unscoped path would have let an
+L0-matched run overwrite the spliced seed-42 features and silently redraw every canonical
+grid. `r21_run_population/measure.py` swaps `sae_encoder` for `fork_plane.encoder`, which is
+what applies each pick's own input convention.
+
+**Two device notes.** `r21_run_population/measure.py` had the same latent bug the
+`divergence_by_space` agent hit on its first H100 run: `features()` fed a host-side mmap'd
+tensor to an encoder whose weights `fork_plane.encoder` had moved to `device`. On CPU both
+sides matched and it never showed. The round trip now lives in the `encoders()` closure that
+knows both sides. Nothing was re-measured for it -- every artifact in this group was measured
+and rendered on CPU, one process per figure family, so each family has one provenance;
+`curvature_discriminant` never encodes at all and `fork_curvature_space` pins `device="cpu"`.
+
+**Gotcha for anyone rendering in a worktree.** `checkpoints/**/ae.pt` is gitignored, so a
+fresh worktree has the config.json files and no weights and `seed42_entries()` fails its
+`_verify` assert -- which blocks *canonical* renders while L0-matched ones work fine, since
+`Matched.encode` resolves to netscratch. Symlinking the eleven `ae.pt` from the main clone
+fixes it and stays invisible to git.
+
 ## The quantity ablation is spliced-only, and its L0-matched bar IS the detector's (2026-08-25)
 
 Two changes, both asked for. The regenerated regime is gone -- every arm now keeps the source

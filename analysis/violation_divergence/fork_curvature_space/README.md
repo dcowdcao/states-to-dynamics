@@ -12,13 +12,16 @@ illegal category — and the six illegal categories are grouped into the three
 constraint rules they violate, so each grid carries five series.
 
 ```
-python analysis/violation_divergence/fork_curvature_space/make_figures.py [--game 1235] [--w 8] [--variant spliced|rollout] [--camera-ready]
+python analysis/violation_divergence/fork_curvature_space/make_figures.py [--game 1235] [--w 8] [--variant spliced|rollout] [--l0-matched] [--camera-ready]
 python analysis/violation_divergence/fork_curvature_space/measure.py [--n_games 40] [--w 8] [--game 1235]
 ```
 
 `--variant rollout` redraws all four grids on the branch set whose suffixes are
 sampled from the model, into `*_rollout` files; see "The rollout variant" below.
-`measure.py` is spliced-only.
+`--l0-matched` redraws them over the eight `l0_operating_point` picks, into
+`*_l0_matched` files; see "At matched L0" below. `measure.py` is spliced-only and
+seed-42-only — its separation table ranks planes, not spaces, and pools all nine
+cells before quoting a number.
 
 The plane itself lives in `src/spade/violation_divergence/curvature_plane.py`,
 beside `fork_plane.py`, which owns the displacement plane and the sampling window
@@ -98,7 +101,8 @@ collapses onto the origin) and `max|Δφ_ref| = 0.00e+00` everywhere (the refere
 | `fork_r21_whole_fixed` | same | `mean d` × `mean θ` |
 
 Each has a `_rollout` twin drawn from the rollout branch set on the same game,
-same planes, same styling. The windowed twins stop at `t − t0 = 8`; the whole
+and an `_l0_matched` twin drawn over the eight `l0_operating_point` picks — same
+game, same planes, same styling in both. The windowed twins stop at `t − t0 = 8`; the whole
 twins keep `r = 0…24` because R^21 has no shorter form. "The rollout variant"
 below is their caption.
 
@@ -353,6 +357,37 @@ resampled legal control is itself a long way from the reference, so the
 denominator grows. Read it with "The rollout variant" below; every offset here is
 inside the region where the branch still outweighs the sampler, but the branch
 set answers a different question from the spliced one.
+
+## At matched L0
+
+The eight dictionary cells are the seed-42 roster, whose L0s span **32.5 to 1,808**, so a
+difference between two panels is an architecture difference *and* a sparsity one.
+`fork_r21_{windowed,whole}_{pca,fixed}_l0_matched` redraw all four grids over
+`results/l0_operating_point/picks.csv` — one checkpoint per architecture at a shared L0 of
+219.16, 184–260 in practice. Game 1235 again, *t₀* = 20, same window, same planes, same
+read-out strip; each panel title carries the L0 its checkpoint was seated at. Raw layer 5 is
+not an SAE and its row is identical in both rosters, which is the check that nothing else
+moved. Both rosters are encoded on CPU — `figure_game` takes `device="cpu"` — so the two
+grids are one provenance and the raw row's exact agreement is meaningful rather than lucky.
+
+**The read-out strip's shape survives the match.** On the PCA plane the run ratios are
+R1 0.48–1.16, R2 1.11–2.45, R3 1.69–4.85, against full R²¹'s narrower R1 0.77–1.34,
+R2 0.80–1.29, R3 1.50–2.48 — the canonical roster gives R1 0.49–1.32, R2 1.13–2.17,
+R3 2.24–3.94 in the plane and R1 0.77–1.19, R2 0.89–1.30, R3 1.69–2.47 in full R²¹. Both
+of the section above's findings hold: **plane ÷ full R²¹ runs 0.54–1.96 with a median of
+1.41** (1.31 on the fixed plane, against 1.31 and 1.27 canonically), so the plane still
+stretches the far branch and shrinks the near one; and the in-plane number lands nearer the
+turning-angle block in **15 of 27** rule × space cells on the PCA plane and 16 of 27 on the
+fixed one, against 14 and 17 — still a coin flip.
+
+**What moves is which dictionary sits where, and it moves a lot.** GatedSAE runs the
+furthest on R3 here (4.85 in the plane) where TopK, PAnneal and BatchTopK led before within
+0.02 of each other (3.94, 3.92, 3.92). GatedAnneal, the lowest cell on R1 canonically at
+0.49, sits at 1.07 once it is off L0 32.5 — the same reversal `../curvature_discriminant`'s
+twin reports on its own statistic — and the two lowest R1 cells become Standard 0.48 and
+SpaDE 0.57. These are n = 1 numbers on a selected game, so read them as the strip's spread
+and not as a ranking: the point of the twin is that the canonical spread was partly the
+sparsity axis, not that this one is an ordering.
 
 ## The rollout variant
 

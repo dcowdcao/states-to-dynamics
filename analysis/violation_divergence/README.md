@@ -337,6 +337,21 @@ What the figures no longer repeat, because it is here:
   the top-10 ranking on even-numbered games and scores it on odd, and vice versa, so no
   event contributes to the ranking it is scored against; chance for that overlap is
   10²/8192 = 0.0122 against 10/8192 = 0.0012 for panel (a).
+  **It gets no `_l0_matched` twin**, unlike the by-space figures in
+  `curvature_discriminant/`, `fork_curvature_space/`, `r21_run_population/`,
+  `divergence_by_space/` and `step_length_fork/`. The L0-matched roster exists to remove one
+  confound — "cell A beats cell B because it is sparser, not because of its architecture" —
+  and this figure reads no cell against another. Its claim is within-dictionary and
+  replicated eight times: in *each* dictionary separately, one feature is in the top-10 of
+  43–99% of empty-square violations and of almost no legal control, and the null it is
+  measured against is the gray `control_legal` series in that same cell. The 43–99% is
+  reported as a range, never as a ranking. The identities compound it: a family reseated at
+  another L0 is a different dictionary with a fresh 8192 features and no correspondence to
+  the seed-42 one, and panel (a)'s "single most recurrent feature" is refit per cell in
+  either roster, so there is nothing held constant for the match to hold. Recurrence rate
+  does depend on sparsity, so "how does this statistic move with L0" is a fair question —
+  but it is a new experiment (a full `compute_divergence.py` pass for eight more
+  dictionaries), not this figure with its confound removed.
 - **F6.** Each branch is scored against the reference of its own group — the source
   game in the spliced tree, the (game, rollout) sample in the rollout tree.
 - **F7 rollout.** Both anchors rise as each branch's own rollout fills the square, not

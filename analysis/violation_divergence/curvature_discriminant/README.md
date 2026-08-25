@@ -24,6 +24,10 @@ ReStraV curvature descriptor (R²¹) rather than in activation space:
 python analysis/violation_divergence/curvature_discriminant/branch_geometry.py   # d/theta per branch, 9 spaces
 python analysis/violation_divergence/curvature_discriminant/evaluate.py          # the honesty numbers
 python analysis/violation_divergence/curvature_discriminant/make_figures.py      # -> figures/
+PYTHONPATH=src python analysis/violation_divergence/curvature_discriminant/l0_matched_geometry.py  # d/theta per pick
+PYTHONPATH=src python analysis/straightness/l0_matched_profile.py                # the picks' straightness geometry
+python analysis/violation_divergence/curvature_discriminant/evaluate.py --l0-matched
+python analysis/violation_divergence/curvature_discriminant/make_figures.py --l0-matched
 ```
 
 All three take `--variant {spliced,rollout}`, default spliced. Intermediates go
@@ -74,34 +78,76 @@ training split's per-column SD before projection, following
 `spade.straightness.classify.lr_auc`. The z-scoring *mean* cancels in the
 difference; only the scale survives.
 
-## Why there is no L0-matched twin of this figure
+## At matched L0: three of the four leaders were their sparsity
 
-`l0_matched_geometry.py` writes `d`/`theta` for the eight `l0_operating_point` picks, and
-`../divergence_by_space` and `../step_length_fork` both draw an `_l0_matched` twin off the
-same picks. This figure cannot, and the blocker is the axis, not the geometry.
+**This section used to say the twin could not be built.** The blocker it named was real —
+`curvature_axis.fit_axis` reads `$SPADE_STRAIGHTNESS_DIR/geometry/<space>_raw.npz`, which
+existed for the nine canonical spaces and for no pick — and it is now gone:
+`analysis/straightness/l0_matched_profile.py` writes `l0_<config>_raw.npz` with `d`, `theta`
+and `norm` over all five straightness classes, in the canonical file's row layout. So the
+eight probes are fit per pick, in the pick's own space, exactly as the canonical nine are;
+nothing is scored on another dictionary's column scale. `evaluate.py --l0-matched` and
+`make_figures.py --l0-matched` write `evaluation_l0_matched.csv` and
+`figures/space_fork_grid_discriminant_l0_matched.png`; the canonical artifacts are untouched
+and re-render identically.
 
-Axis 1 is `curvature_axis.fit_axis(space, ...)`, fit **per space** on the straightness
-study's violation/source-legal pairs — it reads
-`$SPADE_STRAIGHTNESS_DIR/geometry/<space>_raw.npz`, which exists for the nine canonical
-spaces and for no L0-matched pick. `axis.sd`, the per-column training scale every number
-in the bottom row divides by, comes from the same fit, so `control_test`,
-`random_direction_null`, `magnitude_only` and the landing panel are all downstream of it.
-There is no version of this figure at matched L0 that does not first fit eight new probes.
+The confound this removes is the sharp one. The canonical roster's L0s span **32.5 to
+1,808**, and the four dictionaries the table below calls best — GatedAnneal 32.5, GatedSAE
+50.6, TopK 79.9, BatchTopK 80.2 — **are the four sparsest of the nine**. Every claim of the
+form "the sparse dictionaries do X" was therefore also a claim about four particular
+architectures. `picks.csv` seats one checkpoint per architecture at L0 219.16 (184–260 in
+practice); same 575 games, same 5175 branches, same window, same fit offset, same nulls.
 
-The cost of unblocking it is one straightness-geometry pass for the eight picks — 10,000
-games x 59 positions per dictionary, about an hour and a half on one core against the
-~3 minutes each of the two divergence sweeps costs — and it is a new experiment rather
-than a re-render: the probes, their held-out AUROCs and the whole honesty table would be
-new numbers. Scoring the picks on the *existing* per-space scale is not an alternative;
-z-scoring a descriptor by another dictionary's column SDs is the units error the
-"Scaling" note above exists to prevent.
+| space | L0 | probe AUROC | illegal-vs-control | random dir. (95th) | ‖Δφ‖ alone | flip ρ |
+|---|---|---|---|---|---|---|
+| GatedSAE | 220 | 0.890 | **0.812** [0.801, 0.824] | 0.778 | 0.660 | −0.02 |
+| TopK | 220 | 0.771 | 0.717 [0.703, 0.731] | 0.668 | 0.593 | +0.13 |
+| Standard | 209 | 0.751 | 0.716 [0.704, 0.729] | 0.683 | 0.611 | −0.02 |
+| GatedAnneal | 222 | 0.754 | 0.706 [0.693, 0.719] | 0.651 | 0.592 | +0.20 |
+| PAnneal | 260 | 0.717 | 0.667 [0.652, 0.680] | 0.630 | 0.565 | +0.07 |
+| BatchTopK | 227 | 0.712 | 0.640 [0.625, 0.654] | 0.617 | 0.585 | +0.32 |
+| SpaDE | 232 | 0.692 | 0.638 [0.623, 0.654] | 0.621 | 0.587 | +0.21 |
+| raw layer 5 | — | 0.723 | 0.634 [0.619, 0.650] | 0.624 | 0.587 | **+0.42** |
+| CosineSpaDE | 184 | 0.704 | 0.622 [0.607, 0.637] | 0.659 | 0.676 | +0.14 |
 
-What can be said without it: the `d` half of the L0-matched descriptor is already drawn,
-in `../step_length_fork`'s twin, and the finding there is that the four gated/TopK
-dictionaries' apparent weakness on R2/R3 was their default sparsity rather than their
-architecture. The r = 0 table below orders the same four *above* raw layer 5 on
-illegal-vs-control AUROC, so whether that ordering is architecture or L0 is open, and this
-figure does not settle it.
+**GatedAnneal's lead was its sparsity; Standard's collapse was too.** GatedAnneal is first
+canonically at 0.859 and fourth here at 0.706, its probe AUROC falling 0.927 → 0.754.
+Standard is *last* canonically at 0.553 — below raw and below the plain norm — and third
+here at 0.716; it was the second-densest space in that roster at L0 1,093. BatchTopK drops
+from fourth (0.803) to sixth (0.640). **GatedSAE is the one leader that is an architecture**,
+0.824 → 0.812, and it is the only cell that clears raw by more than 0.08. The spread across
+the eight dictionaries compresses from 0.306 to 0.190.
+
+**Two of the three "what does not hold" findings soften, and the third does not.**
+Supervision now clears the random-direction 95th percentile in **8 of 9 spaces** rather than
+6, and the plain norm beats the fitted axis in **1 of 9** (CosineSpaDE) rather than 3 — so
+"most of the separation is magnitude, not direction" was itself partly a sparsity statement.
+Move-index calibration is unchanged: by *r* = 2 the transported AUROC is 0.37–0.62, at chance
+or inverted, against the canonical 0.35–0.70. And on one game the plane still separates
+nothing — 0.11–1.08× its own exact permutation null at *p* 0.43–0.86, against 0.09–1.05× at
+*p* 0.36–1.00.
+
+**What holds everywhere.** The axis still reads legality rather than novelty: the two
+held-out legal controls land at +0.01 to +0.06 log-odds in every cell, on the reference,
+while R2 lands at +0.51 to +3.42 and R3 at +0.49 to +2.45.
+
+**What does not survive at all is the R1 result.** Canonically R1 — the rule no straightness
+violation contains in any form — lands at +1.26 to +2.16 in the four sparse dictionaries, and
+that was the study's out-of-distribution generalization claim. At matched L0 **only GatedSAE
+reproduces it** (+1.40); the rest land at −0.16 to +0.49, and BatchTopK and CosineSpaDE are
+*negative*. Read the canonical R1 finding as a property of dictionaries at L0 ≤ 80, not of
+the four architectures that happened to sit there.
+
+**The flip confound, restated.** "Weak axis ⇒ board-change read-out, strong axis ⇒ legality"
+survives at the ends — the two flattest control slopes are GatedSAE and Standard at ρ = −0.02,
+the two strongest axes among the picks — but the middle is not clean: BatchTopK has the
+*highest* ρ of any dictionary (+0.32) and the weakest axis but one. Raw layer 5 is still the
+worst offender at +0.42.
+
+**Two caveats carry over from every L0-matched arm.** The two SAE families are not fed one
+input convention — ours were trained on `scale*(x − mean)`, Karvonen's on the raw residual,
+and each is fed what it was trained on — and the match is on **L0 only**: `picks.csv` carries
+`recon_f1` 0.46–0.94 across the eight, so "matched sparsity" is not "matched everything".
 
 ## The honesty guard
 
@@ -156,6 +202,12 @@ index, (k) legality or novelty, (l) where each rule group lands.
 `figures/space_fork_grid_discriminant_rollout.png` is the same figure on the
 resampled-continuation tree; see *The suffix confound* below before reading
 anything but its *r* = 0 column.
+`figures/space_fork_grid_discriminant_l0_matched.png` is the same figure again over the
+eight `l0_operating_point` picks — one checkpoint per architecture at L0 219.16 (184–260),
+so a difference between two cells is the architecture and not its sparsity. Same game, same
+575-game population, same estimator; each panel header carries the L0 its checkpoint was
+seated at, its rows are `evaluation_l0_matched.csv`, and *At matched L0* above is its
+caption.
 
 **The caption, which is here and not on the figure.** (a)–(i) draw game 1235,
 *t0* = 20, every 2nd ply, viewed at `elev = 18, azim = −58` (the parent fork

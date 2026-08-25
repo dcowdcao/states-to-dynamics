@@ -14,8 +14,8 @@ control. What changes is that the plane fits, the z-scoring and the control divi
 means something.
 
 ```
-python analysis/violation_divergence/r21_run_population/measure.py [--n_games N]
-python analysis/violation_divergence/r21_run_population/make_figures.py [--camera-ready]
+python analysis/violation_divergence/r21_run_population/measure.py [--n_games N] [--l0-matched]
+python analysis/violation_divergence/r21_run_population/make_figures.py [--camera-ready] [--l0-matched]
 ```
 
 `measure.py` writes `$SPADE_DIVERGENCE_DIR/r21_run_population/runs.npz` at ~1.6 s/game,
@@ -130,6 +130,47 @@ components disagreed sharply (0.34 vs 0.94 in TopK). Paired per game over 100, �
 disagreement was a property of that game, so the panel is retitled: it shows what the
 single R²¹ number averages, not a conflict inside it.
 
+## At matched L0, so the cells are architectures and not sparsities
+
+The nine cells above are the seed-42 roster, each dictionary sitting wherever its own
+default hyperparameters put it on the sparsity axis; their L0s span **32.5 to 1,808**, so a
+gap between two of those columns is an architecture difference *and* an L0 difference.
+`figures/run_from_reference_population_l0_matched.png` and
+`results/violation_divergence/r21_run_population_l0_matched.csv` redraw the same two panels
+over `results/l0_operating_point/picks.csv` — one checkpoint per architecture, each the
+nearest-L0 member of its own grid to a shared target of 219.16, spanning 184–260 in
+practice. Same 100 branch-complete games at *t₀* = 20, same anchors, same per-game refits,
+same estimator; only the dictionaries change. **Both sweeps are measured on CPU**, all
+nine cells of each in one process: CPU and GPU float arithmetic differ in the last digits,
+so a family measured half on one and half on the other would carry two provenances.
+`encoders()` moves each batch to the encoder's device and brings the result back, which is
+the identity on CPU — that round trip is why the sweep can move to a GPU later without the
+device mismatch the first H100 run of `../divergence_by_space` hit.
+
+| series | canonical, across cells | at matched L0 | CI half-width |
+|---|---|---|---|
+| activation refit | 1.05–1.14 | 1.03–1.15 | ±0.03–0.14 |
+| refit | 0.96–1.21 | 0.94–1.24 | ±0.06–0.11 |
+| shared | 0.94–1.08 | 0.93–1.14 | ±0.07–0.11 |
+| named | 0.92–1.15 | 0.90–1.12 | ±0.07–0.11 |
+| full R²¹ | 0.84–0.93 | 0.81–0.94 | ±0.04–0.05 |
+| control 2 (null) | 1.04–1.10 | 1.03–1.09 | ±0.06–0.08 |
+
+**Nothing here was sparsity.** Both of the figure's claims survive intact. Full R²¹ stays
+below 1 in every cell (0.81–0.94 against CIs of ±0.04–0.05), so an illegal branch still does
+not run further from the reference than a second legal move does; and every plane still
+inflates it, by a paired mean of **+0.22 (activation refit), +0.16 (refit), +0.13 (shared),
++0.11 (named)** against the canonical roster's +0.22, +0.17, +0.12, +0.11. The empirical
+null is unmoved at 1.03–1.09. The spread across the nine cells on full R²¹ is 0.12 here
+against 0.10 canonically — still inside two CI half-widths, so the roster swap does not
+make the cells separate any better than they did.
+
+**CosineSpaDE is the one cell that stands out, in both rosters.** It is the top of every
+plane series here as it was there (refit 1.24 vs 1.21), and it is the only pick whose full
+R²¹ reaches 0.94. Since it is also the *sparsest* pick at L0 184 in one roster and the
+mid-density one at L0 173.6 in the other, that behaviour is the architecture's, not its
+sparsity's — which is exactly the question this roster exists to answer.
+
 ## Reading it honestly
 
 - **Everything is refit per game.** The z-scoring is per space and per game; `refit` is a
@@ -159,6 +200,12 @@ single R²¹ number averages, not a conflict inside it.
   `--n_games` is what decides the interval's width.
 - **Isomap is absent**, as in the single-game figure: it is not a linear image of R²¹ and
   its reference is not at the origin, so a distance in it is not a share of anything.
-- **Spliced only.** The rollout twin resamples every branch's suffix, which moves where the
-  mean over K rollouts is taken and puts every anchor drawn here deep in the regime the
-  rollout study found saturated.
+- **Spliced only, and not for want of trying.** The anchors are the 10 offsets
+  *t* − *t₀* = 6…24, and **8 of them sit past *r* = 8**, which is where
+  `../fork_curvature_space` measured a branch's K rollouts to differ from each other by
+  more than the branch differs from the reference (`ROLLOUT_MAX_R`). A rollout twin would
+  therefore divide two numbers that are both sampling noise at the offsets it is mostly
+  drawn from. It would also be a different estimator, not the same one on other rows: φ is
+  nonlinear, so the mean over K has to be taken after the descriptor, and `game_rows`
+  asserts nine branch-complete rows per game where the rollout tree has nine × K.
+  `measure.py` asserts `"rollout" not in meta` rather than leaving that implicit.

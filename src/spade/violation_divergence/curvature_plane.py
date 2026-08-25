@@ -52,8 +52,7 @@ from spade.straightness.geometry import (
     N_RAW_D, N_RAW_THETA, RESTRAV_FEATURE_NAMES, moment4, restrav_features,
     temporal_geometry)
 from spade.violation_divergence.branches import FIGURE_GAME, complete_games
-from spade.violation_divergence.compute_divergence import sae_encoder
-from spade.violation_divergence.fork_plane import STRIDE, positions, spaces
+from spade.violation_divergence.fork_plane import STRIDE, encoder, positions, spaces, tag
 
 W = 8                    # smallest window filling all 21 coordinates; see the docstring
 # The two descriptor components the straightness study states its results in, and
@@ -126,19 +125,22 @@ def usable(n: int | None = None, w: int = W, variant: str = "") -> list[int]:
     return ids[:n]
 
 
-def stream(gids: list[int], device: str = "cpu", w: int = W, variant: str = ""):
+def stream(gids: list[int], device: str = "cpu", w: int = W, variant: str = "",
+           l0_matched: bool = False):
     """Each game's nine branches in all nine representation spaces, one at a time.
 
     A generator, not a list: forty games in nine 8192-wide spaces is 2 GB on top
     of the 1 GB activation file, and the login node kills it.
+
+    `l0_matched` swaps the seed-42 roster for the eight `l0_operating_point` picks; each
+    pick carries its own input convention, which `fork_plane.encoder` applies.
     """
     base = variant_dir("divergence", variant=variant)
     meta = torch.load(base / "branches" / "branches.pt", weights_only=True)
     # mmap: the 1 GB activation file is indexed nine rows at a time, and
     # materialising it alongside eight SAE checkpoints trips the memory cap.
     acts = torch.load(base / "acts" / "resid_post_5.pt", weights_only=True, mmap=True)
-    encoders = [(label, None if e is None else sae_encoder(e, device))
-                for label, e in spaces()]
+    encoders = [(label, encoder(e, device)) for label, e in spaces(l0_matched)]
     for gid in gids:
         idx = (meta["game_id"] == gid).nonzero().flatten()
         t0 = int(meta["t0"][idx[0]])
@@ -164,18 +166,19 @@ def stream(gids: list[int], device: str = "cpu", w: int = W, variant: str = ""):
 
 
 def figure_game(gid: int = FIGURE_GAME, w: int = W, device: str = "cpu",
-                variant: str = "") -> dict:
+                variant: str = "", l0_matched: bool = False) -> dict:
     """The one game the grids draw, cached so re-rendering skips the 1 GB load.
 
-    The cache is scoped by variant: an unscoped path would let a rollout run
-    overwrite the spliced features and silently redraw every spliced figure.
+    The cache is scoped by variant AND by roster: an unscoped path would let a rollout or
+    an L0-matched run overwrite the spliced seed-42 features and silently redraw every
+    canonical figure.
     """
     cache = (variant_dir("divergence", variant=variant) / "fork_curvature"
-             / f"game_{gid}_w{w}.npz")
+             / f"game_{gid}_w{w}{tag(l0_matched=l0_matched)}.npz")
     if cache.exists():
         z = np.load(cache)
         return {k: z[k] if z[k].ndim else z[k].item() for k in z.files}
-    g = next(stream([gid], device, w, variant))
+    g = next(stream([gid], device, w, variant, l0_matched))
     cache.parent.mkdir(parents=True, exist_ok=True)
     np.savez(cache, **g)
     return g

@@ -27,8 +27,17 @@ Four questions, in the order that decides whether the figure may be drawn:
    construction; `variant_agreement` measures the residual rather than trusting
    it, and what the rollout can actually change is r > 0.
 
+6. Is the ordering an ARCHITECTURE ordering, or a sparsity one? The nine canonical
+   spaces sit wherever their own defaults put them on the sparsity axis, and their L0s
+   span 32.5 to 1,808 -- with the four that win this table the four sparsest.
+   --l0-matched re-runs everything above over the eight `l0_operating_point` picks, one
+   checkpoint per architecture at a shared L0. Nothing else moves: the axis is still fit
+   per space on straightness pairs, in the pick's own space, off the `l0_*_raw.npz`
+   geometry `analysis/straightness/l0_matched_profile.py` writes. It writes
+   `evaluation_l0_matched.csv` and leaves the canonical table alone.
+
 Usage: python analysis/violation_divergence/curvature_discriminant/evaluate.py
-           [--variant {spliced,rollout}]
+           [--variant {spliced,rollout}] [--l0-matched]
 """
 
 import argparse
@@ -39,6 +48,7 @@ from sklearn.metrics import roc_auc_score
 from spade.common.study import variant_dir
 
 from spade.straightness.geometry import RESTRAV_FEATURE_NAMES
+from spade.violation_divergence.fork_plane import tag
 
 from curvature_axis import (
     WINDOW_PLIES, CurvatureAxis, fit_axis, residual_plane, spaces, transported_auroc,
@@ -349,6 +359,10 @@ def variant_agreement(space: str, m: dict, variant: str) -> float:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--variant", choices=list(VARIANTS), default="spliced")
+    parser.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                        help="score the eight l0_operating_point picks instead of the "
+                             "seed-42 roster, so a difference between two spaces is the "
+                             "architecture and not its sparsity")
     args = parser.parse_args()
     variant = VARIANTS[args.variant]
 
@@ -364,7 +378,7 @@ def main():
     r0 = int(np.flatnonzero(OFFSETS == 0)[0])
     illegal, control = mb["category"] != 0, mb["is_control"] > 0
     rows = []
-    for space in spaces():
+    for space in spaces(args.l0_matched):
         axis = fit_axis(space, FIT_OFFSET, m["held_out_legal"])
         F = descriptors(space, m, variant)
         delta = deltas(F, axis, m)
@@ -444,7 +458,7 @@ def main():
             print(f"  {r['space']:40} {r['r0_vs_spliced']:.3e}")
 
     import pandas as pd
-    out = out_dir(variant) / "evaluation.csv"
+    out = out_dir(variant) / f"evaluation{tag(l0_matched=args.l0_matched)}.csv"
     flat = [{**{k: v for k, v in r.items() if k not in ("transport", "landing")},
              **{f"landing_{k}": v for k, v in r["landing"].items()},
              **{f"transport_r{k}": v for k, v in r["transport"].items()}} for r in rows]
