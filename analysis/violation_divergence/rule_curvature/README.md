@@ -58,6 +58,9 @@ Skip-if-exists is per product.
 | `curvature_rules_{tree}_raw_L5` | the three panels in raw layer 5 |
 | `curvature_rules_{tree}_{family}` | the same three panels in one SAE's latents (8 families) |
 | `curvature_rules_{tree}_combined` | panel (b) alone in all nine spaces, shared axes, over the board |
+| `curvature_rules_{tree}_population_combined` | panel (a) alone in all nine spaces, shared axes, no board |
+| `curvature_rules_{tree}_combined_l0_matched` | `_combined`'s grid, redrawn on the L0-matched roster |
+| `curvature_rules_{tree}_population_combined_l0_matched` | `_population_combined`'s grid, redrawn on the L0-matched roster |
 
 `{tree}` is `branches` (spliced) or `rollout` (resampled).
 
@@ -349,6 +352,107 @@ One hypothesis this does **not** support: that the shared suffix is what makes
 the six illegal branches' post-*t0* responses co-vary. Mean pairwise correlation
 between them over *t* ≥ *t0* is **+0.536 spliced and +0.580 resampled** — the
 co-variation is the game, not the splice.
+
+## The L0-matched arm
+
+Both combined grids read cell to cell, and on the seed-42 roster that reading
+confounds the architecture with its sparsity: those eight checkpoints sit wherever
+each family's default hyperparameters left them, at L0 32.5 to 1,808.
+`--l0-matched` redraws the two grids over the eight `l0_operating_point` picks —
+one checkpoint per architecture, each the nearest-L0 member of its own grid to the
+shared target 219.16, spanning **L0 184 (CosineSpaDE) to 260 (PAnneal)** — and puts
+each pick's L0 in its cell title, which is where a reader checks how well "matched"
+holds. Raw layer 5 leads both grids unchanged: it is the reference space and has no
+L0, so its cell is the same numbers in both arms.
+
+```
+python -m spade.violation_divergence.rule_curvature --tree branches|rollout --l0-matched
+python analysis/violation_divergence/rule_curvature/make_figures.py \
+    --tree branches|rollout --l0-matched
+```
+
+Nothing else moves. Same `branches.pt` tree, same corpus for panel (a) — the
+rule-complete games forking at *t0* = 20, **n = 2000 per rule**, all three rules the
+same games — same game 1235 for panel (b), same per-ply θ, same estimator: mean ±
+95% CI over games at the markers in (a), and n = 1 with no uncertainty display in
+(b). Panel (a)'s three class profiles are the straightness study's, read for a pick
+from `l0_<config>_raw.npz` — the drop-in twin that
+`analysis/straightness/l0_matched_profile.py` writes — so they are still 2000 whole
+games per class, now
+encoded through the pick's own dictionary. The population cache is
+`$DIR/[rollout/]rule_population/l0_<config>_t0-20.npz`; the per-game 21-D
+descriptors are **not** built for this roster, since `feature_pca` is their only
+reader and it draws the seed-42 one. Every cell of both arms — measurement and
+render — was produced on an H100: CPU and GPU float arithmetic differ in the last
+digits, so one device per figure family is the rule, not a detail.
+
+**Only the two combined grids are twinned, and the nine per-space files are what
+this arm leaves out.** Panel (c) is the same board in all nine of them, panel (a) is
+`_population_combined`'s cell and panel (b) is `_combined`'s, so a per-space
+L0-matched file would be a larger rendering of two cells the pair already carries,
+beside a board that does not depend on the space at all. Eighteen near-duplicate
+PNGs for no claim.
+
+### What moves
+
+Panel (a)'s largest deviation from the legal class, R2 — the rule with the clearest
+population response — in each of the four (tree, roster) combinations, all at
+n = 2000 and all from the scripts' own output:
+
+| space | L0 (matched) | spliced, seed-42 | spliced, matched | resampled, seed-42 | resampled, matched |
+|---|---|---|---|---|---|
+| raw layer 5 | — | −4.41 | −4.41 | −4.65 | −4.65 |
+| CosineSpaDE | 184 | −13.06 | −12.72 | −13.06 | −12.72 |
+| BatchTopK | 227 | −2.84 | −4.67 | −2.79 | −4.86 |
+| PAnneal | 260 | −3.94 | −3.62 | −4.05 | −3.66 |
+| TopK | 220 | −2.59 | −3.44 | −2.68 | −3.63 |
+| GatedAnneal | 222 | −2.50 | −3.37 | −2.66 | −3.52 |
+| Standard | 209 | −3.47 | −2.90 | −3.53 | −2.84 |
+| SpaDE | 232 | −4.44 | −2.40 | −4.44 | −2.70 |
+| GatedSAE | 220 | −2.19 | −2.36 | −2.25 | −2.47 |
+
+Each against a 95% CI half-width of 0.10–0.31° and a pre-fork sampling residual of
+0.19–0.58° (seed-42) or 0.21–0.40° (matched), identical between the trees as it must
+be, so every entry is resolved. Four readings:
+
+- **The roster reorders the spaces; the suffix does not.** Within a roster the two
+  trees rank the eight SAE spaces identically. Between rosters the ranking moves a
+  long way, the same way on both trees: SpaDE falls from second to seventh and
+  BatchTopK rises from fifth to second — the "its lead was sparsity" reversal the
+  by-space AUROC bars showed. So this is a property of which checkpoint represents a
+  family, not of the measurement.
+- **The two ends hold.** CosineSpaDE is the extreme in all four panels and GatedSAE
+  the mildest in all four.
+- **Only one SAE space beats raw layer 5 by anything, on either roster.**
+  CosineSpaDE, by a factor of nearly three in all four panels. The runner-up sits
+  within 0.3° of raw in every panel — on either side of it — and which space it is
+  depends on the roster (SpaDE at seed-42, BatchTopK matched). Encoding through a
+  dictionary does not amplify the rule signal at matched sparsity any more than it
+  did before.
+- **R2 > R3 > R1 holds in all nine spaces of all four panels**, and on the matched
+  roster all three rules clear the pre-fork residual in all nine: spliced, R1 by
+  2.3–9.8×, R3 by 6.1–46×, R2 by 9.1–51×; resampled, R1 by only 1.3–5.4× (the
+  seed-42 tree reads 1.4–4.5× there), with R2 and R3 unambiguous. The rule ordering
+  is the part of this figure that does not care which checkpoint each family is
+  represented by.
+
+The rows where the two trees agree to the second decimal (CosineSpaDE in both
+rosters, SpaDE at seed-42) are the spaces whose extremum sits at *t* = 19 = *t0* − 1,
+whose window is positions *t0* − 2 .. *t0* and is shared by the two trees by
+construction — the same invariant the tree comparison above rests on, now visible
+per space.
+
+The n = 1 spread ratio moves further than any of this: 0.858–0.956 across the
+seed-42 spliced spaces against **0.734–1.059** across the picks, with Standard,
+GatedSAE and SpaDE now **above 1**, where no seed-42 space was. The rule grouping
+was already a labelling convenience; at matched sparsity three spaces put a rule's
+members further from each other than from another rule's.
+
+**A note on n, for anyone reading the captions above.** Every committed figure in
+this study, both arms, is drawn at n = 2000 games at *t0* = 20 — `extend_branches`
+grew the tree to that many at one fork position, and `af73625` re-rendered on it.
+The Captions and "What changes between the two trees" sections still quote the
+earlier n = 80 and its numbers, and were not rewritten here.
 
 ## Reading it honestly
 
