@@ -18,7 +18,8 @@ bands undo that.
 
 Both statistics are reported because they disagree about curvature: the **hit rate** is the
 forced choice the study always had, the **per-position AUROC** is what the thresholded
-read-out added.
+read-out added. The figures plot the AUROC only; the hit rate is a column in every CSV, and
+the numbers this document quotes from it are read there.
 
 ## Result
 
@@ -42,6 +43,8 @@ bootstrap over source games, 1,000 resamples, seed 42.
 | **mean** | **0.726** | 0.698 | 0.566 | **0.715** | 0.672 | 0.584 |
 
 Figures: `figures/quantity_ablation_regenerated.png`, `figures/quantity_ablation_spliced.png`.
+One panel each, no title: the bars are the AUROC column of the table above, spaces ordered by
+`d`. This document is their caption.
 
 **Every claim below holds in both regimes**, and the two orderings of `d` agree at Spearman
 +0.983, so none of this is a property of one suffix convention.

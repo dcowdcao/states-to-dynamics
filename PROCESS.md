@@ -6,6 +6,14 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The quantity ablation is one panel now (2026-08-25)
+
+All four `quantity_ablation_*` figures lost the gray note strip, lost panel (b) (argmax hit
+rate), and label the y axis `AUROC`; the subcaption sits below the axes as everywhere else.
+`hit` is still measured and still a CSV column -- it is the half of the finding that says
+curvature reads as chance on the forced choice -- so dropping the panel drops a view, not a
+number. The chance label needed a wider right slot to fit the narrower single-panel canvas.
+
 ## The quantity ablation now has an L0-matched twin (2026-08-25)
 
 `quantity_ablation.py --l0-matched` re-runs both suffix regimes over the eight

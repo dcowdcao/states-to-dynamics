@@ -196,34 +196,27 @@ def panel(ax, table, value: str, ylabel: str, chance: float, index: int, top: fl
     ax.set_xticks(range(len(spaces)), [name(s) for s in spaces], fontsize=6.8, rotation=35,
                   ha="right", rotation_mode="anchor")
     ax.set_ylim(0, top)
-    ax.set_xlim(-0.7, len(spaces) + 0.45)      # a slot past the last group for the chance label
+    ax.set_xlim(-0.7, len(spaces) + 1.0)       # a slot past the last group for the chance label
     ax.set_ylabel(ylabel)
-    ax.text(len(spaces) - 0.55, chance, "chance", color=NULL["color"], fontsize=6.8,
+    ax.text(len(spaces) - 0.45, chance, "chance", color=NULL["color"], fontsize=6.8,
             ha="left", va="center", bbox={"fc": "white", "ec": "none", "pad": 1.2})
-    ax.text(0.0, 1.02, f"({chr(97 + index)})", va="bottom", transform=ax.transAxes,
-            color=INK, fontsize=9)
+    ax.set_title(f"({chr(97 + index)})", y=-0.32, color=INK, fontsize=9)
     ax.grid(axis="x", visible=False)
     ax.tick_params(axis="x", length=0)
 
 
 def draw(table: pd.DataFrame, variant: str, camera_ready: bool, suffix: str = "") -> Path:
+    """The per-position panel alone. What the bars mean, what orders the spaces, and the
+    localization half of the same table all live in QUANTITY_ABLATION.md, which is this
+    figure's caption; `hit` stays in the CSV."""
     keys = [k for k in BANDS if (table.quantity == k).any()]
     order = (table[table.quantity == "d"].sort_values("auroc_position", ascending=False)
              .space.tolist())
-    fig, axes = plt.subplots(1, 2, figsize=(7.6, 3.6))
-    against = ("legal move" if variant == "regenerated" else
-               "legal move at $t \\leq t_0$")
-    panel(axes[0], table, "auroc_position",
-          f"per-position AUROC, illegal vs {against}\n($\\uparrow$ better)",
-          0.5, 0, 1.0, order, keys)
-    panel(axes[1], table, "hit", "localization: argmax lands on $t_0$\n($\\uparrow$ better)",
-          float(table.chance_hit.iloc[0]), 1, 0.55, order, keys)
-    axes[0].legend(loc="upper right", fontsize=6.8, frameon=False, handlelength=1.4,
-                   labelspacing=0.3)
-    fig.tight_layout(rect=(0, 0, 1, 0.94))
-    fig.text(0.005, 0.985, "hue and hatch = the scored quantity; spaces are ordered by $d$'s "
-             f"per-position AUROC, raw layer 5 wherever it lands ({variant} suffix)",
-             fontsize=7, color=MUTED, va="top")
+    fig, ax = plt.subplots(figsize=(4.4, 3.4))
+    panel(ax, table, "auroc_position", "AUROC", 0.5, 0, 1.0, order, keys)
+    ax.legend(loc="upper right", fontsize=6.8, frameon=False, handlelength=1.4,
+              labelspacing=0.3)
+    fig.tight_layout()
     return save_figure(fig, HERE / "figures" / f"quantity_ablation_{variant}{suffix}",
                        camera_ready)
 
