@@ -45,6 +45,7 @@ import numpy as np
 import torch
 
 from spade.common.study import study_dir
+from spade.l0_operating_point import roster
 from spade.straightness.build_games import CLASSES
 from spade.straightness.geometry import restrav_features
 
@@ -53,8 +54,18 @@ GEOM_DIR = study_dir("straightness") / "geometry"
 RAW_SPACE = "resid_post_5"
 
 
-def spaces() -> list[str]:
-    """Raw layer 5 first (the reference space), then every seed-42 dictionary."""
+def spaces(l0_matched: bool = False) -> list[str]:
+    """Raw layer 5 first (the reference space), then every dictionary.
+
+    The seed-42 roster sits wherever each family's default hyperparameters put it on the
+    sparsity axis, so a difference between two of those cells confounds the architecture
+    with its L0. `l0_matched` swaps in the eight `l0_operating_point` picks, one per family
+    at the shared target, which is what removes that confound. Both rosters read the same
+    two files per space -- the straightness `_raw` geometry the axis is fit on and the
+    branch geometry it is scored on -- so only the names change.
+    """
+    if l0_matched:
+        return [RAW_SPACE] + roster.SPACES
     return [RAW_SPACE] + sorted(
         f.name.removesuffix("_raw.npz") for f in GEOM_DIR.glob("sae_*_raw.npz"))
 

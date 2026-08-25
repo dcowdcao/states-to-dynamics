@@ -18,8 +18,14 @@ at the origin, so a distance in it is not a share of anything.
 Reads `measure.py`'s npz. Writes the figure and one tidy CSV of every drawn
 point; prose belongs in README.md.
 
+`--l0-matched` draws the sweep `measure.py --l0-matched` wrote over the eight
+`l0_operating_point` picks, one checkpoint per architecture at the shared L0, so a
+difference between two cells is the architecture and not its sparsity. Same panels, same
+estimator; each cell's tick label carries the L0 it was seated at, and the canonical
+figure and CSV are untouched.
+
 Usage: python analysis/violation_divergence/r21_run_population/make_figures.py
-       [--camera-ready]
+       [--camera-ready] [--l0-matched]
 """
 
 import argparse
@@ -35,6 +41,7 @@ from spade.common.study import study_dir
 from spade.figures.paper_style import (
     FULL_STYLE, GRID, INK, MUTED, NULL, PLANE_STYLE, QUANTITY_STYLE, apply_style,
     save_figure)
+from spade.violation_divergence.fork_plane import tag
 from spade.violation_divergence.fork_r21 import BLOCKS
 
 HERE = Path(__file__).resolve().parent
@@ -85,7 +92,7 @@ def limits(z) -> tuple[float, float]:
     return lo / 1.06, hi * 1.06
 
 
-def figure(z, camera_ready: bool) -> Path:
+def figure(z, camera_ready: bool, suffix: str = "") -> Path:
     names = list(z["space"])
     x = np.arange(len(names))
     n_games = z["ratio"].shape[1]
@@ -153,7 +160,7 @@ def figure(z, camera_ready: bool) -> Path:
         "Ratios, so only the within-space contrast carries across cells; the reference "
         "is 0 in every field by construction."]),
         ha="center", va="top", fontsize=7.5, color=MUTED)
-    return save_figure(fig, HERE / "figures" / "run_from_reference_population",
+    return save_figure(fig, HERE / "figures" / f"run_from_reference_population{suffix}",
                        camera_ready)
 
 
@@ -180,19 +187,22 @@ def table(z) -> pd.DataFrame:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--camera-ready", dest="camera_ready", action="store_true")
+    ap.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                    help="draw the sweep measure.py --l0-matched wrote")
     args = ap.parse_args()
     apply_style(args.camera_ready)
 
-    z = dict(np.load(study_dir("divergence") / "r21_run_population" / "runs.npz"))
+    suffix = tag(l0_matched=args.l0_matched)
+    z = dict(np.load(study_dir("divergence") / "r21_run_population" / f"runs{suffix}.npz"))
     df = table(z)
-    out = results_dir("violation_divergence") / "r21_run_population.csv"
+    out = results_dir("violation_divergence") / f"r21_run_population{suffix}.csv"
     out.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out, index=False)
     wide = df[df.series.isin(list(z["series"]))].pivot(
         index="space", columns="series", values="ratio").reindex(list(z["space"]))
     print(wide[list(z["series"])].round(2).to_string())
     print(f"wrote {out}")
-    print(f"wrote {figure(z, args.camera_ready)}")
+    print(f"wrote {figure(z, args.camera_ready, suffix)}")
 
 
 if __name__ == "__main__":

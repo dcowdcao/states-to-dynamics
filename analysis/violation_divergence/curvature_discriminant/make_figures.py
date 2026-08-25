@@ -47,8 +47,17 @@ Only r > 0 can differ, and that is the regime the rollout study found
 uninformative -- which the panels already shade and label "axis not calibrated
 here", so it needs no caveat of its own (README.md carries the numbers).
 
+--l0-matched redraws the grid over the eight `l0_operating_point` picks, one checkpoint
+per architecture seated at the shared L0, instead of the seed-42 roster whose L0s span
+32.5 to 1,808 -- so a difference between two cells is the architecture and not its
+sparsity. Nothing else moves: the axis is still fit on straightness pairs in the pick's
+own space, and the two files it reads (`l0_*_raw.npz` beside the seed-42 geometry,
+`l0_*.npz` beside the branch geometry) are the same objects under different names. Each
+panel header carries the L0 the checkpoint was seated at, and the canonical figure is
+untouched.
+
 Usage: python analysis/violation_divergence/curvature_discriminant/make_figures.py
-           [--variant {spliced,rollout}] [--camera-ready]
+           [--variant {spliced,rollout}] [--l0-matched] [--camera-ready]
 """
 
 import argparse
@@ -60,7 +69,9 @@ import numpy as np
 from spade.figures.paper_style import (
     CATEGORY_STYLE, GRID, INK, MUTED, NULL, REFERENCE, RULE_STYLE, apply_style,
     sae_label, save_figure)
+from spade.l0_operating_point import roster
 from spade.othello.taxonomy import CATEGORIES
+from spade.violation_divergence.fork_plane import tag
 
 from curvature_axis import fit_axis, residual_plane, spaces, transported_auroc
 from branch_geometry import VARIANTS, PLOT_GAME
@@ -263,7 +274,7 @@ def landing_panel(ax, landing: dict, space_labels: list[str], rho: float) -> Non
 
 # --- assembly ---
 
-def collect(m: dict, game: int, variant: str = "") -> dict:
+def collect(m: dict, game: int, variant: str = "", l0_matched: bool = False) -> dict:
     mb, k = branch_meta(m), rollouts(m)
     idx = np.flatnonzero(mb["game_id"] == game)
     groups = landing_groups(mb, True, variant)
@@ -272,7 +283,7 @@ def collect(m: dict, game: int, variant: str = "") -> dict:
     y = illegal[keep].astype(float)
 
     out = {}
-    for space in spaces():
+    for space in spaces(l0_matched):
         axis = fit_axis(space, FIT_OFFSET, m["held_out_legal"])
         delta = deltas(descriptors(space, m, variant), axis, m)
         score = (delta / axis.sd) @ axis.w
@@ -317,11 +328,13 @@ def boot_ci_mean(x: np.ndarray, game: np.ndarray, n_boot: int = 1000):
 def space_label(space: str) -> str:
     if space == "resid_post_5":
         return "raw layer 5 (reference space)"
+    if space in roster.L0:
+        return f"{roster.styles()[space]['short']} ($L_0$ {roster.L0[space]:.0f})"
     return sae_label(space.removeprefix("sae_").removesuffix("Trainer-othello"))
 
 
 def figure(res: dict, m: dict, game: int, camera_ready: bool, n_roll: int = 1,
-           suffix: str = "") -> Path:
+           suffix: str = "", l0_matched: bool = False) -> Path:
     """`m` is the per-branch meta; under the rollout variant a branch's row is the
     mean over its K descriptors, taken after phi."""
     idx = np.flatnonzero(m["game_id"] == game)
@@ -375,7 +388,13 @@ def figure(res: dict, m: dict, game: int, camera_ready: bool, n_roll: int = 1,
 
     ordered_legend(fig, fig.axes[0], 5, -0.056, legend_note(game))
     if not camera_ready:
-        fig.suptitle("Most of the separation in $R^{21}$ is magnitude, not direction — "
+        # The magnitude claim is the seed-42 roster's: at matched L0 the fitted axis clears
+        # the random-direction null in 8 of 9 spaces rather than 6, so the L0-matched grid
+        # must not repeat it (README, "At matched L0").
+        fig.suptitle("Held at one $L_0$, three of the four leading dictionaries fall — "
+                     "and on one game the plane still does not beat its own null"
+                     if l0_matched else
+                     "Most of the separation in $R^{21}$ is magnitude, not direction — "
                      "and on one game the plane does not beat its own null"
                      if n_roll == 1 else
                      "Resampling every branch's future changes nothing at $r=0$: the "
@@ -388,15 +407,20 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--game", type=int, default=PLOT_GAME)
     parser.add_argument("--variant", choices=list(VARIANTS), default="spliced")
+    parser.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                        help="draw the eight l0_operating_point picks instead of the "
+                             "seed-42 roster, so a difference between two cells is the "
+                             "architecture and not its sparsity")
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()
     apply_style(args.camera_ready)
 
     variant = VARIANTS[args.variant]
-    suffix = "" if args.variant == "spliced" else f"_{args.variant}"
+    suffix = tag(args.variant if args.variant != "spliced" else "", args.l0_matched)
     m = meta(variant)
-    res = collect(m, args.game, variant)
-    print(f"wrote {figure(res, branch_meta(m), args.game, args.camera_ready, rollouts(m), suffix)}")
+    res = collect(m, args.game, variant, args.l0_matched)
+    print("wrote " + str(figure(res, branch_meta(m), args.game, args.camera_ready,
+                                rollouts(m), suffix, args.l0_matched)))
 
 
 if __name__ == "__main__":

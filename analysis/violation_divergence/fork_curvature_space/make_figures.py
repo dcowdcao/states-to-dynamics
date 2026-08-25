@@ -59,8 +59,16 @@ averaged trajectory is the curvature of a path no rollout took -- and the
 windowed grids stop at ROLLOUT_MAX_R, past which two rollouts of one branch
 differ by more than the branch differs from the reference.
 
+`--l0-matched` draws the same four grids over the eight `l0_operating_point` picks --
+one checkpoint per architecture seated at the shared L0 -- instead of the seed-42 roster,
+whose L0s span 32.5 to 1,808 and whose cells therefore confound architecture with
+sparsity. The game, the window, the planes and the read-out strip are unchanged; each
+panel title carries the L0 its checkpoint was seated at, and the canonical grids are
+untouched.
+
 Usage: python analysis/violation_divergence/fork_curvature_space/make_figures.py
-       [--game 1235] [--w 8] [--variant spliced|rollout] [--camera-ready]
+       [--game 1235] [--w 8] [--variant spliced|rollout] [--l0-matched]
+       [--camera-ready]
 """
 
 import argparse
@@ -81,7 +89,7 @@ from spade.figures.paper_style import GRID, INK, MUTED, NULL, apply_style, save_
 from spade.othello.taxonomy import LEGAL
 from spade.straightness.geometry import RESTRAV_FEATURE_NAMES
 from spade.violation_divergence import curvature_plane as dsc
-from spade.violation_divergence.fork_plane import RAW_SPACE
+from spade.violation_divergence.fork_plane import RAW_SPACE, tag
 from spade.violation_divergence.branches import FIGURE_GAME
 from spade.violation_divergence.rule_groups import rule_rows, spread_ratio
 
@@ -402,7 +410,7 @@ def spreads(g: dict, w: int, d: Draw, r_max: int) -> dict[str, float]:
             "displacement": spread_ratio((D - D[d.ref])[:, post], d.rows)}
 
 
-def windowed_grid(g: dict, w: int, plane: str, d: Draw, v: View,
+def windowed_grid(g: dict, w: int, plane: str, d: Draw, v: View, names: list[str],
                   camera_ready: bool) -> Path:
     c = int(g["n_context"])
     r = g["pos"][c:] - g["t0"]
@@ -415,7 +423,7 @@ def windowed_grid(g: dict, w: int, plane: str, d: Draw, v: View,
     cells = fig.add_gridspec(NCOL, NCOL, left=0.02, right=0.97, top=1 - 0.72 / h,
                              bottom=STRIP_H / h, wspace=0.04, hspace=0.18)
     read = []
-    for j, (name, _) in enumerate(dsc.spaces()):
+    for j, name in enumerate(names):
         phi = phi_mean(dsc.windowed(g[name], w)[:, c:], d.groups)[:, drawn]
         dphi = phi - phi[d.ref]
         flat = dphi.reshape(-1, dphi.shape[2])
@@ -445,14 +453,14 @@ def windowed_grid(g: dict, w: int, plane: str, d: Draw, v: View,
     strip = fig.add_subplot(fig.add_gridspec(1, 1, left=0.07, right=0.97,
                                              bottom=0.95 / h,
                                              top=(STRIP_H - STRIP_LEGEND) / h)[0])
-    run_strip(strip, [name for name, _ in dsc.spaces()], read, d, r[r >= 0])
+    run_strip(strip, names, read, d, r[r >= 0])
     leg = ordered_legend(fig, fig.axes[0], 4, loc="lower center",
                          bbox_to_anchor=(0.5, -0.035))
     if not camera_ready:
         fig.suptitle(f"The fork inside the 21-D ReStraV descriptor space, "
                      f"game {g['game']} ({plane} plane)", fontsize=11)
     selection_and_key(fig, leg, int(g['game']))
-    print(run_table(plane, [name for name, _ in dsc.spaces()], read, d))
+    print(run_table(plane, names, read, d))
     return save_figure(fig, FIG_DIR / f"fork_r21_windowed_{plane}{v.suffix}",
                        camera_ready)
 
@@ -470,11 +478,12 @@ def run_table(plane: str, names: list[str], read: list[Run], d: Draw) -> str:
         for name, q in zip(names, read)])
 
 
-def whole_grid(g: dict, plane: str, d: Draw, v: View, camera_ready: bool) -> Path:
+def whole_grid(g: dict, plane: str, d: Draw, v: View, names: list[str],
+               camera_ready: bool) -> Path:
     c = int(g["n_context"])
     k = c + int(np.flatnonzero(g["pos"][c:] - g["t0"] == 0)[0])
     fig, axes = plt.subplots(NCOL, NCOL, figsize=(3.4 * NCOL, 3.2 * NCOL))
-    for ax, (name, _) in zip(axes.flat, dsc.spaces()):
+    for ax, name in zip(axes.flat, names):
         Z = g[name][:, k:]
         rowphi = dsc.descriptor(torch.from_numpy(Z))
         phi = phi_mean(rowphi, d.groups)
@@ -527,14 +536,20 @@ def main():
     parser.add_argument("--w", type=int, default=dsc.W)
     parser.add_argument("--game", type=int, default=FIGURE_GAME)
     parser.add_argument("--variant", default="spliced", choices=list(VARIANT_DIRS))
+    parser.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                        help="draw the eight l0_operating_point picks instead of the "
+                             "seed-42 roster, so a difference between two cells is the "
+                             "architecture and not its sparsity")
     parser.add_argument("--camera-ready", dest="camera_ready", action="store_true")
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    g = dsc.figure_game(args.game, args.w, variant=VARIANT_DIRS[args.variant])
+    g = dsc.figure_game(args.game, args.w, variant=VARIANT_DIRS[args.variant],
+                        l0_matched=args.l0_matched)
     rollout = args.variant == "rollout"
     d = one_control(g)
-    suffix = "_rollout" if rollout else ""
+    names = [name for name, _ in dsc.spaces(args.l0_matched)]
+    suffix = tag("rollout" if rollout else "", args.l0_matched)
     windowed = View(ROLLOUT_MAX_R if rollout else FULL_R, suffix)
     whole = View(FULL_R, suffix)
     # The ratios are the figures' caption, not the figures': README.md quotes them.
@@ -544,8 +559,9 @@ def main():
               + ", ".join(f"{k} {x:.3f}"
                           for k, x in spreads(g, args.w, d, r_max).items()))
     for plane in ("pca", "fixed"):
-        print(f"wrote {windowed_grid(g, args.w, plane, d, windowed, args.camera_ready)}")
-        print(f"wrote {whole_grid(g, plane, d, whole, args.camera_ready)}")
+        print("wrote " + str(windowed_grid(g, args.w, plane, d, windowed, names,
+                                           args.camera_ready)))
+        print(f"wrote {whole_grid(g, plane, d, whole, names, args.camera_ready)}")
 
 
 if __name__ == "__main__":

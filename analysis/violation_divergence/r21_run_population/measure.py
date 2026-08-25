@@ -23,7 +23,13 @@ rollout study found illegal and control already saturated.
       category [6]         the illegal categories `member` is over
       member   [S, G, 6]   each illegal category alone, full R^21
 
+`--l0-matched` sweeps the eight `l0_operating_point` picks instead of the seed-42
+roster, whose L0s span 32.5 to 1,808, so a difference between two cells is the
+architecture and not its sparsity. Same games, same planes, same descriptor; it
+writes `runs_l0_matched.npz` and leaves the canonical sweep alone.
+
 Usage: python analysis/violation_divergence/r21_run_population/measure.py [--n_games 100]
+           [--l0-matched]
 """
 
 import argparse
@@ -37,8 +43,7 @@ from spade.common.study import study_dir
 from spade.figures.paper_style import PLANE_STYLE
 from spade.othello.taxonomy import CATEGORIES
 from spade.violation_divergence.branches import POPULATION_T0, games_at_t0, role
-from spade.violation_divergence.compute_divergence import sae_encoder
-from spade.violation_divergence.fork_plane import positions, spaces
+from spade.violation_divergence.fork_plane import encoder, positions, spaces, tag
 from spade.violation_divergence.fork_r21 import (
     BLOCKS, W, activation_plane, displacement21, named_basis, run_ratio, top2)
 
@@ -61,11 +66,19 @@ def game_rows(meta: dict, game: int) -> torch.Tensor:
     return torch.tensor([by_role[r] for r in ROLES])
 
 
-def encoders(device: str) -> list[tuple[str, object]]:
+def encoders(device: str, l0_matched: bool) -> list[tuple[str, object]]:
     """(label, encode or None) per space, built once: `fork_plane.space_features`
-    reloads the checkpoint on every call, which a population sweep cannot pay."""
-    return [(label, None if e is None else sae_encoder(e, device))
-            for label, e in spaces()]
+    reloads the checkpoint on every call, which a population sweep cannot pay.
+
+    Each encode takes and returns a CPU tensor. The activations are mmap'd on the host and
+    the weights live on `device`, so the round trip belongs with the closure that knows both
+    -- on CPU it is the identity, which is why feeding a host tensor straight in survived
+    until the first GPU run.
+    """
+    def on_device(entry):
+        enc = encoder(entry, device)
+        return None if enc is None else lambda x: enc(x.to(device)).cpu()
+    return [(label, on_device(e)) for label, e in spaces(l0_matched)]
 
 
 def features(Z: torch.Tensor, encode) -> np.ndarray:
@@ -105,6 +118,10 @@ def main():
     # The study's shared population: 1696 branch-complete games fork at t0 = 20 and
     # the first 100 are what every n-game figure here draws. ~1.6 s/game.
     ap.add_argument("--n_games", type=int, default=100, help="games to sweep")
+    ap.add_argument("--l0-matched", dest="l0_matched", action="store_true",
+                    help="sweep the eight l0_operating_point picks instead of the "
+                         "seed-42 roster, so a difference between two cells is the "
+                         "architecture and not its sparsity")
     args = ap.parse_args()
 
     base = study_dir("divergence")
@@ -113,7 +130,7 @@ def main():
     # mmap: the activation tensor is 2 GB and one game is nine of its rows.
     acts = torch.load(base / "acts" / "resid_post_5.pt", weights_only=True, mmap=True)
     games = games_at_t0(meta, POPULATION_T0, args.n_games)
-    cells = encoders(select_device())
+    cells = encoders(select_device(), args.l0_matched)
 
     ratio = np.full((len(cells), len(games), len(SERIES)), np.nan, np.float32)
     member = np.full((len(cells), len(games), len(ILL)), np.nan, np.float32)
@@ -130,10 +147,11 @@ def main():
 
     out = base / "r21_run_population"
     out.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(out / "runs.npz", space=[name for name, _ in cells],
+    npz = out / f"runs{tag(l0_matched=args.l0_matched)}.npz"
+    np.savez_compressed(npz, space=[name for name, _ in cells],
                         game=np.array(games), series=SERIES, ratio=ratio,
                         category=np.array(CATEGORIES[1:]), member=member)
-    print(f"wrote {out / 'runs.npz'}: {len(games)} games x {len(cells)} spaces, "
+    print(f"wrote {npz}: {len(games)} games x {len(cells)} spaces, "
           f"{time.time() - started:.0f}s")
 
 
