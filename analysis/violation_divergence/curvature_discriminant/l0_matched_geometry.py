@@ -22,11 +22,17 @@ Writes `d` AND `theta`, the pair `branch_geometry.py` writes, because the R^21 a
 studies build the ReStraV descriptor out of both -- saving only `d` would quietly restrict the
 L0-matched roster to the step-length figures.
 
-Writes study_dir("divergence")/curvature_discriminant/l0_<config>.npz, one per space.
+`--variant rollout` does the same for the rollout tree, where every branch samples its own
+continuation instead of replaying the source suffix. The two trees have different rows, so
+each needs its own encode; `meta.npz` in the tree being written is what the rows come from.
+
+Writes variant_dir("divergence")/curvature_discriminant/l0_<config>.npz, one per space.
 
 Usage: PYTHONPATH=src python analysis/violation_divergence/curvature_discriminant/l0_matched_geometry.py
+           [--variant spliced|rollout]
 """
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -34,20 +40,25 @@ import numpy as np
 import torch
 
 from spade.common.device import select_device
-from spade.common.study import study_dir
+from spade.common.study import variant_dir
 from spade.l0_operating_point.checkpoints import matched
 from spade.straightness.geometry import temporal_geometry
 from spade.violation_divergence.compute_divergence import sae_encoder
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from branch_geometry import GAME_BATCH, out_dir  # noqa: E402  (sibling script)
+from branch_geometry import GAME_BATCH, VARIANTS, out_dir  # noqa: E402  (sibling script)
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--variant", choices=list(VARIANTS), default="spliced")
+    args = parser.parse_args()
+    variant = VARIANTS[args.variant]
+
     device = select_device()
-    out = out_dir()
+    out = out_dir(variant)
     rows = torch.from_numpy(np.load(out / "meta.npz")["row"])
-    acts = torch.load(study_dir("divergence") / "acts" / "resid_post_5.pt",
+    acts = torch.load(variant_dir("divergence", variant=variant) / "acts" / "resid_post_5.pt",
                       weights_only=True, mmap=True)
     print(f"{len(rows)} branch rows", flush=True)
 

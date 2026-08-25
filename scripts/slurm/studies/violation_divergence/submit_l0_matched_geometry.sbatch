@@ -16,4 +16,4 @@ export PYTHONUNBUFFERED=1
 cd "${SPADE_REPO:?}"
 export PYTHONPATH="${SPADE_REPO}/src:${PYTHONPATH:-}"
 mkdir -p logs/violation_divergence
-python analysis/violation_divergence/curvature_discriminant/l0_matched_geometry.py
+python analysis/violation_divergence/curvature_discriminant/l0_matched_geometry.py "$@"
