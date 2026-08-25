@@ -120,6 +120,13 @@ which it does not.
 | `game_<id>_fork_pca_rollout` | the same three panels on the rollout branch set, each curve a mean over that branch's K = 4 sampled continuations, window cut to *r* ∈ [−8, +8] |
 | `space_fork_grid_pca` | one game across **all nine representation spaces** — raw layer 5 and the eight seed-42 dictionaries. Planes are refit per space, so only the *shape* of the fork is comparable across cells, never position. **Superseded by `../fork_and_board`**, which draws this grid as panel (a) over the board the branches play on |
 
+**There is no `_l0_matched` twin here, and there is nothing for one to change.**
+Both committed figures are drawn in raw layer 5 alone — `make_figures.py` reads
+`resid_post_5.pt` and never encodes through a dictionary — so the SAE roster does
+not enter them. The roster-dependent figure this study used to carry is the
+superseded grid in the row above; its L0-matched arm is
+`../fork_and_board/game_1235_fork_and_board_*_l0_matched`.
+
 ## Caption
 
 The figure carries no prose. What a reader needs in order not to over-read it is

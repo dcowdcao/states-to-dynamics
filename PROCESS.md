@@ -6,6 +6,43 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The fork grid gets its L0-matched arm; game_trajectory cannot have one (2026-08-25)
+
+`fork_and_board/make_figures.py --l0-matched` redraws all five of its figures over the eight
+`l0_operating_point` picks — {displacement, r21, d7} x spliced and {displacement, r21} x
+rollout. No new input had to be built: this study encodes the picks live out of
+`branches/acts/resid_post_5.pt`, so it never reads `curvature_discriminant/l0_*.npz` and the
+rollout arm was never blocked on them. `fork_plane.spaces(l0_matched)` and `tag()` already
+existed; the script only had to pass the flag through.
+
+**No grey note block on the canvas, by standing preference.** The first draft drew the roster
+as a two-line note under (c); it was the README's caption pasted onto the figure, which is
+what David has asked twice to stop. What the figure now carries of the roster is the L0 in
+each panel title and nothing else, so a matched grid read on its own cannot say that its cells
+are one checkpoint per type at a shared operating point, nor that the canonical grid confounds
+architecture with sparsity. Both facts live in the sub-study README, which is the caption these
+five are published with.
+
+**GatedAnneal has the smallest R3 excursion in all five seed-42 figures and in none of the
+five matched ones** (displacement spliced 1.34 -> 1.47, r21 1.69 -> 2.20, d7 1.29 -> 2.28,
+displacement rollout 1.11 -> 1.30, r21 rollout 1.06 -> 2.09). It is the sparsest seed-42
+cell, so the flattened fork was its L0 — the same reversal `fork_population` and
+`changepoint_localization` found. CosineSpaDE's R^21-rollout outlier survives matching
+(12.33 -> 9.88 in the plane), so that one is architecture. n = 1 and a selected game: a
+direction, not a measurement.
+
+**`analysis/violation_divergence/game_trajectory` has no roster to match.** Both of its
+committed figures are raw layer 5 alone — it never encodes through a dictionary — and the
+by-space grid it used to carry was superseded by `fork_and_board` itself. Its README now says
+so, so the next agent does not re-derive it.
+
+**Verification gotcha worth keeping.** Re-rendering the five canonical PNGs on an H100 changed
+them: antialiasing-level noise in four (max 2/255 on ~0.01% of pixels) and ~280 real pixels in
+`displacement_pca_rollout`. It is device arithmetic, not the edit — two runs of the new script
+are byte-identical to each other, and HEAD's script run on the same H100 is byte-identical to
+the new one. The canonical files were restored with `git checkout`; check pre-existing
+artifacts with git, never by regenerating on a different device. All five new figures were
+rendered in one batch on one H100, so the family has one provenance.
 ## divergence_by_space's L0-matched arm covers all eight cells, and a device bug was in the way (2026-08-25)
 
 The L0-matched roster only ever ran on {displacement} x {spliced} x {ratio, raw}, 2 of the
