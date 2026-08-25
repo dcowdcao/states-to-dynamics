@@ -173,9 +173,10 @@ def encoders(device: str, l0_matched: bool) -> list[tuple[str, object]]:
     return [(label, encoder(e, device)) for label, e in spaces(l0_matched)]
 
 
-def features(Z: torch.Tensor, encode) -> np.ndarray:
+def features(Z: torch.Tensor, encode, device: str) -> np.ndarray:
+    """`Z` is a slice of the mmap'd CPU tensor; `encode`'s weights live on `device`."""
     with torch.no_grad():
-        f = encode(Z.reshape(-1, Z.shape[2]))
+        f = encode(Z.reshape(-1, Z.shape[2]).to(device))
     return f.reshape(Z.shape[0], Z.shape[1], -1).cpu().numpy()
 
 
@@ -228,7 +229,7 @@ def main():
         assert np.array_equal(w, window), f"game {gid}: window {w}"
         Z = acts[g.idx[game_rows(g, K)]][:, pos, :].float()
         for si, (_, encode) in enumerate(cells):
-            F = Z.numpy() if encode is None else features(Z, encode)
+            F = Z.numpy() if encode is None else features(Z, encode, device)
             if args.plane == "displacement":
                 D = paired_mean(F, ref, K)
                 plane[si, gi], full[si, gi] = distances(D)
