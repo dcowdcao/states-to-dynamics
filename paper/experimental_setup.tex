@@ -6,7 +6,7 @@ hours; every probe fit, rollout and read-out below takes minutes on one GPU. The
 
 \subsection{Model and activations}
 
-We study OthelloGPT \citep{li2023othello}, an 8-layer decoder-only transformer trained to
+We study OthelloGPT [10], an 8-layer decoder-only transformer trained to
 predict the next legal move from a sequence of move tokens alone -- it never sees a board. We
 use the TransformerLens port \texttt{Baidicoot/Othello-GPT-Transformer-Lens}: $d_{\mathrm{model}} =
 512$, 8 heads of dimension 64, MLP width 2048, GELU, context length 59, vocabulary 61, 25.3M
@@ -25,7 +25,7 @@ positions and 57 steps.
 
 \subsection{Game corpus}
 
-All probes, rollouts and read-outs stream \texttt{adamkarvonen/othello\_45MB\_games}: 990,623
+All probes, rollouts and read-outs stream \texttt{adamkarvonen/othello\_45MB\_games} [8]: 990,623
 games (792,498 train, 198,125 test), each exactly 60 plies with no pass token. The corpus is
 synthetic uniform-random legal play. We group games by $k$-ply prefix and test each prefix's
 children against uniform over the engine-legal set. At $k = 5$, no prefix with $n \ge 400$
@@ -69,7 +69,7 @@ on each square, and legality probes, which report whether the move at that posit
 which rule it breaks. Both take labels from engine replay, are fit on the seed-42 stream, and
 split \emph{over games}, so no game straddles a split.
 
-\textbf{Board state.} We use a tensor product probe (TPR) \citep{lee2025tpr},
+\textbf{Board state.} We use a tensor product probe (TPR) [9],
 $\mathrm{logit}(s, c) = r_s^\top M(h) f_c$, at role dimension 52 and filler dimension 2 over the
 64 squares and the three mover-relative colors $\{$empty, theirs, mine$\}$: a $[512, 52, 2]$
 binding map, a $[64, 52]$ role table and a $[3, 2]$ filler table, 56,582 parameters in total,
@@ -134,9 +134,7 @@ panels are statements about geometry rather than about generalization. The legal
 scored on the spliced branch tree below, which is disjoint from the 800 probe-fit games by exact
 token match.
 
-\subsection{Probe accuracy across layers}
-
-% TODO: layer sweep figure + text.
+\subsection{Choosing residual stream layer}
 
 \subsection{Counterfactual constructions}
 
@@ -212,8 +210,9 @@ gives $\tau = 1.245$.
 \subsection{Sparse autoencoders}
 
 We compare eight architectures at expansion factor 16, giving 8192 latents on
-$d_{\mathrm{model}} = 512$, on layer-5 activations: Standard (ReLU), $p$-Anneal, Gated, Gated+$p$-Anneal, TopK,
-BatchTopK, SpaDE and CosineSpaDE.
+$d_{\mathrm{model}} = 512$, on layer-5 activations: Standard (ReLU) [4], $p$-Anneal [8], Gated [11],
+Gated+$p$-Anneal [8], TopK [6], BatchTopK [5], and the two prototype-distance variants SpaDE
+and CosineSpaDE [7].
 
 \textbf{Training.} Our own dictionaries train through one loop off a single activation stream,
 so no comparison is confounded by data order: 300M tokens at batch 8192, i.e. 36,621 steps,
@@ -240,8 +239,7 @@ score. Realized $L_0$ runs from 183.79 to 260.13, a $1.42\times$ band. CosineSpa
 grid maximum: it cannot leave $L_0 \in [19.4, 178.4]$ at any $\gamma$, which is what kept the
 target from going higher.
 
-\textbf{The roster.} Five of the eight seated checkpoints are Karvonen's released ones
-\citep{karvonen2025boardgames} (Standard \texttt{trainer25-v2}, $p$-Anneal \texttt{trainer22},
+\textbf{The roster.} Five of the eight seated checkpoints are Karvonen's released ones [8] (Standard \texttt{trainer25-v2}, $p$-Anneal \texttt{trainer22},
 Gated \texttt{trainer32}, Gated+$p$-Anneal \texttt{trainer25}, TopK \texttt{trainer\_61}) and
 three are ours (BatchTopK at $k = 220$, SpaDE at $\lambda = 10^{-3}, \gamma = 5\times10^{-3}$,
 CosineSpaDE at $\beta = 1, \gamma = 0.05$). Those five are trained on the raw residual stream
@@ -255,9 +253,7 @@ to the dictionary's 8192 latents and the step length $d_t$ is taken there, on th
 code and not on the reconstruction, with $\mu_t$ and $\sigma_t$ refit in that space on the
 same held-out legal block. Same 500 games, same statistic, same profile construction.
 
-\subsection{The sparsity--fidelity frontier}
-
-% TODO: L0 Pareto figure + text.
+\subsection{Hyperparameter Sweeps of SAEs}
 
 \subsection{Evaluation protocol}
 
