@@ -11,13 +11,14 @@ FIGURE_GUIDELINES are deliberately not applied. See *Where this violates FIGURE_
 
 ```
 python load_points.py    # what landed, the L0 coverage table, the physics check
-python plot_pareto.py    # renders/karvonen_only (his 280) and renders/with_spade (+ ours)
+python plot_pareto.py    # renders/{karvonen_only, styled_karvonen_only, with_spade}
 python verify_match.py   # pixel diff of renders/karvonen_only against his PNGs
+python combine_figure.py # the two 2x2 composites the paper prints
 ```
 
-Both figure sets come out of one `plot_pareto.py` run: `renders/karvonen_only` is rendered
-from `source == "karvonen"` rows of the same frame, so our data cannot leak into the figure
-`verify_match.py` checks. `--ours` narrows the streams; `--karvonen-csv` swaps his CSV.
+All three figure sets come out of one `plot_pareto.py` run: `renders/karvonen_only` is
+rendered from `source == "karvonen"` rows of the same frame, so our data cannot leak into the
+figure `verify_match.py` checks. `--ours` narrows the streams; `--karvonen-csv` swaps his CSV.
 
 ## Data
 
@@ -163,6 +164,28 @@ added to these figures — the pixel match depends on it. Seed spread, if we wan
 belongs in a separate supplementary figure that is ours and follows FIGURE_GUIDELINES; the
 per-seed rows it needs are what `load_points.load()` returns before `one_per_config`.
 
+## The type, where it is ours
+
+`karvonen_only` is his type and stays that way — it is the pixel match. The two composites the
+paper prints are built from renders that keep every one of his axes, limits, colours, markers
+and point sizes and change only the typeface and its sizes:
+
+- **Face.** `OUR_FONTS` — Times/Nimbus serif, stix mathtext, `pdf.fonttype` 42. This is the
+  typeface half of `paper_style.apply_style(camera_ready=True)` and only that half; the rest of
+  `apply_style` sets a colour cycle, grids and spines that would overwrite what the figure
+  exists to match.
+- **Size.** `OUR_TYPE` adds 17 pt labels, 16 pt ticks and legend. Not paper_style's 9/8.5 —
+  those are authored for a 5.4in canvas, and this one is 10in. 9/5.4 and 8.5/5.4 pt per inch
+  rescaled to 10in is 17 and 16, so at equal printed width these panels carry the same apparent
+  type as every other figure in the repo. His 18/18/16 was marginally larger.
+- **Subcaptions.** `(a)`–`(d)`, nothing more. His wording ("Coverage of Board State vs. $L_0$")
+  restated axis labels the panels already carry.
+
+Two consequences worth stating. Point sizes are still his `s=100`, tuned for a 10in canvas, so
+the markers read larger than a house figure's. And a composite is two panels wide: place it at
+less than full text width and the panel type falls under the 9 pt floor, whatever this section
+does.
+
 ## Where this violates FIGURE_GUIDELINES
 
 Reported, not fixed, because matching him is the requirement:
@@ -175,8 +198,8 @@ Reported, not fixed, because matching him is the requirement:
   training run;
 - no reference class or null series is styled as such — TopK, our nearest baseline, is just
   another colour;
-- 18pt type in a 10x6 inch figure is oversized for a single-column paper figure, and the
-  filename/label vocabulary ("2var", "3var") is his;
+- the filename/label vocabulary ("2var", "3var") is his; the 18 pt type in a 10x6 inch figure
+  is his too, and the composites now carry ours instead (*The type, where it is ours*);
 - the 3-var plot's colour normalisation depends on the min/max of whatever rows are loaded, so
   adding our SAEs can rescale the colorbar and change the appearance of his points. It did not
   here (our metric values fall inside his range), but it is a property of his code worth knowing.

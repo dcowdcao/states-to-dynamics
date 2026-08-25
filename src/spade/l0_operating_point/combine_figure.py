@@ -6,12 +6,10 @@ His repo has no code for this: `f1_analysis.ipynb` renders four separate PNGs an
 paper assembles them in LaTeX. So this composites the same four images rather than
 re-plotting, which keeps every panel byte-identical to what `verify_match.py` checks.
 
-Layout and subcaptions are read off arXiv:2408.00113v2 Figure 4 -- top row coverage,
-bottom row board reconstruction, left column the loss-recovered-vs-L0 scatter coloured by
-the metric, right column the metric against L0:
-
-    (a) Coverage of Board State            (b) Coverage of Board State vs. L0
-    (c) Board Reconstruction               (d) Board Reconstruction vs. L0
+Layout is read off arXiv:2408.00113v2 Figure 4 -- top row coverage, bottom row board
+reconstruction, left column the loss-recovered-vs-L0 scatter coloured by the metric, right
+column the metric against L0. The subcaptions are bare letters: every panel already names
+its own axes, and his wording repeated them.
 
 Panels arrive at slightly different pixel sizes because each was saved with a tight bbox,
 so each is centred in a common cell on white rather than stretched -- scaling them to a
@@ -34,16 +32,23 @@ RENDERS = repo_root() / "figures/l0_operating_point"
 
 # (filename, subcaption), in the paper's reading order.
 PANELS = [
-    ("othello_3var_coverage.png", "(a) Coverage of Board State"),
-    ("othello_2var_coverage.png", r"(b) Coverage of Board State vs. $L_0$"),
-    ("othello_3var_reconstruct.png", "(c) Board Reconstruction"),
-    ("othello_2var_reconstruct.png", r"(d) Board Reconstruction vs. $L_0$"),
+    ("othello_3var_coverage.png", "(a)"),
+    ("othello_2var_coverage.png", "(b)"),
+    ("othello_3var_reconstruct.png", "(c)"),
+    ("othello_2var_reconstruct.png", "(d)"),
 ]
+# The composite is ~9.7in wide and prints at NeurIPS's 5.5in, so 17 pt lands near 10 pt --
+# a size the panels' own 32 pt type also lands near. Sizes here are canvas pt, not final pt.
+CAPTION_PT = 17
+
+# Which panel directory each combined figure is built from. The his-SAEs-only figure takes
+# the styled render, not the byte-identical one verify_match checks.
+SOURCES = {"karvonen_only": "styled_karvonen_only", "with_spade": "with_spade"}
 
 
-def combine(panel_dir: Path, out_stem: Path, dpi: int = 200, our_fonts: bool = False) -> Path:
+def combine(panel_dir: Path, out_stem: Path, dpi: int = 200) -> Path:
     # The subcaptions must match the type inside the panels they label.
-    with plt.rc_context(OUR_FONTS if our_fonts else {}):
+    with plt.rc_context(OUR_FONTS):
         return _compose(panel_dir, out_stem, dpi)
 
 
@@ -60,7 +65,7 @@ def _compose(panel_dir: Path, out_stem: Path, dpi: int) -> Path:
         ax.set_xlim(-(cell_w - im.shape[1]) / 2, im.shape[1] + (cell_w - im.shape[1]) / 2)
         ax.set_ylim(im.shape[0] + (cell_h - im.shape[0]) / 2, -(cell_h - im.shape[0]) / 2)
         ax.axis("off")
-        ax.set_title(caption, fontsize=17, y=-0.11)
+        ax.set_title(caption, fontsize=CAPTION_PT, y=-0.11)
 
     fig.subplots_adjust(wspace=0.02, hspace=0.16, left=0.01, right=0.99, top=0.99, bottom=0.05)
     out_stem.parent.mkdir(parents=True, exist_ok=True)
@@ -75,12 +80,11 @@ def main():
     ap.add_argument("--renders", type=Path, default=RENDERS)
     args = ap.parse_args()
 
-    for variant in ("karvonen_only", "with_spade"):
-        panel_dir = args.renders / variant
+    for variant, source in SOURCES.items():
+        panel_dir = args.renders / source
         if not panel_dir.is_dir():
             raise FileNotFoundError(f"{panel_dir} -- run spade.l0_operating_point.plot_pareto first")
-        out = combine(panel_dir, args.renders / f"figure4_othello_{variant}",
-                      our_fonts=(variant == "with_spade"))
+        out = combine(panel_dir, args.renders / f"figure4_othello_{variant}")
         print(f"{variant}: {out} (+ .pdf)")
 
 

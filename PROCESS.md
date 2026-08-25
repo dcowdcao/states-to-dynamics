@@ -6,6 +6,25 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Karvonen's Figure 4 composites now carry our type (2026-08-25)
+
+`figures/l0_operating_point/figure4_othello_{karvonen_only,with_spade}` are serif with bare
+`(a)`-`(d)` subcaptions. His wording under each panel restated the axis labels inside it.
+
+**The pixel match survives.** `plot_pareto.render` used one `faithful` flag for two unrelated
+things -- typeface and legend placement -- so restyling would have moved the legend too. It is
+now `our_type` and `legend_below`, and there are three renders: `karvonen_only` (his type,
+still byte-identical, verify_match reports diff 0), `styled_karvonen_only` (ours, his data,
+what the his-SAEs-only composite is built from), `with_spade` (ours, legend moved out from
+under our points).
+
+**Sizes are rescaled, not copied.** paper_style's 9/8.5 pt are authored for a 5.4in canvas;
+his panels are 10in, so the house pt-per-inch lands at 17/16. Copying 9 pt would have rendered
+at a third the apparent size. Reading the other direction -- solving for 9 pt at the printed
+half-of-textwidth a composite panel gets -- gives 32 pt and blows the layout apart: y-labels
+clipped, legends over the data. That is a placement problem, not a font one: print the
+composite at anything less than full text width and the panels fall under the 9 pt floor.
+
 ## board_layer_sweep is now n = 1,000 games, and the panel carries no title (2026-08-25)
 
 `analysis/board_probe_sweep/` scored all 3,000 test games; it now scores the first 1,000

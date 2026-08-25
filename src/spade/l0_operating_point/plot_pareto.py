@@ -5,8 +5,10 @@ Every style parameter is copied from his `circuits/f1_analysis.ipynb` (`plot_l0_
 apply. KARVONEN_STYLE.md records what was copied and the three places his code had to be
 extended to carry eight trainer classes instead of five.
 
-Both figure sets come out of one run, so `renders/karvonen_only` cannot pick up our points
-by accident — that directory is what `verify_match.py` checks against his published PNGs.
+All three figure sets come out of one run, so `renders/karvonen_only` cannot pick up our
+points by accident — that directory is what `verify_match.py` checks against his published
+PNGs, and it is the only one still in his type. `styled_karvonen_only` is the same data in
+ours, and is what the combined his-SAEs-only figure is built from.
 `load_points.py` decides which of our rows are points; run it alone to see what landed.
 
   python plot_pareto.py                     # every stream in load_points.OUR_STREAMS
@@ -175,7 +177,7 @@ HIS_3VAR_YLIMS = (0.996, 1.0005)
 # that half: apply_style also sets a colour cycle, grids and spine visibility, which would
 # overwrite the Set1 colours and marker scheme this figure exists to match. Point sizes stay
 # his -- ours are tuned for a 3.25in column and would render at a third the apparent size on
-# a 10in canvas. Applied to the combined figure only, so karvonen_only stays byte-identical.
+# a 10in canvas.
 OUR_FONTS = {
     "font.family": "serif",
     "font.serif": ["Times New Roman", "Nimbus Roman No9 L", "DejaVu Serif"],
@@ -183,21 +185,33 @@ OUR_FONTS = {
     "pdf.fonttype": 42, "ps.fonttype": 42,  # TrueType; Type 3 fails NeurIPS
 }
 
+# Sizes are paper_style's, rescaled to this canvas rather than copied: a house figure is
+# 5.4in wide at 9 pt labels / 8.5 pt ticks, so 1.67 and 1.57 pt per inch of width, which on
+# his 10in canvas is 17 and 16. That lands just under his 18/18/16 -- at equal printed width
+# these panels now carry the same apparent type as every other figure in the repo. It does
+# not rescue the composite: two panels side by side halve each one's printed width, so the
+# combined figure has to be placed at full text width to clear the 9 pt floor.
+OUR_TYPE = {
+    **OUR_FONTS,
+    "font.size": 17, "axes.labelsize": 17,
+    "xtick.labelsize": 16, "ytick.labelsize": 16, "legend.fontsize": 16,
+}
 
-def render(df: pd.DataFrame, out_dir: Path, faithful: bool = True):
-    """faithful=True is his figure exactly, and verify_match holds it to that.
 
-    faithful=False keeps every axis he set -- including the 3-var frac_recovered window,
-    so the tick increments stay his 1.0005 / 1.0000 / 0.9995 -- and changes two things: the
-    legend moves out from under our points, and the type becomes this project's (OUR_FONTS).
+def render(df: pd.DataFrame, out_dir: Path, our_type: bool = False,
+           legend_below: bool = False):
+    """Neither flag touches an axis: every limit and tick increment stays his, including
+    the 3-var frac_recovered window. `our_type` restyles the type only, `legend_below`
+    moves the legend out from under our points. Both off is his figure exactly, and
+    verify_match holds the karvonen_only render to that.
 
-    That window costs coverage of our own data: a low-fidelity SAE falls off the bottom
+    His window costs coverage of our own data: a low-fidelity SAE falls off the bottom
     rather than compressing the axis. This prints how many and of which type, every run, so
     the omission is on the record rather than inferred from a suspiciously empty panel."""
     out_dir.mkdir(parents=True, exist_ok=True)
-    below = not faithful
+    below = legend_below
     y3 = HIS_3VAR_YLIMS
-    with plt.rc_context({} if faithful else OUR_FONTS):
+    with plt.rc_context(OUR_TYPE if our_type else {}):
         plot_l0_metric(df, RECON, r"Othello Board State Reconstruction $F_1$",
             legend_below=below, output_filename=out_dir / "othello_2var_reconstruct.png")
         plot_l0_metric(df, COVERAGE, "Coverage of Othello Board State",
@@ -229,8 +243,10 @@ def main():
         print(f"\n{len(flagged)} of our points are below the physics floor and are plotted anyway:")
         print(flagged[["config", "seed", "l0", RECON, COVERAGE, "flag"]].to_string(index=False))
 
-    render(df[df["source"] == "karvonen"], args.out_dir / "karvonen_only")
-    render(df, args.out_dir / "with_spade", faithful=False)
+    his = df[df["source"] == "karvonen"]
+    render(his, args.out_dir / "karvonen_only")
+    render(his, args.out_dir / "styled_karvonen_only", our_type=True)
+    render(df, args.out_dir / "with_spade", our_type=True, legend_below=True)
 
 
 if __name__ == "__main__":
