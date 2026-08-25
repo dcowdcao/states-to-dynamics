@@ -112,7 +112,7 @@ class (F1 0.6402).
 
 \textbf{Probe directions.} The five pooled directions are read off the two committed legality
 probes: from the four-way head, $\mathrm{unit}(w_i - \bar{w})$ for legal, R1, R2 and R3; from the
-binary head, $\mathrm{unit}(w_{\rm illegal} - w_{\rm legal})$. The per-square directions are the
+binary head, $\mathrm{unit}(w_{\mathrm{illegal}} - w_{\mathrm{legal}})$. The per-square directions are the
 same read-outs refit per candidate move square by ridge regression ($\lambda = 10$) on centered
 activations and centered one-hot targets, one point per playable square, so each class
 contributes $n = 60$ points. We embed per-square points and pooled directions in one
@@ -219,12 +219,10 @@ Gated+$p$-Anneal [8], TopK [6], BatchTopK [5], the prototype-distance architectu
 and CosineSpaDE, a variant of it we introduce here.
 
 \textbf{Training.} Our own dictionaries see 300M tokens at batch 8192, i.e. 36,621 steps, at
-learning rate $3\times10^{-4}$ ($2.83\times10^{-4}$ for the TopK family), with 1000 warmup steps
-and seed 42. Calibration is deterministic at a fixed seed, so runs launched separately still
-share a standardization and no comparison is confounded by data order. Activations are standardized before any autoencoder sees
+learning rate $3\times10^{-4}$ ($2.83\times10^{-4}$ for the TopK family, which sets it from the
+dictionary size), with 1000 warmup steps and seed 42. Activations are standardized before any autoencoder sees
 them, $x' = \sigma (x - \mu)$ with $\mu$ the mean over the first 100 calibration batches and
-$\sigma = \sqrt{d_{\mathrm{model}} / \mathbb{E}\|x - \mu\|^2}$, so $\mathbb{E}\|x'\|^2 = d_{\rm
-model}$. The same transform is applied at encode time. SpaDE scores prototypes by
+$\sigma = \sqrt{d_{\mathrm{model}} / \mathbb{E}\|x - \mu\|^2}$, so $\mathbb{E}\|x'\|^2 = d_{\mathrm{model}}$. The same transform is applied at encode time. SpaDE scores prototypes by
 $-\lambda\|x - Ae_i\|^2$ with $\lambda$ trainable through a softplus, encodes with sparsemax [11],
 and adds the distance-weighted regularizer of K-Deep Simplex [13],
 $\gamma \sum_j \|x - Ad_j\|^2 f_j$; CosineSpaDE scores
