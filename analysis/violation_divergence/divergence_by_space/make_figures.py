@@ -45,14 +45,18 @@ per-game descriptor SDs, not activations.
 
 Reads `measure.py`'s npz. Writes the figure and one tidy CSV of every drawn
 point. Prose belongs in README.md (FIGURE_GUIDELINES 2, 5); what stays inside
-the figure is what a reader cannot decode while looking at it.
+the figure is what a reader cannot decode while looking at it. The figure carries
+no title, and neither the n nor the band's semantics ride on the legend: both are
+README.md's `## Figure notes` entry, which FIGURE_GUIDELINES 1.2 still requires
+them to appear in verbatim.
 
 `--l0-matched` draws `measure.py --l0-matched`'s sweep: the same nine cells with
 the eight SAE slots seated at `l0_operating_point`'s shared L0 rather than at each
 type's own default sparsity, so a difference between two cells is the architecture
 and not how sparse it happens to be. Every file it writes carries an `_l0_matched`
-suffix, so the canonical figures and CSVs are untouched. Each cell's title carries
-its own L0, which is what the panels are matched on.
+suffix, so the canonical figures and CSVs are untouched. A cell is titled with its
+architecture and nothing else, so the two rosters' grids are identical on their
+faces and which one drew a figure is carried by its filename and by README.md.
 
 Usage: python analysis/violation_divergence/divergence_by_space/make_figures.py
        [--plane displacement|r21] [--variant spliced|rollout] [--raw [--shared-y]]
@@ -155,11 +159,14 @@ def table(z, variant: str, raw: bool) -> pd.DataFrame:
 
 def style_of(name: str) -> dict:
     """The fork grid's own styling, through `branch_style`, so a colour and a
-    marker mean the same thing in both figures."""
+    marker mean the same thing in both figures.
+
+    A rule's label is the rule, not the rule and its member count: how many
+    categories each mean averages is README.md's `## Figure notes` entry
+    (FIGURE_GUIDELINES 5)."""
     if name == CONTROL:
-        return branch_style(LEGAL, 1)
-    st = branch_style(CATEGORIES.index(RULE_MEMBERS[name][0]), 0, by_rule=True)
-    return st | {"label": f"{st['label']} (mean of {len(RULE_MEMBERS[name])})"}
+        return branch_style(LEGAL, 1) | {"label": "legal control (baseline)"}
+    return branch_style(CATEGORIES.index(RULE_MEMBERS[name][0]), 0, by_rule=True)
 
 
 def draw_series(ax, w, mu, half, name: str, how: dict, offset: int) -> None:
@@ -197,7 +204,7 @@ def spread_note(z) -> str:
             "games drawn (rule_groups)")
 
 
-def legend_marks(n_games: int) -> tuple[list, list]:
+def legend_marks() -> tuple[list, list]:
     """Two keys in one legend: hue and marker = class, exactly as the fork grid
     styles it; line style and marker fill = which space the distance is in."""
     handles, labels = [], []
@@ -209,41 +216,10 @@ def legend_marks(n_games: int) -> tuple[list, list]:
     return handles, labels
 
 
-TITLE = {
-    ("displacement", "spliced"): "How far the fork panels' branches actually run — and "
-                                 "how much of that separation is the plane",
-    ("displacement", "rollout"): "With a sampled suffix the branch move stops setting "
-                                 "the distance, in every space",
-    ("r21", "spliced"): "How far the branches run with the reference subtracted in "
-                        "R$^{21}$ curvature space, not in the representation",
-    ("r21", "rollout"): "With a sampled suffix, R$^{21}$'s trailing window puts the "
-                        "separation where the comparison has already saturated",
-}
-# Spans are of what is drawn -- every rule mean and the control, over r >= 0 -- not
-# of the control alone, which is the ~585x `measure.py` reports and a smaller number.
-RAW_TITLE = {
-    ("displacement", "spliced"): "The same branches un-normalised: nine spaces, nine "
-                                 "scales, 1360$\\times$ from SpaDE to raw layer 5",
-    ("displacement", "rollout"): "Un-normalised on the rollout tree: the same nine "
-                                 "scales, 1671$\\times$ from SpaDE to raw layer 5",
-    ("r21", "spliced"): "Un-normalised in R$^{21}$: column-scaling per game puts every "
-                        "panel's peak within 1.3$\\times$, so one axis holds all nine",
-    ("r21", "rollout"): "Un-normalised in R$^{21}$ on the rollout tree, where every "
-                        "panel's peak is within 1.5$\\times$ and one axis still holds",
-}
-
-
-# A variant figure's title says what changed, not what the canonical one claims: the
-# roster moved, and whether the claim survives is the thing the reader is here to check.
-L0_TITLE = ("Each SAE type seated at the shared operating point $L_0$ = 219.2 — "
-            "architecture and sparsity no longer confounded")
-
-
 def figure(z, plane: str, variant: str, suffix: str, raw: bool, shared_y: bool,
            l0_matched: bool, camera_ready: bool) -> Path:
     w = z["window"]
     rollout = variant == "rollout"
-    n_games = z["plane"].shape[1]
     curves = {key: rule_means(z, key, raw) for key in MEASURES}
     nrow = int(np.ceil(len(z["space"]) / NCOL))
     # What raw displacement draws spans 1360x, which no one linear axis holds;
@@ -260,7 +236,9 @@ def figure(z, plane: str, variant: str, suffix: str, raw: bool, shared_y: bool,
         for ci, (name, rows) in enumerate(series_rows(z).items()):
             for key, how in MEASURES.items():
                 draw_series(ax, w, *mean_ci(curves[key][si, :, ci]), name, how, ci)
-        ax.set_title(space, loc="left", fontsize=8)
+        # The architecture alone: "(reference space)" on raw layer 5, the seed-42
+        # hyperparameters, and the matched roster's L0 are all README.md's.
+        ax.set_title(space.split(" (")[0], loc="left", fontsize=8)
         if not raw:
             ax.set_ylim(-0.09, YMAX)
             off = curves["plane"][si].mean(0).max(0)
@@ -271,8 +249,8 @@ def figure(z, plane: str, variant: str, suffix: str, raw: bool, shared_y: bool,
                             arrowprops=dict(arrowstyle="->", color=MUTED, lw=0.8))
         if si % NCOL == 0:
             ax.set_ylabel(RAW_YLABEL[plane] if raw else RATIO_YLABEL, fontsize=8.5)
-    axes.flat[-NCOL + 1].set_xlabel("position relative to the branch move "
-                                    "($r = s - t_0$)", fontsize=9)
+    axes.flat[-NCOL + 1].set_xlabel(f"game move number $t$ relative to $t_0$ "
+                                    f"({variant} move)", fontsize=9)
     # Autoscaled, since YMAX is a multiple of a divisor --raw does not have, but
     # keeping the ratio panels' -0.09/2.0 of headroom under zero, so the shared
     # prefix is visibly zero rather than sitting on the spine. After the loop: on a
@@ -301,15 +279,9 @@ def figure(z, plane: str, variant: str, suffix: str, raw: bool, shared_y: bool,
                  "saturated,\nnot evidence", fontsize=7, color=MUTED,
                  style="italic", ha="left", va="bottom")
 
-    fig.tight_layout(rect=(0, 0.12, 1, 0.97 if camera_ready else 0.94))
-    legend = fig.legend(*legend_marks(n_games), ncol=3, fontsize=8, frameon=False,
-                        loc="lower center", bbox_to_anchor=(0.5, 0.025),
-                        title=f"mean over n = {n_games} source games, band = 95% CI")
-    legend.get_title().set_fontsize(8)
-    if not camera_ready:
-        fig.suptitle(L0_TITLE if l0_matched
-                     else (RAW_TITLE if raw else TITLE)[(plane, variant)],
-                     fontsize=11, y=0.995)
+    fig.tight_layout(rect=(0, 0.12, 1, 0.97))
+    fig.legend(*legend_marks(), ncol=3, fontsize=8, frameon=False,
+               loc="lower center", bbox_to_anchor=(0.5, 0.025))
     name = ("divergence_by_space" + ("" if plane == "displacement" else f"_{plane}")
             + (f"_{variant}" if rollout else "") + suffix
             + ("_raw" if raw else "") + ("_sharedy" if shared_y else "")

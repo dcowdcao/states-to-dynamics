@@ -4625,3 +4625,35 @@ independently, and they did not meet in the middle. `make_figures.py --l0-matche
 - **`threshold_localization_l0_matched.csv` stays.** It is a valid measurement on the branch
   tree and is column-comparable with `threshold_localization.csv`; it is simply no longer a
   figure's input.
+
+## The fork and by-space figures were stripped for the manuscript (2026-08-26)
+
+Both figure families carried furniture written for a reader with the README open, and
+the appendix prints them with a LaTeX caption instead. `fork_and_board` loses its board
+panel (b), its run-ratio panel (c), the "(a) where the branches go" header, the
+suptitle, the selection note and the rule-member key; its nine cells are now lettered
+(a)–(i) centred under each, its legend moved to a strip under the grid, and each cell is
+titled with its architecture alone. `divergence_by_space` loses its four-way title
+table, its legend title, the "(mean of n)" suffixes and the "(reference space)" /
+hyperparameter / L0 parentheticals; its control reads "legal control (baseline)" and its
+x axis reads "game move number t relative to t0 ({variant} move)".
+
+- **This is the §5 direction, not a departure from it.** FIGURE_GUIDELINES 5 already
+  reverses the older rule that printed a key under the panels, so deleting the grey
+  block moves `fork_and_board` into compliance. What §5 also requires is the other half:
+  the removed n, the band semantics, the rule member counts and the selection disclosure
+  go into each study README's `## Figure notes` **verbatim**. Neither README has that
+  section yet, and both still describe panels that no longer exist. **Not done.**
+- **Panel (c) was §4.8's quantitative companion and nothing replaced it in the figure.**
+  `control_ratio` and its stdout print stay, so the numbers README.md quotes are still
+  reproducible; the drawn companion is now `../divergence_by_space` for magnitude and
+  `../fork_population` for the same shape over 100 games. A caption has to carry that
+  pointer or the 3-D panels stand alone.
+- **The two rosters are now identical on their faces.** Stripping the L0 from the cell
+  titles means a canonical grid and its `_l0_matched` twin differ only in their filenames.
+  Given how far the match moves the readings, a caption that does not name the roster is
+  wrong rather than merely incomplete.
+- **Nothing was re-rendered.** There is no `.venv` in the worktree and no matplotlib or
+  torch on the system python, so all 10 fork PNGs and all 18 by-space PNGs on disk are
+  still the old ones. `SUBCAP_Y = 0.018` (the (a)–(i) offset, which may collide with the
+  3-D cells' `PC1` labels) and the 4-column legend strip are unverified guesses.
