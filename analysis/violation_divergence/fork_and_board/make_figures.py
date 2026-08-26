@@ -1,7 +1,9 @@
 """Where the branches go in every representation space.
 
 A 3x3 grid of forks, one per space, raw layer 5 first so the eye calibrates on
-it, lettered (a)-(i) under the cells and enumerated in the figure's caption
+it. Each cell carries one label centred under it -- its letter and the space it
+draws, formatted as ../divergence_by_space formats its own so the two grids of an
+appendix spread read alike -- enumerated in the figure's caption
 (FIGURE_GUIDELINES 5). One legend under the grid serves all nine: they draw the
 same series out of spade.figures.branch_style, so a colour and a marker mean the
 same thing in every cell.
@@ -86,7 +88,8 @@ from spade.violation_divergence.rule_groups import rule_rows, spread_ratio
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 NCOL = 3
 CELL_W, CELL_H = 3.7, 3.5  # one fork cell, as in ../game_trajectory's grid
-LEGEND_H = 0.8             # the strip under the grid; eight entries over two rows
+LEGEND_H = 1.3             # the strip under the grid: the bottom row's labels,
+                           # then eight legend entries over two rows
 # A 3-D cell's bbox runs well below its drawn cube, so a letter placed inside it
 # lands beside the PC1 label. This drops it into the row gap instead, measured
 # down from the cell's bottom edge; `hspace` below is what buys that gap.
@@ -180,9 +183,10 @@ def figure(g: Game, Z: np.ndarray, pos: np.ndarray, plane: str, method: str,
     fig = plt.figure(figsize=(CELL_W * NCOL, CELL_H * nrow + LEGEND_H))
     gs = fig.add_gridspec(2, 1, height_ratios=[CELL_H * nrow, LEGEND_H],
                           left=0.03, right=0.97, top=0.96, bottom=0.01, hspace=0.02)
-    # hspace is the strip each row's letter is centred in, so it is set by SUBCAP_Y
-    # and not by how far apart the cubes should sit.
-    grid = gs[0].subgridspec(nrow, NCOL, wspace=0.06, hspace=0.30)
+    # hspace is the strip each row's label is centred in, so it is set by SUBCAP_Y
+    # and not by how far apart the cubes should sit. Nothing is drawn above a cell
+    # any more, so it buys the label and nothing else.
+    grid = gs[0].subgridspec(nrow, NCOL, wspace=0.06, hspace=0.14)
 
     measured = []
     for j, (name, entry) in enumerate(cells):
@@ -194,13 +198,15 @@ def figure(g: Game, Z: np.ndarray, pos: np.ndarray, plane: str, method: str,
                         legend=(j == 0), zlabel=(j % NCOL == 0))
         ax.set_xlabel(p.labels[0], labelpad=-2, fontsize=8)
         ax.set_ylabel(p.labels[1], labelpad=-2, fontsize=8)
-        # The architecture alone. Its hyperparameters -- the seed-42 defaults, or
-        # the L0 the matched roster seats it at -- are what the filename and
-        # README.md carry, so the two grids read cell for cell.
-        ax.set_title(name.split(" (")[0], loc="left", fontsize=8.5)
+        # The panel letter and the space it draws are one label centred under the
+        # cell, formatted as ../divergence_by_space formats its own. The
+        # architecture alone names the space: its hyperparameters -- the seed-42
+        # defaults, or the L0 the matched roster seats it at -- are what the
+        # filename and README.md carry, so the two grids read cell for cell.
         box = cell.get_position(fig)
         fig.text(0.5 * (box.x0 + box.x1), box.y0 - SUBCAP_Y,
-                 f"({ascii_lowercase[j]})", ha="center", va="top", fontsize=9)
+                 f"({ascii_lowercase[j]}) {name.split(' (')[0]}",
+                 ha="center", va="top", fontsize=8)
         measured.append((name.split(" (")[0],
                          control_ratio(p.coords, pos[p.dropped:], g.t0, g.rows),
                          control_ratio(p.space, pos[p.dropped:], g.t0, g.rows)))

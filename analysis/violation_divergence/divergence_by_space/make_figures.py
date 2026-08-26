@@ -237,12 +237,14 @@ def figure(z, plane: str, variant: str, suffix: str, raw: bool, shared_y: bool,
         for ci, (name, rows) in enumerate(series_rows(z).items()):
             for key, how in MEASURES.items():
                 draw_series(ax, w, *mean_ci(curves[key][si, :, ci]), name, how, ci)
-        # The panel letter and the space it draws are one label, enumerated in the
-        # figure's caption (FIGURE_GUIDELINES 5). The architecture alone names the
-        # space: "(reference space)" on raw layer 5, the seed-42 hyperparameters and
-        # the matched roster's L0 are all README.md's.
-        ax.set_title(f"({ascii_lowercase[si]}) {space.split(' (')[0]}",
-                     loc="left", fontsize=8)
+        # The panel letter and the space it draws are one label, centred under the
+        # cell and enumerated in the figure's caption (FIGURE_GUIDELINES 5). An
+        # xlabel and not a fig.text in figure coordinates: matplotlib already
+        # centres it on the axes and already drops it below the bottom row's tick
+        # labels, which the other two rows do not carry. The architecture alone
+        # names the space -- "(reference space)" on raw layer 5, the seed-42
+        # hyperparameters and the matched roster's L0 are all README.md's.
+        ax.set_xlabel(f"({ascii_lowercase[si]}) {space.split(' (')[0]}", fontsize=8)
         if not raw:
             ax.set_ylim(-0.09, YMAX)
             off = curves["plane"][si].mean(0).max(0)
@@ -253,8 +255,6 @@ def figure(z, plane: str, variant: str, suffix: str, raw: bool, shared_y: bool,
                             arrowprops=dict(arrowstyle="->", color=MUTED, lw=0.8))
         if si % NCOL == 0:
             ax.set_ylabel(RAW_YLABEL[plane] if raw else RATIO_YLABEL, fontsize=8.5)
-    axes.flat[-NCOL + 1].set_xlabel(f"game move number $t$ relative to $t_0$ "
-                                    f"({variant} move)", fontsize=9)
     # Autoscaled, since YMAX is a multiple of a divisor --raw does not have, but
     # keeping the ratio panels' -0.09/2.0 of headroom under zero, so the shared
     # prefix is visibly zero rather than sitting on the spine. After the loop: on a
@@ -283,10 +283,13 @@ def figure(z, plane: str, variant: str, suffix: str, raw: bool, shared_y: bool,
                  "saturated,\nnot evidence", fontsize=7, color=MUTED,
                  style="italic", ha="left", va="bottom")
 
-    # The strip is sized for a legend that no longer carries a title.
-    fig.tight_layout(rect=(0, 0.085, 1, 0.97))
+    # The strip under the grid holds the shared axis name and then the legend.
+    # Both are placed after tight_layout so neither is inside what it fits.
+    fig.tight_layout(rect=(0, 0.13, 1, 0.97))
+    fig.text(0.5, 0.082, f"game move number $t$ relative to $t_0$ ({variant} move)",
+             ha="center", va="bottom", fontsize=9)
     fig.legend(*legend_marks(), ncol=3, fontsize=8, frameon=False,
-               loc="lower center", bbox_to_anchor=(0.5, 0.025))
+               loc="lower center", bbox_to_anchor=(0.5, 0.005))
     name = ("divergence_by_space" + ("" if plane == "displacement" else f"_{plane}")
             + (f"_{variant}" if rollout else "") + suffix
             + ("_raw" if raw else "") + ("_sharedy" if shared_y else "")
