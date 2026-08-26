@@ -279,7 +279,8 @@ def figure(z, plane: str, variant: str, suffix: str, raw: bool, shared_y: bool,
                  "saturated,\nnot evidence", fontsize=7, color=MUTED,
                  style="italic", ha="left", va="bottom")
 
-    fig.tight_layout(rect=(0, 0.12, 1, 0.97))
+    # The strip is sized for a legend that no longer carries a title.
+    fig.tight_layout(rect=(0, 0.085, 1, 0.97))
     fig.legend(*legend_marks(), ncol=3, fontsize=8, frameon=False,
                loc="lower center", bbox_to_anchor=(0.5, 0.025))
     name = ("divergence_by_space" + ("" if plane == "displacement" else f"_{plane}")

@@ -87,9 +87,10 @@ FIG_DIR = Path(__file__).resolve().parent / "figures"
 NCOL = 3
 CELL_W, CELL_H = 3.7, 3.5  # one fork cell, as in ../game_trajectory's grid
 LEGEND_H = 0.8             # the strip under the grid; eight entries over two rows
-# A 3-D cell leaves its own margin under the plane axis labels, so the letter is
-# measured up from the cell's bottom edge rather than hung off the labels.
-SUBCAP_Y = 0.018
+# A 3-D cell's bbox runs well below its drawn cube, so a letter placed inside it
+# lands beside the PC1 label. This drops it into the row gap instead, measured
+# down from the cell's bottom edge; `hspace` below is what buys that gap.
+SUBCAP_Y = 0.016
 PLANES = ("displacement", "r21", "d7")
 VARIANTS = {"spliced": "", "rollout": "rollout"}
 # Past r = +8 the rollout set's illegal and control δ̂ agree to within 0.5% and
@@ -179,8 +180,9 @@ def figure(g: Game, Z: np.ndarray, pos: np.ndarray, plane: str, method: str,
     fig = plt.figure(figsize=(CELL_W * NCOL, CELL_H * nrow + LEGEND_H))
     gs = fig.add_gridspec(2, 1, height_ratios=[CELL_H * nrow, LEGEND_H],
                           left=0.03, right=0.97, top=0.96, bottom=0.01, hspace=0.02)
-    # hspace carries the letter under every row but the last, which sits on bottom.
-    grid = gs[0].subgridspec(nrow, NCOL, wspace=0.06, hspace=0.26)
+    # hspace is the strip each row's letter is centred in, so it is set by SUBCAP_Y
+    # and not by how far apart the cubes should sit.
+    grid = gs[0].subgridspec(nrow, NCOL, wspace=0.06, hspace=0.30)
 
     measured = []
     for j, (name, entry) in enumerate(cells):
@@ -197,7 +199,7 @@ def figure(g: Game, Z: np.ndarray, pos: np.ndarray, plane: str, method: str,
         # README.md carry, so the two grids read cell for cell.
         ax.set_title(name.split(" (")[0], loc="left", fontsize=8.5)
         box = cell.get_position(fig)
-        fig.text(0.5 * (box.x0 + box.x1), box.y0 + SUBCAP_Y,
+        fig.text(0.5 * (box.x0 + box.x1), box.y0 - SUBCAP_Y,
                  f"({ascii_lowercase[j]})", ha="center", va="top", fontsize=9)
         measured.append((name.split(" (")[0],
                          control_ratio(p.coords, pos[p.dropped:], g.t0, g.rows),
