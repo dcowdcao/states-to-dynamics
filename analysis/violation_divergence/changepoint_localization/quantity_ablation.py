@@ -55,7 +55,7 @@ from matplotlib import pyplot as plt
 
 from spade.common.study import study_dir
 from spade.figures.paper_style import (
-    MUTED, NULL, OKABE_ITO, REFERENCE_SPACE, apply_style, letters_below, save_figure)
+    MUTED, NULL, OKABE_ITO, REFERENCE_SPACE, apply_style, save_figure)
 from spade.l0_operating_point import roster
 from spade.move_legality import localize
 
@@ -273,7 +273,6 @@ def draw(table: pd.DataFrame, name: str, camera_ready: bool) -> Path:
     ax.legend(loc="upper right", fontsize=6.8, frameon=False, handlelength=1.4,
               labelspacing=0.3)
     fig.tight_layout()
-    letters_below(fig, [ax])
     return save_figure(fig, HERE / "figures" / name, camera_ready)
 
 
