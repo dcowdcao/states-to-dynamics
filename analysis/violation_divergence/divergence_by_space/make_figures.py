@@ -263,25 +263,16 @@ def figure(z, plane: str, variant: str, suffix: str, raw: bool, shared_y: bool,
         for ax in axes.flat[:len(z["space"])]:
             ax.set_ylim(bottom=-0.045 * ax.get_ylim()[1])
 
-    lead = axes.flat[0]
-    top = lead.get_ylim()[1]
+    # The lead panel's peak, and nothing else written on the canvas: what "above 1"
+    # means, that the shaded prefix is identically zero, and where the rollout tree
+    # saturates are README.md's `## Figure notes` (FIGURE_GUIDELINES 5).
     if not raw:
-        lead.text(1, 0.06, "above 1: the rule runs further from the reference\nthan a "
-                  "legal alternative does at the same prefix", fontsize=7, color=MUTED,
-                  style="italic", ha="left", va="bottom")
-    lead.text(w[0] + 1, 0.06 * top, "$\\equiv 0$ (shared prefix)", fontsize=7,
-              rotation=90, color=MUTED, style="italic", ha="center", va="bottom")
-    if not raw:
+        lead = axes.flat[0]
         peak = curves["plane"][0].mean(0)[:-1]  # series x r; the control is the last row
         ci, ri = np.unravel_index(np.argmax(np.where(w >= 0, peak, -np.inf)), peak.shape)
-        lead.annotate(f"{peak[ci, ri]:.2f}$\\times$ at $r$={w[ri]}",
-                      xy=(w[ri], peak[ci, ri]), xytext=(4, 0.90 * top), fontsize=7.5,
-                      color=INK, arrowprops=dict(arrowstyle="->", color=MUTED, lw=0.8))
-    if rollout:
-        sat = axes.flat[NCOL - 1]
-        sat.text(SATURATED_R + 1, 0.06 * sat.get_ylim()[1], f"$r \\geq {SATURATED_R}$: "
-                 "saturated,\nnot evidence", fontsize=7, color=MUTED,
-                 style="italic", ha="left", va="bottom")
+        lead.annotate(f"{peak[ci, ri]:.2f}$\\times$", xy=(w[ri], peak[ci, ri]),
+                      xytext=(4, 0.90 * lead.get_ylim()[1]), fontsize=7.5, color=INK,
+                      arrowprops=dict(arrowstyle="->", color=MUTED, lw=0.8))
 
     # The strip under the grid holds the shared axis name and then the legend.
     # Both are placed after tight_layout so neither is inside what it fits.
