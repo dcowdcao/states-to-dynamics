@@ -65,6 +65,7 @@ Usage: python analysis/violation_divergence/divergence_by_space/make_figures.py
 
 import argparse
 from pathlib import Path
+from string import ascii_lowercase
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -236,9 +237,12 @@ def figure(z, plane: str, variant: str, suffix: str, raw: bool, shared_y: bool,
         for ci, (name, rows) in enumerate(series_rows(z).items()):
             for key, how in MEASURES.items():
                 draw_series(ax, w, *mean_ci(curves[key][si, :, ci]), name, how, ci)
-        # The architecture alone: "(reference space)" on raw layer 5, the seed-42
-        # hyperparameters, and the matched roster's L0 are all README.md's.
-        ax.set_title(space.split(" (")[0], loc="left", fontsize=8)
+        # The panel letter and the space it draws are one label, enumerated in the
+        # figure's caption (FIGURE_GUIDELINES 5). The architecture alone names the
+        # space: "(reference space)" on raw layer 5, the seed-42 hyperparameters and
+        # the matched roster's L0 are all README.md's.
+        ax.set_title(f"({ascii_lowercase[si]}) {space.split(' (')[0]}",
+                     loc="left", fontsize=8)
         if not raw:
             ax.set_ylim(-0.09, YMAX)
             off = curves["plane"][si].mean(0).max(0)
