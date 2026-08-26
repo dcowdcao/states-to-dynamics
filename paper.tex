@@ -1,0 +1,983 @@
+\documentclass{article}
+
+% if you need to pass options to natbib, use, e.g.:
+%     \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading neurips_2026
+
+% The authors should use one of these tracks.
+% Before accepting by the NeurIPS conference, select one of the options below.
+% 0. "default" for submission
+\usepackage{neurips_2026}
+% the "default" option is equal to the "main" option, which is used  for the Main Track with double-blind reviewing.
+% 1. "main" option is used for the Main Track
+%  \usepackage[main]{neurips_2026}
+% 2. "position" option is used for the Position Paper Track
+%  \usepackage[position]{neurips_2026}
+% 3. "eandd" option is used for the Evaluations & Datasets Track
+ % \usepackage[eandd]{neurips_2026}
+% 4. "creativeai" option is used for the Creative AI Track
+%  \usepackage[creativeai]{neurips_2026}
+% 5. "sglblindworkshop" option is used for the Workshop with single-blind reviewing
+ % \usepackage[sglblindworkshop]{neurips_2026}
+% 6. "dblblindworkshop" option is used for the Workshop with double-blind reviewing
+%  \usepackage[dblblindworkshop]{neurips_2026}
+% 7. "education" option is used for the Education Track
+%  \usepackage[education]{neurips_2026}
+
+
+% After being accepted, the authors should add "final" behind the track to compile a camera-ready version.
+% 1. Main Track
+ % \usepackage[main, final]{neurips_2026}
+% 2. Position Paper Track
+%  \usepackage[position, final]{neurips_2026}
+% 3. Evaluations & Datasets Track
+ % \usepackage[eandd, final]{neurips_2026}
+% 4. Creative AI Track
+%  \usepackage[creativeai, final]{neurips_2026}
+% 5. Workshop with single-blind reviewing
+%  \usepackage[sglblindworkshop, final]{neurips_2026}
+% 6. Workshop with double-blind reviewing
+%  \usepackage[dblblindworkshop, final]{neurips_2026}
+% Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote.
+% For workshops (5., 6.), the authors should add the name of the workshop, "\workshoptitle" command is used to set the workshop title.
+% \workshoptitle{WORKSHOP TITLE}
+% 7. Education Track
+% \usepackage[education, final]{neurips_2026}
+
+% "preprint" option is used for arXiv or other preprint submissions
+ % \usepackage[preprint]{neurips_2026}
+
+% to avoid loading the natbib package, add option nonatbib:
+%    \usepackage[nonatbib]{neurips_2026}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{wrapfig}
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{amsmath}
+\usepackage{cleveref}
+\crefname{figure}{Figure}{Figures}   
+\Crefname{figure}{Figure}{Figures}
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{xcolor}         % colors
+\usepackage{graphicx}       % figures
+
+% Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote. 
+\title{Formatting Instructions For NeurIPS 2026}
+
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to break the
+% lines. Using \AND forces a line break at that point. So, if LaTeX puts 3 of 4
+% authors names on the first line, and the last on the second line, try using
+% \AND instead of \And before the third author name.
+
+
+\author{%
+  David L.~Cao \\
+  Harvard College\\
+  Harvard University\\
+  Cambridge, MA 02138 \\
+  \texttt{dcao@college.harvard.edu} \\
+  \And
+  Sai Sumedh R.~Hindupur \\
+  School of Engineering and Applied Sciences\\
+  Harvard University\\
+  Cambridge, MA 02138 \\
+  \texttt{sumedh.hindupur@gmail.com} \\
+  \And
+  Demba Ba \\
+  School of Engineering and Applied Sciences\\
+  Kempner Institute, Harvard University\\
+  Cambridge, MA 02138 \\
+  \texttt{deb884@g.harvard.edu} \\
+}
+
+
+\begin{document}
+
+
+\maketitle
+
+
+\begin{abstract} 
+
+\end{abstract}
+
+
+
+\section{Introduction}
+
+\section{Preliminaries}
+
+\section{How OthelloGPT Encodes Rules}
+
+%%% Section Intro
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+In this section, we introduce the rules of Othello, rigorously define the $3$ classes of illegal moves, and show that OthelloGPT follows these rules.
+
+The game rules of Othello are summarized as follows:
+\begin{itemize}
+    \item \textbf{R1:} The player must place a disc on a currently empty square. 
+    \item \textbf{R2:} The player's disk must flank a contiguous line of their opponents pieces (horizontally, vertically, and/or diagonally). After the move, the opponent's disks turn in the player's color. 
+    \item \textbf{R3:} The player's move is only valid if it is the player's turn. Players take turns moving unless a player cannot play a move that flanks their opponent's discs (per R2), in which case their turn is skipped.
+\end{itemize}
+
+
+%%% FIGURE 1 & 2: RULES/GENERATION + FLANKING (SIDE BY SIDE) %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[htbp]
+\begin{minipage}[t]{0.48\linewidth}
+  \vspace{0pt}
+  \centering
+  \includegraphics[width=\linewidth]{figures/rules_and_generation.png}
+  \caption{\textbf{OthelloGPT follows the rules of Othello} \textbf{(a)} Randomly chosen game, board state at move $t = 16$, black to move. Examples of a legal move and the 3 types illegal moves (R1, R2, R3) are colored on the board. \textbf{(b)} Probability that any move was illegal up to the current move number $t$, differentiated by the illegal move classes (averaged across $n = 1000$ OthelloGPT rollout games).}
+  \label{fig:1}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\linewidth}
+  \vspace{0pt}
+  \centering
+  \includegraphics[width=\linewidth]{figures/flanking.png}
+  \caption{\textbf{OthelloGPT understands that flanking flips opponent's discs} \textbf{(a)} Randomly chosen game, board state at move $t = 25$, white to move. `m' denotes move $t = 26$, `s' denotes opponent's flanked disc, and `m'' denotes the matched control move. \textbf{(b)} We train a tensor product probe (TPR) on the board state of Othello. The x-axis, $\ell_{\mathrm{mine}} - \ell_{\mathrm{theirs}}$, is a subtraction of the `mine' and `theirs' directions of the TPR, and shows what OthelloGPT thinks are the relative disc colors. The y-axis, $\frac{1}{2}(\ell_{\rm mine}+\ell_{\rm theirs})-\ell_{\rm empty}$, shows whether OthelloGPT thinks the squares are empty or occupied.}
+  \label{fig:2}
+\end{minipage}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+The above rules of Othello simultaneously define $3$ illegal move classes. The illegal class \textbf{R1} encloses illegal moves $t$ that \textit{place disks on squares already occupied.} Similarly, illegal class \textbf{R2} encloses illegal moves that are placed on empty squares but \textit{do not flank the opponent's discs.} Finally, \textbf{R3} encloses illegal moves that \textit{would have been legal} if it were actually the opponent's turn. 
+
+See \cref{fig:1} (a) for rigorous examples of R1, R2, and R3 in play. In (b), we find that the probability any move played was illegal up to $t$ grows exponentially, but always remains low (under $10\%$).
+
+Additionally, we train a tensor product probe coupling the $64$ squares with the relative disc colors $\{\rm empty, \rm theirs, \rm mine\}.$ See \cref{fig:2} -- we find that OthelloGPT accurately updates the relative disc colors after the flanking is was played. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Probes Reveal Geometry of Legal \& Illegal Moves in Model Activations} \label{sec:4}
+
+In this section, we first show that the rules of Othello can be accurately decoded from the model's residual stream activations using two linear probes: the first is trained to classify moves as $\{\rm legal, \rm illegal\}$, and the second $\{\rm legal, R1, R2, R3\}$ -- see \cref{fig:3} (c).
+
+%%% FIGURE 3: PROBE GEOMETRY AND DETECTION %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{wrapfigure}{R}{0.5\textwidth}
+  \centering
+  \includegraphics[width=0.47\textwidth]{figures/probe_geometry_and_detection.png}
+  \caption{\textbf{Rule violations can be accurately decoded and geometrically separated using linear probes.} \textbf{(a)} 2D Multidimensional Scaling (MDS) of linear probe directions (ring is pooled across squares, point is per-square) across five classes: legal, illegal, R1, R2, and R3. \textbf{(b)} Cosine similarity matrix between the five probe directions. \textbf{(c)} Probes' AUROC across the five directions.}
+  \label{fig:3}
+\end{wrapfigure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Second, we show that the five aggregate linear probe directions are geometrically separable via 2D Multidimensional Scaling (MDS). MDS takes in the matrix of geodesic angles $\theta_{ij} = \arccos(x_i^{\top} x_j)$ between unit-normalized probe directions, and places these geodesic angles in 2D space such that their Euclidean distances correlate with how close the directions are. As such, we find as evident in \cref{fig:3} (a) that OthelloGPT learns unique directions for each of the five classes and geometrically separates them from each other. 
+
+Third, cosine similarity between the probe directions demonstrates that OthelloGPT understands how similar or dissimilar each of the five directions are to each other. For example, in \cref{fig:3} (b), $\{\rm legal, \rm illegal \}$ score $-0.83$, meaning that OthelloGPT encodes $\rm legal$ and $\rm illegal$ in nearly opposite directions. Additionally, we find that $\{R1, R2, R3\}$ all score $< 0$ with each other. This makes sense because, for instance, if an illegal move falls under violation $R1$, it cannot simultaneously fall under $R2$ or $R3$. 
+
+\section{Illegal Move Detector}
+
+In this section, we propose a novel metric that detects whether a move in a game violated a rule. 
+
+Let $z_t \in \mathbb{R}^{512}$ denote OthelloGPT's layer-$5$ residual stream activations at the position of move $t$, and let
+
+\begin{equation}
+    d_t \;=\; \lVert z_t - z_{t-1} \rVert_2
+    \label{eq:step}
+\end{equation}
+
+be the norm step length at move $t$. We standardize the norm step length for each $t \in [2, 58]$ against a corpus of $n = 2000$ legal games:
+
+\begin{equation}
+  g_t \;=\; -\,\frac{d_t - \mu_t}{\sigma_t},
+  \qquad
+  \mu_t = \mathbb{E}_{\rm legal}\!\left[d_t\right],
+  \quad
+  \sigma_t^2 = \mathrm{Var}_{\rm legal}\!\left[d_t\right]. 
+  \label{eq:drop}
+\end{equation} 
+  
+Finally, for $t \in [6, 55]$, we find the normalized difference in $g_t$ between the moves after $t$ inclusive, i.e. $[t, t+m]$, against the moves before $t$ exclusive, i.e. $[t-m-1, t-1]$ (moving sum):
+
+  \begin{equation}
+      S_t \;=\; \sqrt{\tfrac{m}{2}}\left(
+          \frac{1}{m}\sum_{i=0}^{m-1} g_{t+i}
+          \;-\;
+          \frac{1}{m}\sum_{i=1}^{m} g_{t-i}
+      \right), 
+      \qquad m = 4 .
+      \label{eq:mosum}
+  \end{equation}
+
+We do a moving sum because we are asking "was there a rule violation at $t$?", and we answer this question by measuring the causal affect that $t$ has on $g_t$ at a window of $m = 4$ before and after $t$.
+
+In \cref{fig:4}, we show our metric, $S_t$, in action on a specific example game. In that game, we find that $S_t$ peaks at $t_0$, the illegal move number, and correctly classifies $4/5$ of the window of moves as $\rm illegal$ or $\rm legal$ -- see (a) and (b). 
+
+We also measure the AUROC of using our metric $S_t$ at detecting $\{\rm illegal,\rm R1, \rm R2, \rm R3\}$ against $\{\rm legal\}$. See \cref{fig:4} (c) -- we find that our metric achieves an AUROC of $\sim 0.68$ for detecting illegal moves, which is considerably better than the random baseline of $0.50$. Within specific rule violations, our metric performs especially well at detecting $\rm R2$ violations, achieving an AUROC of $\sim 0.76$, and performs less well at detecting $\rm R1$ violations, achieving an AUROC of $\sim 0.60$ (though still above the random baseline). This difference in AUROC implies that our metric, at least for the model's residual stream activations, ascribes greater weight to the rule that moves must flank the opponent's discs than to the rule that discs must be played on empty squares. 
+
+\textit{Note: AUROC is the probability that a randomly picked violation scores higher than a randomly picked legal move. We therefore do not need to choose threshold(s) for $S_t$, making our metric completely \textbf{unsupervised.}}
+
+%%% FIGURE 4: ILLEGAL MOVE DETECTOR %%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\linewidth]{figures/detector_example.png}
+  \caption{\textbf{Detecting rule violations with residual stream activations.} \textbf{(a)} Sequence of $5$ moves in an Othello game centered at $t_0 = 20$, the illegal move (R2). \textbf{(b)} Value of detection metric (standardized norm of step length) in \textit{residual stream activations} over a window of moves in the same game. \textbf{(c)} AUROC of using our metric to detect $\{\rm illegal,\rm R1, \rm R2, \rm R3\}$ against $\{\rm legal\}$, averaged among $n = 500$ games. \textbf{(d)} Distributions of the detection metric across each of the five classes, averaged across $n = 500$ games.}
+  \label{fig:4}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{SAEs Improve the Detector}
+
+While our metric performs reasonably well on the model's residual stream activations, in this section, we test our metric on SAEs, and find that half of the SAEs we tested -- namely GatedSAE, BatchTopK, TopK, and GatedAnneal -- achiever higher AUROC than that of the residual stream. GatedSAE achieves the highest AUROC, -- $\sim 0.75$ -- for detecting $\rm illegal$ from $\rm legal$ moves \big(see \cref{fig:5} (a)\big). 
+
+%%% FIGURE 5: SAE ILLEGAL MOVE DETECTOR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%sss%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\linewidth]{figures/detector_SAE.png}
+  \caption{\textbf{Detecting rule violations with SAEs.} \textbf{(a)} AUROC of using our metric in \textit{SAE latent activations} to detect $\{\rm illegal,\rm R1, \rm R2, \rm R3\}$ against $\{\rm legal\}$, averaged among $n = 500$ games, averaged among $n = 500$ games. \textbf{(b)} Distributions of the detection metric in the SAE latent activations of the SAE that scored the highest AUROC -- GatedSAE -- across each of the five classes, averaged across $n = 500$ games.}
+  \label{fig:5}
+\end{figure}
+
+%%%%%% REFERENCES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section*{References}
+
+{
+\small
+
+
+[1] Alexander, J.A.\ \& Mozer, M.C.\ (1995) Template-based algorithms for
+connectionist rule extraction. In G.\ Tesauro, D.S.\ Touretzky and T.K.\ Leen
+(eds.), {\it Advances in Neural Information Processing Systems 7},
+pp.\ 609--616. Cambridge, MA: MIT Press.
+
+
+[2] Bower, J.M.\ \& Beeman, D.\ (1995) {\it The Book of GENESIS: Exploring
+  Realistic Neural Models with the GEneral NEural SImulation System.}  New York:
+TELOS/Springer--Verlag.
+
+
+[3] Hasselmo, M.E., Schnell, E.\ \& Barkai, E.\ (1995) Dynamics of learning and
+recall at excitatory recurrent synapses and cholinergic modulation in rat
+hippocampal region CA3. {\it Journal of Neuroscience} {\bf 15}(7):5249-5262.
+
+
+[4] Bricken, T., Templeton, A., Batson, J., Chen, B., Jermyn, A., Conerly, T., Turner, N., Anil, C.,
+Denison, C., Askell, A., Lasenby, R., Wu, Y., Kravec, S., Schiefer, N., Maxwell, T., Joseph, N.,
+Hatfield-Dodds, Z., Tamkin, A., Nguyen, K., McLean, B., Burke, J.E., Hume, T., Carter, S.,
+Henighan, T.\ \& Olah, C.\ (2023) Towards monosemanticity: decomposing language models with
+dictionary learning. {\it Transformer Circuits Thread}.
+\url{https://transformer-circuits.pub/2023/monosemantic-features/index.html}.
+
+
+[5] Bussmann, B., Leask, P.\ \& Nanda, N.\ (2024) BatchTopK sparse autoencoders. {\it arXiv
+preprint arXiv:2412.06410}.
+
+
+[6] Gao, L., Dupr\'e la Tour, T., Tillman, H., Goh, G., Troll, R., Radford, A., Sutskever, I.,
+Leike, J.\ \& Wu, J.\ (2025) Scaling and evaluating sparse autoencoders. In {\it
+International Conference on Learning Representations}.
+
+
+[7] Hindupur, S.S.R., Lubana, E.S., Fel, T.\ \& Ba, D.\ (2025) Projecting assumptions: the duality
+between sparse autoencoders and concept geometry. In D.\ Belgrave, C.\ Zhang, H.\ Lin,
+R.\ Pascanu, P.\ Koniusz, M.\ Ghassemi \& N.\ Chen (eds.), {\it Advances in Neural Information
+Processing Systems 38}, pp.\ 11649--11699. Red Hook, NY: Curran Associates, Inc.
+
+
+[8] Karvonen, A., Wright, B., Rager, C., Angell, R., Brinkmann, J., Smith, L., Mayrink Verdun, C.,
+Bau, D.\ \& Marks, S.\ (2024) Measuring progress in dictionary learning for language model
+interpretability with board game models. In A.\ Globerson, L.\ Mackey, D.\ Belgrave, A.\ Fan,
+U.\ Paquet, J.\ Tomczak \& C.\ Zhang (eds.), {\it Advances in Neural Information Processing
+Systems 37}, pp.\ 83091--83118. Red Hook, NY: Curran Associates, Inc.
+
+
+[9] Lee, A., Vi\'egas, F.\ \& Wattenberg, M.\ (2026) Tensor product representation probes reveal
+shared structure across linear directions. {\it arXiv preprint arXiv:2605.09967}.
+
+
+[10] Li, K., Hopkins, A.K., Bau, D., Vi\'egas, F., Pfister, H.\ \& Wattenberg, M.\ (2023) Emergent
+world representations: exploring a sequence model trained on a synthetic task. In {\it
+International Conference on Learning Representations}.
+
+
+[11] Martins, A.F.T.\ \& Astudillo, R.F.\ (2016) From softmax to sparsemax: a sparse model of
+attention and multi-label classification. In M.F.\ Balcan \& K.Q.\ Weinberger (eds.), {\it
+Proceedings of the 33rd International Conference on Machine Learning}, vol.\ 48, pp.\ 1614--1623.
+New York, NY: PMLR.
+
+
+[12] Rajamanoharan, S., Conmy, A., Smith, L., Lieberum, T., Varma, V., Kram\'ar, J., Shah, R.\ \&
+Nanda, N.\ (2024) Improving dictionary learning with gated sparse autoencoders. {\it arXiv
+preprint arXiv:2404.16014}.
+
+
+[13] Tasissa, A., Tankala, P., Murphy, J.M.\ \& Ba, D.\ (2023) K-Deep Simplex: manifold learning
+via local dictionaries. {\it IEEE Transactions on Signal Processing} {\bf 71}:3741--3754.
+
+
+[14] Intern\`o, C., Geirhos, R., Olhofer, M., Liu, S., Hammer, B.\ \& Klindt, D.\ (2025)
+AI-generated video detection via perceptual straightening. In {\it Advances in Neural
+Information Processing Systems 38}.
+}
+
+
+
+%%%%%%%%%%% APPENDIX %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\appendix
+
+\section{Experimental Setup}
+
+Every experiment runs on NVIDIA H100 80GB GPUs. Training the sparse autoencoders takes 8--16
+hours; every probe fit, rollout and read-out below takes minutes on one GPU. The code is PyTorch
+2.5.1 with TransformerLens 1.17.0 under Python 3.11.
+
+\subsection{Model and activations}
+
+We study OthelloGPT [10], an 8-layer decoder-only transformer trained to
+predict the next legal move from a sequence of move tokens alone -- it never sees a board. We
+use the TransformerLens port \texttt{Baidicoot/Othello-GPT-Transformer-Lens}: $d_{\mathrm{model}} =
+512$, 8 heads of dimension 64, MLP width 2048, GELU, context length 59, vocabulary 61, 25.3M
+parameters. It is loaded with TransformerLens defaults, so LayerNorm is folded into the
+adjacent weights and the writing and unembedding weights are centered; every activation below
+comes from that folded model. Token 0 is the pass token and tokens 1--60 are the playable
+squares, which are the board minus the four center squares -- those start occupied and are
+never played.
+
+Unless stated otherwise activations are the residual stream after block 5,
+\texttt{blocks.5.hook\_resid\_post}, so $z_t \in \mathbb{R}^{512}$. We read at layer 5 because the board probe is
+flat across the top of the stack (\cref{fig:6}) -- 0.9940 at layer 5 against 0.9948 at layer 6
+and 0.9943 at layer 7, a spread of 0.0008 -- so the choice costs nothing and every study shares
+it. Position 0 is an attention sink whose norm is $\approx 300$ against the $\approx 23$ of
+every other position, so every trajectory measurement drops it: a game contributes 58
+positions and 57 steps.
+
+%%%%%%%%%%%% LINEAR PROBE ACCURACY BY LAYER %%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\linewidth]{figures/Appendix/board_layer_sweep.png}
+  \caption{\textbf{Accuracy of linear probe trained on Othello board state over each residual stream layer of OthelloGPT.} Linear probe classifies each of the $64$ squares in the board as $\{\rm empty, \rm mine, \rm theirs\}$ \textit{residual stream activations} after each block $\ell \in \{0, \ldots, 7\}$, scored on $n = 1000$ held-out games ($58{,}000$ positions). }
+  \label{fig:6}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Game corpus}
+
+All probes, rollouts and read-outs stream \texttt{adamkarvonen/othello\_45MB\_games} [8]: 990,623
+games (792,498 train, 198,125 test), each exactly 60 plies with no pass token. The corpus is
+synthetic uniform-random legal play. We group games by $k$-ply prefix and test each prefix's
+children against uniform over the engine-legal set. At $k = 5$, no prefix with $n \ge 400$
+rejects at $p < 10^{-3}$.
+
+Two properties of the corpus reach every number below. First, games are drawn with
+\texttt{shuffle(seed=42, buffer\_size=10{,}000)} over a streaming split that is a single shard,
+so the shuffle permutes only a 10,000-row reservoir and drawing $N$ games reads the first
+$N + 10{,}000$ rows. It is a window on the corpus, not a sample of it. Every study therefore walks the same leading percent or two of the
+corpus in the same order, and their game sets are nested prefixes rather than independent
+draws; a different seed replaces $\approx 80\%$ of the games but stays inside that same slice. A
+different seed is not a replication.
+Where two studies must not share games we exclude by exact token match rather than by
+reseeding, and say so below. Second, the corpus is lexicographically sorted and truncated to
+its 45\,MB byte budget, which cuts one opening: \texttt{e6} holds 10.78\% of games where the
+board's symmetry group requires 25\% ($\chi^2 = 106{,}901$ on 3 df over the pooled corpus). Nothing in the corpus is
+illegal and play off that branch is uniform random-legal, but a per-square aggregate can
+inherit an asymmetry that has nothing to do with the model.
+
+Forfeits are unmarked in the move stream -- the same color moves twice -- so whose turn it
+is always comes from replay through Li et al.'s board implementation [10], never from the
+parity of the move index.
+
+The sparse autoencoders are trained on the separate stream Karvonen's pipeline uses [8],
+\texttt{taufeeque/othellogpt}.
+
+\subsection{The illegal-move taxonomy}
+
+Given a board and the player to move, each of the 60 vocabulary squares falls into one of seven
+categories: \texttt{legal}, and six violations ordered by how much board computation is needed
+to detect them. \textbf{R1 placement} is $\{$\texttt{occupied\_own}, \texttt{occupied\_opp}$\}$;
+\textbf{R2 bracketing} is $\{$\texttt{empty\_detached}, \texttt{empty\_own\_only},
+\texttt{empty\_no\_bracket}$\}$; \textbf{R3 turn} is $\{$\texttt{opponent\_only}$\}$, a square
+that flips only for the player who is not to move. The classifier agrees with the engine's legal
+set exactly on non-forfeit positions, and we assert that at every position we accept. Forfeit
+positions are skipped: there the engine falls back to letting opponent-flipping squares be
+played. R2 has three members and R3 has one, so any average over a rule states its $n$.
+
+\subsection{Probes}
+
+Two families of linear read-out sit on $z_t$ at layer 5: board-state probes, which report what is
+on each square, and legality probes, which report whether the move at that position is legal and
+which rule it breaks. Both take labels from engine replay, are fit on the seed-42 stream, and
+split \emph{over games}, so no game straddles a split.
+
+\textbf{Board state.} We use a tensor product probe (TPR) [9],
+$\mathrm{logit}(s, c) = r_s^\top M(h) f_c$, at role dimension 52 and filler dimension 2 over the
+64 squares and the three mover-relative colors $\{$empty, theirs, mine$\}$: a $[512, 52, 2]$
+binding map, a $[64, 52]$ role table and a $[3, 2]$ filler table, 56,582 parameters in total,
+57.6\% of the 98,304 of the per-square linear read-out it is measured against. Architecture and loss are [9]'s; the recipe is ours, and both probes run behind one protocol so
+that a head-to-head compares probe class and nothing else. Both are fit on 20,000 corpus games at
+58 positions each, 1,160,000 rows, split $70/15/15$ into 812,000 training and 174,000 validation
+and test rows. We use AdamW at learning rate $10^{-2}$, batch 8192, at most 400 epochs, stopping
+early on validation accuracy with patience 20 and minimum improvement $10^{-4}$, and keep the
+best-validation weights. Weight decay is $10^{-4}$ for the linear arm; for the TPR we re-select
+it on validation over $\{10^{-4}, 10^{-3}, 10^{-2}, 10^{-1}, 0.5, 1.0, 2.0\}$, which picks
+$10^{-3}$ (validation 0.99202, against 0.99107 at 2.0). At layer 5 the held-out test accuracies
+are 0.9920 (TPR, best epoch 31) and 0.9937 (linear).
+
+\textbf{Reading the TPR.} From the three logits at a square $s$ we plot $\ell_{\mathrm{mine}} -
+\ell_{\mathrm{theirs}}$, which is positive when the square is owned by the player to move, against
+$\tfrac{1}{2}(\ell_{\mathrm{mine}} + \ell_{\mathrm{theirs}}) - \ell_{\mathrm{empty}}$, which is positive when
+it is occupied. We read logit differences rather than filler coordinates because the bilinear
+form is gauge-invariant under $f \mapsto Af,\; M \mapsto MA^{-1}$: the measured filler angle
+moves from $131.3^\circ$ to $104.5^\circ$ across seeds at constant accuracy.
+
+\textbf{Legality.} Two linear read-outs of $z_t$ at the position of the candidate move: a binary
+$\{$legal, illegal$\}$ head and a four-way $\{$legal, R1, R2, R3$\}$ head. We mine 800 games at
+seed 42. An item is a (game, move index) pair carrying the move actually played plus one
+substituted illegal move per constraint rule that has a candidate there; all rows of an item
+share \texttt{tokens[:$t$]} and differ in exactly one token, so class is the only thing that
+varies. The illegal move is drawn uniformly over that rule's candidate tokens, and positions run
+over $1 \ldots 58$. The split is $60/20/20$ over games (480/160/160), giving 27,743 rows per
+class for the binary head and 23,641 for the four-way head in training. Balance is structural
+rather than reweighted: the four-way head keeps only items where all three rules have a
+candidate, and the binary head draws one illegal row per item. Fitting is multinomial logistic
+regression with an $\ell_2$ penalty, optimized full-batch by L-BFGS (300 iterations,
+strong-Wolfe line search) on features standardized by the training split's mean and standard
+deviation. The penalty is chosen from $\{10^{-4}, \ldots, 1\}$ on validation macro-F1, selecting
+$10^{-4}$ for both heads in the raw space. On the held-out test split the binary head reaches accuracy 0.8896 and
+AUROC 0.9418, and the four-way head accuracy 0.7760 and macro-F1 0.7734, with R1 its weakest
+class (F1 0.6402).
+
+\textbf{Probe directions.} The five pooled directions are read off the two committed legality
+probes: from the four-way head, $\mathrm{unit}(w_i - \bar{w})$ for legal, R1, R2 and R3; from the
+binary head, $\mathrm{unit}(w_{\mathrm{illegal}} - w_{\mathrm{legal}})$. The per-square directions are the
+same read-outs refit per candidate move square by ridge regression ($\lambda = 10$) on centered
+activations and centered one-hot targets, one point per playable square, so each class
+contributes $n = 60$ points. We embed per-square points and pooled directions in one
+two-dimensional non-metric MDS fit (SMACOF, deterministic classical-scaling initialization, one
+restart, 1000 iterations) on the matrix of geodesic angles $\theta_{ij} = \arccos(x_i^\top x_j)$
+between unit-normalized directions; we use the angle rather than $1 - \cos$ because it is a
+metric, and the orientation is pinned by orthogonal Procrustes onto the PCA coordinates so a
+refit cannot rotate or mirror the panel. The embedding preserves family membership but not finer
+structure -- its rank fidelity, 0.504, sits below a structure-free null of $0.574 \pm 0.007$ --
+so read it for which families separate, and read angles off the cosine-similarity matrix among
+the five pooled directions. In $\mathbb{R}^{512}$ random unit directions meet at $|\cos| \approx
+0.035$. Read those entries against that scale. In the MDS panel
+the ring is the pooled committed probe, a separate fit on pooled rows, not the centroid of its
+own points.
+
+\textbf{What is held out.} The per-square refits use all rows of the fit set, so the MDS panel
+describes the geometry of the fit rather than a held-out one. The board probes are fit on 20,000
+games of the same seed-42 stream, so they have seen most of the games the bracket-flip events
+come from; the accuracies quoted above are the probes' own held-out test numbers, and those
+panels are statements about geometry rather than about generalization. The legality heads are
+scored on the spliced branch tree below, which is disjoint from the 800 probe-fit games by exact
+token match.
+
+\subsection{Counterfactual constructions}
+
+Three constructions manufacture a contrast: free-running rollouts, bracket-flip events with a
+matched legal control, and a spliced branch tree that changes one token.
+
+\textbf{Free-running rollouts.} We sample 1000 games from the model at temperature 1.0 --
+ancestral, no top-$k$ or nucleus, with the pass token masked -- taking the first move uniformly
+over the four legal openings and generating all 58 remaining tokens, at seed 42. Illegal moves
+are kept rather than resampled; 885 of the 1000 rollouts are legal throughout. Each rollout is
+then teacher-forced on its own tokens, and at every $t \in [0, 56)$ its next-move mass is split
+by the taxonomy, keeping only positions where the rollout is still legal through $t$ and the
+mover does not forfeit, which leaves 54,766 positions. The reported curve is the per-game
+cumulative $1 - \prod_{t' \le t}(1 - p(t'))$ of that mass, averaged over the games still alive at
+$t$, on a logarithmic $y$ axis. Because a game leaves the population at its first illegal move,
+$n$ falls from 1000 to 891 across the axis, which is also why the curves are not monotone. This
+is the probability composed from the model's own next-move distribution, not the rate at which
+rollouts actually sample an illegal move; which is 11.5\% [9.5, 13.6] by ply 59.
+
+\textbf{Bracket-flip events.} An \emph{event} is a move that flips exactly one disc: for prefix
+$P = \texttt{tokens[:}t \texttt{]}$ with mover $e$, the played move $m$ has flip set $\{s\}$, so
+the board before and after differ in exactly two squares. Positions where either side forfeits at
+$t$ or $t+1$ are dropped, since a forfeit at $t+1$ leaves $e$ to move again and inverts the
+prediction the study rests on. The matched control $m'$ is another legal move for the same mover
+from the same position that leaves $s$ unflipped and does not forfeit the opponent, so it is
+matched on prefix, move index, mover and next mover, and differs only in leaving $s$ alone. A
+control is \emph{strict} if its placement and every disc it flips stay off all eight of $s$'s
+rays, so the control branch cannot reach $s$ along any line.
+
+The population read-out is 1000 strict-control events, 40 at each of the 25 move indices $t \in
+[10, 34]$, sampled at seed 42. We use a fixed quota per move index rather than whatever the
+corpus holds, because move index is the strongest nuisance variable here and it is the window the
+legality and detector studies also rest on. Meeting that quota needs a larger mining run -- 4000
+events, of which 3194 have a strict control -- from the same miner, stream and seed. That run scans a longer prefix of
+the same stream than the 2000-event corpus every other measurement uses, and mines it
+independently, so the event drawn for the single-game panel is not among these 1000. Each event has exactly one
+flipped and one placed square but about 12 unflipped mover's and 13 unflipped opponent's squares,
+so the five role markers average over 1000, 1000, 11,935, 13,065 and 37,000 square-observations.
+Open markers are the state before $m$, filled markers the state after, and the cross is where
+$m'$ leaves $s$; the dashed arrow to that cross is the panel's one contrastive element, and the
+rest is definitional. Both axes are read in each condition's own mover-relative frame, and the
+frame alternates with the ply, so every unflipped disc crossing $x = 0$ is a consequence of that
+convention rather than a finding about the model. The claim the panel supports is the gap between
+the two heads at $s$: $13.98$ logits [13.86, 14.10].
+
+\textbf{The spliced branch tree.} Each source game is forked once at $t_0$ into up to nine branches
+that share \texttt{tokens[:$t_0$]} and \texttt{tokens[$t_0$+1:]} and differ only at $t_0$: the
+move actually played, two further legal moves, and one move per available illegal category, drawn
+uniformly within its category at seed 42. There are two legal controls rather than one because a
+second is what supplies the legal-versus-legal null. Nothing is regenerated after $t_0$ -- the
+suffix is kept verbatim -- so a difference downstream comes from that one token and nothing
+else. Fork points are round-robin over $t_0 \in [10, 34]$, and a later pass appended
+games forked at $t_0 = 20$. The tree holds 3923 games and 34,546 branches, 8.81 per game: a game contributes a branch
+only for the illegal categories its board admits. After $t_0$ a branch
+replays the source game's suffix onto a board that no longer exists, so a trajectory's right half
+shows the score decaying and is not a legality judgment of those moves.
+
+\subsection{The detection statistic}
+
+Equations (1)--(3) are computed exactly as written: the step length $d_t$, its standardization
+$g_t$ against a per-move-index legal profile $\mu_t, \sigma_t$, and the windowed score $S_t$.
+$g_t$ is the negative of the $z$-score, so that a \emph{shorter}-than-usual step scores high. With
+the sink dropped a game yields 57 steps, and the candidate move index is the step index plus two,
+so an $m = 4$ window reaches moves 6--55: 50 candidates.
+
+\textbf{Operating point.} The threshold $\tau = 0.618$ is the cut maximizing balanced accuracy,
+found by an exact sweep of the breakpoints over all 2415 scored games rather than the 500 the
+population panels draw, pooling every
+scored position up to $t_0$ across all four branch blocks with positives only at $t_0$ of the
+illegal arm. It gives TPR 0.658 and TNR 0.683 there. The objective is nearly flat -- balanced accuracy is
+0.6644 at $\tau = 0.869$ -- so $\tau$ names a trade-off rather than a sharp optimum. Scored at
+$t_0$ on the 500-game set, 37\% of legal controls still sit above it. The same procedure refit in the best-ranked dictionary space
+gives $\tau = 1.245$.
+
+\subsection{Sparse autoencoders}
+
+We compare eight architectures at expansion factor 16, giving 8192 latents on
+$d_{\mathrm{model}} = 512$, on layer-5 activations: Standard (ReLU) [4], $p$-Anneal [8], Gated [12],
+Gated+$p$-Anneal [8], TopK [6], BatchTopK [5], the prototype-distance architecture SpaDE [7],
+and CosineSpaDE, a variant of it we introduce here.
+
+\textbf{Training.} Our own dictionaries see 300M tokens at batch 8192, i.e. 36,621 steps, at
+learning rate $3\times10^{-4}$ ($2.83\times10^{-4}$ for the TopK family, which sets it from the
+dictionary size), with 1000 warmup steps and seed 42. Activations are standardized before any autoencoder sees
+them, $x' = \sigma (x - \mu)$ with $\mu$ the mean over the first 100 calibration batches and
+$\sigma = \sqrt{d_{\mathrm{model}} / \mathbb{E}\|x - \mu\|^2}$, so $\mathbb{E}\|x'\|^2 = d_{\mathrm{model}}$. The same transform is applied at encode time. SpaDE scores prototypes by
+$-\lambda\|x - Ae_i\|^2$ with $\lambda$ trainable through a softplus, encodes with sparsemax [11],
+and adds the distance-weighted regularizer of K-Deep Simplex [13],
+$\gamma \sum_j \|x - Ad_j\|^2 f_j$; CosineSpaDE scores
+by cosine similarity with no $\lambda$ and regularizes with $\sum_j (1 - \cos(x, Ad_j)) f_j$,
+which is bounded in $[0, 2]$ because sparsemax sums to one, so its natural $\gamma$ scale is
+orders of magnitude larger.
+
+\textbf{Matching sparsity.} Trained at each family's own default hyperparameters our eight land anywhere on the sparsity
+axis, $L_0$ 32.5 to 1808, so a gap between two spaces confounds
+architecture with sparsity. For the dictionary comparison we instead hold every family at one
+operating point. Each type first names its own best-scoring configuration on an equal-weight mean
+of four min--max normalized metrics from Karvonen's board-game suite [8] (coverage,
+reconstruction F$_1$, loss recovered, variance explained) over the 8192-latent half of a 516-checkpoint grid, seed-collapsed to 257
+configurations; the mean of those
+eight $L_0$ values, \textbf{219.16}, becomes a shared target, and each type is then re-seated at
+whichever member of its own grid is nearest that target in $\log L_0$ -- by sparsity, not by
+score. Realized $L_0$ runs from 183.79 to 260.13, a $1.42\times$ band. CosineSpaDE sits at the top of its own grid: a bounded cosine score with no inverse
+temperature cannot leave $L_0 \in [16.1, 183.2]$ at any $\gamma$, which is what kept the target
+from going higher.
+
+\textbf{The roster.} Five of the eight seated checkpoints are Karvonen's released ones [8] (Standard \texttt{trainer25-v2}, $p$-Anneal \texttt{trainer22},
+Gated \texttt{trainer32}, Gated+$p$-Anneal \texttt{trainer25}, TopK \texttt{trainer\_61}) and
+three are ours (BatchTopK at $k = 220$, SpaDE at $\lambda$ initialized to $10^{-3}$ and
+$\gamma = 5\times10^{-3}$,
+CosineSpaDE at $\beta = 1, \gamma = 0.05$). Those five are trained on the raw residual stream
+where ours are trained on the standardized one, so each is encoded under the convention it was trained
+in, and the two families' latents are not on one input scale: the roster compares architectures
+at matched $L_0$, not one quantity measured eight ways. Matching is on sparsity only --
+reconstruction F$_1$ across the eight still runs 0.464 to 0.938.
+
+\textbf{Reading the detector in a dictionary.} The layer-5 activation at each position is encoded
+to the dictionary's 8192 latents and the step length $d_t$ is taken there, on the latent
+code and not on the reconstruction, with $\mu_t$ and $\sigma_t$ refit in that space on the
+same held-out legal block. Same 500 games, same statistic, same profile construction.
+
+\textbf{The evaluation suite.} Both the operating point above and the sweep in \cref{fig:7} are
+scored with Karvonen's board-game suite [8], on 1000 held-out games. Let $f_i(x)$ be latent $i$'s
+activation on a layer-5 activation $x$, let $f_i^{\max}$ be its maximum over a firing-rate pass,
+and let $\phi_{i,\tau}(x) = \mathbf{1}[f_i(x) > \tau f_i^{\max}]$ binarize it at relative threshold
+$\tau \in \{0, 0.1, \ldots, 1\}$. A \textit{board state property} $g_{r,c,k}$ is the binary event
+that square $(r,c)$ holds class $k \in \{\rm mine, \rm blank, \rm theirs\}$, player-relative, at a
+given position. Four metrics enter the score:
+
+\begin{itemize}
+\item \textbf{Sparsity} $L_0$, the mean number of nonzero latents per activation.
+
+\item \textbf{Loss recovered (fidelity)}, $(H_{\rm SAE} - H_0)/(H_{\rm clean} - H_0)$, where
+$H_{\rm clean}$ is the model's next-token cross-entropy, $H_{\rm SAE}$ is that cross-entropy with
+the layer-5 residual stream replaced by the autoencoder's reconstruction $\hat{x}$, and $H_0$ is it
+with that activation zeroed. Anchored at zero ablation this way, it is not confined to $[0, 1]$.
+
+\item \textbf{Variance explained}, $1 - \sum_d \mathrm{Var}[(x - \hat{x})_d] / \sum_d \mathrm{Var}[x_d]$,
+summed over the $d_{\mathrm{model}}$ coordinates.
+
+\item \textbf{Coverage}, $\max_{\tau} \frac{1}{192} \sum_{r,c,k} \max_i F_1(\phi_{i,\tau}; g_{r,c,k})$:
+at one threshold, the best single latent's $F_1$ for each property, averaged over properties. It
+asks whether the dictionary \textit{contains} a latent that tracks a property, one latent at a time.
+
+\item \textbf{Board state reconstruction} $F_1$. Latents are first labelled with the properties they
+predict at precision $\ge 0.95$ on at least 10 positions; the board is then rebuilt at each position
+as the union of the labels of every latent that fires there, and $F_1$ is micro-averaged over all
+(position, square, class) cells. It asks whether the labelled dictionary \textit{jointly}
+reconstructs the board.
+\end{itemize}
+
+The last two are easily conflated but are different tasks, not two aggregations of one number:
+coverage macro-averages over properties and lets each pick its own best latent, while
+reconstruction pools a single micro-averaged $F_1$ over cells and uses the whole labelled
+dictionary at once. Masking the blank channel leaves 128 live properties of the 192 the suite
+normalizes by, so Othello coverage cannot exceed $128/192 = 0.667$; this is why the coverage axis
+of \cref{fig:7} tops out near $0.5$ and not near $1$, and we report the uncorrected values so that
+they stay comparable to [8].
+
+%%%%%%%%%%%% SAE HYPERPARAMETER SWEEPS %%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\linewidth]{figures/Appendix/karvonen_sae_sweep.png}
+  \caption{\textbf{Hyperparameter sweep of each SAE architecture used in this work across sparsity $L_0$.} Every point is one trained dictionary at expansion factor $16$ ($8192$ latents) on layer-$5$ activations, scored with Karvonen's board-game suite [8]; all four panels share the $x$-axis $L_0$, clipped to $[0, 400]$, and marker shape denotes the architecture. \textbf{(a)} Loss recovered (fidelity) against $L_0$, each point colored by its coverage of the Othello board state. \textbf{(b)} Coverage of the Othello board state against $L_0$. \textbf{(c)} As in (a), each point colored by its board state reconstruction $F_1$. \textbf{(d)} Board state reconstruction $F_1$ against $L_0$. }
+  \label{fig:7}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Evaluation protocol}
+
+\textbf{Scored populations.} We score every branch-complete game with $t_0 \in [10, 34]$ that is
+either absent from the legal corpus below or sits at an odd index in it, which is what keeps a
+scored trajectory out of the profile it is scored against: 2415 games, 21,735 branch rows. The
+per-move-index profile $\mu_t, \sigma_t$ is fit on a block of 2000 legal games, minus the 778
+that are themselves scored here -- a trajectory must not contribute to the baseline it is scored
+against -- leaving \textbf{1222}. The evaluation set for the population panels is 500 games, an
+equal quota of 20 at each of the 25 values of $t_0$, taken as the first by sorted game id. The
+tree is not balanced on move index, forking 1665 of the eligible games at $t_0 = 20$, and move
+index is the strongest nuisance variable it has, which is what the quota removes. Those 500 games
+are written down once and re-read by the legality-probe AUROC bars, the residual-stream detector
+panels and the dictionary ranking rather than re-dealt, so those three score one set of games
+rather than three built by the same recipe.
+
+\textbf{Scoring.} Every AUROC is taken at each row's own $t_0$ -- one value per branch, not a
+maximum over the window -- for the illegal branch against the same source game's legal control at
+the same $t_0$. A rule arm is one branch per game drawn at seed 42, never a mean over its member
+categories, so R2 with three members carries the same estimator as R3 with one. AUROC is
+rank-based with ties averaged. For the probe heads the score is $1 - P(\text{legal})$, taken from
+the binary head for the first bar and from the four-way posterior for the rule bars; for the
+detector it is $S_t$. The dictionary ranking is nine bars -- raw layer 5 and the eight
+$L_0$-matched dictionaries -- sorted by height and ranked on the same at-$t_0$ paired statistic,
+which is why raw reads 0.681 in both the residual and the dictionary panel.
+
+\textbf{Chance.} Chance is measured rather than assumed: a game's legal control scored against
+the second legal control the same game carries. For the probe heads this gives 0.4875 [0.4587,
+0.5144], which licenses the 0.5 line; across dictionary spaces it lands in $[0.485, 0.508]$.
+
+\textbf{Density panels.} Class distributions are Gaussian kernel density estimates (Scott's rule)
+rescaled to a count axis on one slice width shared across all five series and across spaces, so a
+curve's height is comparable between panels. The dictionary density panel is structurally forced
+to draw the winner of the ranking above.
+
+\textbf{Uncertainty.} Every interval is a 95\% percentile bootstrap, computed and written out
+even where the panel does not draw it -- the rollout curve carries five series and reads better
+without bands. The resampling unit
+is the source game, except for the bracket-flip population, where it is the event, and for the
+probe-head AUROC bars, where it is the game pair. The rollout curve uses 2000 resamples at seed
+0; the bracket-flip bars use 2000 resamples at seed 42; every AUROC bar uses 1000 resamples at
+seed 42. The bracket-flip bars are a cluster bootstrap on the \emph{paired} displacement within
+event, which is what an arrow asserts -- the endpoints move together, so an endpoint interval
+understates the arrow by 1.4 to 1.8$\times$ on $x$.
+
+\subsection{Illustrative positions}
+
+Three single-game board panels are chosen for legibility, not sampled. The selections are
+mechanical, but the criteria are about what reads in a picture, so these are illustrative games
+rather than typical ones; the populations carry the claims.
+
+\textbf{The rule panel.} Game 606 of the seed-42 stream at $t = 16$, black to move. We scan $t
+\in [14, 26]$ over the first 800 games for a position where all three rules have a candidate, the
+played move flips discs in more than one direction, and the four drawn squares stay at least
+three cells apart. All three rules co-occur at 97.8\% of positions, so nothing here is rare. The
+played move b4 is the legal one, and the violations drawn are \texttt{occupied\_opp} at b2 (R1),
+\texttt{empty\_no\_bracket} at h3 (R2) and \texttt{opponent\_only} at f7 (R3). R2 is drawn from
+its deepest member because the shallowest, \texttt{empty\_detached}, is an empty square with
+nothing to see.
+
+\textbf{The bracket-flip panel.} Game 550 at $t = 25$, white to move, with $s = $ c6, $m = $ d7
+and $m' = $ g1. Among strict-control events at the median move index, we take the one whose
+flipped-square displacement is closest to the median displacement over all 2000 events (pool of
+34; median 9.566, this event 9.232). It is typical in the measurement, not in the picture, and
+$t = 25$ is the corpus median rather than a chosen value.
+
+\textbf{The detector trajectory.} Game 3889 at $t_0 = 20$. It is chosen so that all three rules
+have a branch there, $t_0 \pm 5$ stays inside the scanned band, the score peaks at $t_0$ on all
+three rule arms while the matched legal control does not, and the detector is right about at
+least four of the five plies drawn; among those, the largest margin over its own runner-up. The
+last two are selections over games. Off $t_0$ the row scored is the reference game, whose move
+there is the legal one it played, so anything above $\tau$ is a false alarm; at $t_0$ it is the
+drawn branch, and the rule members drawn are \texttt{occupied\_opp},
+\texttt{empty\_no\_bracket} and \texttt{opponent\_only}. The shaded region is $t \le t_0 - m$,
+where all four branches are still bit-identical because the window has not yet reached the
+splice.
+
+\section{Further Results}
+
+In this section, we compare the rule violation metric we selected with other candidate metrics. We also present additional results 
+we did not include in our main paper.  
+
+\subsection{Rule Violation Metric Comparison Experiments}
+
+The detector reads one scalar per position and asks whether it departs from what a legal game
+does at the same move index. Step length is not the only candidate for that scalar, so we
+compare it against the two alternatives a reader is most likely to prefer. Write $z_p$ for the
+representation at position $p$ -- the layer-5 residual stream, or a dictionary's latent code --
+and $\Delta_p = z_{p+1} - z_p$ for the displacement between consecutive positions.
+
+\begin{itemize}
+\item \textbf{Step length,} $d_p = \|\Delta_p\|_2$, the statistic this work uses. It is a property
+of the \textit{pair} $(z_p, z_{p+1})$ and carries the magnitude of the move between them.
+
+\item \textbf{Representation norm,} $\|z_p\|_2$, the norm of the representation itself, which in a
+dictionary is the norm of the latent code and not of the reconstruction. It is a property of a
+\textit{single} position, so alone among the three it carries no displacement at all.
+
+\item \textbf{Curvature angle,} $\theta_p = \arccos\!\left(\frac{\langle \Delta_p, \Delta_{p+1}
+\rangle}{\|\Delta_p\|_2\,\|\Delta_{p+1}\|_2}\right)$, in degrees, the turn between consecutive
+displacements. It divides both lengths out, so it is scale-free where $d$ is not, and it is a
+property of the \textit{triple} $(z_p, z_{p+1}, z_{p+2})$: it needs two consecutive
+displacements where $d$ needs one, and is undefined wherever either has zero length.
+\end{itemize}
+
+The three therefore differ in what they can see. The norm cannot see motion, the angle cannot
+see how far the representation travelled, and only $d$ sees both a displacement and its size.
+Each is standardized per move index against a $\mu_t, \sigma_t$ profile fit on the held-out
+legal block, so one cut is meaningful across games, and each is read on the same $n = 500$
+games at each game's own $t_0$. \cref{fig:8} reports the result.
+
+Step length wins in eight of the nine spaces, and the turning angle exceeds $0.569$ nowhere.
+The comparison is not tilted in its favour: $d$ is held at the direction this work fixed for it
+-- shorter than the legal profile counts as illegal -- while the norm and the angle are each
+granted whichever sign scores better, which is the one asymmetry here and it favours the
+challengers. Neither survives it. The norm's better direction is positive in six of the nine
+spaces and negative in three, and a label-free detector has to fix its direction in advance, so
+a quantity whose sign moves from space to space is unusable however well it scores.
+
+%%%%%%%%%%%% RULE VIOLATION METRIC COMPARISSON %%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\linewidth]{figures/Appendix/compare_metrics.png}
+  \caption{\textbf{Step length performs the best compared to the other rule violation detection metrics we tested.} AUROC comparing three rule violation detection metrics -- step length $d$, representation
+  norm $\|z\|$, and turning angle $\theta$ -- in \textit{residual stream activations} and in
+  the \textit{SAE latent activations}, averaged among
+  $n = 500$ games.}
+  \label{fig:8}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Rule Violation Diverging Trajectories Experiments}
+
+In this section, we present two additional results. First, we show how activations in the residual stream and in the SAE latent spaces diverge after a rule-violating move. Second, we show how that violation changes their distance to the reference game. Both vary the same two things.
+
+\textbf{Whether the game is regenerated after $t_0$.} In the \textit{spliced} branch set every
+branch replays the source game's own remaining moves, so two branches are token-identical
+everywhere except at $t_0$ and any later difference is attributable to that one token. The price
+is that the shared suffix is a legal continuation of the reference's board alone, which no
+illegal branch's board admits, so every branch but the reference carries a future it could not
+have played. The \textit{rollout} set removes that confound: from $t_0$ onward every branch --
+the reference included -- samples its own continuation from OthelloGPT at temperature $1.0$,
+$K = 4$ samples per branch, with rollout $k$ of every branch drawn against the same uniform
+stream so that the $K$ are paired and each path is the mean of the $K$ paired differences from
+the reference. Only the pass token is masked, so a sampled continuation may itself be illegal;
+that is the model's own behaviour and is the object of study. What it costs is attribution, since
+two branches now differ at $t_0$ and at every position after it, so neither set replaces the
+other. \cref{fig:9} and \cref{fig:11} are spliced, and \cref{fig:10} and \cref{fig:12} are their
+regenerated twins, drawn only to $t_0 + 8$ because past that offset the illegal and control
+displacements agree to within $0.5\%$ and cross over by $t_0 + 13$.
+
+\textbf{Which space the trajectory is read in.} \cref{fig:9} and \cref{fig:10} embed the
+displacement $\Delta(t) = z_b(t) - z_{\rm ref}(t)$ in the activations themselves. \cref{fig:11}
+and \cref{fig:12} instead map each trajectory into ReStraV's $21$-dimensional curvature
+descriptor [14] and difference it there. Over a trailing window of eight sampled positions, write
+$\Delta z_i = z_{i+1} - z_i$, $d_i = \|\Delta z_i\|_2$, and
+$\theta_i = \arccos\!\left(\frac{\langle \Delta z_i, \Delta z_{i+1}\rangle}{\|\Delta z_i\|_2\,
+\|\Delta z_{i+1}\|_2}\right)$ in degrees; the descriptor is
+\[
+\varphi(z) \;=\; \big[\, d_1, \ldots, d_7,\; \theta_1, \ldots, \theta_6,\; m(d),\; m(\theta) \,\big]
+\;\in\; \mathbb{R}^{21},
+\]
+where $m(x) = (\mathrm{mean}, \min, \max, \mathrm{var})$ over the whole sequence. It separates how
+far a trajectory travels from how sharply it turns, which the raw displacement mixes together.
+$\varphi$ is nonlinear, so it is applied to each branch on its own and the difference
+$\Delta\varphi(t) = \varphi(z_b(t)) - \varphi(z_{\rm ref}(t))$ is taken inside the descriptor: a
+mean taken before $\varphi$ would measure the curvature of a path no branch travels. The trailing
+window costs the first offsets, so these panels begin later than their activation counterparts.
+
+\textbf{Distance to the reference.} \cref{fig:13}--\cref{fig:16} carry the magnitude a projection
+cannot show -- how far each rule runs from the reference at every offset, in the same plane the
+corresponding panel of \cref{fig:9} or \cref{fig:11} draws -- and we plot it in two forms.
+\cref{fig:13} and \cref{fig:15} divide by the legal control's own mean over $t \ge t_0$, one
+scalar per panel and game, so the control keeps its shape and only averages to $1$. That is the
+only form in which nine planes refit per space may be read side by side, since the control's own
+in-plane distance differs by $\sim 700\times$ across the grid. \cref{fig:14} and
+\cref{fig:16} drop the divisor and draw those measured distances, which the ratio hides: in the
+activations the nine spaces span $1360\times$, so each panel there carries its own $y$ axis,
+while the descriptor's columns are scaled to unit variance per game and every panel's peak falls
+within $1.3\times$ of every other's.
+
+  %%%%% TRAJECTORY PCAs %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+  \begin{figure}[htbp]
+  \begin{minipage}[t]{0.48\linewidth}
+    \vspace{0pt}
+    \centering
+    \includegraphics[width=\linewidth]{figures/Appendix/trajectory_PCA/raw_trajectory.png}
+    \caption{\textbf{Divergence of activations in residual stream after a rule violating move
+    (moves are NOT regenerated after $t_0$).} Trajectories of one game's eight branches after
+    $t_0 = 20$, projected onto the first two PCs of the displacement from the reference,
+    $\Delta(t) = z_b(t) - z_{\rm ref}(t)$, with move index $t$ on the vertical axis.
+    \textbf{(a)} \textit{Residual stream activations} at layer $5$, \textbf{(b)}--\textbf{(i)}
+    \textit{SAE latent activations} of the eight SAE types. Branches share both the prefix and
+    the suffix with the reference, so two of them differ in exactly one token.}
+    \label{fig:9}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\linewidth}
+    \vspace{0pt}
+    \centering
+    \includegraphics[width=\linewidth]{figures/Appendix/trajectory_PCA/raw_trajectory_rollout.png}
+    \caption{\textbf{Divergence of activations in residual stream after a rule violating move
+    (moves ARE regenerated after $t_0$).} As \cref{fig:9}, but each branch samples its own
+    continuation from OthelloGPT assuming the move at $t_0$ was played. Each path is the mean
+    over $K = 4$ sampled futures, and the window stops at $t_0 + 8$, where the comparison
+    saturates.}
+    \label{fig:10}
+  \end{minipage}
+  
+  \vspace{\floatsep}
+  
+  \begin{minipage}[t]{0.48\linewidth}
+    \vspace{0pt}
+    \centering
+    \includegraphics[width=\linewidth]{figures/Appendix/trajectory_PCA/r21_trajectory.png}
+    \caption{\textbf{Divergence of $R^{21}$ curvature descriptors after a rule violating move
+    (moves are NOT regenerated after $t_0$).} As \cref{fig:9}, but the PCs are of the curvature
+    displacement $\Delta\varphi(t) = \varphi(z_b(t)) - \varphi(z_{\rm ref}(t))$, inside
+    ReStraV's $21$-dimensional descriptor space of $11$ step-length and $10$ turning-angle
+    components.}
+    \label{fig:11}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\linewidth}
+    \vspace{0pt}
+    \centering
+    \includegraphics[width=\linewidth]{figures/Appendix/trajectory_PCA/r21_trajectory_rollout.png}
+    \caption{\textbf{Divergence of $R^{21}$ curvature descriptors after a rule violating move
+    (moves ARE regenerated after $t_0$).} \Cref{fig:11}'s descriptor plane on \cref{fig:10}'s
+    regenerated branches.}
+    \label{fig:12}
+  \end{minipage}
+  \end{figure}
+
+%%%%% DISTANCE TO REF %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+  \begin{figure}[htbp]
+  \begin{minipage}[t]{0.48\linewidth}
+    \vspace{0pt}
+    \centering
+    \includegraphics[width=\linewidth]{figures/Appendix/distance_reference/divergence_raw.png}
+    \caption{\textbf{Distance from the reference after a rule violating move (moves are NOT
+    regenerated after $t_0$).} Each rule's distance from the reference branch, measured in the
+    plane its panel of \cref{fig:9} draws and divided by that panel's own legal control, against
+    move index $t$ relative to $t_0 = 20$. Panels are as in \cref{fig:9}. One curve per rule, the
+    mean of its categories; bands are $95\%$ CIs over $n = 100$ games. Left of $t_0$ the branches
+    share their prefix and the distance is $0$ by construction; a curve that leaves the $y$ cap
+    carries the value it reaches.}
+    \label{fig:13}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\linewidth}
+    \vspace{0pt}
+    \centering
+    \includegraphics[width=\linewidth]{figures/Appendix/distance_reference/divergence_raw_values.png}
+    \caption{\textbf{Distance from the reference after a rule violating move, un-normalised
+    (moves are NOT regenerated after $t_0$).} \Cref{fig:13} without the divisor: distances in
+    each space's own units, so every panel carries its own $y$ axis. What the nine draw spans
+    $1360\times$, from SpaDE to raw layer $5$.}
+    \label{fig:14}
+  \end{minipage}
+  
+  \vspace{\floatsep}
+  
+  \begin{minipage}[t]{0.48\linewidth}
+    \vspace{0pt}
+    \centering
+    \includegraphics[width=\linewidth]{figures/Appendix/distance_reference/divergence_r21_raw.png}
+    \caption{\textbf{Distance from the reference in $R^{21}$ curvature space after a rule
+    violating move (moves are NOT regenerated after $t_0$).} As \cref{fig:13}, but distances are
+    taken in \cref{fig:11}'s curvature descriptor plane rather than in the displacement plane.}
+    \label{fig:15}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\linewidth}
+    \vspace{0pt}
+    \centering
+    \includegraphics[width=\linewidth]{figures/Appendix/distance_reference/divergence_r21_raw_values.png}
+    \caption{\textbf{Distance from the reference in $R^{21}$ curvature space, un-normalised
+    (moves are NOT regenerated after $t_0$).} \Cref{fig:15} without the divisor, in per-game
+    descriptor SDs. Column scaling puts every panel's peak within $1.3\times$ of every other's,
+    so one $y$ axis holds all nine.}
+    \label{fig:16}
+  \end{minipage}
+  \end{figure}
+
+% APPENDIX TO INCLUDE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% linear probe board state accuracies by layer --> chose layer 5 linear probe -- done
+
+% karvonen plot recreation with each of the metrics. need to plot FULL FRONTIER acorss many L0 for each SAE type -- done
+
+% some figure comparing different metrics for choosing the position that had the illegal move  -- done
+
+% we chose spliced + raw activations, put all of the distance to reference + trajectory figures for regeneration + R^21 space in the appendix. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{document}
