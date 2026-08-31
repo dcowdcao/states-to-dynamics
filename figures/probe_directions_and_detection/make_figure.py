@@ -1,16 +1,16 @@
 """Where the probe's rule directions sit, and how well those probes separate a spliced move.
 
-Three panels of one argument, which is why they are one figure: (a) and (b) say the five rule
+Three panels of one argument, which is why they are one figure: A and B say the five rule
 directions are near-mutually-orthogonal and that `legal` and R1 are the pair the probe cannot
-separate; (c) says what that costs at the spliced move, where R1 is the short bar. Read apart,
-(c) looks like a probe that works; read under (a)-(b), its R1 gap has a geometric reason.
+separate; C says what that costs at the spliced move, where R1 is the short bar. Read apart,
+C looks like a probe that works; read beside A and B, its R1 gap has a geometric reason.
 
 Draws committed CSVs and recomputes nothing, so it cannot disagree with the two studies it
-combines. The panels keep their own drawing code too -- (a) and (b) are imported from
+combines. The panels keep their own drawing code too -- A and B are imported from
 `analysis/probe_geometry/make_figures`, not reimplemented -- so a change there lands here.
 
-**The two panels do not share a corpus, on purpose.** (a) and (b) are the probe's own weights,
-refit per candidate square on the move-legality fit set (800 games); (c) evaluates those
+**The two panels do not share a corpus, on purpose.** A and B are the probe's own weights,
+refit per candidate square on the move-legality fit set (800 games); C evaluates those
 probes on the violation-divergence branch tree (3,923 games), which is disjoint from the fit
 set by exact token match. Pointing them at one corpus would mean scoring a probe on the rows
 it was fitted on.
@@ -54,29 +54,23 @@ BAR_STYLE = {"illegal": {**CLASS_STYLE["violation"], "label": "legal / illegal"}
              **{r: {**PROBE_CLASS_STYLE[r], "label": r} for r in RULES}}
 
 
-def letters(fig, rows: list[list]) -> None:
-    """Panel letters UNDER each plot, placed off the rendered extents.
+def letters(fig, axes: list) -> None:
+    """Bold A. B. C. at each panel's top-left, on one baseline.
 
-    A fixed axes-fraction offset cannot align them: (a) carries a two-row legend below its
-    axes and (b) carries tick labels, so the same offset lands in different places. Measuring
-    each panel's tight bbox puts every letter just below whatever that panel actually occupies,
-    and a row shares one baseline so (a) and (b) line up.
+    Each panel supplies its own left edge, but the three share the highest top: the heatmap is
+    squared by its aspect and the MDS cloud gives room to a legend, so their drawn boxes are
+    unequal and a per-axes offset would step the letters down across the row.
     """
     fig.canvas.draw()
-    renderer = fig.canvas.get_renderer()
-    box = lambda ax: ax.get_tightbbox(renderer).transformed(fig.transFigure.inverted())
-    i = 0
-    for row in rows:
-        boxes = [box(ax) for ax in row]
-        base = min(b.y0 for b in boxes) - 0.018
-        for b in boxes:
-            fig.text((b.x0 + b.x1) / 2, base, f"({chr(97 + i)})", ha="center", va="top",
-                     color=INK, fontsize=10)
-            i += 1
+    boxes = [ax.get_window_extent().transformed(fig.transFigure.inverted()) for ax in axes]
+    top = max(b.y1 for b in boxes) + 0.015
+    for i, b in enumerate(boxes):
+        fig.text(b.x0, top, f"{chr(65 + i)}.", ha="left", va="bottom", color=INK,
+                 fontsize=12, fontweight="bold")
 
 
 def detection_panel(ax, bars: pd.DataFrame) -> None:
-    """(c) redrawn from `detection_auroc_raw.csv`, the even-split rows only."""
+    """C redrawn from `detection_auroc_raw.csv`, the even-split rows only."""
     x = np.array([i + (GAP if r.head == "4-class" else 0.0) for i, r in enumerate(bars.itertuples())])
     split = int(np.argmax(bars["head"].to_numpy() == "4-class"))
 
@@ -118,17 +112,17 @@ def main() -> None:
                      & detection.arm.isin(BARS)].reset_index(drop=True)
     assert len(bars) == len(BARS), f"expected {len(BARS)} paired bars, found {len(bars)}"
 
-    # (c) spans the width because its x axis is four bars and a sentence; the top row is two
-    # square-ish panels. Heights favour the top row, where the MDS cloud needs the room.
-    fig = plt.figure(figsize=(9.0, 8.0))
-    grid = GridSpec(2, 2, figure=fig, height_ratios=[1.0, 0.86], hspace=0.62, wspace=0.26)
-    top_left, top_right = fig.add_subplot(grid[0, 0]), fig.add_subplot(grid[0, 1])
-    bottom = fig.add_subplot(grid[1, :])
+    # One row of three. C's x axis is four bars and reads at any width, so it sits beside the
+    # two square-ish panels rather than under them; A's legend hangs below its own axes and
+    # bbox_inches="tight" keeps it.
+    fig = plt.figure(figsize=(14.0, 4.4))
+    grid = GridSpec(1, 3, figure=fig, wspace=0.30)
+    left, middle, right = (fig.add_subplot(grid[0, i]) for i in range(3))
 
-    embed_panel(top_left, points, probes)
-    cosine_panel(fig, top_right, gram)
-    detection_panel(bottom, bars)
-    letters(fig, [[top_left, top_right], [bottom]])
+    embed_panel(left, points, probes)
+    cosine_panel(fig, middle, gram)
+    detection_panel(right, bars)
+    letters(fig, [left, middle, right])
 
     return print(save_figure(fig, HERE / "probe_directions_and_detection", args.camera_ready))
 
