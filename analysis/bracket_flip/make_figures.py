@@ -145,16 +145,16 @@ def figure_one(camera_ready: bool) -> None:
     meta = pd.read_csv(RESULTS / "f2_event_meta.csv").iloc[0]
     # Board is square, so the left column's height sets the figure's: any extra
     # becomes dead space beside it.
-    fig = plt.figure(figsize=(9.6, 4.6))
-    gs = fig.add_gridspec(1, 2, width_ratios=[0.85, 1.0], wspace=0.32,
-                          bottom=0.24, top=0.87)
+    fig = plt.figure(figsize=(9.6, 4.3))
+    gs = fig.add_gridspec(1, 2, width_ratios=[0.85, 1.0], wspace=0.20,
+                          left=0.055, right=0.985, bottom=0.21, top=0.94)
     board = fig.add_subplot(gs[0, 0])
     native = fig.add_subplot(gs[0, 1])
 
     board_panel(board, event, meta)
     field_panel(native, field, annotate=True)
     fig.legend(*native.get_legend_handles_labels(), loc="upper left",
-               bbox_to_anchor=(0.50, 0.015), ncol=3, fontsize=7, alignment="left",
+               bbox_to_anchor=(0.50, 0.105), ncol=3, fontsize=7, alignment="left",
                labelspacing=0.3, columnspacing=1.0)
     letters_topleft(fig, (board, native))
     save_figure(fig, FIGURES / "fig1_flip_and_basis", camera_ready)

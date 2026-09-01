@@ -72,7 +72,7 @@ def _compose(panel_dir: Path, out_stem: Path, dpi: int) -> Path:
         ax.text(0.0, 1.0, caption, transform=ax.transAxes, ha="left", va="top",
                 fontsize=caption_pt, fontweight="bold")
 
-    fig.subplots_adjust(wspace=0.02, hspace=0.16, left=0.01, right=0.99, top=0.99, bottom=0.01)
+    fig.subplots_adjust(wspace=0.0, hspace=0.01, left=0.005, right=0.995, top=0.995, bottom=0.005)
     out_stem.parent.mkdir(parents=True, exist_ok=True)
     for suffix in (".png", ".pdf"):
         fig.savefig(out_stem.with_suffix(suffix), bbox_inches="tight", facecolor="white")

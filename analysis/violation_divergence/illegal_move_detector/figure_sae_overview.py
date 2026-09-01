@@ -37,7 +37,7 @@ from make_figures import histogram_panel  # noqa: E402  (sibling study, not a pa
 
 
 def draw(table: pd.DataFrame, camera_ready: bool) -> Path:
-    fig, axes = plt.subplots(1, 2, figsize=(11.0, 3.6),
+    fig, axes = plt.subplots(1, 2, figsize=(11.0, 3.4),
                              gridspec_kw={"width_ratios": [1.0, 0.92]})
     bars(axes[0], table)
     n_games = histogram_panel(axes[1], table.space.iloc[0])

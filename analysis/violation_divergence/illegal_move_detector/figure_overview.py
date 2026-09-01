@@ -33,9 +33,9 @@ from figure_trace import panel as trace_panel
 from spade.figures.paper_style import apply_style, letters_topleft, save_figure
 
 HERE = Path(__file__).resolve().parent
-FIGURE_SIZE = (12.0, 8.4)
+FIGURE_SIZE = (12.0, 7.5)
 ROWS = [3.3, 4.0]        # the boards are shallower than a plot with an axis label under it
-MARGINS = {"left": 0.055, "right": 0.988, "top": 0.945, "bottom": 0.105}
+MARGINS = {"left": 0.055, "right": 0.988, "top": 0.945, "bottom": 0.075}
 PLY, CALL = 0.030, 0.052   # drops below the boards, in figure fractions
 
 
@@ -64,7 +64,7 @@ def overview(spec: dict, camera_ready: bool) -> Path:
     # One grid of 15 columns rather than two nested ones: 5 boards at 3 columns each over 3
     # plots at 5, which `tight_layout` can lay out and a subgridspec cannot.
     fig = plt.figure(figsize=FIGURE_SIZE)
-    grid = GridSpec(2, 15, figure=fig, height_ratios=ROWS, hspace=0.62, wspace=1.6)
+    grid = GridSpec(2, 15, figure=fig, height_ratios=ROWS, hspace=0.44, wspace=1.25)
     boards = [fig.add_subplot(grid[0, 3 * i:3 * i + 3]) for i in range(len(OFFSETS))]
     plots = [fig.add_subplot(grid[1, 5 * i:5 * i + 5]) for i in range(3)]
 

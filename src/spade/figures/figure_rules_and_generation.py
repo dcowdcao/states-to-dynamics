@@ -24,8 +24,8 @@ from spade.figures.paper_style import apply_style, letters_topleft, save_figure
 FIGURES = repo_root() / "figures" / "rules_and_generation"
 ROLLOUT = (repo_root() / "analysis" / "generation_legality" / "results"
            / "rollout_by_move.csv")
-FIGURE_SIZE = (11.0, 4.8)
-WIDTHS = [1, 1.35]   # (a) holds a square board, (b) a wide move axis
+FIGURE_SIZE = (10.4, 4.5)
+WIDTHS = [1, 1.45]   # A holds a square board, B a wide move axis; the board sets the height
 
 
 def combined_figure(board, mover: int, played: int, rollout: pd.DataFrame,

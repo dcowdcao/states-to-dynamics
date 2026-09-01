@@ -115,8 +115,9 @@ def main() -> None:
     # One row of three. C's x axis is four bars and reads at any width, so it sits beside the
     # two square-ish panels rather than under them; A's legend hangs below its own axes and
     # bbox_inches="tight" keeps it.
-    fig = plt.figure(figsize=(14.0, 4.4))
-    grid = GridSpec(1, 3, figure=fig, wspace=0.30)
+    fig = plt.figure(figsize=(13.0, 4.1))
+    grid = GridSpec(1, 3, figure=fig, wspace=0.30,
+                    left=0.045, right=0.99, top=0.90, bottom=0.02)
     left, middle, right = (fig.add_subplot(grid[0, i]) for i in range(3))
 
     embed_panel(left, points, probes)
