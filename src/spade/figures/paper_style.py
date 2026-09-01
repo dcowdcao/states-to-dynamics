@@ -405,6 +405,22 @@ def letters_below(fig, axes) -> None:
                  color=INK, fontsize=10)
 
 
+def letters_topleft(fig, axes) -> None:
+    """Bold A. B. C. at each panel's top-left, on one baseline.
+
+    Each panel supplies its own left edge, but the row shares the highest top: a squared
+    heatmap, a legend under a scatter or a taller x label leave the drawn boxes at unequal
+    heights, and a per-axes offset would step the letters down across the row. Measured off
+    the axes rectangle rather than the tight box, so a y label does not push a letter left.
+    """
+    fig.canvas.draw()
+    boxes = [ax.get_window_extent().transformed(fig.transFigure.inverted()) for ax in axes]
+    top = max(b.y1 for b in boxes) + 0.015
+    for i, b in enumerate(boxes):
+        fig.text(b.x0, top, f"{chr(65 + i)}.", ha="left", va="bottom", color=INK,
+                 fontsize=12, fontweight="bold")
+
+
 def apply_style(camera_ready: bool = False) -> None:
     """Working PNG by default; camera_ready switches to vector PDF + serif."""
     mpl.rcParams.update({

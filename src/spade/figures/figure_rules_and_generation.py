@@ -4,7 +4,7 @@
 by-rule mass, each drawn by the function that owns it. This module is layout: it places the
 two panels and their letters and sets nothing else.
 
-The letters go *under* the panels rather than over them, because (a)'s square labels sit above
+The letters go at each panel's top-left, bolded, as everywhere else in the paper; (a)'s square labels sit above
 its top rank and a title lands on them.
 
 Usage: python -m spade.figures.figure_rules_and_generation [--camera_ready]
@@ -19,20 +19,13 @@ import pandas as pd
 from spade.common.paths import repo_root
 from spade.figures.figure_othello_rules import position, rules_panel
 from spade.figures.generation_panels import cumulative_panel
-from spade.figures.paper_style import apply_style, save_figure
+from spade.figures.paper_style import apply_style, letters_topleft, save_figure
 
 FIGURES = repo_root() / "figures" / "rules_and_generation"
 ROLLOUT = (repo_root() / "analysis" / "generation_legality" / "results"
            / "rollout_by_move.csv")
 FIGURE_SIZE = (11.0, 4.8)
 WIDTHS = [1, 1.35]   # (a) holds a square board, (b) a wide move axis
-LETTER_STRIP = 0.05  # figure fraction reserved under the panels for the letters
-
-
-def letter(fig, ax, text: str) -> None:
-    box = ax.get_position()
-    fig.text(box.x0 + box.width / 2, 0.012, text, ha="center", va="bottom",
-             fontsize=plt.rcParams["axes.titlesize"])
 
 
 def combined_figure(board, mover: int, played: int, rollout: pd.DataFrame,
@@ -41,9 +34,8 @@ def combined_figure(board, mover: int, played: int, rollout: pd.DataFrame,
                                       gridspec_kw={"width_ratios": WIDTHS})
     rules_panel(left, board, mover, played)
     cumulative_panel(right, rollout)
-    fig.tight_layout(rect=(0, LETTER_STRIP, 1, 1))
-    letter(fig, left, "(a)")
-    letter(fig, right, "(b)")
+    fig.tight_layout()
+    letters_topleft(fig, (left, right))
     return save_figure(fig, FIGURES / "rules_and_generation", camera_ready)
 
 

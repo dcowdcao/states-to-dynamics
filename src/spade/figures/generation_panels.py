@@ -15,14 +15,17 @@ MARKS = 8   # markers per curve; the move axis has 56 points
 
 
 def curve(ax, x, frame: pd.DataFrame, style: dict, label: str, value: str = "mean", **kw):
-    """Point curve, markers thinned to MARKS. No band: the intervals are in the CSVs.
+    """Point curve, markers thinned to MARKS, over its interval band.
 
-    Dropping the drawn interval is a deliberate departure from FIGURE_GUIDELINES 1.2, which
-    wants every claim-supporting curve to carry its uncertainty. Every `lo`/`hi` column is
-    still computed and written, and each panel says where; nothing was stopped being
-    measured.
+    The band is the `lo`/`hi` pair the study already writes for every series, drawn rather
+    than left in the CSV so each curve carries its own uncertainty (FIGURE_GUIDELINES 1.2).
+    It is faint and unstroked because four series overlap on the cumulative panel, and the
+    panels are on a log axis where every bound is positive.
     """
     every = max(1, len(x) // MARKS)
+    if {"lo", "hi"} <= set(frame.columns):
+        ax.fill_between(x, frame["lo"], frame["hi"], color=style["color"], alpha=0.15,
+                        lw=0, zorder=kw.get("zorder", 2) - 1)
     return ax.plot(x, frame[value], color=style["color"], ls=style.get("ls", "-"),
                    marker=style["marker"], ms=4, markevery=(every // 2, every),
                    label=label, **kw)[0]
