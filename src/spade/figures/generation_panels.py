@@ -6,12 +6,14 @@ The statistics are `analysis/generation_legality/results/`; everything here is d
 import numpy as np
 import pandas as pd
 from matplotlib.ticker import FuncFormatter
+from matplotlib.transforms import blended_transform_factory
 
-from spade.figures.paper_style import GENERATION_STYLE, RULE_STYLE
+from spade.figures.paper_style import GENERATION_STYLE, MUTED, NULL, RULE_STYLE
 from spade.othello.taxonomy import RULE_MEMBERS
 
 RULES = {rule.split()[0]: (rule, members) for rule, members in RULE_MEMBERS.items()}
-MARKS = 8   # markers per curve; the move axis has 56 points
+MARKS = 8      # markers per curve; the move axis has 56 points
+GAME_MOVES = 60  # a game is exactly 60 plies, so the axis has a hard right edge
 
 
 def curve(ax, x, frame: pd.DataFrame, style: dict, label: str, value: str = "mean", **kw):
@@ -58,5 +60,11 @@ def cumulative_panel(ax, by_move: pd.DataFrame) -> None:
     log_y(ax)
     ax.set_xlabel("game move number $t$")
     ax.set_ylabel("P(Illegal move in game so far up to $t$)")
-    ax.set_xlim(left=0)
+    # The axis runs to the end of a game rather than to the last measured move, so the gap
+    # between the two is visible instead of being cropped away.
+    ax.set_xlim(0, GAME_MOVES + 1)
+    ax.axvline(GAME_MOVES, color=NULL["color"], ls=NULL["ls"], lw=1.1, zorder=1)
+    ax.text(GAME_MOVES, 0.5, f"{GAME_MOVES} moves per game",
+            transform=blended_transform_factory(ax.transData, ax.transAxes), rotation=90,
+            ha="right", va="center", fontsize=7.5, color=MUTED)
     ax.legend(loc="lower right", fontsize=8)
