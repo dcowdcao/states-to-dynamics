@@ -6,10 +6,13 @@ does. A game is taken whole or not at all, so every accepted game contributes ex
 `len(POSITIONS)` rows, n is constant across the move axis and the bootstrap resamples
 source games.
 
-POSITIONS is every t at which the model predicts a move, minus the last two. At t = 56
-and t = 57 the mover forfeits in 13.5% and 4.0% of games, where `classify() == LEGAL` stops
-matching the engine; whole-or-nothing acceptance over [0, 56) still keeps ~97.5% of games,
-over [0, 58) it would keep 82%.
+POSITIONS is every t at which the model predicts a move: t = 0..57, scoring plies 1..58,
+the last ply of a 59-token context. It used to stop at 56 because the mover forfeits at
+t = 56 and t = 57 in 13.5% and 4.0% of games, where `classify() == LEGAL` stops matching the
+engine, and whole-or-nothing acceptance over [0, 58) keeps 82% of games against [0, 56)'s
+97.5%. The axis is now the full one and the corpus scan pays that 15 points of acceptance;
+`rollout_scan` does not, since it drops forfeit positions one at a time rather than whole
+games.
 
 These games are disjoint from the divergence branches and from nothing else: they are the
 leading rows of the same seed-42 window every other study reads (docs/game_corpus.md), and
@@ -32,7 +35,7 @@ from spade.legality_probe.fit_set import branch_tokens
 from spade.othello.games import classify_prefix, collect_legal, stream_games
 from spade.othello.taxonomy import CATEGORIES
 
-POSITIONS = range(0, 56)  # logits at t predict the move at ply t+1
+POSITIONS = range(0, 58)  # logits at t predict the move at ply t+1
 N_SQUARES = 60
 
 
