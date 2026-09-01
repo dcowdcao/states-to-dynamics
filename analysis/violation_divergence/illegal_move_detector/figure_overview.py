@@ -26,17 +26,17 @@ from matplotlib.gridspec import GridSpec
 import detector
 from detector import CAND_OFFSET, FIGURES
 from figure_auroc import panel as auroc_panel, table as auroc_table
-from figure_boards import (LETTERS, OFFSETS, boards_row, game as boards_game, label_move,
+from figure_boards import (OFFSETS, boards_row, game as boards_game, label_move,
                            panel_label)
 from figure_histograms import panel as density_panel, subset
 from figure_trace import panel as trace_panel
-from spade.figures.paper_style import INK, apply_style, save_figure
+from spade.figures.paper_style import apply_style, letters_topleft, save_figure
 
 HERE = Path(__file__).resolve().parent
 FIGURE_SIZE = (12.0, 8.4)
 ROWS = [3.3, 4.0]        # the boards are shallower than a plot with an axis label under it
-MARGINS = {"left": 0.055, "right": 0.988, "top": 0.985, "bottom": 0.105}
-PLY, CALL, LETTER = 0.030, 0.052, 0.088   # drops below the boards, in figure fractions
+MARGINS = {"left": 0.055, "right": 0.988, "top": 0.945, "bottom": 0.105}
+PLY, CALL = 0.030, 0.052   # drops below the boards, in figure fractions
 
 
 def under(fig, axes, pad: float = 0.006) -> float:
@@ -49,13 +49,6 @@ def under(fig, axes, pad: float = 0.006) -> float:
     renderer = fig.canvas.get_renderer()
     boxes = [ax.get_tightbbox(renderer).transformed(fig.transFigure.inverted()) for ax in axes]
     return min(b.y0 for b in boxes) - pad
-
-
-def letter(fig, axes, text: str, y: float) -> None:
-    box = [ax.get_position() for ax in axes]
-    x = (min(b.x0 for b in box) + max(b.x1 for b in box)) / 2
-    fig.text(x, y, text, ha="center", va="top", color=INK,
-             fontsize=plt.rcParams["axes.titlesize"])
 
 
 def overview(spec: dict, camera_ready: bool) -> Path:
@@ -92,12 +85,10 @@ def overview(spec: dict, camera_ready: bool) -> Path:
         tag = "$t_0$" if offset == 0 else f"$t_0{offset:+d}$"
         panel_label(fig, ax, f"{tag}, move {spec['t0'] + offset}", offset == 0,
                     made["calls"][offset], y=base - PLY, call_y=base - CALL)
-    letter(fig, boards, "(a)", base - LETTER)
-    # One baseline for the bottom row: its three x labels are different heights, and letters
-    # that follow each panel's own extent read as a stagger rather than as a row.
-    floor = under(fig, plots)
-    for ax, text in zip(plots, LETTERS[1:]):
-        letter(fig, [ax], f"({text})", floor)
+    # Two rows at different heights, so each letters on its own baseline: A over the leftmost
+    # board, which is the top-left of the whole row, then B C D over the three panels.
+    letters_topleft(fig, [boards[0]])
+    letters_topleft(fig, plots, start=1)
     return save_figure(fig, FIGURES / "detector_overview", camera_ready)
 
 

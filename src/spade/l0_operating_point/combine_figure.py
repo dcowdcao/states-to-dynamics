@@ -8,7 +8,7 @@ re-plotting, which keeps every panel byte-identical to what `verify_match.py` ch
 
 Layout is read off arXiv:2408.00113v2 Figure 4 -- top row coverage, bottom row board
 reconstruction, left column the loss-recovered-vs-L0 scatter coloured by the metric, right
-column the metric against L0. The subcaptions are bare letters: every panel already names
+column the metric against L0. The letters are bare and bold at each panel's top-left: every panel already names
 its own axes, and his wording repeated them.
 
 Panels arrive at slightly different pixel sizes because each was saved with a tight bbox,
@@ -32,10 +32,10 @@ RENDERS = repo_root() / "figures/l0_operating_point"
 
 # (filename, subcaption), in the paper's reading order.
 PANELS = [
-    ("othello_3var_coverage.png", "(a)"),
-    ("othello_2var_coverage.png", "(b)"),
-    ("othello_3var_reconstruct.png", "(c)"),
-    ("othello_2var_reconstruct.png", "(d)"),
+    ("othello_3var_coverage.png", "A."),
+    ("othello_2var_coverage.png", "B."),
+    ("othello_3var_reconstruct.png", "C."),
+    ("othello_2var_reconstruct.png", "D."),
 ]
 PANEL_WIDTH_IN = 10   # plot_pareto's figsize; each panel lands in a cell narrower than that
 
@@ -67,9 +67,12 @@ def _compose(panel_dir: Path, out_stem: Path, dpi: int) -> Path:
         ax.set_xlim(-(cell_w - im.shape[1]) / 2, im.shape[1] + (cell_w - im.shape[1]) / 2)
         ax.set_ylim(im.shape[0] + (cell_h - im.shape[0]) / 2, -(cell_h - im.shape[0]) / 2)
         ax.axis("off")
-        ax.set_title(caption, fontsize=caption_pt, y=-0.11)
+        # Bold, at the panel's own top-left, as every other lettered figure in the paper.
+        # In axes coordinates, so it does not move with the image inset into the cell.
+        ax.text(0.0, 1.0, caption, transform=ax.transAxes, ha="left", va="top",
+                fontsize=caption_pt, fontweight="bold")
 
-    fig.subplots_adjust(wspace=0.02, hspace=0.16, left=0.01, right=0.99, top=0.99, bottom=0.05)
+    fig.subplots_adjust(wspace=0.02, hspace=0.16, left=0.01, right=0.99, top=0.99, bottom=0.01)
     out_stem.parent.mkdir(parents=True, exist_ok=True)
     for suffix in (".png", ".pdf"):
         fig.savefig(out_stem.with_suffix(suffix), bbox_inches="tight", facecolor="white")

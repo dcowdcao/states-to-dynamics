@@ -30,7 +30,7 @@ from matplotlib import pyplot as plt
 
 import detector
 from figure_auroc_l0_matched import bars
-from spade.figures.paper_style import apply_style, letters_below, save_figure
+from spade.figures.paper_style import apply_style, letters_topleft, save_figure
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "changepoint_localization"))
 from make_figures import histogram_panel  # noqa: E402  (sibling study, not a package)
@@ -42,8 +42,8 @@ def draw(table: pd.DataFrame, camera_ready: bool) -> Path:
     bars(axes[0], table)
     n_games = histogram_panel(axes[1], table.space.iloc[0])
     assert (table.n_games == n_games).all(), "the two panels are not one evaluation set"
-    fig.tight_layout(rect=(0, 0.06, 1, 1))
-    letters_below(fig, axes)
+    fig.tight_layout()
+    letters_topleft(fig, axes)
     return save_figure(fig, detector.FIGURES / "sae_detector_overview", camera_ready)
 
 

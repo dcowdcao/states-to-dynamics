@@ -22,7 +22,7 @@ from matplotlib.ticker import MaxNLocator, PercentFormatter
 from spade.figures.figure_othello_rules import mover_note
 from spade.figures.othello_board import draw_board, mark_square, square_xy
 from spade.figures.paper_style import (
-    INK, MUTED, NULL, PROBE_STYLE, SQUARE_ROLE_STYLE, apply_style, letters_below,
+    INK, MUTED, NULL, PROBE_STYLE, SQUARE_ROLE_STYLE, apply_style, letters_topleft,
     save_figure)
 from spade.figures.straightness_panels import kde_ci
 
@@ -156,7 +156,7 @@ def figure_one(camera_ready: bool) -> None:
     fig.legend(*native.get_legend_handles_labels(), loc="upper left",
                bbox_to_anchor=(0.50, 0.015), ncol=3, fontsize=7, alignment="left",
                labelspacing=0.3, columnspacing=1.0)
-    letters_below(fig, (board, native))
+    letters_topleft(fig, (board, native))
     save_figure(fig, FIGURES / "fig1_flip_and_basis", camera_ready)
 
 
