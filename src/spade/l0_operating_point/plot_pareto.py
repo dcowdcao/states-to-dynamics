@@ -173,15 +173,18 @@ def plot_3var_graph(
 
 HIS_3VAR_YLIMS = (0.996, 1.0005)
 
-# The typeface half of spade.figures.paper_style.apply_style(camera_ready=True), and only
-# that half: apply_style also sets a colour cycle, grids and spine visibility, which would
-# overwrite the Set1 colours and marker scheme this figure exists to match. Point sizes stay
-# his -- ours are tuned for a 3.25in column and would render at a third the apparent size on
-# a 10in canvas.
+# The typeface half of spade.figures.paper_style.apply_style(), and only that half:
+# apply_style also sets a colour cycle, grids and spine visibility, which would overwrite the
+# Set1 colours and marker scheme this figure exists to match. Point sizes stay his -- ours are
+# tuned for a 3.25in column and would render at a third the apparent size on a 10in canvas.
+#
+# The sans face is apply_style's *default* branch, not its camera_ready one. paper.tex
+# includes the PNGs, and every other figure's PNG is drawn in that default, so a serif here
+# was the one figure in the paper set in a different face.
 OUR_FONTS = {
-    "font.family": "serif",
-    "font.serif": ["Times New Roman", "Nimbus Roman No9 L", "DejaVu Serif"],
-    "mathtext.fontset": "stix",
+    "font.family": "sans-serif",
+    "font.sans-serif": ["DejaVu Sans"],
+    "mathtext.fontset": "dejavusans",
     "pdf.fonttype": 42, "ps.fonttype": 42,  # TrueType; Type 3 fails NeurIPS
 }
 
