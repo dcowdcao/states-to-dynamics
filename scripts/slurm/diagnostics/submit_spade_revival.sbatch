@@ -1,7 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=spade_revival
-#SBATCH --account=kempner_ba_lab
-#SBATCH --partition=kempner_h100
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=96G
@@ -13,9 +11,7 @@
 # and the rules manifolds.
 
 set -e
-module load python
-module load cuda/12.4.1-fasrc01
-source activate spade_env
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 export PYTHONUNBUFFERED=1
 export HF_USE_SOFTFILELOCK=1
 
@@ -23,7 +19,7 @@ cd "${SPADE_REPO:?}"
 mkdir -p logs/revival
 
 CKPT=checkpoints/spade_revival
-MULTISEED_DIR="${SPADE_MULTISEED_DIR:-/n/netscratch/ba_lab/Lab/$USER/spade_multiseed}"
+MULTISEED_DIR="$(python -m spade.common.study multiseed)"
 
 if [ ! -f "$CKPT/trainer_0/ae.pt" ]; then
     python -m spade.training.sweep \

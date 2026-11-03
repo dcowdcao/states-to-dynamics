@@ -1,7 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=rollout_geometry
-#SBATCH --account=kempner_ba_lab
-#SBATCH --partition=kempner_h100
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=96G
@@ -10,15 +8,13 @@
 #SBATCH --error=logs/violation_divergence/%x_%j.err
 
 set -e
-module load python
-module load cuda/12.4.1-fasrc01
-source activate spade_env
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 export PYTHONUNBUFFERED=1
 
 cd "${SPADE_REPO:?}"
 mkdir -p logs/violation_divergence
 
-DIR="${SPADE_DIVERGENCE_DIR:-/n/netscratch/ba_lab/Lab/$USER/spade_divergence}"
+DIR="$(python -m spade.common.study divergence)"
 
 # The rollout tree's per-branch geometry: 20700 rows x 9 spaces. This is the step
 # that gets OOM-killed on a login node roughly 12 minutes in, silently and with no

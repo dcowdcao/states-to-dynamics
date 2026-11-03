@@ -13,7 +13,7 @@ import argparse
 
 import torch
 
-from spade.common.config import CTX_LEN, D_MODEL, MODEL_NAME
+from spade.common.config import CTX_LEN, D_MODEL, HF_REVISIONS, MODEL_NAME
 from spade.common.device import select_device
 from spade.common.net import force_ipv4
 from spade.common.study import variant_dir
@@ -115,7 +115,8 @@ def main():
 
     device = select_device()
     torch.set_grad_enabled(False)
-    model = HookedTransformer.from_pretrained(MODEL_NAME, device=device).eval()
+    model = HookedTransformer.from_pretrained(
+        MODEL_NAME, revision=HF_REVISIONS[MODEL_NAME], device=device).eval()
     assert model.cfg.n_layers == N_LAYERS and model.cfg.d_model == D_MODEL
 
     out = extract(model, tokens, items["game_id"], device)

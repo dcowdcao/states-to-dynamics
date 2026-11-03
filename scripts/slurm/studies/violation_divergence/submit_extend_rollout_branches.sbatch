@@ -5,8 +5,6 @@
 # activation pass over ~140k rows that extract_acts rewrites whole. The memory is for
 # that pass -- it holds nine [n_rows, 59, 512] fp16 tensors, ~75 GB at 140k rows.
 #SBATCH --job-name=extend_rollout_branches
-#SBATCH --account=kempner_ba_lab
-#SBATCH --partition=kempner_h100
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=250G
@@ -15,9 +13,7 @@
 #SBATCH --error=logs/violation_divergence/%x_%j.err
 
 set -e
-module load python
-module load cuda/12.4.1-fasrc01
-source activate spade_env
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 export PYTHONUNBUFFERED=1
 
 cd "${SPADE_REPO:?}"

@@ -1,9 +1,9 @@
 """Curvature ablation: the changepoint pipeline with `theta` in place of `d`."""
 import numpy as np
-from pathlib import Path
 
-B = Path("/n/netscratch/ba_lab/Lab/dcao")
-DIV, STR = B/"spade_divergence"/"curvature_discriminant", B/"spade_straightness"/"geometry"
+from spade.common.study import study_dir
+
+DIV, STR = study_dir("divergence")/"curvature_discriminant", study_dir("straightness")/"geometry"
 REF = "raw"
 SPACES = ["raw", "StandardTrainer-othello", "PAnnealTrainer-othello", "GatedSAETrainer-othello",
           "GatedAnnealTrainer-othello", "TopKTrainer-othello", "BatchTopKTrainer-othello",

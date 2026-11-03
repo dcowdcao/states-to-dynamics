@@ -12,7 +12,7 @@ Usage: python -m spade.rules.extract_acts
 
 import torch
 
-from spade.common.config import CTX_LEN, D_MODEL, HOOK_POINT, MODEL_NAME
+from spade.common.config import CTX_LEN, D_MODEL, HF_REVISIONS, HOOK_POINT, MODEL_NAME
 from spade.common.device import select_device
 from spade.common.net import force_ipv4
 from spade.common.study import study_dir
@@ -76,7 +76,8 @@ def main():
     assert items["length"].max().item() <= CTX_LEN
 
     torch.set_grad_enabled(False)
-    model = HookedTransformer.from_pretrained(MODEL_NAME, device=device)
+    model = HookedTransformer.from_pretrained(
+        MODEL_NAME, revision=HF_REVISIONS[MODEL_NAME], device=device)
     model.eval()
 
     acts_final, acts_before, p_injected = extract(model, items, device)

@@ -1,7 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=cos_sweep_eval
-#SBATCH --account=kempner_ba_lab
-#SBATCH --partition=kempner_h100
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=96G
@@ -17,9 +15,7 @@
 
 set -e
 
-module load python
-module load cuda/12.4.1-fasrc01
-source activate spade_env
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 export PYTHONUNBUFFERED=1
 # The datasets builder hard-flocks its cache, and flock on NFS dies with
 # "Errno 116 Stale file handle" when concurrent array tasks hit it (~1 task per
@@ -28,7 +24,7 @@ export PYTHONUNBUFFERED=1
 # only metadata lands there. HF_HOME stays on NFS so the LM is not refetched.
 export HF_DATASETS_CACHE="${TMPDIR:-/tmp}/hf_datasets_${SLURM_JOB_ID}"
 
-BASE="${SPADE_MULTISEED_DIR:-/n/netscratch/ba_lab/Lab/${USER}/spade_multiseed}"
+BASE="$(python -m spade.common.study multiseed)"
 TRAINER="trainer_${SLURM_ARRAY_TASK_ID}"
 
 : "${SEED:?SEED must be set (run_cosine_sweep_multiseed.sh exports it per eval array)}"

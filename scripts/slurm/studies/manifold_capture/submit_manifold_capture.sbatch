@@ -1,7 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=manifold_capture
-#SBATCH --account=kempner_ba_lab
-#SBATCH --partition=kempner_h100
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=96G
@@ -10,16 +8,14 @@
 #SBATCH --error=logs/manifold_capture/%x_%j.err
 
 set -e
-module load python
-module load cuda/12.4.1-fasrc01
-source activate spade_env
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 export PYTHONUNBUFFERED=1
 export HF_USE_SOFTFILELOCK=1
 
 cd "${SPADE_REPO:?}"
 mkdir -p logs/manifold_capture
 
-DIR="${SPADE_MANIFOLD_DIR:-/n/netscratch/ba_lab/Lab/$USER/spade_manifold}"
+DIR="$(python -m spade.common.study manifold)"
 
 [ -f "$DIR/corpus/corpus.pt" ] || python -m spade.manifold_capture.build_corpus
 [ -f "$DIR/acts/acts.pt" ] || python -m spade.manifold_capture.extract_acts

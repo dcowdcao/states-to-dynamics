@@ -1,7 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=bracket_robustness
-#SBATCH --account=kempner_ba_lab
-#SBATCH --partition=kempner_h100
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
@@ -12,9 +10,7 @@
 # 56,582 parameters on cached activations, which is minutes on an H100.
 
 set -e
-module load python
-module load cuda/12.4.1-fasrc01
-source activate spade_env
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 export PYTHONUNBUFFERED=1
 
 cd "${SPADE_REPO:?}"

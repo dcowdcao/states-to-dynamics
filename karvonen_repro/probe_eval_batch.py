@@ -20,6 +20,8 @@ from datasets import load_dataset
 from huggingface_hub import hf_hub_download
 from transformer_lens import HookedTransformer
 
+from spade.common.config import HF_REVISIONS
+
 REPO = "adamkarvonen/othello_saes"
 MODEL = "Baidicoot/Othello-GPT-Transformer-Lens"
 DATASET = "adamkarvonen/othello_45MB_games"
@@ -31,8 +33,8 @@ N_CTXS = 512  # min(512, eval_results_n_inputs)
 
 def buffer_activations(layer: int, device: str) -> torch.Tensor:
     """The activations NNsightActivationBuffer holds after its first refresh."""
-    games = load_dataset(DATASET, split="train")
-    model = HookedTransformer.from_pretrained(MODEL, device=device)
+    games = load_dataset(DATASET, split="train", revision=HF_REVISIONS[DATASET])
+    model = HookedTransformer.from_pretrained(MODEL, revision=HF_REVISIONS[MODEL], device=device)
     target = N_CTXS * CTX_LEN
 
     chunks, filled, cursor = [], 0, 0

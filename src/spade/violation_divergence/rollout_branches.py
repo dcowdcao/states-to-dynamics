@@ -41,7 +41,7 @@ import json
 
 import torch
 
-from spade.common.config import CTX_LEN, MODEL_NAME
+from spade.common.config import CTX_LEN, HF_REVISIONS, MODEL_NAME, provenance
 from spade.common.device import select_device
 from spade.common.net import force_ipv4
 from spade.common.study import study_dir
@@ -159,7 +159,8 @@ def main():
 
     device = select_device()
     torch.set_grad_enabled(False)
-    model = HookedTransformer.from_pretrained(MODEL_NAME, device=device).eval()
+    model = HookedTransformer.from_pretrained(
+        MODEL_NAME, revision=HF_REVISIONS[MODEL_NAME], device=device).eval()
     u = uniforms(items["game_id"], items["rollout"], SEED)
     items["tokens"] = generate(model, items, u, device)
 
@@ -182,6 +183,7 @@ def main():
         "note": "tokens[:t0+1] copied from the source branch, tokens[t0+1:] sampled from the "
                 "model; the reference is sampled too, so branches differ at every position "
                 "after t0 and single-token attribution does not hold here",
+        **provenance(),
     }
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2))
     print(f"wrote {len(items['t0'])} rollout rows to {out_dir}")

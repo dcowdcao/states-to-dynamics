@@ -36,6 +36,7 @@ import time
 import numpy as np
 from tqdm import tqdm
 
+from spade.common.config import HF_REVISIONS, provenance
 from spade.common.device import select_device
 from spade.common.net import force_ipv4
 from spade.common.paths import add_karvonen_to_path, repo_root
@@ -75,13 +76,14 @@ def collect_games(dataset_name, n_games, seed=42):
 
     if n_games == 0:
         print(f"Loading ALL available games from {dataset_name}...")
-        dataset = load_dataset(dataset_name, split="train")
+        dataset = load_dataset(dataset_name, split="train", revision=HF_REVISIONS[dataset_name])
         games = [example["tokens"] for example in tqdm(dataset, desc="Collecting games")]
         print(f"Collected {len(games)} games, each with {len(games[0])} moves")
         return games
 
     print(f"Loading {n_games} games from {dataset_name}...")
-    dataset = load_dataset(dataset_name, split="train", streaming=True)
+    dataset = load_dataset(dataset_name, split="train", streaming=True,
+                           revision=HF_REVISIONS[dataset_name])
     # A reservoir over the corpus's leading rows, not a sample of it — docs/game_corpus.md
     dataset = dataset.shuffle(seed=seed, buffer_size=10000)
 
@@ -173,7 +175,8 @@ if __name__ == '__main__':
     torch.set_grad_enabled(False)  # inference only — save memory
 
     print(f"\nLoading model: {args.model_name}")
-    model = HookedTransformer.from_pretrained(args.model_name, device=device)
+    model = HookedTransformer.from_pretrained(
+        args.model_name, revision=HF_REVISIONS[args.model_name], device=device)
     model.eval()
     print(f"Model loaded: {sum(p.numel() for p in model.parameters()):,} parameters")
     print(f"Config: n_layers={model.cfg.n_layers}, d_model={model.cfg.d_model}")
@@ -344,6 +347,7 @@ if __name__ == '__main__':
         },
         "karvonen_repro": args.karvonen_repro,
         "seed": args.seed,
+        **provenance(),
     }
     meta_path = os.path.join(args.output_dir, 'metadata.json')
     with open(meta_path, 'w') as f:

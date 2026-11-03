@@ -5,8 +5,6 @@
 # redoes one. Memory holds the branch activations ([34546, 59, 512] fp16, 2 GB) plus one
 # space's encoded fit set ([~185k, 8192] fp16, 3 GB) at a time.
 #SBATCH --job-name=move_legality_readout
-#SBATCH --account=kempner_ba_lab
-#SBATCH --partition=kempner_h100
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=128G
@@ -15,9 +13,7 @@
 #SBATCH --error=logs/move_legality/%x_%j.err
 
 set -e
-module load python
-module load cuda/12.4.1-fasrc01
-source activate spade_env
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 export PYTHONUNBUFFERED=1
 
 cd "${SPADE_REPO:?}"

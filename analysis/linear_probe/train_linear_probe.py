@@ -35,7 +35,7 @@ import torch as t
 import torch.nn.functional as F
 from transformer_lens import HookedTransformer
 
-from spade.common.config import CTX_LEN, D_MODEL, LAYER, MODEL_NAME
+from spade.common.config import CTX_LEN, D_MODEL, HF_REVISIONS, LAYER, MODEL_NAME
 from spade.common.device import select_device
 from spade.common.net import force_ipv4
 from spade.common.paths import add_karvonen_to_path, linear_probe_activations, repo_root
@@ -227,7 +227,8 @@ def main() -> None:
     audit = audit_parity(to_move, labels, parity_labels)
     print(audit.report(to_move.numel(), NUM_GAMES * n_turns))
 
-    model = HookedTransformer.from_pretrained(MODEL_NAME, device=device)
+    model = HookedTransformer.from_pretrained(
+        MODEL_NAME, revision=HF_REVISIONS[MODEL_NAME], device=device)
     print(f"{MODEL_NAME}: n_layers={model.cfg.n_layers}, d_model={model.cfg.d_model}, "
           f"normalization={model.cfg.normalization_type}")
     assert model.cfg.d_model == D_MODEL, "spade.common.config disagrees with the checkpoint"

@@ -44,7 +44,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from spade.common.config import D_MODEL, HOOK_POINT, LAYER, MODEL_NAME
+from spade.common.config import D_MODEL, HF_REVISIONS, HOOK_POINT, LAYER, MODEL_NAME, provenance
 from spade.common.device import select_device
 from spade.common.net import force_ipv4
 from spade.common.paths import repo_root
@@ -315,7 +315,8 @@ def main() -> None:
 
     from transformer_lens import HookedTransformer
     torch.set_grad_enabled(False)
-    model = HookedTransformer.from_pretrained(MODEL_NAME, device=device).eval()
+    model = HookedTransformer.from_pretrained(
+        MODEL_NAME, revision=HF_REVISIONS[MODEL_NAME], device=device).eval()
 
     betas = [float(b) for b in args.betas.split(",")]
     conditions = [Condition("base", 0.0)]
@@ -349,6 +350,7 @@ def main() -> None:
         "settled_min_age": SETTLED_MIN_AGE, "n_bootstrap": N_BOOT, "seed": SEED,
         "board_probe": str(probes.path(LAYER)),
         "tpr_probe": str(probes.path(LAYER, "tpr")),
+        **provenance(),
     }, indent=2))
     print(summary.to_string(index=False))
     print(f"wrote {out / 'intervention_per_event.csv'}")

@@ -28,12 +28,13 @@
 # ==========================================================================
 
 set -euo pipefail
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 
 ARCH="${1:?spade | cosine_spade | batch_topk | standard | gated | panneal | gated_anneal | topk}"
 SEED="${2:-42}"
 
-BASE="${SPADE_MULTISEED_DIR:-/n/netscratch/ba_lab/Lab/${USER}/spade_multiseed}"
-REPRO_ROOT="${SPADE_KARVONEN_REPRO_DIR:-/n/netscratch/ba_lab/Lab/${USER}}"
+BASE="$(python -m spade.common.study multiseed)"
+REPRO_ROOT="${SPADE_KARVONEN_REPRO_DIR:-$(python -m spade.common.study)}"
 LOGS="${BASE}/logs"
 
 # L0 = 4.381 * gamma^-0.752 inverted over L0 550..10, 20 points log-spaced.

@@ -34,7 +34,7 @@ from random import Random
 
 import torch
 
-from spade.common.config import CTX_LEN
+from spade.common.config import CTX_LEN, provenance
 from spade.common.study import study_dir
 from spade.othello.boards import replay
 from spade.othello.games import (  # imports force_ipv4() + karvonen path
@@ -255,7 +255,6 @@ def main():
     parser.add_argument("--smoke", action="store_true", help=f"{SMOKE_GAMES} games into $DIR/smoke/")
     args = parser.parse_args()
 
-    import datasets as hf_datasets
     n_games = SMOKE_GAMES if args.smoke else args.n_prefixes
     rng = Random(args.seed)
     games = stream_games(args.dataset_name, args.seed)
@@ -285,13 +284,13 @@ def main():
     manifest = {
         "seed": args.seed,
         "dataset": args.dataset_name,
-        "datasets_version": hf_datasets.__version__,
         **summary(items),
         "skips": dict(skips),
         "appended": [],  # one block per extend_branches run, in the order they were appended
         "categories": CATEGORIES,
         "note": "t0 assigned to accepted games; skips retry the same t0, so late-t0 "
                 "games are conditioned on pass-free non-forfeit sources",
+        **provenance(),
     }
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2))
     print(f"wrote {len(rows['t0'])} branches from {n_games} games to {out_dir}")

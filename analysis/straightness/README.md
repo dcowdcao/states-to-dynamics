@@ -29,7 +29,7 @@ beside the geometry above, because `changepoint_localization` and `illegal_move_
 against a per-move-index profile fit on these legal games and `compute_geometry.py` only ever
 wrote one for the seed-42 roster. Legal block only -- that is all the profile reads.
 
-`$DIR` = `$SPADE_STRAIGHTNESS_DIR` (default `/n/netscratch/ba_lab/Lab/$USER/spade_straightness`).
+`$DIR` = `$SPADE_STRAIGHTNESS_DIR` (default `$SPADE_DATA_ROOT/spade_straightness`).
 One GPU job runs the whole chain:
 `sbatch scripts/slurm/studies/straightness/submit_straightness.sh`.
 

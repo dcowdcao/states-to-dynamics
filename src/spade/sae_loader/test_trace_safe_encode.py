@@ -19,6 +19,7 @@ import torch as t
 from sparsemax import Sparsemax
 
 from spade.common.paths import add_karvonen_to_path
+from spade.common.study import data_root, study_dir
 from spade.sae_loader.load_sae import load_sae
 from spade.sae_loader.trace_safe_spade import sparsemax
 
@@ -32,9 +33,8 @@ N_GAMES = 25
 # His stage indexes the code by a list of alive features; any list exercises the same path.
 N_DIMS = 8
 
-_MULTISEED = os.environ.get("SPADE_MULTISEED_DIR", "/n/netscratch/ba_lab/Lab/dcao/spade_multiseed")
-_RELEASED = os.environ.get("SPADE_KARVONEN_RELEASED",
-                           "/n/netscratch/ba_lab/Lab/dcao/karvonen_released")
+_MULTISEED = study_dir("multiseed")
+_RELEASED = os.environ.get("SPADE_KARVONEN_RELEASED", data_root() / "karvonen_released")
 
 DEFAULTS = {
     "karvonen": f"{_RELEASED}/othello-trained_model-layer_5-2024-07-10_topk"

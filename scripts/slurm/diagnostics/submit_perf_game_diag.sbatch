@@ -1,7 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=perf_game_diag
-#SBATCH --account=kempner_ba_lab
-#SBATCH --partition=kempner_h100
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=64G
@@ -28,9 +26,7 @@
 
 set -e
 
-module load python
-module load cuda/12.4.1-fasrc01
-source activate spade_env
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 export PYTHONUNBUFFERED=1
 
 SAE_PATH="${1:-checkpoints/spade_sweep/trainer_3}"

@@ -9,7 +9,7 @@ Usage: python -m spade.manifold_capture.extract_acts
 
 import torch
 
-from spade.common.config import CTX_LEN, D_MODEL, HOOK_POINT, MODEL_NAME
+from spade.common.config import CTX_LEN, D_MODEL, HF_REVISIONS, HOOK_POINT, MODEL_NAME
 from spade.common.device import select_device
 from spade.common.net import force_ipv4
 from spade.common.study import study_dir
@@ -27,7 +27,8 @@ def main():
                         weights_only=True)["tokens"]
     n = tokens.shape[0]
     torch.set_grad_enabled(False)
-    model = HookedTransformer.from_pretrained(MODEL_NAME, device=device).eval()
+    model = HookedTransformer.from_pretrained(
+        MODEL_NAME, revision=HF_REVISIONS[MODEL_NAME], device=device).eval()
 
     acts = torch.empty(n, CTX_LEN, D_MODEL)
     for start in range(0, n, BATCH_SIZE):

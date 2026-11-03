@@ -85,10 +85,10 @@ spade_sae/
 └── archive/                   superseded configs, run records and docs — provenance only
 ```
 
-**Outside the repo, and load-bearing.** Six studies keep their heavy artifacts on netscratch
-at `/n/netscratch/ba_lab/Lab/$USER/spade_<study>`, resolved by `spade.common.study.study_dir()`
-and overridable per study with `SPADE_<STUDY>_DIR`. That tier holds ~92 GB, including the
-seeds 43–46 behind every error bar, and it is on **90-day retention** running from
+**Outside git, and load-bearing.** Six studies keep their heavy artifacts under
+`$SPADE_DATA_ROOT/spade_<study>` (default `data/`), resolved by `spade.common.study.study_dir()`
+and overridable per study with `SPADE_<STUDY>_DIR`. On FASRC that tier is netscratch: ~92 GB,
+including the seeds 43–46 behind every error bar, on **90-day retention** running from
 2026-07-22. The repo alone cannot reproduce the figures.
 
 ## Old → new migration map

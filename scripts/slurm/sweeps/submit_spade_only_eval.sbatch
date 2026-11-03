@@ -1,7 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=spade_eval
-#SBATCH --account=kempner_ba_lab
-#SBATCH --partition=kempner_h100
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=96G
@@ -23,9 +21,7 @@
 set -e
 
 # ---- Environment setup ----
-module load python
-module load cuda/12.4.1-fasrc01
-source activate spade_env
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 export PYTHONUNBUFFERED=1
 
 # ---- Working directory ----

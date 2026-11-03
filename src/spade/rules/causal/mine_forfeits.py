@@ -24,7 +24,7 @@ from random import Random
 
 import torch
 
-from spade.common.config import CTX_LEN
+from spade.common.config import CTX_LEN, provenance
 from spade.common.net import force_ipv4
 from spade.common.paths import add_karvonen_to_path
 from spade.common.study import study_dir
@@ -120,7 +120,7 @@ def main():
     j_hist = Counter(e["j"] for e in events[:args.n_events])
     manifest = {"seed": args.seed, "dataset": args.dataset_name,
                 "n_events": args.n_events, "n_games_scanned": n_games,
-                "skips": dict(skips), "j_histogram": dict(sorted(j_hist.items()))}
+                "skips": dict(skips), "j_histogram": dict(sorted(j_hist.items())), **provenance()}
     (out_dir / "forfeit_manifest.json").write_text(json.dumps(manifest, indent=2))
     print(f"wrote {args.n_events} events from {n_games} games; skips: {dict(skips)}")
 

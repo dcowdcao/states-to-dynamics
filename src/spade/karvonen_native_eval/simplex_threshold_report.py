@@ -16,10 +16,11 @@ import os
 
 import torch as t
 
+from spade.common.study import study_dir
 from spade.sae_loader.load_sae import load_sae
 
 THRESHOLD_FRACS = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-DEFAULT_ACTS = "/n/netscratch/ba_lab/Lab/dcao/spade_multiseed/data/activations"
+DEFAULT_ACTS = study_dir("multiseed") / "data" / "activations"
 
 
 def encode_all(ae, acts, device, batch=4096):

@@ -14,7 +14,8 @@ For the job layout, the log-path and `--export` gotchas, and which directory
 holds which program, see [`scripts/slurm/README.md`](../scripts/slurm/README.md).
 
 ```bash
-export SPADE_REPO="$HOME/spade_sae"      # put this in ~/.bashrc
+export SPADE_REPO="$HOME/spade_sae"      # put both in ~/.bashrc
+export SPADE_DATA_ROOT=/n/netscratch/ba_lab/Lab/dcao   # study trees + weights (spade.common.study)
 ```
 
 ## 1. Create the environment (once)
@@ -93,8 +94,7 @@ activation caches move by filesystem copy, not through this path.
 
 ```bash
 salloc -p kempner_requeue -A kempner_ba_lab -c 2 --gres=gpu:1 -t 00:30:00
-module load python cuda/12.4.1-fasrc01
-source activate spade_env
+source "$SPADE_REPO/scripts/slurm/cluster.env"
 python -m spade.validation.final_validation
 bash "$SPADE_REPO/scripts/smoke_test.sh"
 exit
@@ -108,6 +108,8 @@ mkdir -p logs/{training,extraction,eval,figures}
 bash scripts/slurm/main/run_all.sh
 ```
 
+Account, partition, modules and env come from `scripts/slurm/cluster.env`, which every
+`run_*.sh` and job sources; to `sbatch` a single script by hand, `source` it first.
 `run_all.sh` submits train and extract in parallel, then chains eval on both with
 `--dependency=afterok`, and prints the three job IDs. Roughly: training 8–16 h,
 extraction 1–2 h, evaluation 4–8 h on one H100.
@@ -150,10 +152,9 @@ index**: sweep directories restart `trainer_N` at 0, and three different
 experiments each contain a `trainer_0` from a different λ/γ grid.
 
 Big study intermediates never come back over scp. They live on netscratch under
-`/n/netscratch/ba_lab/Lab/$USER/spade_<study>`, resolved by
-`spade.common.study.study_dir()` and overridable with `SPADE_<STUDY>_DIR`. That
-tier is on **90-day retention**; back up anything you need to keep, seeds 43–46
-above all.
+`$SPADE_DATA_ROOT/spade_<study>`, resolved by `spade.common.study.study_dir()` and
+overridable with `SPADE_<STUDY>_DIR`. That tier is on **90-day retention**; back up
+anything you need to keep, seeds 43–46 above all.
 
 ---
 

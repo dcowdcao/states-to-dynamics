@@ -1,29 +1,31 @@
-"""Netscratch working directories for the per-study pipelines.
+"""Where the data lives: the per-study working directories and the downloaded weights.
 
 Five study packages in the source repo each grew their own `study_dir.py` with the same
 body; this is that rule, once. A study's heavy intermediates (extracted activations,
-branch tensors, probe fits) live outside the repo under a netscratch root, are resumable
-(each step skips what already exists), and are on 90-day retention — the repo alone cannot
-regenerate a figure.
+branch tensors, probe fits) live under one data root, are resumable (each step skips what
+already exists), and are too big for git — the repo alone cannot regenerate a figure.
 
-`study_dir("bracket")` -> $SPADE_BRACKET_DIR, else /n/netscratch/ba_lab/Lab/$USER/spade_bracket
+`data_root()` -> $SPADE_DATA_ROOT, else <repo>/data
+`study_dir("bracket")` -> $SPADE_BRACKET_DIR, else data_root()/spade_bracket
 Names in use: rules, bracket, straightness, manifold, divergence, multiseed, legality,
-generation, move_legality.
+generation, move_legality, probes, rollouts.
 
-$USER unset is a KeyError, not a fallback to a hardcoded username: the source repo's
-multiseed and registry copies defaulted to `dcao`, which silently points another user at
-someone else's netscratch tree.
+`python -m spade.common.study [name]` prints data_root(), or study_dir(name), for the shell
+scripts, so the rule is not restated in bash.
 """
 
-import os
+import os, sys
 from pathlib import Path
 
-_NETSCRATCH = Path("/n/netscratch/ba_lab/Lab")
+from spade.common.paths import repo_root
+
+
+def data_root() -> Path:
+    return Path(os.environ.get("SPADE_DATA_ROOT", repo_root() / "data"))
 
 
 def study_dir(name: str) -> Path:
-    default = _NETSCRATCH / os.environ["USER"] / f"spade_{name}"
-    return Path(os.environ.get(f"SPADE_{name.upper()}_DIR", default))
+    return Path(os.environ.get(f"SPADE_{name.upper()}_DIR", data_root() / f"spade_{name}"))
 
 
 def variant_dir(name: str, smoke: bool = False, variant: str = "") -> Path:
@@ -35,3 +37,7 @@ def variant_dir(name: str, smoke: bool = False, variant: str = "") -> Path:
     """
     base = study_dir(name) / "smoke" if smoke else study_dir(name)
     return base / variant if variant else base
+
+
+if __name__ == "__main__":
+    print(study_dir(sys.argv[1]) if sys.argv[1:] else data_root())

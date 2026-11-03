@@ -16,7 +16,7 @@ import pandas as pd
 import torch
 
 from spade.bracket_flip.events import PROBE_T_MAX, PROBE_T_MIN
-from spade.common.config import CTX_LEN, D_MODEL, MODEL_NAME
+from spade.common.config import CTX_LEN, D_MODEL, HF_REVISIONS, MODEL_NAME, provenance
 from spade.common.device import select_device
 from spade.common.net import force_ipv4
 from spade.common.study import study_dir, variant_dir
@@ -100,7 +100,8 @@ def main():
     assert events["t"].min() >= 5, "position 0 would be read as `before`"
 
     torch.set_grad_enabled(False)
-    model = HookedTransformer.from_pretrained(MODEL_NAME, device=device).eval()
+    model = HookedTransformer.from_pretrained(
+        MODEL_NAME, revision=HF_REVISIONS[MODEL_NAME], device=device).eval()
     assert model.cfg.n_layers == N_LAYERS and model.cfg.d_model == D_MODEL
 
     acts = extract_events(model, events, device)
@@ -116,6 +117,7 @@ def main():
                        "control": "position t of run(P + m')"},
         "shape": [len(events), N_LAYERS, D_MODEL],
         "dtype": "float32",
+        **provenance(),
     }, indent=2))
     print(f"wrote {len(CONDITIONS)} event tensors {tuple(acts['before'].shape)} to {event_dir}")
     if args.variant:

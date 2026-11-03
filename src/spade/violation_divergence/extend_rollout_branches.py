@@ -16,7 +16,7 @@ import json
 
 import torch
 
-from spade.common.config import MODEL_NAME
+from spade.common.config import HF_REVISIONS, MODEL_NAME
 from spade.common.device import select_device
 from spade.common.study import study_dir
 from spade.violation_divergence.extend_branches import digest
@@ -47,7 +47,8 @@ def main():
 
     device = select_device()
     torch.set_grad_enabled(False)
-    model = HookedTransformer.from_pretrained(MODEL_NAME, device=device).eval()
+    model = HookedTransformer.from_pretrained(
+        MODEL_NAME, revision=HF_REVISIONS[MODEL_NAME], device=device).eval()
     u = uniforms(items["game_id"], items["rollout"], SEED)
     items["tokens"] = generate(model, items, u, device)
 

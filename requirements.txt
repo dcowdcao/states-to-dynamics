@@ -10,29 +10,40 @@
 # nothing in this repo calls either.
 #
 # pyproject.toml reads this file as the package's dependency list, so: one requirement
-# per line, comments on their own line.
+# per line, comments on their own line. requirements.lock pins the full closure.
 
 # spade_env runs the +cu124 build, which is what PyPI serves for 2.5.1 on linux
 torch==2.5.1
+# torch 2.5.1's torchvision; nnsight 0.3.7 requires it (spade_env lacks it, so pip check fails there)
+torchvision==0.20.1
 # 2.x breaks TransformerLens 1.17
 numpy==1.26.4
 # 2.x breaks the vendored circuits
 transformer-lens==1.17.0
+# transformer_lens imports it at module level (SVDInterpreter) without declaring it
+typeguard>=4.5
 # circuits.utils and the activation buffer import it at module level
 nnsight==0.3.7
 # circuits.chess_utils, reached via circuits.utils; the distribution is chess, not python-chess
 chess==1.11.2
 # module-level in circuits.utils
 jaxtyping==0.3.9
+# module-level in circuits.dictionary_learning.utils, reached via circuits.utils
+zstandard>=0.25
 sparsemax==0.1.9
 matplotlib==3.10.8
 einops>=0.8
-# PCA, Isomap, logistic
-scikit-learn>=1.8
-scipy>=1.17
+# PCA, Isomap, logistic, MDS. Pinned to the versions the probe-geometry CSVs were made with:
+# MDS's metric_mds / classical_mds init is new in 1.8, and SMACOF defaults move between releases
+scikit-learn==1.8.0
+scipy==1.17.1
 pandas>=2.0
 transformers>=4.57
-datasets>=4.8
+# datasets' shuffle buffer decides which games every corpus holds (docs/game_corpus.md);
+# pyarrow decodes the shards it streams and huggingface_hub resolves the pinned HF revisions
+datasets==4.8.4
+pyarrow==23.0.1
+huggingface_hub==0.36.2
 wandb>=0.25
 tqdm>=4.67
 # Louvain communities in manifold_capture.feature_geometry

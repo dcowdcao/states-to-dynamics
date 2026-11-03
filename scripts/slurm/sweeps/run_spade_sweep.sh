@@ -15,6 +15,7 @@
 # ==========================================================================
 
 set -e
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 
 cd "${SPADE_REPO:?}"
 
@@ -24,8 +25,8 @@ mkdir -p "${LOG_DIR}"/{training,karvonen}
 mkdir -p checkpoints/spade_sweep results/spade_sweep
 
 echo "=============================================="
-echo " SpaDE Lambda x Gamma Sweep — Kempner H100"
-echo " Account: kempner_ba_lab"
+echo " SpaDE Lambda x Gamma Sweep"
+echo " Account: ${SBATCH_ACCOUNT}, partition ${SBATCH_PARTITION}"
 echo "=============================================="
 echo " Lambda x Gamma grid (2 x 4 = 8 configs):"
 echo "   lambda_init: [1e-3, 1e-4]"

@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from spade.common.config import CTX_LEN
+from spade.common.config import CTX_LEN, provenance
 from spade.common.paths import repo_root
 from spade.common.study import study_dir
 from spade.legality_probe.labels import LABELS, labels_at_ply
@@ -135,6 +135,7 @@ def main() -> None:
         "label_of_row": "position p sees moves 0..p; labels are for the move at ply p+1",
         "disjoint_from": str(study_dir("divergence") / "branches" / "branches.pt"),
         "skips": dict(skips),
+        **provenance(),
     }, indent=2))
 
     balance = class_balance(fit["labels"], fit["position"])

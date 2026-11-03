@@ -24,7 +24,7 @@ from spade.common.paths import add_karvonen_to_path, repo_root
 
 add_karvonen_to_path()
 
-from spade.common.config import CTX_LEN, LAYER, HOOK_POINT, MODEL_NAME
+from spade.common.config import CTX_LEN, HF_REVISIONS, HOOK_POINT, LAYER, MODEL_NAME
 from spade.common.net import force_ipv4
 from spade.evaluation.karvonen_adapter import (
     StandardizedDictionary, load_karvonen_sae, load_standardization_params)
@@ -169,7 +169,8 @@ def main():
     torch.set_grad_enabled(False)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    model = HookedTransformer.from_pretrained(MODEL_NAME, device="cpu")
+    model = HookedTransformer.from_pretrained(
+        MODEL_NAME, revision=HF_REVISIONS[MODEL_NAME], device="cpu")
     model.eval()
     manifest = {"model": export_model(model),
                 "saes": [export_sae(e) for e in roster()],

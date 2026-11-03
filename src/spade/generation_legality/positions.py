@@ -29,7 +29,7 @@ from collections import Counter
 import numpy as np
 import torch
 
-from spade.common.config import CTX_LEN
+from spade.common.config import CTX_LEN, provenance
 from spade.common.study import study_dir
 from spade.legality_probe.fit_set import branch_tokens
 from spade.othello.games import classify_prefix, collect_legal, stream_games
@@ -107,6 +107,7 @@ def main() -> None:
                              "stream_games reads one window of the corpus in a fixed order "
                              "(docs/game_corpus.md)",
         "skips": dict(skips),
+        **provenance(),
     }, indent=2))
     print(f"wrote {n_rows} positions from {args.n_games} games to {out_dir}\n"
           f"skips: {dict(skips)}")

@@ -6,6 +6,68 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## A clean clone: one data root, pinned seats, pinned versions (2026-11-03)
+
+`release/clean-clone-env`, RELEASE_PLAN.md §5 items C2-C5, C7, C9, C28.
+
+- **C3, the data root.** `$SPADE_DATA_ROOT` (default `<repo>/data`, gitignored) holds every
+  study tree and the downloaded weights; `study_dir(name)` is `$SPADE_<NAME>_DIR`, else
+  `data_root()/spade_<name>`. The `$USER` lookup is gone. With
+  `SPADE_DATA_ROOT=/n/netscratch/ba_lab/Lab/dcao` all 11 study names resolve to exactly the
+  paths the old netscratch default gave. The unused `paths.data_dir()`, which ignored the env,
+  became `study.data_root()`.
+- **C2, the seats.** `checkpoints._ours()` rglobbed the whole data root for a config.json with
+  the pick's hyperparameters and took the first: CosineSpaDE matched 10 (seeds 42-46, each
+  twice via the `karvonen_repro_*` symlink mirrors) and got seed 42 by filesystem order.
+  `OUR_DIRS` + `SEED = 42` now pin each pick under `study_dir("multiseed")`, and config.json
+  must agree on class, seed and knobs. Old and new resolve ae.pt, config.json and
+  standardization_params.json to the same real files. `KARVONEN_ROOT` is
+  `data_root()/karvonen_saes`; `GRID_ROOT` went with the rglob.
+- **C5, the cluster.** Account, partition, `module load` and `source activate spade_env` came
+  out of all 55 `.sbatch` files and the `run_*.sh` submitters into `scripts/slurm/cluster.env`.
+  `#SBATCH` lines cannot read a variable, so the file exports `SBATCH_ACCOUNT` /
+  `SBATCH_PARTITION`, which sbatch reads as `--account` / `--partition` (env beats the script,
+  the command line beats env). Jobs source it for the stack; submitters source it before
+  `sbatch`. Without it, FASRC's sbatch refuses the job ("allocation failure"), so a forgotten
+  source fails at submit time. The one CPU job is submitted with `$SPADE_CPU_ACCOUNT` /
+  `$SPADE_CPU_PARTITION` from the same file.
+- **C4, the other hardcoded paths.** `build_report.py`, `test_trace_safe_encode.py`,
+  `karvonen_repro/spade_checkpoints.py`, `simplex_threshold_report.py` and `theta_ablation.py`
+  now go through `data_root()` / `study_dir()`. The 23 `${SPADE_X_DIR:-/n/netscratch/...}`
+  defaults in the shell scripts call `python -m spade.common.study x` instead of restating the
+  rule in bash; each resolves to its old value under the FASRC data root. `REPORT.md` now
+  names the default as `$SPADE_DATA_ROOT/karvonen_released`, so it no longer embeds whoever's
+  root regenerated it. `load_points.py:39` is left to the pipeline-decoupling branch.
+- **C7, the versions.** `requirements.txt` pins `datasets==4.8.4`, `pyarrow==23.0.1`,
+  `huggingface_hub==0.36.2` (the stream order is the game set), `scikit-learn==1.8.0`,
+  `scipy==1.17.1` (MDS) and `torchvision==0.20.1`; all but torchvision equal spade_env, which
+  lacks torchvision although nnsight requires it. Two imports were undeclared and a clean venv
+  would have died on them: `typeguard` (transformer_lens's `__init__` imports it) and
+  `zstandard` (circuits.utils). `requirements.lock` is spade_env's freeze cut to that closure:
+  115 pins, the CUDA wheels and triton behind torch's Linux x86_64 marker. A PyPI dry-run of
+  `pip install -e . -r requirements.lock` resolves exactly those 115 and nothing else, and every
+  module imports with site-packages cut down to them.
+- **C9, the HF commits.** `config.HF_REVISIONS` pins the model (`30e9176f…`) and
+  `adamkarvonen/othello_45MB_games` (`caafaff9…`, the revision datasets 4.8.4 resolved: its
+  builder cache is keyed by it). Every `HookedTransformer.from_pretrained` and every load of
+  that corpus passes `revision=HF_REVISIONS[name]`, so an unpinned name is a KeyError. Pinned and
+  `main` give the same weights (state-dict sha256) and the same first 3,000 `stream_games`
+  games. `config.provenance()` (both commits plus datasets/numpy/torch/transformer-lens versions)
+  is now in all 17 manifests (15 files) the corpus and model steps write; it replaces
+  `datasets_version`.
+  Not pinned: `taufeeque/othellogpt` (training; no revision on record) and the loads inside
+  `external/` (`circuits.utils.get_model`, the eval's own `load_dataset`).
+- **C28, stale caches.** `compute_divergence` skipped any `divergence/<space>.npz` that
+  existed, so a rerun after `extend_branches` silently kept the smaller tree's rows. It now
+  refuses one whose saved row metadata (`row`, `game_id`, `t0`, `category`, `is_control`,
+  `n_flipped`[, `rollout`]) differs from the current branches.pt's. That is the branches.pt key
+  the plan asked for, read from what the existing npz already carry, so the 34 caches on disk
+  pass without a rewrite (a stored sha256 would have rejected all of them). Left alone:
+  `rule_curvature` (the population file is keyed on t0, and `rule_descriptors/` being a
+  2,000-game subset is deliberate, docs/finish_notes/t0-20-population.md), the caches that
+  note calls correct-but-partial, `divergence_by_space` (another branch), and a
+  concurrent-writer lock (one incident, no guard asked for).
+
 ## The public code is one anonymous commit, scanned before it exists (2026-11-03)
 
 `scripts/release/export_public.py REF OUT_DIR` builds the double-blind release (D5). It takes

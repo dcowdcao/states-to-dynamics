@@ -24,7 +24,7 @@ import json
 
 import torch
 
-from spade.common.config import CTX_LEN, MODEL_NAME
+from spade.common.config import CTX_LEN, HF_REVISIONS, MODEL_NAME, provenance
 from spade.common.device import select_device
 from spade.common.net import force_ipv4
 from spade.common.study import study_dir
@@ -71,7 +71,8 @@ def main() -> None:
 
     device = select_device()
     torch.set_grad_enabled(False)
-    model = HookedTransformer.from_pretrained(MODEL_NAME, device=device).eval()
+    model = HookedTransformer.from_pretrained(
+        MODEL_NAME, revision=HF_REVISIONS[MODEL_NAME], device=device).eval()
 
     seqs, first_illegal = sample_rollouts(model, device, args.n_games, SEED)
     assert all(len(s) == CTX_LEN and 0 not in s for s in seqs)
@@ -98,6 +99,7 @@ def main() -> None:
         "first_illegal": "0-indexed ply of the first engine-illegal move, -1 if none",
         "extends_by_prefix": "the first k games are the same for any bank size >= k, as long "
                              "as k is a multiple of `batch`",
+        **provenance(),
     }, indent=2))
     clean = int((first < 0).sum())
     print(f"bank of {args.n_games} rollouts at {base}\nfully legal {clean}/{args.n_games}")

@@ -3,8 +3,6 @@
 # from submit_legality_spaces.sbatch and the fitted probes from submit_legality_fit.sbatch;
 # both carry the fit set's fingerprint and both are checked before anything is decoded.
 #SBATCH --job-name=legality_readout
-#SBATCH --account=kempner_ba_lab
-#SBATCH --partition=kempner_h100
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=128G
@@ -13,9 +11,7 @@
 #SBATCH --error=logs/legality_probe/%x_%j.err
 
 set -e
-module load python
-module load cuda/12.4.1-fasrc01
-source activate spade_env
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 export PYTHONUNBUFFERED=1
 
 cd "${SPADE_REPO:?}"
