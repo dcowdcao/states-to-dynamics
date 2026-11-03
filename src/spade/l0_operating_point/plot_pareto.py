@@ -26,12 +26,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.colors import Normalize
 
-from spade.common.paths import repo_root
+from spade.common.paths import build_dir
 from spade.l0_operating_point.load_points import (
     KARVONEN_CSV, check_physics, load, one_per_config, streams,
 )
 
-RENDERS = repo_root() / "figures/l0_operating_point"
+RENDERS = build_dir("l0_operating_point")
 
 RECON = "recon_f1"
 COVERAGE = "coverage"

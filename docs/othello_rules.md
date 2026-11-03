@@ -55,7 +55,7 @@ Violation: `opponent_only` (legal for the opponent only — turn confusion).
 it is at every position — is defined but deferred.
 
 The three constraint rules are drawn on one board in
-`archive/figures/othello_rules/rules_legal_and_illegal.png`
+`build/othello_rules/rules_legal_and_illegal.png` (committed copy archived)
 (`src/spade/figures/figure_othello_rules.py`). One panel carries the move a corpus
 game actually played, ticked, and one violation of each rule at the *same position*,
 each crossed — an occupied square, a line of opponent discs that nothing of the mover's

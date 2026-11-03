@@ -10,12 +10,12 @@ removes the second.
 
 Same statistic as `figure_auroc.py`: the pooled illegal branch against the SAME source game's
 legal control, ranked on the score at that game's own t0, one value per branch. Same games too
--- `results/eval_games.csv`, the 500 t0-stratified games that figure wrote down, read here
+-- `results/shared/eval_games.csv`, the 500 t0-stratified games that figure wrote down, read here
 rather than re-dealt, so the two panels score one set.
 
 Bars are sorted by height, because the ordering is the claim (FIGURE_GUIDELINES 4.5), and raw
 layer 5 keeps reference styling wherever it lands. The panel is drawn by
-`changepoint_localization.make_figures.panel`, the same code that study's by-space bars use,
+`changepoint_localization.changepoint_figures.panel`, the same code that study's by-space bars use,
 so the two cannot drift.
 
 Usage: PYTHONPATH=src python analysis/violation_divergence/illegal_move_detector/figure_auroc_l0_matched.py
@@ -35,20 +35,20 @@ from spade.figures.paper_style import REFERENCE_SPACE, apply_style
 from spade.l0_operating_point import roster
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "changepoint_localization"))
-from make_figures import finish, panel  # noqa: E402  (sibling study, not a package)
+from changepoint_figures import finish, panel  # noqa: E402  (sibling study, not a package)
 
 BOOT_SEED = 42
 SPACES = [REFERENCE_SPACE] + roster.SPACES
 
 
 def eval_rows(data: dict, sel: dict) -> np.ndarray:
-    """Positions into every arm's index array for the games of `results/eval_games.csv`.
+    """Positions into every arm's index array for the games of `results/shared/eval_games.csv`.
 
     That file is the evaluation set, not a recipe for one: `detector.stratified` deals an
     equal quota of games at every t0 and `figure_auroc` writes the result down, so reading it
     back is what makes "the same 500 games" checkable instead of merely reproducible.
     """
-    want = pd.read_csv(detector.RESULTS / "eval_games.csv")
+    want = pd.read_csv(detector.EVAL_GAMES)
     game, t0 = data["game_id"][sel["reference"]], data["t0"][sel["reference"]]
     order = np.argsort(game, kind="stable")
     keep = order[np.searchsorted(game[order], want.game_id.to_numpy())]
@@ -107,8 +107,8 @@ def main() -> None:
 
     apply_style(args.camera_ready)
     rows = table()
-    detector.RESULTS.mkdir(parents=True, exist_ok=True)
-    csv = detector.RESULTS / "auroc_by_space_l0_matched.csv"
+    detector.SAE_RESULTS.mkdir(parents=True, exist_ok=True)
+    csv = detector.SAE_RESULTS / "auroc_by_space_l0_matched.csv"
     rows.round(5).to_csv(csv, index=False)
     print(rows.round(4).to_string(index=False))
     print(csv)

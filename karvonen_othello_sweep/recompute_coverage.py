@@ -5,8 +5,8 @@ Karvonen never published exists nowhere on disk as a number. It is recoverable e
 his own `analysis.get_all_f1s` + `f1_analysis.best_f1_average` over each checkpoint's
 `indexing_None_n_inputs_1000_results.pkl` reproduces the published column bit for bit.
 
-Writes coverage_recomputed.csv, which build_report.py reads. Slow (~23 GB of pickles), so it is
-a separate entrypoint and its output is committed.
+Writes results/shared/l0_roster/karvonen_coverage_recomputed.csv, which build_report.py reads.
+Slow (~23 GB of pickles), so it is a separate entrypoint and its output is committed.
 """
 
 import argparse
@@ -43,8 +43,8 @@ def coverage(trainer_dir: Path) -> list[dict]:
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--config-root", type=Path, required=True)
-    ap.add_argument("--out", type=Path, default=Path(__file__).resolve().parent /
-                    "coverage_recomputed.csv")
+    ap.add_argument("--out", type=Path, default=REPO_ROOT / "results" / "shared" / "l0_roster" /
+                    "karvonen_coverage_recomputed.csv")
     args = ap.parse_args()
 
     torch.set_num_threads(1)

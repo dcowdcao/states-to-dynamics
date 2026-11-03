@@ -2,7 +2,7 @@
 
     python -m spade.l0_operating_point.aggregate
 
-His side is `karvonen_othello_sweep/sweep_full.csv` rather than the published aggregate
+His side is `results/shared/l0_roster/karvonen_sweep_full.csv` rather than the published aggregate
 `load_points` defaults to. It is the same 320 checkpoints run through his own pipeline,
 so it carries the coverage his released per-checkpoint CSVs omit, both expansion factors,
 and the 40 TopK configs he never published — one of which (trainer_53, k=140) is the best
@@ -27,8 +27,8 @@ import pandas as pd
 from spade.common.paths import repo_root
 from spade.l0_operating_point import load_points
 
-SWEEP_FULL = repo_root() / "karvonen_othello_sweep/sweep_full.csv"
-OUT = repo_root() / "results/l0_operating_point/pooled.csv"
+SWEEP_FULL = repo_root() / "results/shared/l0_roster/karvonen_sweep_full.csv"
+OUT = repo_root() / "results/shared/l0_roster/pooled.csv"
 
 # Blank-masked is the headline; the unmasked twin travels beside it, never scored.
 MASKED = "games_batch_to_state_stack_mine_yours_blank_mask_BLRRC"

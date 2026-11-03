@@ -24,7 +24,7 @@ from pathlib import Path
 
 from matplotlib import pyplot as plt
 
-from spade.common.paths import repo_root
+from spade.common.paths import build_dir
 from spade.figures.othello_board import (candidate, draw_board, mark_square, square_xy,
                                           verdict)
 from spade.figures.paper_style import INK, RULE_STYLE, apply_style, save_figure
@@ -34,7 +34,7 @@ from spade.othello.taxonomy import CATEGORIES, LEGAL, classify
 
 from circuits.othello_engine_utils import to_string
 
-FIGURES = repo_root() / "figures" / "othello_rules"
+FIGURES = build_dir("othello_rules")
 SEED = 42
 FIGURE_SIZE = (4.6, 4.6)
 

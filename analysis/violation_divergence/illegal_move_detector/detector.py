@@ -21,6 +21,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from spade.common.paths import results_dir
 from spade.common.study import study_dir
 from spade.l0_operating_point import roster
 from spade.move_legality import localize
@@ -33,7 +34,9 @@ from changepoint import (  # noqa: E402  (sibling module, not an installed packa
 
 DIR = study_dir("divergence") / "illegal_move_detector"
 FIGURES = Path(__file__).resolve().parent / "figures"
-RESULTS = Path(__file__).resolve().parent / "results"
+EVAL_GAMES = results_dir("shared") / "eval_games.csv"
+EXAMPLE_RESULTS = results_dir("fig03_detector_example")   # Fig 3: tables + figure_game.json
+SAE_RESULTS = results_dir("fig04_detector_sae")
 M, PAIRED = 4, True                     # the window changepoint_localization selected
 SEED = 42
 N_LEGAL = 2000                          # the straightness legal block
@@ -50,6 +53,7 @@ N_EVAL = 500
 # board, and raw's score peaks at t0 on all three rule arms. Asserted at load, so a corpus
 # change fails loudly rather than drawing a game the caption no longer describes.
 FIGURE_GAME = None                      # set by select_game.py, written into figure_game.json
+FIGURE_GAME_JSON = EXAMPLE_RESULTS / "figure_game.json"
 
 
 def band() -> np.ndarray:
@@ -148,16 +152,16 @@ def stratified(data: dict, sel: dict, n_games: int = N_EVAL) -> np.ndarray:
 
 
 def assert_eval_set(game: np.ndarray, t0: np.ndarray) -> int:
-    """Fail unless these are exactly the games results/eval_games.csv names. Returns n.
+    """Fail unless these are exactly the games results/shared/eval_games.csv names. Returns n.
 
     `figure_auroc.write_eval_games` writes that file out of `stratified`; every figure read
     beside those bars -- here and in `changepoint_localization` -- checks its own draw against
     it rather than trusting that two calls of `stratified` agree.
     """
-    want = np.loadtxt(RESULTS / "eval_games.csv", delimiter=",", skiprows=1, dtype=int)
+    want = np.loadtxt(EVAL_GAMES, delimiter=",", skiprows=1, dtype=int)
     order = np.argsort(game, kind="stable")
     assert np.array_equal(game[order], want[:, 0]) and np.array_equal(t0[order], want[:, 1]), \
-        f"{len(game)} games, not the {len(want)} of results/eval_games.csv"
+        f"{len(game)} games, not the {len(want)} of results/shared/eval_games.csv"
     return len(want)
 
 

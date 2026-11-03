@@ -226,9 +226,13 @@ than one axis.
 
 ## Outputs
 
+`score_games.py` writes `ranking.csv` to the repo's `results/` (B.2 quotes it) and the rest to
+`results/` here, a build directory; the committed copies of those are under
+`archive/analysis/violation_divergence/game_selection/`.
+
 | file | what |
 |---|---|
-| `results/ranking.csv` | one row per complete game: *t0*, all four scores, rank under each |
+| `results/fig09_fork_displacement_spliced/ranking.csv` | one row per complete game: *t0*, all four scores, rank under each |
 | `results/transfer_check.csv` | the same scores in three SAE spaces, on 302 sampled games |
 | `results/summary.txt` | top-10 tables, Spearman agreement, *t0* placement, transfer ranks |
 | `figures/selection_disclosure` | the population the pick came from, the criteria disagreeing, the transfer check |

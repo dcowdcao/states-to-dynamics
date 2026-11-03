@@ -1,11 +1,12 @@
 # Red team of the probe-geometry claims
 
 `python src/probe_geometry/robustness.py` writes every number below to
-`analysis/probe_geometry/results/robustness_*.csv`. Layer 5, `blocks.5.hook_resid_post`,
-d = 512. Both committed probes were fit on `adamkarvonen/othello_45MB_games`; the board
-arm's *re-fits* run on 200 ARENA games, 10000 rows, which is the only corpus difference
-left. Rules arm: the move-legality fit set, 800 games, 176262 rows, 60 candidate squares
-with 2482-4544 rows each.
+`analysis/probe_geometry/results/robustness_*.csv` (committed copies archived there under
+`archive/`), except `robustness_cells.csv`, which A.4 quotes and sits here. Layer 5,
+`blocks.5.hook_resid_post`, d = 512. Both committed probes were fit on
+`adamkarvonen/othello_45MB_games`; the board arm's *re-fits* run on 200 ARENA games, 10000 rows,
+which is the only corpus difference left. Rules arm: the move-legality fit set, 800 games,
+176262 rows, 60 candidate squares with 2482-4544 rows each.
 
 ## The two claims, and why only one of them is a claim
 

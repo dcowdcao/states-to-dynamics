@@ -71,7 +71,6 @@ from spade.othello.taxonomy import CATEGORIES, LEGAL, RULE_OF, classify
 
 from circuits.othello_engine_utils import to_string
 
-HERE = Path(__file__).resolve().parent
 OFFSETS = (-2, -1, 0, 1, 2)
 LETTERS = "abcde"
 FIGURE_SIZE = (12.0, 3.3)
@@ -293,7 +292,7 @@ def main() -> None:
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    spec = json.loads((HERE / "figure_game.json").read_text())
+    spec = json.loads(detector.FIGURE_GAME_JSON.read_text())
     tokens, squares = game(spec)
     print(boards_figure(tokens, squares, spec, args.camera_ready))
 

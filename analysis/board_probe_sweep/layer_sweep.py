@@ -25,6 +25,7 @@ import pandas as pd
 import torch
 from matplotlib import pyplot as plt
 
+from spade.common.paths import results_dir
 from spade.figures.paper_style import (
     BOARD_SWEEP_STYLE, INK, MUTED, apply_style, save_figure)
 from spade.probes import load as probes
@@ -141,7 +142,7 @@ def main() -> None:
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    csv = HERE / "results" / "board_layer_sweep.csv"
+    csv = results_dir("fig05_board_layer_sweep") / "board_layer_sweep.csv"
     with torch.no_grad():
         table = measure(args.device)
     csv.parent.mkdir(parents=True, exist_ok=True)

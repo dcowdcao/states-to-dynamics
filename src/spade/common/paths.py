@@ -75,7 +75,13 @@ def linear_probe_activations() -> Path:
 
 
 def results_dir(experiment: str) -> Path:
+    """A paper result: results/figNN_<name>/, or results/shared/ for cross-figure inputs."""
     return repo_root() / "results" / experiment
+
+
+def build_dir(name: str) -> Path:
+    """Gitignored output that is not itself a paper result (scripts/stage_figures.py)."""
+    return repo_root() / "build" / name
 
 
 def checkpoints_dir(experiment: str) -> Path:

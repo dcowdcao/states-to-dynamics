@@ -29,7 +29,7 @@ from spade.common.paths import repo_root
 from spade.l0_operating_point import score
 from spade.l0_operating_point.aggregate import OUT as POOLED, SCORED
 
-PICKS = repo_root() / "results/l0_operating_point/picks.csv"
+PICKS = repo_root() / "results/shared/l0_roster/picks.csv"
 
 # Karvonen's axis runs L0 10-571.
 EDGES = np.geomspace(10, 600, 41)

@@ -34,7 +34,7 @@ from spade.evaluation.karvonen_adapter import (
 
 KARVONEN_ROOT = Path("/n/netscratch/ba_lab/Lab/dcao/karvonen_saes")
 GRID_ROOT = Path("/n/netscratch/ba_lab/Lab/dcao")
-PICKS = repo_root() / "results" / "l0_operating_point" / "picks.csv"
+PICKS = repo_root() / "results" / "shared" / "l0_roster" / "picks.csv"
 
 # Karvonen's results table records `gated/trainer32`; the archive stores `trainer32-v2`.
 KARVONEN_DIRS = {

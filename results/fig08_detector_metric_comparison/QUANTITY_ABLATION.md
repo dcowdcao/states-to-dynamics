@@ -42,11 +42,12 @@ resamples, seed 42.
 | CosineSpaDE | 0.533 | 0.570 | 0.560 |
 | **mean** | **0.715** | 0.672 | 0.584 |
 
-Figure: `figures/quantity_ablation_spliced.png`. One panel, no title: the bars are the AUROC
-column of this table, spaces ordered by `d`. This document is its caption.
+Figure: `figures/quantity_ablation_spliced.png` in `changepoint_localization/` (its committed
+copy is archived). One panel, no title: the bars are the AUROC column of this table, spaces
+ordered by `d`. This document is its caption.
 
-`d`'s column here is `threshold_localization.csv` exactly, all nine spaces — this is the
-parent study's own per-position statistic, read three ways.
+`d`'s column here is `threshold_localization.csv` (`results/fig03_detector_example/`)
+exactly, all nine spaces — this is the parent study's own per-position statistic, read three ways.
 
 ## Three findings
 
@@ -100,11 +101,12 @@ eight `l0_operating_point` picks — and on a different corpus and statistic fro
 above, on purpose.
 
 **It is `illegal_move_detector`'s figure with two more quantities on it.** Same 500
-t0-stratified games (`illegal_move_detector/results/eval_games.csv`), same at-t0 paired
+t0-stratified games (`results/shared/eval_games.csv`), same at-t0 paired
 statistic: the pooled illegal branch against the SAME source game's legal control, ranked on
 the score at that game's own t0. `d` is therefore not merely close to panel (a) of
 `sae_detector_overview.png` — it **is** that bar, and `assert_matches_detector` fails the run
-if the two ever drift. Figure: `quantity_ablation_l0_matched.png`.
+if the two ever drift. Figure: `quantity_ablation_l0_matched.png`, staged as
+`figures/fig08_detector_metric_comparison.png`.
 
 | space | `d` | `norm` | `theta` |
 |---|---|---|---|
@@ -138,7 +140,7 @@ takes the top. That reversal is `36f452c`'s, reproduced on a third corpus.
 
 ```
 # once, on a GPU: per-position norms for the spliced tree, written beside the existing npz
-sbatch scripts/slurm/studies/violation_divergence/submit_branch_norms.sbatch
+sbatch archive/scripts/slurm/studies/violation_divergence/submit_branch_norms.sbatch
 
 PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/quantity_ablation.py
 

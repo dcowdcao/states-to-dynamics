@@ -38,7 +38,7 @@ import pandas as pd
 import torch
 
 from spade.common.config import CTX_LEN
-from spade.common.paths import repo_root
+from spade.common.paths import results_dir
 from spade.common.study import study_dir
 from spade.legality_probe.fit_set import branch_tokens
 from spade.othello.games import classify_prefix, collect_legal, stream_games
@@ -192,7 +192,7 @@ def main() -> None:
         "skips": dict(skips),
     }, indent=2))
 
-    results = repo_root() / "analysis" / "move_legality" / "results"
+    results = results_dir("fig02_probe_geometry_and_detection")
     results.mkdir(parents=True, exist_ok=True)
     table.to_csv(results / "fit_set_balance.csv", index=False)
     print(f"wrote {len(fit['position'])} rows from {args.n_games} games to {out_dir}")

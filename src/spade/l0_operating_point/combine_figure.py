@@ -25,10 +25,10 @@ matplotlib.use("Agg")
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 
-from spade.common.paths import repo_root
+from spade.common.paths import build_dir
 from spade.l0_operating_point.plot_pareto import OUR_FONTS, OUR_TYPE
 
-RENDERS = repo_root() / "figures/l0_operating_point"
+RENDERS = build_dir("l0_operating_point")
 
 # (filename, subcaption), in the paper's reading order.
 PANELS = [

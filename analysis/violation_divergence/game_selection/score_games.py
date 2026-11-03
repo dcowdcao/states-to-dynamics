@@ -70,12 +70,14 @@ from scipy.spatial.distance import pdist
 from scipy.stats import spearmanr
 
 from spade.common.device import select_device
+from spade.common.paths import results_dir
 from spade.common.study import study_dir
 from spade.othello.taxonomy import CATEGORIES
 from spade.saes.registry import seed42_entries
 from spade.violation_divergence.compute_divergence import sae_encoder
 
 OUT_DIR = Path(__file__).resolve().parent / "results"
+RANKING = results_dir("fig09_fork_displacement_spliced") / "ranking.csv"   # B.2 selection
 STRIDE, WINDOW = 2, (-8, 24)      # mirrors game_trajectory/make_figures.py, the
 FIRST_POS, LAST_POS = 1, 58       # figure this selects for; keep the two in sync
 CRITERIA = ["s1_illegal_vs_control", "s2_branch_distinctness",
@@ -260,7 +262,7 @@ def main():
 
     scores = sweep(meta, acts, complete)
     rows = ranked(scores)
-    print(f"wrote {write_csv(OUT_DIR / 'ranking.csv', rows)}")
+    print(f"wrote {write_csv(RANKING, rows)}")
 
     pick = rows[0]["game"]
     rng = np.random.default_rng(TRANSFER_SEED)

@@ -2,7 +2,7 @@
 
 Draws the CSVs written by spade.probe_geometry.embed_directions; recomputes nothing.
 
-Usage: python analysis/probe_geometry/make_figures.py [--camera-ready]
+Usage: python analysis/probe_geometry/probe_geometry_figures.py [--camera-ready]
 """
 
 import argparse
@@ -14,10 +14,11 @@ import pandas as pd
 
 import matplotlib.pyplot as plt
 
+from spade.common.paths import results_dir
 from spade.figures.paper_style import (
     DIRECTION_ORDER, DIRECTION_STYLE, INK, apply_style, save_figure)
 
-RESULTS = Path(__file__).resolve().parent / "results"
+RESULTS = results_dir("fig02_probe_geometry_and_detection")
 FIGURES = Path(__file__).resolve().parent / "figures"
 DIVERGING = "RdBu_r"
 

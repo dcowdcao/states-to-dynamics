@@ -33,7 +33,7 @@ from figure_auroc_l0_matched import bars
 from spade.figures.paper_style import apply_style, letters_topleft, save_figure
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "changepoint_localization"))
-from make_figures import histogram_panel  # noqa: E402  (sibling study, not a package)
+from changepoint_figures import histogram_panel  # noqa: E402  (sibling study, not a package)
 
 
 def draw(table: pd.DataFrame, camera_ready: bool) -> Path:
@@ -53,7 +53,7 @@ def main() -> None:
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    table = pd.read_csv(detector.RESULTS / "auroc_by_space_l0_matched.csv")
+    table = pd.read_csv(detector.SAE_RESULTS / "auroc_by_space_l0_matched.csv")
     print(draw(table.sort_values("auroc", ascending=False).reset_index(drop=True),
                args.camera_ready))
 

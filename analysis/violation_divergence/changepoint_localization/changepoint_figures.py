@@ -12,7 +12,7 @@ still looks like up close, which is a cut sitting inside the overlap rather than
 separated classes. (b) is drawn by `illegal_move_detector.figure_histograms.panel`, the same
 code its own figure uses, so the two cannot drift.
 
-Both panels are the SAME 500 games -- `illegal_move_detector/results/eval_games.csv`, 20 games
+Both panels are the SAME 500 games -- `results/shared/eval_games.csv`, 20 games
 at each of 25 positions -- which is why (a) reads `results/threshold_detection.csv` and not the
 `threshold_localization.csv` beside it. That table is the 575 games of `curvature_discriminant`
 at t0 in [16, 34], a different corpus from the one (b) draws, and two panels on two corpora are
@@ -38,7 +38,7 @@ untouched by it. Both variants of `threshold_detection` read the SAME 500 games,
 `measure_detector.py --l0-matched` scores that roster on this corpus; the matched bars are
 therefore comparable with the canonical bars and not only with each other.
 
-Usage: python analysis/violation_divergence/changepoint_localization/make_figures.py
+Usage: python analysis/violation_divergence/changepoint_localization/changepoint_figures.py
            [--camera-ready] [--l0-matched]
 """
 

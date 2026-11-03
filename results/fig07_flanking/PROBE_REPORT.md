@@ -93,7 +93,7 @@ and the pinv edit are upstream's:
 3. **Fixed epoch budget, no early stopping and no best-checkpointing.** Our
    committed set has only the 8000/2000 convention; early stopping on the 2000
    would select on the very number acceptance is judged by. This matches
-   `analysis/linear_probe/train_linear_probe.py`, which also trains a fixed 200/500
+   `archive/analysis/linear_probe/train_linear_probe.py`, which also trains a fixed 200/500
    epochs, so the two probes are compared under the same protocol.
 4. **`fit_binding_to_residual_linear_map` not ported** (`train_tpr_probe.py:352-447`,
    called at `:712-730`). It ridge-fits a map from flattened binding tensors back to

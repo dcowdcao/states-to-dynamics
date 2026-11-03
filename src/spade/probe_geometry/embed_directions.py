@@ -24,7 +24,7 @@ from scipy.linalg import orthogonal_procrustes
 from scipy.stats import mannwhitneyu, spearmanr
 from sklearn.manifold import MDS
 
-from spade.common.paths import repo_root
+from spade.common.paths import results_dir
 from spade.probe_geometry.probes import (
     Direction,
     board_directions,
@@ -37,7 +37,7 @@ from spade.probe_geometry.probes import (
     unit,
 )
 
-RESULTS = repo_root() / "analysis" / "probe_geometry" / "results"
+RESULTS = results_dir("fig02_probe_geometry_and_detection")
 LAMBDA = 10.0
 ORDER = ("legal", "illegal", "R1", "R2", "R3", "colour", "occupancy")
 

@@ -7,7 +7,7 @@ C looks like a probe that works; read beside A and B, its R1 gap has a geometric
 
 Draws committed CSVs and recomputes nothing, so it cannot disagree with the two studies it
 combines. The panels keep their own drawing code too -- A and B are imported from
-`analysis/probe_geometry/make_figures`, not reimplemented -- so a change there lands here.
+`analysis/probe_geometry/probe_geometry_figures`, not reimplemented -- so a change there lands here.
 
 **The two panels do not share a corpus, on purpose.** A and B are the probe's own weights,
 refit per candidate square on the move-legality fit set (800 games); C evaluates those
@@ -15,7 +15,7 @@ probes on the violation-divergence branch tree (3,923 games), which is disjoint 
 set by exact token match. Pointing them at one corpus would mean scoring a probe on the rows
 it was fitted on.
 
-Usage: python figures/probe_directions_and_detection/make_figure.py [--camera-ready]
+Usage: python analysis/probe_directions_and_detection/make_figure.py [--camera-ready]
 """
 
 import argparse
@@ -27,17 +27,16 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.gridspec import GridSpec
 
-from spade.common.paths import repo_root
+from spade.common.paths import repo_root, results_dir
 from spade.figures.paper_style import (
     CLASS_STYLE, DIRECTION_ORDER, INK, MUTED, NULL, PROBE_CLASS_STYLE, apply_style,
     save_figure)
 
 sys.path.insert(0, str(repo_root() / "analysis" / "probe_geometry"))
-from make_figures import cosine_panel, embed_panel  # noqa: E402  (sibling study, not a package)
+from probe_geometry_figures import cosine_panel, embed_panel  # noqa: E402  (sibling study)
 
 HERE = Path(__file__).resolve().parent
-GEOMETRY = repo_root() / "analysis" / "probe_geometry" / "results"
-DETECTION = repo_root() / "analysis" / "move_legality" / "results"
+RESULTS = results_dir("fig02_probe_geometry_and_detection")
 RULES = ["R1", "R2", "R3"]
 GAP = 0.8                    # blank slot between the two probe heads, as in the source figure
 # The paired rows over the 500 games `illegal_move_detector`'s population figures score --
@@ -92,7 +91,7 @@ def detection_panel(ax, bars: pd.DataFrame) -> None:
     ax.set_ylabel("AUROC")
     # No x label: the evaluation set (1000 games split evenly over the five conditions and
     # stratified by t0, 200 per group) is the caption's job, and it is stated in
-    # analysis/move_legality/README.md next to the numbers it describes.
+    # archive/analysis/move_legality/README.md next to the numbers it describes.
     ax.grid(axis="x", visible=False)
     ax.tick_params(axis="x", length=0)
 
@@ -103,11 +102,11 @@ def main() -> None:
     args = parser.parse_args()
     apply_style(args.camera_ready)
 
-    points = pd.read_csv(GEOMETRY / "embed_points.csv")
-    probes = pd.read_csv(GEOMETRY / "embed_probes.csv")
-    gram = pd.read_csv(GEOMETRY / "type_cosines.csv", index_col=0).loc[
+    points = pd.read_csv(RESULTS / "embed_points.csv")
+    probes = pd.read_csv(RESULTS / "embed_probes.csv")
+    gram = pd.read_csv(RESULTS / "type_cosines.csv", index_col=0).loc[
         list(DIRECTION_ORDER), list(DIRECTION_ORDER)]
-    detection = pd.read_csv(DETECTION / "detection_auroc_raw.csv")
+    detection = pd.read_csv(RESULTS / "detection_auroc_raw.csv")
     bars = detection[(detection.pairing == DRAWN)
                      & detection.arm.isin(BARS)].reset_index(drop=True)
     assert len(bars) == len(BARS), f"expected {len(BARS)} paired bars, found {len(bars)}"
@@ -125,7 +124,8 @@ def main() -> None:
     detection_panel(right, bars)
     letters(fig, [left, middle, right])
 
-    return print(save_figure(fig, HERE / "probe_directions_and_detection", args.camera_ready))
+    return print(save_figure(fig, HERE / "figures" / "probe_directions_and_detection",
+                             args.camera_ready))
 
 
 if __name__ == "__main__":

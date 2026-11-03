@@ -61,10 +61,12 @@ row in the CSV rather than a line on the panel.
 
 ## Reproducing
 
-    python analysis/board_probe_sweep/layer_sweep.py                 # results/ + figures/
+    python analysis/board_probe_sweep/layer_sweep.py                 # CSV + PNG
     python analysis/board_probe_sweep/layer_sweep.py --camera_ready  # vector PDF
 
-One entry point: it measures and draws in the same run, so a committed figure and a
-committed CSV cannot drift apart. Needs `$SPADE_PROBES_DIR` (corpus + probes) and a GPU
-for the read-out pass. Cluster:
+The CSV goes to `results/fig05_board_layer_sweep/`, the figure to `figures/` here.
+
+One entry point: it measures and draws in the same run, so the figure and the committed CSV
+cannot drift apart; `scripts/stage_figures.py` copies the figure to `figures/fig05_*`. Needs
+`$SPADE_PROBES_DIR` (corpus + probes) and a GPU for the read-out pass. Cluster:
 `scripts/slurm/studies/board_probe_sweep/submit_board_layer_sweep.sbatch`.

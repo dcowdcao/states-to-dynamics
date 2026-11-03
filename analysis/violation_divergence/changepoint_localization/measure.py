@@ -28,7 +28,8 @@ and leaves the canonical ones alone, and it reads the window back out of
 `window_selection.csv` instead of re-running the selection grid over the new roster.
 
 Writes results/changepoint_localization[_l0_matched].csv and
-results/threshold_localization[_l0_matched].csv.
+results/threshold_localization[_l0_matched].csv here; the unsuffixed threshold table (A.6's
+0.869) goes to results/fig03_detector_example/ instead.
 
 Usage: python analysis/violation_divergence/changepoint_localization/measure.py
            [--seed 42] [--l0-matched]
@@ -43,6 +44,7 @@ import numpy as np
 import pandas as pd
 import torch
 
+from spade.common.paths import results_dir
 from spade.common.study import study_dir
 from spade.figures.paper_style import DICTIONARIES, REFERENCE_SPACE
 from spade.l0_operating_point import roster
@@ -287,7 +289,9 @@ def main() -> None:
     table.to_csv(csv, index=False)
     if not args.l0_matched:
         picks.to_csv(HERE / "results" / "window_selection.csv", index=False)
-    thresholds = HERE / "results" / f"threshold_localization{suffix}.csv"
+    thresholds = ((HERE / "results" if args.l0_matched else results_dir("fig03_detector_example"))
+                  / f"threshold_localization{suffix}.csv")
+    thresholds.parent.mkdir(parents=True, exist_ok=True)
     flagged.round(5).to_csv(thresholds, index=False)
     print(f"\nwrote {csv}")
     print(table[["space", "auroc_vs_control", "auroc_minus_raw", "auroc_minus_raw_lo",

@@ -18,7 +18,7 @@ Bars stay in rule order rather than sorting by height (FIGURE_GUIDELINES 4.5): R
 ordered variable, and the finding is that the AUROC ordering is NOT monotone in it, which a
 sort would hide.
 
-Numbers, with n per bar, go to results/auroc_by_rule.csv.
+Numbers, with n per bar, go to results/fig03_detector_example/auroc_by_rule.csv.
 
 Usage: python analysis/violation_divergence/illegal_move_detector/figure_auroc.py
            [--camera-ready]
@@ -117,8 +117,8 @@ def write_eval_games(data: dict, sel: dict, keep: np.ndarray) -> Path:
     `move_legality.detection_auroc` reads this for its paired bars: the two figures are read
     side by side, and "the same 500 games" is only checkable if one of them writes them down.
     """
-    detector.RESULTS.mkdir(parents=True, exist_ok=True)
-    out = detector.RESULTS / "eval_games.csv"
+    out = detector.EVAL_GAMES
+    out.parent.mkdir(parents=True, exist_ok=True)
     game = data["game_id"][sel["reference"][keep]]
     t0 = data["t0"][sel["reference"][keep]]
     with out.open("w", newline="") as fh:
@@ -129,8 +129,8 @@ def write_eval_games(data: dict, sel: dict, keep: np.ndarray) -> Path:
 
 
 def write_csv(rows: list[Bar]) -> Path:
-    detector.RESULTS.mkdir(parents=True, exist_ok=True)
-    out = detector.RESULTS / "auroc_by_rule.csv"
+    detector.EXAMPLE_RESULTS.mkdir(parents=True, exist_ok=True)
+    out = detector.EXAMPLE_RESULTS / "auroc_by_rule.csv"
     round5 = lambda v: round(v, 5) if isinstance(v, float) else v
     with out.open("w", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=list(asdict(rows[0])))

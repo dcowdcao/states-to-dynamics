@@ -1,6 +1,7 @@
 """Generation-legality panels, for the study's own figures and for any figure that reuses one.
 
-The statistics are `analysis/generation_legality/results/`; everything here is drawing.
+The statistics are `spade.generation_legality.aggregate`'s tables (the two Fig 1 reads are in
+`results/fig01_rules_and_generation/`); everything here is drawing.
 """
 
 import numpy as np
