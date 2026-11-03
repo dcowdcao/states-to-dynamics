@@ -140,14 +140,18 @@ on the score at that game's own *t0*, over the 500 games of `results/eval_games.
 this script **reads** rather than re-deals. Whiskers are 95% percentile bootstrap CIs over
 source games, 1,000 resamples, seed 42 — one branch per game per arm, so a game is a cluster of
 one here. The gray band is the empirical chance level, each space's own legal control scored
-against the second legal control the same game carries; it sits at 0.486-0.508. Bars sorted by
+against the second legal control the same game carries; it sits at 0.486-0.507. Bars sorted by
 height, raw layer 5 in reference styling wherever it lands, hue = architecture family and hatch
 = its second dictionary, drawn by `changepoint_localization.make_figures.panel` so it cannot
-drift from that study's by-space bars. Numbers in `results/auroc_by_space_l0_matched.csv`.
+drift from that study's by-space bars. Numbers in `results/auroc_by_space_l0_matched.csv`; the
+paired differences in `results/auroc_by_space_l0_matched_paired.csv`, on the bars' own draws.
 
-**GatedSAE at 0.754 [0.731, 0.776] is the only dictionary clearly above raw's 0.681 [0.658,
-0.704]**; BatchTopK 0.710, TopK 0.708 and GatedAnneal 0.703 overlap raw, PAnneal 0.677 ties it,
-and SpaDE 0.634, Standard 0.612 and CosineSpaDE 0.498 sit below. On the same corpus at
+**Four dictionaries clear raw's 0.681 [0.658, 0.704] on the paired difference**: GatedSAE
+0.723 [0.700, 0.745] by +0.042 [+0.031, +0.054], BatchTopK 0.710 by +0.029 [+0.015, +0.044],
+TopK 0.708 by +0.028 [+0.015, +0.040] and GatedAnneal 0.703 by +0.022 [+0.011, +0.034]. PAnneal
+0.677 ties raw (-0.004 [-0.019, +0.013]), and SpaDE 0.634, Standard 0.612 and CosineSpaDE 0.498
+sit below. **GatedSAE has the highest point estimate but is not separable from BatchTopK**
+(+0.013 [-0.000, +0.027]); it does clear TopK (+0.015 [+0.003, +0.027]) and GatedAnneal. On the same corpus at
 *unmatched* sparsity `changepoint_localization` calls GatedAnneal the best space, so that
 ranking was reading L0 as much as architecture — see that study's "At matched L0" section.
 

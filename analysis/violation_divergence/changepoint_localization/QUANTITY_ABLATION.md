@@ -109,7 +109,7 @@ camera-ready twin.
 
 | space | `d` | `norm` | `theta` |
 |---|---|---|---|
-| GatedSAE | 0.754 | 0.703 | 0.564 |
+| GatedSAE | 0.723 | 0.595 | 0.556 |
 | BatchTopK | 0.710 | 0.553 | 0.569 |
 | TopK | 0.708 | 0.554 | 0.566 |
 | GatedAnneal | 0.703 | 0.501 | 0.564 |
@@ -133,7 +133,8 @@ range, so unlike the per-position AUROC nothing here depends on the bands agreei
 
 **The space ordering also changes, as it should.** GatedAnneal is fourth here, a point above
 raw, not the runaway first it is on the seed-42 roster — its lead there was sparsity. GatedSAE
-takes the top. That reversal is `36f452c`'s, reproduced on a third corpus.
+takes the top by point estimate, not separably from BatchTopK (`d` +0.013 [-0.000, +0.027],
+paired; `illegal_move_detector/results/auroc_by_space_l0_matched_paired.csv`). That reversal is `36f452c`'s, reproduced on a third corpus.
 
 ## Reproducing
 

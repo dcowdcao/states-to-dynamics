@@ -6,6 +6,42 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The GatedSAE pick was loading `trainer32-v2`; the L0-matched paper outputs are re-seated (2026-11-03)
+
+`checkpoints.KARVONEN_DIRS` sent the pick `gated/trainer32` (l1 0.705, L0 219.93) to
+`gated/trainer32-v2` (l1 1.632, L0 74.29), on the premise that the archive stores only the v2.
+The 05-23 zip holds both, under one `wandb_name`. So from `65b260a` on, every L0-matched
+GatedSAE number came from an L0-74 dictionary, and it was the space that won. `matched()` now
+asserts each Karvonen checkpoint's `config.json` sparsity knob against its `sweep_full.csv`
+row. **Knob, not L0 or `dict_size`:** a re-measured picks.csv would trip an L0 check, and
+Standard's 05-23 configs carry no `dict_size`. The knob cannot tell `gated/trainer12` (4096
+latents) from `trainer32`, which share l1 0.705, so a typo landing on the other expansion
+would still pass.
+
+**What moved.** GatedSAE 0.754 -> 0.723 [0.700, 0.745]. It is still the top bar, but only
++0.013 [-0.000, +0.027] over BatchTopK on the bars' own draws, so not separable from it; it is
++0.042 [+0.031, +0.054] over raw. τ 1.245 -> 1.070. Fig 8's Gated norm bar falls from 0.703 to
+0.595; "8 of 9", "θ ≤ 0.569" and the 6/3 norm signs all hold. In Figs 9-16 only the Gated cells
+change, and B.2's 234×, 536× and 1.37× are unchanged. The same pass also took in three
+owner-approved changes: Figs 13-16 bands are now a percentile bootstrap (1000 draws, seed 42),
+Fig 4's τ and paired leads are committed CSVs, and Fig 8 has a camera-ready PDF.
+
+**How it was checked.** The encoders skip files already present, so the four v2 intermediates
+were moved to `release_audit_rerun/gated_fix/v2_superseded/` (they are also in the Tier-A
+backup) and only Gated was re-encoded, on H100. The new `d` matches the audit's independent
+CPU encode of trainer32 to 6e-4. Both curves npz were re-measured on CPU (sapphire, 8 threads)
+and are bitwise identical in the other eight spaces. Every re-rendered figure differs from
+HEAD only in its Gated cell, apart from the Figs 13-16 bands.
+
+**Still `trainer32-v2`, not regenerated because the paper does not use them:**
+- divergence_by_space's rollout arm and fork_and_board's d7 plane;
+- every `_l0_matched` output of changepoint_localization, curvature_discriminant (including
+  `$DIV/curvature_discriminant/l0_gated-trainer32*.npz`), fork_population,
+  fork_curvature_space, fork_expanding_curvature, r21_shared_basis, r21_run_population,
+  rule_curvature and step_length_fork.
+
+Re-run that study's `--l0-matched` path before quoting a Gated cell from any of them.
+
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 
 `curvature_rules_{tree}_combined` and `curvature_rules_{tree}_population_combined` read cell to

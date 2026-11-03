@@ -142,10 +142,10 @@ each other. Raw layer 5 is not an SAE and is the same cell in both — its 136 C
 identical to the canonical file's, which is the check that only the dictionaries moved.
 
 **Both qualitative claims survive.** The plane inflates the rule/control ratio in **27 of
-27 cells** here too, median **1.104** (range 1.070–1.325) against the canonical n = 100
+27 cells** here too, median **1.106** (range 1.070–1.325) against the canonical n = 100
 figure's 1.108 (1.084–1.309). And no rule ends up further from the reference than a legal
-alternative does by more than a few percent in the full space: R2 runs 0.987–1.073 and R3
-0.999–1.046, against 0.977–1.059 and 0.994–1.041 canonically, while **R1 sits 8–9% below
+alternative does by more than a few percent in the full space: R2 runs 0.999–1.073 and R3
+1.003–1.046, against 0.977–1.059 and 0.994–1.041 canonically, while **R1 sits 8–9% below
 the control in all nine spaces** (0.906–0.920) exactly as before.
 
 **What moves is the ranking of the dictionaries, and the two SpaDE codes lose their
@@ -156,7 +156,7 @@ distinction.** Mean over r ≥ 0 in the plane, canonical n = 100 → L0-matched:
 | raw layer 5 | 0.989 → 0.989 | 1.157 → 1.157 | 1.130 → 1.130 |
 | PAnneal | 0.984 → 0.998 | 1.144 → 1.146 | 1.124 → 1.130 |
 | Standard | 1.011 → 1.000 | 1.223 → **1.140** | 1.198 → **1.128** |
-| GatedSAE | 1.000 → 1.002 | 1.088 → 1.089 | 1.096 → 1.097 |
+| GatedSAE | 1.000 → 0.984 | 1.088 → 1.109 | 1.096 → 1.105 |
 | TopK | 0.983 → 0.970 | 1.086 → 1.106 | 1.097 → 1.101 |
 | GatedAnneal | 0.998 → 0.987 | 1.097 → 1.134 | 1.104 → 1.107 |
 | BatchTopK | 1.003 → 0.995 | 1.110 → 1.149 | 1.115 → 1.134 |
@@ -165,7 +165,7 @@ distinction.** Mean over r ≥ 0 in the plane, canonical n = 100 → L0-matched:
 
 By R2 the canonical order is CosineSpaDE > SpaDE > Standard > raw > PAnneal > BatchTopK >
 GatedAnneal > GatedSAE > TopK; at matched L0 it is CosineSpaDE > raw > BatchTopK > PAnneal
-> Standard > GatedAnneal > SpaDE > TopK > GatedSAE. **"The two SpaDE codes inflate most" is
+> Standard > GatedAnneal > SpaDE > GatedSAE > TopK. **"The two SpaDE codes inflate most" is
 half an L0 effect**: SpaDE's R2 falls from 1.224 to 1.127 once it is seated at L0 232 rather
 than at its own default, which lands it below raw layer 5, and Standard falls the same way.
 What is left is CosineSpaDE, which is also the one pick *below* the target (L0 184) and is
@@ -175,7 +175,7 @@ the loudest cell in every figure in this study for its own reasons.
 Karvonen picks are fed the raw residual stream (`Matched.standardize`) where the canonical
 seed-42 entries are all fed scale·(x − mean), so their latent scale changes for a reason
 that is not the L0: the legal control's full-space distance goes 6.38 → 12.5 in PAnneal,
-3.53 → 8.05 in Standard, 6.23 → 11.98 in GatedSAE, 6.62 → 13.04 in TopK and 7.19 → 11.78 in
+3.53 → 8.05 in Standard, 6.23 → 11.16 in GatedSAE, 6.62 → 13.04 in TopK and 7.19 → 11.78 in
 GatedAnneal, while our three (BatchTopK 6.83 → 6.98, CosineSpaDE 0.0820 → 0.0831, SpaDE
 0.0226 → 0.0688) move only as much as the checkpoint did. The span across the grid
 therefore narrows from 586× to **193×** in the full space, and that number is a change of
@@ -186,17 +186,19 @@ why it is the one a cross-panel claim is read off.
 
 Mean over r ≥ 0 in the plane, canonical n = 100 → L0-matched, for the three arms the
 spliced-displacement table above does not cover. Raw layer 5 is not an SAE and is the same
-cell in both columns of every arm.
+cell in both columns of every arm. **The two rollout arms' L0-matched GatedSAE cells, here and
+in their figures, are still the `gated/trainer32-v2` encode (L0 74.29), not the seated
+`trainer32`**: only the two spliced arms have been re-measured on the corrected roster.
 
-**R²¹, spliced.** Plane inflation stays 27 of 27 with the same median, 1.134, and a wider
-range (1.051–1.309 → 1.032–1.363).
+**R²¹, spliced.** Plane inflation stays 27 of 27, median 1.134 → 1.136, and a wider range
+(1.051–1.309 → 1.032–1.363).
 
 | space | R1 | R2 | R3 |
 |---|---|---|---|
 | raw layer 5 | 1.040 → 1.040 | 1.228 → 1.228 | 1.204 → 1.204 |
 | PAnneal | 1.063 → 1.035 | 1.284 → 1.248 | 1.246 → 1.166 |
 | Standard | 1.053 → 1.030 | 1.309 → **1.122** | 1.294 → **1.114** |
-| GatedSAE | 1.092 → 1.036 | 1.216 → 1.166 | 1.134 → 1.171 |
+| GatedSAE | 1.092 → 1.056 | 1.216 → 1.156 | 1.134 → 1.151 |
 | TopK | 1.032 → 1.016 | 1.128 → 1.201 | 1.076 → 1.182 |
 | GatedAnneal | 1.076 → 1.012 | 1.164 → 1.165 | 1.126 → 1.143 |
 | BatchTopK | 1.062 → 1.014 | 1.168 → 1.280 | 1.168 → 1.232 |
@@ -249,7 +251,7 @@ divisor the ratio figures remove, for the three new raw twins:
 | raw layer 5 | 3.123 \| 5.405 | 7.512 \| 14.53 | 2.849 \| 4.987 |
 | PAnneal | 3.172 \| 5.448 | 6.825 \| 13.27 | 2.948 \| 5.090 |
 | Standard | 3.241 \| 5.506 | 3.960 \| 8.201 | 2.861 \| 5.064 |
-| GatedSAE | 3.322 \| 5.549 | 6.765 \| 12.73 | 2.948 \| 5.149 |
+| GatedSAE | 3.289 \| 5.571 | 6.765 \| 12.73 | 2.948 \| 5.149 |
 | TopK | 3.192 \| 5.505 | 7.623 \| 14.23 | 2.933 \| 5.116 |
 | GatedAnneal | 3.258 \| 5.547 | 6.041 \| 12.15 | 2.902 \| 5.082 |
 | BatchTopK | 3.107 \| 5.376 | 4.001 \| 7.559 | 2.846 \| 4.978 |
