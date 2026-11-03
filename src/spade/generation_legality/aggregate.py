@@ -17,7 +17,10 @@ per-position mass of a model that never sees its own output; `free_running` samp
 games and lets the error compound. The gap between them is the cost of self-conditioning,
 and neither one is a substitute for the other.
 
-Usage: python -m spade.generation_legality.aggregate
+`--rollout-only` writes Fig 1(b)'s `rollout_by_move.csv` alone, from the rollout scan: the
+corpus scan the other tables read needs the violation-divergence branch tree.
+
+Usage: python -m spade.generation_legality.aggregate [--rollout-only]
 """
 
 import argparse
@@ -273,33 +276,35 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--results", type=Path,
                         default=repo_root() / "analysis" / "generation_legality" / "results")
+    parser.add_argument("--rollout-only", dest="rollout_only", action="store_true",
+                        help="write rollout_by_move.csv alone, without the corpus scan")
     args = parser.parse_args()
 
     base = study_dir("generation")
-    frame = pd.read_csv(base / "scan" / "positions.csv")
     _, first_illegal = load_bank(N_GAMES)
     rollouts = pd.DataFrame({"first_illegal": first_illegal.numpy()})
     rollout_frame = pd.read_csv(base / "rollout" / "positions.csv")
-    game = per_game(frame)
-    rng = np.random.default_rng(BOOT_SEED)
-    w = weights(len(game["p_illegal"]), rng)
+    tables = {"rollout_by_move": rollout_by_move(
+        rollout_frame, weights(len(rollouts), np.random.default_rng(BOOT_SEED)))}
 
-    skew = rule_skew(game, w)
-    tables = {
-        "by_move": by_move(game, w),
-        "rollout_by_move": rollout_by_move(
-            rollout_frame, weights(len(rollouts), np.random.default_rng(BOOT_SEED))),
-        "played_rate": played_rate(game, w),
-        "rule_skew": skew,
-        "survival": survival(game, rollouts, w),
-        "overall": overall(game, rollouts, skew, category_shares(rollout_frame)[0], w),
-    }
+    if not args.rollout_only:
+        game = per_game(pd.read_csv(base / "scan" / "positions.csv"))
+        w = weights(len(game["p_illegal"]), np.random.default_rng(BOOT_SEED))
+        skew = rule_skew(game, w)
+        tables |= {
+            "by_move": by_move(game, w),
+            "played_rate": played_rate(game, w),
+            "rule_skew": skew,
+            "survival": survival(game, rollouts, w),
+            "overall": overall(game, rollouts, skew, category_shares(rollout_frame)[0], w),
+        }
     args.results.mkdir(parents=True, exist_ok=True)
     for name, table in tables.items():
         table.to_csv(args.results / f"{name}.csv", index=False)
     print(f"wrote {len(tables)} CSVs to {args.results}")
-    print(tables["overall"].to_string(index=False))
-    print(skew[skew.level == "rule"].to_string(index=False))
+    if not args.rollout_only:
+        print(tables["overall"].to_string(index=False))
+        print(skew[skew.level == "rule"].to_string(index=False))
 
 
 if __name__ == "__main__":

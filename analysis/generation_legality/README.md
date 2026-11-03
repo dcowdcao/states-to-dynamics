@@ -16,13 +16,15 @@ produce illegal moves on its own, and are they of a particular kind?
 python -m spade.generation_legality.positions   # 1000 games x t in [0, 56), + taxonomy
 python -m spade.generation_legality.scan        # one teacher-forced pass -> per-position mass
 python -m spade.generation_legality.rollout     # 1000 free-running games at T=1.0
-python -m spade.generation_legality.aggregate   # -> results/*.csv
+python -m spade.generation_legality.aggregate   # -> results/*.csv; --rollout-only: rollout_by_move.csv alone
 python analysis/generation_legality/make_figures.py [--camera-ready]
 ```
 
 The three GPU steps are `scripts/slurm/studies/generation_legality/submit_generation_legality.sbatch`
 (one H100, ~5 min). Heavy intermediates live under `study_dir("generation")`; the
-per-position table is `$SPADE_GENERATION_DIR/scan/positions.csv`, 56,000 rows.
+per-position table is `$SPADE_GENERATION_DIR/scan/positions.csv`, 56,000 rows. Its games
+are drawn disjoint from the violation-divergence branch tree, so `positions` needs
+`branches.pt`; `aggregate --rollout-only` writes the rollout curves' table without it.
 
 ## What is measured, exactly
 

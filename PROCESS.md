@@ -40,6 +40,11 @@ RELEASE_PLAN §5 items, so each paper figure recomputes or redraws without anoth
   500 t0-stratified games; `figure_auroc.py` (and so `figure_overview.py`) now asserts its
   draw against the file instead of rewriting it on every render. Re-render: `eval_games.csv`,
   `auroc_by_rule.{csv,png}` and `detector_overview.png` byte-identical.
+- **C16: Fig 1(b) recomputes without the corpus arm.** `generation_legality.aggregate
+  --rollout-only` writes `rollout_by_move.csv` from the rollout scan alone; the corpus scan
+  needs `branches.pt`. Both modes give the same bytes as the old code. Three CSVs
+  (`by_move`, `rollout_by_move`, `survival`) differ from the committed ones by ≤3e-14 under
+  the old code too, as the Fig 1 audit found.
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 
