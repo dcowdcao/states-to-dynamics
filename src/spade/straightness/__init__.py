@@ -8,10 +8,10 @@ and a 21-dimensional descriptor classifier.
   extract_traj.py     step 2: 8-layer resid_post + token embeddings
   geometry.py         the ReStraV kernels (temporal geometry, 21-D descriptor, moments)
   compute_geometry.py step 3: raw + per-t-centered geometry per space
-  classify.py         AUROCs and the logistic descriptor classifier
+  (classify.py, AUROCs and the descriptor classifier: archive/src/spade/straightness/)
 
-It transfers with the sign inverted and a depth flip. Read docs/claims_status.md: two
+It transfers with the sign inverted and a depth flip. Read archive/docs/claims_status.md: two
 earlier claims about SpaDE destroying the curvature signal are retracted.
 
-Working dir: study_dir("straightness"). Figures: analysis/straightness/.
+Working dir: study_dir("straightness"). Figures: archive/analysis/straightness/.
 """

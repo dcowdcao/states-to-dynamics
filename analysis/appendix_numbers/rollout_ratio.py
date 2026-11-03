@@ -6,19 +6,18 @@ over illegal branches over the mean over legal-control branches. B.2's claim ("w
 past t0 + 8, crossing over by t0 + 13") is about the original 2000-game tree, so both that
 population and the whole extended tree are written.
 
-Writes results/rollout_ratio.csv.
+Writes results/appendix_numbers/rollout_ratio.csv.
 
 Usage: python analysis/appendix_numbers/rollout_ratio.py
 """
 
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 
+from spade.common.paths import results_dir
 from spade.common.study import variant_dir
 
-OUT = Path(__file__).resolve().parent / "results" / "rollout_ratio.csv"
+OUT = results_dir("appendix_numbers") / "rollout_ratio.csv"
 NPZ = variant_dir("divergence", variant="rollout") / "divergence" / "resid_post_5.npz"
 POPULATIONS = {"game_id < 2000": lambda game: game < 2000,
                "all": lambda game: np.ones(len(game), bool)}

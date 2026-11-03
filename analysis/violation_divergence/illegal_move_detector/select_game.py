@@ -19,13 +19,12 @@ population, where 37% of legal positions sit above tau. MIN_CORRECT is 4, not 5,
 criterion does not hunt for a window with no false alarm in it; the current pick happens to
 have none.
 
-Writes figure_game.json.
+Writes results/fig03_detector_example/figure_game.json.
 
 Usage: PYTHONPATH=src python analysis/violation_divergence/illegal_move_detector/select_game.py
 """
 
 import json
-from pathlib import Path
 
 import numpy as np
 
@@ -33,7 +32,6 @@ import detector
 from detector import CAND_OFFSET, RULES
 from spade.othello.taxonomy import CATEGORIES
 
-HERE = Path(__file__).resolve().parent
 TRACE_HALF = 5
 PANELS = (-2, -1, 1, 2)   # the plies board_states draws either side of t0
 MIN_CORRECT = 4           # of its five panels, t0 included
@@ -97,9 +95,10 @@ def main() -> None:
                     "categories": {u: str(category[v]) for u, v in picked.items()},
                     "control_row": int(control[0]), "reference_row": reference}
     assert best, "no game satisfies the panel criteria"
-    (HERE / "figure_game.json").write_text(json.dumps(best, indent=2) + "\n")
+    detector.FIGURE_GAME_JSON.parent.mkdir(parents=True, exist_ok=True)
+    detector.FIGURE_GAME_JSON.write_text(json.dumps(best, indent=2) + "\n")
     print(json.dumps(best, indent=2))
-    print(f"\nwrote {HERE / 'figure_game.json'}")
+    print(f"\nwrote {detector.FIGURE_GAME_JSON}")
 
 
 if __name__ == "__main__":

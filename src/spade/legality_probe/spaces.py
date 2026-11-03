@@ -81,7 +81,7 @@ def roster() -> list[tuple[str, SAEEntry | None]]:
 
 def quality() -> pd.DataFrame:
     """L0 / variance explained / reconstruction F1 per space, indexed by config name."""
-    evals = pd.read_csv(repo_root() / "results" / "acceptance" / "all_results.csv")
+    evals = pd.read_csv(repo_root() / "results/shared/l0_roster/acceptance_all_results.csv")
     evals["space"] = evals["wandb_name"].map(config_key)
     return evals.set_index("space")[["l0", "variance_explained", "reconstruction_f1"]]
 

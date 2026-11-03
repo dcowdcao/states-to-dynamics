@@ -9,21 +9,20 @@ needs the gitignored rules corpus; this needs only the fit set. The number is th
 E|cos| over 5 x 10,000 independent pairs, each null drawn from its own seed-0 generator.
 ROBUSTNESS.md's "0.084 to 0.110" is instead a range over `robustness_cells.csv`'s cells.
 
-Writes results/covariance_null.csv.
+Writes results/appendix_numbers/covariance_null.csv.
 
 Usage: python analysis/appendix_numbers/covariance_null.py
 """
-
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import torch
 
 from spade.common.config import D_MODEL, LAYER
+from spade.common.paths import results_dir
 from spade.common.study import study_dir
 
-OUT = Path(__file__).resolve().parent / "results" / "covariance_null.csv"
+OUT = results_dir("appendix_numbers") / "covariance_null.csv"
 SEED = 0
 N_PAIRS, N_REPEATS = 10_000, 5
 

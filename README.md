@@ -50,9 +50,10 @@ $CONDA_PREFIX/bin/python -m venv --system-site-packages .venv
 Two third-party runtime dependencies under `external/`: `Karvonen_Research` (`circuits.*` —
 the baseline trainers, the Othello engine, the board-reconstruction eval) and `tpr_othello`
 (the tensor-product board probe). Neither has a licence, so `make setup` clones each at a
-pinned commit and applies our patch (`external/README.md`). Path resolution is repo-root-anchored — `spade.common.paths`
-walks to the `CLAUDE.md` / `.git` marker — so scripts work from anywhere, but only under an
-editable install. Cluster (FASRC SLURM) commands live in `docs/fasrc_commands.md`.
+pinned commit and applies our patch (`external/README.md`). Path resolution is
+repo-root-anchored — `spade.common.paths` walks up to `pyproject.toml` — so scripts work from
+anywhere, but only under an editable install. Cluster (FASRC SLURM) commands live in
+`archive/docs/fasrc_commands.md`.
 
 Heavy per-study intermediates and downloaded weights live under `$SPADE_DATA_ROOT`
 (default `data/`), resolved by `spade.common.study`. On FASRC they already exist on
@@ -71,4 +72,4 @@ each pair with an `analysis/<study>/` that only draws.
 
 Figures obey [FIGURE_GUIDELINES.md](FIGURE_GUIDELINES.md); color literals live only in
 `spade.figures.paper_style`. Before writing prose about any result, read
-[docs/claims_status.md](docs/claims_status.md) — several headline claims were retired.
+[archive/docs/claims_status.md](archive/docs/claims_status.md) — several headline claims were retired.

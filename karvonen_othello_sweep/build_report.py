@@ -2,11 +2,12 @@
 
 Primary source is the 320 released checkpoints: each one's own `results.csv` for the metrics, its
 `config.json` (and `ae.pt` encoder shape where the config omits dict_size) for the
-hyperparameters, and `coverage_recomputed.csv` for coverage, which the per-checkpoint results.csv
-does not carry. Karvonen's published 280-row aggregate is used only to cross-check and to mark
-which rows he actually published.
+hyperparameters, and `karvonen_coverage_recomputed.csv` for coverage, which the per-checkpoint
+results.csv does not carry. Karvonen's published 280-row aggregate is used only to cross-check
+and to mark which rows he actually published.
 
-Emits sweep_full.csv (one row per SAE), best_per_type.csv (every selection criterion),
+Emits karvonen_sweep_full.csv (one row per SAE; it and the coverage table are the paper's, in
+results/shared/l0_roster/), and into --out-dir best_per_type.csv (every selection criterion),
 controls.csv (random-model and raw-MLP context rows), and REPORT.md. Every number in REPORT.md is
 interpolated from these frames; none is typed by hand.
 """
@@ -144,7 +145,7 @@ def read_aggregate(data_dir: Path) -> pd.DataFrame:
 
 
 def read_coverage(path: Path) -> pd.DataFrame:
-    """coverage_recomputed.csv, long -> one column per board function."""
+    """karvonen_coverage_recomputed.csv, long -> one column per board function."""
     cov = pd.read_csv(path)
     wide = cov.pivot(index=["group_dir", "trainer_dir"], columns="func",
                      values="best_average_f1").reset_index()
@@ -541,7 +542,7 @@ measurement of that noise -- median {q(l0_gap.median_rel, 2)} relative on l0, up
 {q(l0_gap.max_abs, 2)} absolute on the densest rows -- not evidence that one file is wrong. This
 report takes the
 per-checkpoint value as primary (it is the run the 40 new rows come from, so the TopK sweep stays
-internally consistent) and keeps the aggregate's l0 alongside it in `sweep_full.csv` as
+internally consistent) and keeps the aggregate's l0 alongside it in `karvonen_sweep_full.csv` as
 `l0_published`.
 
 **Coverage is not in the per-checkpoint files.** They carry 84 columns against the aggregate's
@@ -613,7 +614,7 @@ median {q(f1_gap.median_rel, 2)} relative.
 {q(dead.hyperparameter_value.min())}. The original othello L1 grid ran to 0.9 while the corrected
 one stops at 0.08, so from the fourth grid point on the SAE trains to nothing.
 {int((d.l0 == 0).sum())} have L0 and `frac_variance_explained` exactly 0. They are flagged
-`collapsed` in `sweep_full.csv` and excluded from every selection here. Note their
+`collapsed` in `karvonen_sweep_full.csv` and excluded from every selection here. Note their
 `num_alive_features` is still {int(dead.num_alive_features.min())}-{int(dead.num_alive_features.max())}:
 that column does not go to zero on a dead SAE.
 
@@ -862,8 +863,8 @@ the {len(cfg)} checkpoints, and the largest disagreement in a sparsity value is
 across {prov['shared_cols']} shared columns on the {prov['shared_rows']} shared rows.
 
 Regenerate with `python karvonen_othello_sweep/recompute_coverage.py --config-root <root>` (slow,
-output committed) then `python karvonen_othello_sweep/build_report.py` (`--config-root` defaults to
-`$KARVONEN_RELEASED`, then to `$SPADE_DATA_ROOT/karvonen_released`).
+output committed to results/shared/l0_roster/) then `python karvonen_othello_sweep/build_report.py`
+(`--config-root` defaults to `$KARVONEN_RELEASED`, then to `$SPADE_DATA_ROOT/karvonen_released`).
 """)
     return "".join(parts)
 
@@ -875,7 +876,9 @@ def main():
                     default=here.parent / "external/Karvonen_Research/autoencoders/saved_data")
     ap.add_argument("--config-root", type=Path,
                     default=Path(os.environ.get("KARVONEN_RELEASED", DEFAULT_CONFIG_ROOT)))
-    ap.add_argument("--coverage", type=Path, default=here / "coverage_recomputed.csv")
+    roster = here.parent / "results" / "shared" / "l0_roster"
+    ap.add_argument("--coverage", type=Path, default=roster / "karvonen_coverage_recomputed.csv")
+    ap.add_argument("--sweep-full", type=Path, default=roster / "karvonen_sweep_full.csv")
     ap.add_argument("--out-dir", type=Path, default=here)
     args = ap.parse_args()
 
@@ -887,7 +890,7 @@ def main():
     ctl = controls(args.data_dir)
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    d.to_csv(args.out_dir / "sweep_full.csv", index=False)
+    d.to_csv(args.sweep_full, index=False)
     ctl.to_csv(args.out_dir / "controls.csv", index=False)
     agree = agreement(per, agg)
     agree.to_csv(args.out_dir / "run_agreement.csv", index=False)

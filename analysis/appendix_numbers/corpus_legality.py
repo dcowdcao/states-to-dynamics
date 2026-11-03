@@ -9,22 +9,22 @@ flips for the opponent), so it cannot be the referee here; it is the check on th
 whose final boards must equal the engine's on the first 1,500 games, 1,500 at random and the
 first 300 with a forfeit.
 
-Writes results/corpus_legality.json.
+Writes results/appendix_numbers/corpus_legality.json.
 
 Usage: python analysis/appendix_numbers/corpus_legality.py
 """
 
 import json
-from pathlib import Path
 
 import numpy as np
 
 import corpus
+from spade.common.paths import results_dir
 from spade.othello.boards import replay
 
 from circuits.othello_engine_utils import stoi_indices
 
-OUT = Path(__file__).resolve().parent / "results" / "corpus_legality.json"
+OUT = results_dir("appendix_numbers") / "corpus_legality.json"
 SQUARE_OF_TOKEN = np.array([-1] + list(stoi_indices))
 CELL_OF_SQUARE = np.array([(s // 8 + 1) * 10 + s % 8 + 1 for s in range(64)])
 STEPS = (-11, -10, -9, -1, 1, 9, 10, 11)

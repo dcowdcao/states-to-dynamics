@@ -15,7 +15,7 @@ against 0.681 here: its negatives are mostly positions nowhere near a splice, an
 is the matched control at the same t0.
 
 (b) is whichever space (a) puts first, so the panels cannot disagree about the winner. Its tau, and
-the share of each series above it, go to results/sae_detector_tau.csv.
+the share of each series above it, go to results/fig04_detector_sae/sae_detector_tau.csv.
 
 Usage: PYTHONPATH=src:analysis/violation_divergence/illegal_move_detector python
            analysis/violation_divergence/illegal_move_detector/figure_sae_overview.py
@@ -34,7 +34,7 @@ from figure_auroc_l0_matched import bars
 from spade.figures.paper_style import apply_style, letters_topleft, save_figure
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "changepoint_localization"))
-from make_figures import histogram_panel  # noqa: E402  (sibling study, not a package)
+from changepoint_figures import histogram_panel  # noqa: E402  (sibling study, not a package)
 
 
 def draw(table: pd.DataFrame, camera_ready: bool) -> tuple[Path, pd.DataFrame]:
@@ -54,10 +54,10 @@ def main() -> None:
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    table = pd.read_csv(detector.RESULTS / "auroc_by_space_l0_matched.csv")
+    table = pd.read_csv(detector.SAE_RESULTS / "auroc_by_space_l0_matched.csv")
     figure, cut = draw(table.sort_values("auroc", ascending=False).reset_index(drop=True),
                        args.camera_ready)
-    cut.to_csv(detector.RESULTS / "sae_detector_tau.csv", index=False)
+    cut.to_csv(detector.SAE_RESULTS / "sae_detector_tau.csv", index=False)
     print(cut.to_string(index=False))
     print(figure)
 

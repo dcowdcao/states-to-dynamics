@@ -13,17 +13,17 @@ gives, but no ranking over one or two of these features picks it: the original s
 committed and its pick is unrecorded, and its R1 square b2 (2 cells from b4) was moved by
 hand afterwards (PROCESS.md, "The constraint rules get drawn").
 
-Writes results/rule_panel_scan.csv: every qualifying position, ranked.
+Writes results/appendix_numbers/rule_panel_scan.csv: every qualifying position, ranked.
 
 Usage: python analysis/appendix_numbers/rule_panel_scan.py
 """
 
 from collections import Counter
 from itertools import product
-from pathlib import Path
 
 import pandas as pd
 
+from spade.common.paths import results_dir
 from spade.figures.figure_othello_rules import SEED, name
 from spade.othello.boards import flip_set, rays, replay
 from spade.othello.games import collect_legal, stream_games
@@ -31,7 +31,7 @@ from spade.othello.taxonomy import CATEGORIES, LEGAL, classify, flips
 
 from circuits.othello_engine_utils import stoi_indices, to_string
 
-OUT = Path(__file__).resolve().parent / "results" / "rule_panel_scan.csv"
+OUT = results_dir("appendix_numbers") / "rule_panel_scan.csv"
 DATASET = "adamkarvonen/othello_45MB_games"
 N_GAMES, T_RANGE = 800, range(14, 27)
 MIN_SEPARATION, MIN_DIRECTIONS = 3, 2

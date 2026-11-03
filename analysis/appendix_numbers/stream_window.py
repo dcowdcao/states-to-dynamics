@@ -8,21 +8,21 @@ largest row the first N draws touch (always below N + 10,000), how many of seed 
 Streams from the HF hub, so it needs the network; the stream order depends on the `datasets`
 version (recorded).
 
-Writes results/stream_window.json.
+Writes results/appendix_numbers/stream_window.json.
 
 Usage: python analysis/appendix_numbers/stream_window.py
 """
 
 import json
-from pathlib import Path
 
 import datasets
 import numpy as np
 
 import corpus
+from spade.common.paths import results_dir
 from spade.othello.games import stream_games
 
-OUT = Path(__file__).resolve().parent / "results" / "stream_window.json"
+OUT = results_dir("appendix_numbers") / "stream_window.json"
 BUFFER = 10_000
 DRAWS = (400, 800, 2000, 2400, 4000)
 OVERLAP_SEEDS, N_OVERLAP = (7, 1234), 2400

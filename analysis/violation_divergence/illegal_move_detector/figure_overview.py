@@ -32,7 +32,6 @@ from figure_histograms import panel as density_panel, subset
 from figure_trace import panel as trace_panel
 from spade.figures.paper_style import apply_style, letters_topleft, save_figure
 
-HERE = Path(__file__).resolve().parent
 FIGURE_SIZE = (12.0, 7.5)
 ROWS = [3.3, 4.0]        # the boards are shallower than a plot with an axis label under it
 MARGINS = {"left": 0.055, "right": 0.988, "top": 0.945, "bottom": 0.075}
@@ -98,7 +97,7 @@ def main() -> None:
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    print(overview(json.loads((HERE / "figure_game.json").read_text()), args.camera_ready))
+    print(overview(json.loads(detector.FIGURE_GAME_JSON.read_text()), args.camera_ready))
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 """M1, M2 and M5 of the bracket-flip study: what the TPR reads off the flanked square.
 
-Writes CSVs to analysis/bracket_flip/results/; make_figures.py draws them and
-never recomputes anything.
+Writes CSVs to results/fig07_flanking/ (m1_decode.csv, which the paper does not read, to
+analysis/bracket_flip/results/); make_figures.py draws them and never recomputes anything.
 
 Three conventions meet here and all three are load-bearing.
 
@@ -11,7 +11,7 @@ Three conventions meet here and all three are load-bearing.
    carries that single fact into the absolute relabeling of the read-out.
 2. Panel coordinates are gauge-invariant logit differences, never filler
    coordinates: the bilinear form is invariant under f -> Af, B -> BA^-1, and
-   analysis/bracket_flip/reports/PROBE_REPORT.md measures the filler angle moving
+   results/fig07_flanking/PROBE_REPORT.md measures the filler angle moving
    131.3 -> 104.5 degrees across seeds at constant accuracy.
 3. Events are the independent unit (one per game), squares within an event are
    not, so every interval here is a cluster bootstrap over events.
@@ -36,7 +36,7 @@ from torch import Tensor
 
 from spade.common.config import HF_REVISIONS, MODEL_NAME
 from spade.common.device import select_device
-from spade.common.paths import add_karvonen_to_path, repo_root
+from spade.common.paths import add_karvonen_to_path, repo_root, results_dir
 from spade.common.study import study_dir, variant_dir
 from spade.probes import load as probes
 from spade.probes.tpr import TPR
@@ -82,6 +82,7 @@ BATCH = 512             # 6.8k fitting rows, so the canonical 8192 would be one 
 
 CACHE = study_dir("bracket") / "probe_space"
 RESULTS = repo_root() / "analysis" / "bracket_flip" / "results"
+FLANKING = results_dir("fig07_flanking")
 
 
 # ---------------------------------------------------------------- data
@@ -518,12 +519,13 @@ def main() -> None:
     torch.set_grad_enabled(False)
 
     RESULTS.mkdir(parents=True, exist_ok=True)
+    FLANKING.mkdir(parents=True, exist_ok=True)
     rng = np.random.default_rng(SEED)
     ev, acts = events(), event_acts()
     input_acts = input_event_acts(ev)
 
     basis = pd.DataFrame([accuracies(layer) for layer in LAYERS])
-    basis.to_csv(RESULTS / "m1_basis.csv", index=False)
+    basis.to_csv(FLANKING / "m1_basis.csv", index=False)
     print(basis.to_string(index=False), flush=True)
 
     rows, main_decode = [], None
@@ -536,7 +538,7 @@ def main() -> None:
     depth = pd.DataFrame(rows)
     depth.to_csv(RESULTS / "m1_decode.csv", index=False)
 
-    per_event(main_decode, ev).to_csv(RESULTS / "m1_per_event.csv", index=False)
+    per_event(main_decode, ev).to_csv(FLANKING / "m1_per_event.csv", index=False)
     absolute_decode = decode(MAIN_LAYER, ev, acts, input_acts, "absolute")
     # The arrow panel scores its own corpus: the quota it needs at every move index is more
     # events than the canonical set holds past t = 30. Same miner, same stream, same seed, so
@@ -546,13 +548,13 @@ def main() -> None:
     input_field = input_event_acts(ev_field)
     field(decode(MAIN_LAYER, ev_field, acts_field, input_field),
           decode(MAIN_LAYER, ev_field, acts_field, input_field, "absolute"),
-          ev_field, rng).to_csv(RESULTS / "m2_field.csv", index=False)
+          ev_field, rng).to_csv(FLANKING / "m2_field.csv", index=False)
     lengths = displacements(main_decode)
     i, rule = canonical(ev, lengths)
-    worked_example(main_decode, ev, i).to_csv(RESULTS / "f2_event.csv", index=False)
-    event_meta(ev, i).to_csv(RESULTS / "f2_event_meta.csv", index=False)
+    worked_example(main_decode, ev, i).to_csv(FLANKING / "f2_event.csv", index=False)
+    event_meta(ev, i).to_csv(FLANKING / "f2_event_meta.csv", index=False)
     lengths.insert(0, "game_id", ev.game_id)
-    lengths.to_csv(RESULTS / "m2_displacements.csv", index=False)
+    lengths.to_csv(FLANKING / "m2_displacements.csv", index=False)
 
     blocks = depth[depth.layer >= 0]
     peak = blocks.loc[blocks[blocks.metric == "p_s_absolute_correct"].estimate.idxmax(), "layer"]
@@ -565,7 +567,7 @@ def main() -> None:
                 "acc_rel_L5": accs.acc_tpr_relative[MAIN_LAYER],
                 "acc_abs_L5": accs.acc_tpr_absolute[MAIN_LAYER],
                 "canonical_event_row": i, **{f"canonical_{k}": v for k, v in rule.items()}}
-    pd.Series(contract).rename("value").rename_axis("key").to_csv(RESULTS / "contract_a3.csv")
+    pd.Series(contract).rename("value").rename_axis("key").to_csv(FLANKING / "contract_a3.csv")
     print(pd.Series(contract).to_string(), flush=True)
 
 

@@ -1,4 +1,4 @@
-"""Step 2: results/eval_games.csv, the 500 t0-stratified games every detector figure scores.
+"""Step 2: results/shared/eval_games.csv, the 500 t0-stratified games every detector figure scores.
 
 `detector.stratified` over the eligible tree. This is the file's one writer; the figures here,
 `changepoint_localization` and `move_legality.detection_auroc` read it, and the first two
@@ -16,8 +16,8 @@ def main() -> None:
     data = detector.load()
     sel = detector.arms(data)
     reference = sel["reference"][detector.stratified(data, sel)]
-    detector.RESULTS.mkdir(parents=True, exist_ok=True)
-    out = detector.RESULTS / "eval_games.csv"
+    out = detector.EVAL_GAMES
+    out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w", newline="") as fh:
         writer = csv.writer(fh)
         writer.writerow(["game_id", "t0"])

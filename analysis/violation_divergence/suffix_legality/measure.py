@@ -18,7 +18,8 @@ Two things are deliberately *not* measured on the spliced set:
     -- is reported as `p_continuation_replays_branch_square`.
 
 Usage: python analysis/violation_divergence/suffix_legality/measure.py [--smoke]
-Writes results/violation_divergence/suffix_legality*.csv; see README.md here.
+Writes suffix_legality_spliced.csv (B.2's median 2) to results/fig09_fork_displacement_spliced/
+and every other suffix_legality*.csv to build/violation_divergence/; see the archived README.md.
 """
 
 import argparse
@@ -29,7 +30,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from spade.common.paths import results_dir
+from spade.common.paths import build_dir, results_dir
 from spade.common.study import variant_dir
 from spade.othello.boards import flip_set, replay
 from spade.othello.games import engine_legal
@@ -39,7 +40,7 @@ from spade.violation_divergence.branches import ROLE_NAMES, role
 from circuits.othello_engine_utils import to_string
 
 N_BOOT = 1000
-# analysis/violation_divergence/README.md, "What does not hold, and why", measured
+# archive/analysis/violation_divergence/README.md, "What does not hold, and why", measured
 # by the red team on the earlier one-control branch set (15531 rows).
 README_CONTROL = {"p_first_move_legal": 0.768, "median_moves_legal": 2}
 
@@ -224,9 +225,11 @@ def reproduction_check(table: pd.DataFrame) -> None:
 def report(meta, stem: str, place_illegal: bool, rng) -> pd.DataFrame:
     df = branches(meta, place_illegal)
     table = summarise(df, rng)
-    out = results_dir("violation_divergence")
+    out = build_dir("violation_divergence")
     out.mkdir(parents=True, exist_ok=True)
-    table.to_csv(out / f"{stem}.csv", index=False, float_format="%.6g")
+    paper = results_dir("fig09_fork_displacement_spliced")
+    table.to_csv((paper if stem == "suffix_legality_spliced" else out) / f"{stem}.csv",
+                 index=False, float_format="%.6g")
     survival(df).to_csv(out / f"{stem}_survival.csv", index=False, float_format="%.6g")
     print(f"\n{stem}\n{table.to_string(index=False)}")
     undefined = df[df.board == NO_BOARD]

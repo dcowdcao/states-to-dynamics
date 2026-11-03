@@ -5,8 +5,10 @@ Fig 1  where each square's read-out moves when a flanking move is played, in the
 Fig 2  that the displacement carries a flip-specific direction, and that editing
        along that direction changes what the model plays.
 
-Drawing only: everything is read from the committed CSVs in results/. The SAE
-arm is drawn by sae_pca_figure.py. Conventions: FIGURE_GUIDELINES.md 4.4 and 4.7.
+Drawing only. Fig 1 (the paper's Fig 7) reads the committed CSVs in results/fig07_flanking/;
+Fig 2 is not in the paper and reads results/ here, whose committed copies are archived under
+archive/analysis/bracket_flip/. The SAE arm is drawn by its archived sae_pca_figure.py.
+Conventions: FIGURE_GUIDELINES.md 4.4 and 4.7.
 
 Usage: python analysis/bracket_flip/make_figures.py [--only fig1] [--camera-ready]
        (fig1 is the paper's Fig 7)
@@ -20,6 +22,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.ticker import MaxNLocator, PercentFormatter
 
+from spade.common.paths import results_dir
 from spade.figures.figure_othello_rules import mover_note
 from spade.figures.othello_board import draw_board, mark_square, square_xy
 from spade.figures.paper_style import (
@@ -28,6 +31,7 @@ from spade.figures.paper_style import (
 
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE / "results"
+FLANKING = results_dir("fig07_flanking")
 FIGURES = HERE / "figures"
 
 ROLES = ["flipped", "unflipped_own", "unflipped_opp", "placed", "empty"]
@@ -107,7 +111,7 @@ TINTED_ROLES = ("unflipped_own", "unflipped_opp")
 def board_panel(ax, event: pd.DataFrame, meta: pd.Series) -> None:
     """The board just before the flanking move, drawn the way every other board here is.
 
-    Same renderer and same marking grammar as `figures/rules_and_generation`: cell outline
+    Same renderer and same marking grammar as `figures/fig01_rules_and_generation`: cell outline
     plus a corner marker, never a fill, so the disc underneath stays visible -- on `s` it is
     the evidence, since `s` is the square whose disc the move flips. `m'` is the matched
     non-flipping move the control branch plays instead, outlined dashed to match the dashed
@@ -140,9 +144,9 @@ def board_panel(ax, event: pd.DataFrame, meta: pd.Series) -> None:
 
 
 def figure_one(camera_ready: bool) -> None:
-    field = pd.read_csv(RESULTS / "m2_field.csv")
-    event = pd.read_csv(RESULTS / "f2_event.csv")
-    meta = pd.read_csv(RESULTS / "f2_event_meta.csv").iloc[0]
+    field = pd.read_csv(FLANKING / "m2_field.csv")
+    event = pd.read_csv(FLANKING / "f2_event.csv")
+    meta = pd.read_csv(FLANKING / "f2_event_meta.csv").iloc[0]
     # Board is square, so the left column's height sets the figure's: any extra
     # becomes dead space beside it.
     fig = plt.figure(figsize=(9.6, 4.3))

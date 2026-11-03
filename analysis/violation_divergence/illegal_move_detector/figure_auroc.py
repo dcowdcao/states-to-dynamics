@@ -18,8 +18,8 @@ Bars stay in rule order rather than sorting by height (FIGURE_GUIDELINES 4.5): R
 ordered variable, and the finding is that the AUROC ordering is NOT monotone in it, which a
 sort would hide.
 
-Numbers, with n per bar, go to results/auroc_by_rule.csv. The games are asserted against
-results/eval_games.csv, which `eval_games.py` writes.
+Numbers, with n per bar, go to results/fig03_detector_example/auroc_by_rule.csv. The games are
+asserted against results/shared/eval_games.csv, which `eval_games.py` writes.
 
 Usage: python analysis/violation_divergence/illegal_move_detector/figure_auroc.py
            [--camera-ready]
@@ -113,8 +113,8 @@ def draw(rows: list[Bar], camera_ready: bool):
 
 
 def write_csv(rows: list[Bar]) -> Path:
-    detector.RESULTS.mkdir(parents=True, exist_ok=True)
-    out = detector.RESULTS / "auroc_by_rule.csv"
+    detector.EXAMPLE_RESULTS.mkdir(parents=True, exist_ok=True)
+    out = detector.EXAMPLE_RESULTS / "auroc_by_rule.csv"
     round5 = lambda v: round(v, 5) if isinstance(v, float) else v
     with out.open("w", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=list(asdict(rows[0])))

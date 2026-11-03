@@ -29,7 +29,7 @@ import pandas as pd
 import torch
 
 
-from spade.common.paths import add_karvonen_to_path, repo_root
+from spade.common.paths import add_karvonen_to_path, repo_root, results_dir
 from spade.probe_geometry.probes import (
     BOARD_FAMILIES,
     D_MODEL,
@@ -59,6 +59,7 @@ add_karvonen_to_path()
 from circuits.othello_engine_utils import OthelloBoardState, to_string
 
 RESULTS = repo_root() / "analysis" / "probe_geometry" / "results"
+PAPER_RESULTS = results_dir("fig02_probe_geometry_and_detection")   # robustness_cells.csv (A.4)
 LAM_GRID = (1e0, 1e1, 1e2, 1e3, 1e4, 1e5)
 LAM = 1e3          # pooled arms: matched shrinkage for the board and square-agnostic fits
 SQUARE_LAM = 1e1   # per-square fits see ~2.8k rows, not 176k; swept in threat 1
@@ -630,11 +631,11 @@ def bootstrap(board: dict, rules: dict, variant: str, same_games: bool) -> pd.Da
 
 # ---------------------------------------------------------------- entrypoint
 
-def write(rows, name: str) -> None:
-    RESULTS.mkdir(parents=True, exist_ok=True)
+def write(rows, name: str, directory: Path = RESULTS) -> None:
+    directory.mkdir(parents=True, exist_ok=True)
     frame = rows if isinstance(rows, pd.DataFrame) else pd.DataFrame(rows)
-    frame.to_csv(RESULTS / name, index=False)
-    print(f"wrote {len(frame)} rows to {RESULTS / name}", flush=True)
+    frame.to_csv(directory / name, index=False)
+    print(f"wrote {len(frame)} rows to {directory / name}", flush=True)
 
 
 def main() -> None:
@@ -695,7 +696,7 @@ def main() -> None:
     detail += square_detail(board_ridge, balanced, square_stats(rules, balanced_rows),
                             "square_balanced")
 
-    write(cells, "robustness_cells.csv")
+    write(cells, "robustness_cells.csv", PAPER_RESULTS)
     write(detail, "robustness_square_detail.csv")
 
     print("bootstraps", flush=True)

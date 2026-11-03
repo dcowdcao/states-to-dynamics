@@ -35,8 +35,9 @@ from spade.evaluation.karvonen_adapter import (
     StandardizedDictionary, load_karvonen_sae, load_standardization_params)
 
 KARVONEN_ROOT = data_root() / "karvonen_saes"
-PICKS = repo_root() / "results" / "l0_operating_point" / "picks.csv"
-SWEEP_FULL = repo_root() / "karvonen_othello_sweep" / "sweep_full.csv"
+ROSTER = repo_root() / "results" / "shared" / "l0_roster"
+PICKS = ROSTER / "picks.csv"
+SWEEP_FULL = ROSTER / "karvonen_sweep_full.csv"
 
 KARVONEN_DIRS = {
     "gated/trainer32": "othello-trained_model-layer_5-2024-05-23/"

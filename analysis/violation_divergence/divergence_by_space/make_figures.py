@@ -71,7 +71,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from spade.common.paths import results_dir
+from spade.common.paths import build_dir, results_dir
 from spade.common.study import variant_dir
 from spade.figures.branch_style import branch_style
 from spade.figures.paper_style import (
@@ -79,6 +79,13 @@ from spade.figures.paper_style import (
 from spade.othello.taxonomy import CATEGORIES, LEGAL, RULE_MEMBERS
 
 HERE = Path(__file__).resolve().parent
+# The four tables Figs 13-16 draw are paper results; every other variant is build output.
+PAPER_CSV = {
+    "divergence_by_space_n100_l0_matched": "fig13_distance_displacement",
+    "divergence_by_space_n100_raw_l0_matched": "fig14_distance_displacement_raw",
+    "divergence_by_space_r21_n100_l0_matched": "fig15_distance_r21",
+    "divergence_by_space_r21_n100_raw_l0_matched": "fig16_distance_r21_raw",
+}
 VARIANTS = {"spliced": "", "rollout": "rollout"}
 NCOL = 3
 CELL_W, CELL_H = 3.05, 2.45
@@ -318,12 +325,14 @@ def main():
     z = dict(np.load(base / "divergence_by_space" / f"curves{tag}{suffix}{l0}.npz"))
     z["space"], z["role"] = list(z["space"]), list(z["role"])
 
-    out = results_dir("violation_divergence")
-    out.mkdir(parents=True, exist_ok=True)
     # --shared-y is the same numbers on a different axis, so it writes no second CSV.
-    csv = out / (f"divergence_by_space{tag}"
-                 f"{'_' + args.variant if args.variant != 'spliced' else ''}"
-                 f"{suffix}{'_raw' if args.raw else ''}{l0}.csv")
+    stem = (f"divergence_by_space{tag}"
+            f"{'_' + args.variant if args.variant != 'spliced' else ''}"
+            f"{suffix}{'_raw' if args.raw else ''}{l0}")
+    out = (results_dir(PAPER_CSV[stem]) if stem in PAPER_CSV
+           else build_dir("violation_divergence"))
+    out.mkdir(parents=True, exist_ok=True)
+    csv = out / f"{stem}.csv"
     n_games = z["plane"].shape[1]
     draws = np.random.default_rng(BOOT_SEED).integers(n_games, size=(N_BOOT, n_games))
     df = table(z, args.variant, args.raw, draws)

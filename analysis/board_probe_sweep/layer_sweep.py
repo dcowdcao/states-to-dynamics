@@ -1,7 +1,7 @@
 """Fig 5: board-state accuracy per residual-stream layer, under the canonical probe.
 
-Draws results/board_layer_sweep.csv, which measure.py writes from the probe corpus; the
-figure is a function of that file, so the two cannot drift apart.
+Draws results/fig05_board_layer_sweep/board_layer_sweep.csv, which measure.py writes from the
+probe corpus; the figure is a function of that file, so the two cannot drift apart.
 
 Usage: python analysis/board_probe_sweep/layer_sweep.py [--camera_ready]
 """
@@ -13,6 +13,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 
 from spade.common.config import LAYER
+from spade.common.paths import results_dir
 from spade.figures.paper_style import (
     BOARD_SWEEP_STYLE, INK, MUTED, apply_style, save_figure)
 
@@ -61,7 +62,8 @@ def main() -> None:
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    print(draw(pd.read_csv(HERE / "results" / "board_layer_sweep.csv"), args.camera_ready))
+    csv = results_dir("fig05_board_layer_sweep") / "board_layer_sweep.csv"
+    print(draw(pd.read_csv(csv), args.camera_ready))
 
 
 if __name__ == "__main__":

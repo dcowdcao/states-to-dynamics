@@ -10,20 +10,20 @@ offset r). Three spans of each, max over min:
   space; before r = 0 every distance is zero. B.2's "536x" is Fig 14's.
 - panel_peak: each space's largest drawn value, across spaces. B.2's "within 1.4x" is Fig 16's.
 
-Writes results/span_stats.csv.
+Writes results/appendix_numbers/span_stats.csv.
 
 Usage: python analysis/appendix_numbers/span_stats.py
 """
-
-from pathlib import Path
 
 import pandas as pd
 
 from spade.common.paths import results_dir
 
-OUT = Path(__file__).resolve().parent / "results" / "span_stats.csv"
-TABLES = {"fig14_displacement": "divergence_by_space_n100_raw_l0_matched.csv",
-          "fig16_r21": "divergence_by_space_r21_n100_raw_l0_matched.csv"}
+OUT = results_dir("appendix_numbers") / "span_stats.csv"
+TABLES = {"fig14_displacement": results_dir("fig14_distance_displacement_raw")
+                                / "divergence_by_space_n100_raw_l0_matched.csv",
+          "fig16_r21": results_dir("fig16_distance_r21_raw")
+                       / "divergence_by_space_r21_n100_raw_l0_matched.csv"}
 CONTROL = "control_legal"
 
 
@@ -47,9 +47,8 @@ def rows(figure: str, drawn: pd.DataFrame) -> list[dict]:
 
 
 def main() -> None:
-    table = pd.DataFrame([row for figure, name in TABLES.items()
-        for row in rows(figure, pd.read_csv(results_dir("violation_divergence") / name)
-                        .query("measured_in == 'plane'"))])
+    table = pd.DataFrame([row for figure, path in TABLES.items()
+        for row in rows(figure, pd.read_csv(path).query("measured_in == 'plane'"))])
     OUT.parent.mkdir(parents=True, exist_ok=True)
     table.to_csv(OUT, index=False, float_format="%.6g")
     print(table.to_string(index=False))

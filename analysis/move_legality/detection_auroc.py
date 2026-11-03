@@ -32,13 +32,14 @@ import pandas as pd
 import torch
 from matplotlib import pyplot as plt
 
-from spade.common.paths import repo_root
+from spade.common.paths import repo_root, results_dir
 from spade.figures.paper_style import (
     CLASS_STYLE, MUTED, NULL, PROBE_CLASS_STYLE, apply_style, save_figure)
 from spade.move_legality import localize
 
 FIGURES = repo_root() / "analysis" / "move_legality" / "figures"
 RESULTS = repo_root() / "analysis" / "move_legality" / "results"
+PAPER_RESULTS = results_dir("fig02_probe_geometry_and_detection")   # the raw-space table, Fig 2c
 RULES = localize.RULES
 SEED = 42
 GAP = 0.8            # blank slot between the two heads
@@ -47,8 +48,7 @@ EVAL_GAMES = 1000    # split evenly over the five conditions, so 200 games each
 # population figures score -- it writes them down, this reads them -- so the panels beside each
 # other are one evaluation set and not two. The full-corpus paired rows stay in the CSV: they
 # are what README.md quotes.
-EVAL_GAMES_CSV = (Path(__file__).resolve().parents[1] / "violation_divergence"
-                  / "illegal_move_detector" / "results" / "eval_games.csv")
+EVAL_GAMES_CSV = results_dir("shared") / "eval_games.csv"
 N_BOOT = 1000
 CONDITIONS = ["control", "illegal", *RULES]
 
@@ -234,10 +234,11 @@ def main() -> None:
     drawn, reference = bars(args.space, meta, selection, split)
 
     print(draw(args.space, drawn, args.camera_ready))
-    RESULTS.mkdir(parents=True, exist_ok=True)
+    out = PAPER_RESULTS if args.space == "raw" else RESULTS
+    out.mkdir(parents=True, exist_ok=True)
     table = pd.DataFrame([{"space": args.space, **{k: v for k, v in r.items() if k != "style"}}
                           for r in drawn + reference])
-    csv = RESULTS / f"detection_auroc_{args.space}.csv"
+    csv = out / f"detection_auroc_{args.space}.csv"
     table.to_csv(csv, index=False)
     print(f"wrote {csv}")
     print(table.to_string(index=False))

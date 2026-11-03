@@ -7,24 +7,24 @@ prefix and each prefix's next moves are tested against uniform over the moves th
 allows there (chi^2, rejecting at p < 1e-3). A next move the engine does not allow fails the
 run. Rejecting prefixes are listed, so the truncated e6 opening can be seen to be them.
 
-Writes results/corpus_stats.json.
+Writes results/appendix_numbers/corpus_stats.json.
 
 Usage: python analysis/appendix_numbers/corpus_stats.py
 """
 
 import json
-from pathlib import Path
 
 import numpy as np
 from scipy.stats import chisquare
 
 import corpus
+from spade.common.paths import results_dir
 from spade.figures.figure_othello_rules import name
 from spade.othello.boards import regular_moves, replay, tokens_of
 
 from circuits.othello_engine_utils import to_string
 
-OUT = Path(__file__).resolve().parent / "results" / "corpus_stats.json"
+OUT = results_dir("appendix_numbers") / "corpus_stats.json"
 OPENINGS = {"d3": 20, "c4": 27, "f5": 34, "e6": 41}   # vocab tokens of the four first moves
 PREFIX_PLIES = range(1, 6)
 ALPHA, MIN_N = 1e-3, 400

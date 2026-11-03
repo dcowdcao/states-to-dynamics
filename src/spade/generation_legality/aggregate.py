@@ -30,7 +30,7 @@ import numpy as np
 import pandas as pd
 
 from spade.common.config import CTX_LEN
-from spade.common.paths import repo_root
+from spade.common.paths import repo_root, results_dir
 from spade.common.study import study_dir
 from spade.generation_legality.positions import N_SQUARES, POSITIONS
 from spade.generation_legality.rollout_scan import N_GAMES
@@ -41,6 +41,7 @@ N_BOOT = 2000
 BOOT_SEED = 0
 PLAYED_BIN = 8  # plies per bin for the greedy/sampled rates; per-t counts are ~1
 RULES = [rule.split()[0] for rule in RULE_MEMBERS]
+PAPER_TABLES = {"rollout_by_move", "overall"}   # read by Fig 1 and A.2; the rest go to --results
 RULE_CATEGORIES = {rule.split()[0]: members for rule, members in RULE_MEMBERS.items()}
 ARMS = ["mass", "greedy", "sampled"]
 
@@ -298,10 +299,12 @@ def main() -> None:
             "survival": survival(game, rollouts, w),
             "overall": overall(game, rollouts, skew, category_shares(rollout_frame)[0], w),
         }
-    args.results.mkdir(parents=True, exist_ok=True)
+    paper = results_dir("fig01_rules_and_generation")
     for name, table in tables.items():
-        table.to_csv(args.results / f"{name}.csv", index=False)
-    print(f"wrote {len(tables)} CSVs to {args.results}")
+        out = paper if name in PAPER_TABLES else args.results
+        out.mkdir(parents=True, exist_ok=True)
+        table.to_csv(out / f"{name}.csv", index=False)
+    print(f"wrote {len(tables)} CSVs to {args.results} and {paper}")
     if not args.rollout_only:
         print(tables["overall"].to_string(index=False))
         print(skew[skew.level == "rule"].to_string(index=False))

@@ -16,7 +16,7 @@ from circuits.dictionary_learning.trainers.batch_top_k import BatchTopKSAE, Batc
 K = 80
 # The canonical run keeps this name; spade.training.sweep's k grid passes
 # `BatchTopK-k<k>` so a swept point cannot be mistaken for the baseline row that
-# results/acceptance and the registry match on.
+# the acceptance table and the registry match on.
 WANDB_NAME = "BatchTopKTrainer-othello"
 
 

@@ -38,7 +38,7 @@ import torch
 
 from spade.common.config import CTX_LEN, D_MODEL, LAYER
 from spade.common.device import select_device
-from spade.common.paths import repo_root
+from spade.common.paths import results_dir
 from spade.common.study import study_dir
 from spade.legality_probe.spaces import NULLS, roster
 from spade.move_legality import probe as probe_module
@@ -183,7 +183,7 @@ def main() -> None:
         return
     rows = [row for path in sorted(out.glob("scores_*.json"))
             for row in quality_rows(json.loads(path.read_text()))]
-    csv = repo_root() / "analysis" / "move_legality" / "results" / "probe_quality.csv"
+    csv = results_dir("fig02_probe_geometry_and_detection") / "probe_quality.csv"
     csv.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(rows).to_csv(csv, index=False)
     print(f"wrote {csv} ({len(rows)} rows)", flush=True)

@@ -1,6 +1,7 @@
 # Numbers the appendix prints with no figure behind them
 
-One script per group of numbers, each writing one committed file in `results/`. All CPU.
+One script per group of numbers, each writing one committed file in `results/appendix_numbers/`.
+All CPU.
 
 | Paper | Number | Script | Writes | Reads |
 |---|---|---|---|---|
@@ -10,7 +11,7 @@ One script per group of numbers, each writing one committed file in `results/`. 
 | A.4 | covariance-matched floor ≈ 0.09 | `covariance_null.py` | `covariance_null.csv` | move-legality fit-set acts |
 | A.9 | the rule panel's scan, ranked | `rule_panel_scan.py` | `rule_panel_scan.csv` | HF stream (network) |
 | B.2 | past t0 + 8 within 0.5%, crossing by t0 + 13 | `rollout_ratio.py` | `rollout_ratio.csv` | `rollout/divergence/resid_post_5.npz` |
-| B.2 | ~234×, 536×, within 1.4× | `span_stats.py` | `span_stats.csv` | the committed by-space CSVs |
+| B.2 | ~234×, 536×, within 1.4× | `span_stats.py` | `span_stats.csv` | `results/fig14_*`, `results/fig16_*` |
 
     python analysis/appendix_numbers/<script>.py
 
@@ -18,7 +19,7 @@ What each number is, exactly, is the script's docstring. Three readings the pape
 does not carry:
 
 - **A.4's floor is ≈ 0.09**, the population E|cos| of covariance-shaped random directions.
-  The paper's "0.084 to 0.110" is a range over `robustness_cells.csv`'s cells (which give
+  The paper's "0.084 to 0.110" is a range over `results/fig02_*/robustness_cells.csv`'s cells (which give
   0.082-0.110), from a battery that needs the gitignored rules corpus.
 - **B.2's cut is on the original 2000 games.** On the extended tree the crossing is at r = 9;
   both populations are in the CSV.

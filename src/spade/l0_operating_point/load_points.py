@@ -143,7 +143,7 @@ def identify(path: Path) -> dict:
 
 def read_f1_results(path: Path, source: str, ours: bool) -> pd.DataFrame:
     df = pd.read_csv(path)
-    if "recon_f1_bm" in df.columns:  # karvonen_othello_sweep/sweep_full.csv naming
+    if "recon_f1_bm" in df.columns:  # results/shared/l0_roster/karvonen_sweep_full.csv naming
         df = df.rename(columns={"recon_f1_bm": METRICS["recon_f1"], "coverage_bm": METRICS["coverage"]})
 
     out = pd.DataFrame({"source": source, "l0": df["l0"], "path": df["autoencoder_path"]})

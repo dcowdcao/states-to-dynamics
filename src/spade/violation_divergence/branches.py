@@ -117,7 +117,7 @@ def complete_games(meta: dict) -> list[int]:
 
 
 # The fork position every n-game sweep in this study draws from, so two figures at
-# the same n are over the same games (docs/finish_notes/t0-20-population.md).
+# the same n are over the same games (archive/docs/finish_notes/t0-20-population.md).
 POPULATION_T0 = 20
 
 

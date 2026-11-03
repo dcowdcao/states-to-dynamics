@@ -16,14 +16,13 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from spade.common.paths import repo_root
+from spade.common.paths import build_dir, results_dir
 from spade.figures.figure_othello_rules import position, rules_panel
 from spade.figures.generation_panels import cumulative_panel
 from spade.figures.paper_style import apply_style, letters_topleft, save_figure
 
-FIGURES = repo_root() / "figures" / "rules_and_generation"
-ROLLOUT = (repo_root() / "analysis" / "generation_legality" / "results"
-           / "rollout_by_move.csv")
+FIGURES = build_dir("rules_and_generation")
+ROLLOUT = results_dir("fig01_rules_and_generation") / "rollout_by_move.csv"
 FIGURE_SIZE = (10.4, 4.5)
 WIDTHS = [1, 1.45]   # A holds a square board, B a wide move axis; the board sets the height
 

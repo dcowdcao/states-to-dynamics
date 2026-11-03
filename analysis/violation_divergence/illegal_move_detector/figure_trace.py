@@ -102,7 +102,7 @@ def main() -> None:
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    game = json.loads((Path(__file__).resolve().parent / "figure_game.json").read_text())
+    game = json.loads(detector.FIGURE_GAME_JSON.read_text())
     data = detector.load()
     cand = detector.band()
     s = detector.score(data, cand)

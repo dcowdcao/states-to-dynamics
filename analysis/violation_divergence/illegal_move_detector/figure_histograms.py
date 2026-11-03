@@ -13,7 +13,7 @@ The evaluation set is `detector.stratified`: the same number of games at every t
 scored range, so the curves are flat over move index rather than weighted toward whichever
 position the tree happens to hold most of. The five arms are kept aligned game by game
 (asserted on game_id and on t0), so all five curves are the same games at the same forks. Per-series n, mean, median and the fraction above tau, the last with a 95%
-bootstrap CI over the same 500 games, go to results/score_histograms.csv.
+bootstrap CI over the same 500 games, go to results/fig03_detector_example/score_histograms.csv.
 
 **The curves are counts, not densities.** Each is `straightness_panels.kde_ci`'s Gaussian KDE
 (Scott's rule) times n times BIN, so a curve reads as "games per BIN-wide slice of the axis"
@@ -150,10 +150,11 @@ def main() -> None:
     x = {k: detector.at_t0(s, cand, data["t0"], r) for k, r in rows.items()}
 
     apply_style(args.camera_ready)
-    RESULTS.mkdir(parents=True, exist_ok=True)
     stem = "score_histograms" + ("" if args.space == detector.REFERENCE else f"_{args.space}")
+    out = detector.EXAMPLE_RESULTS if args.space == detector.REFERENCE else RESULTS
+    out.mkdir(parents=True, exist_ok=True)
     table = summary(x, tau).assign(space=args.space)
-    table.to_csv(RESULTS / f"{stem}.csv", index=False)
+    table.to_csv(out / f"{stem}.csv", index=False)
     print(table.to_string(index=False))
     print(draw(x, tau, args.camera_ready, stem))
 

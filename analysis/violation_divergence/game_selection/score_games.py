@@ -60,8 +60,9 @@ Zero means the six illegal branches move identically.
 
 Writes ranking.csv, transfer_check.csv, summary.txt and inputs.json (the sha256 of
 branches.pt and the activations it scored) into a new `--out` directory. The committed
-results/ are the provenance of B.2's choice and are never rewritten: the activations were
-re-extracted after they were scored, which moves S3 by up to 6e-7.
+results/fig09_fork_displacement_spliced/ranking.csv is the provenance of B.2's choice and is
+never rewritten: the activations were re-extracted after it was scored, which moves S3 by up
+to 6e-7.
 
 Usage: python analysis/violation_divergence/game_selection/score_games.py [--out DIR]
 """

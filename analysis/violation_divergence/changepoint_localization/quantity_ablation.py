@@ -21,7 +21,7 @@ and theta and says so, rather than silently dropping a quantity.
 
 **`--l0-matched`** -- the eight `l0_operating_point` picks, on
 `illegal_move_detector`'s corpus and statistic: its 500 t0-stratified games from
-`results/eval_games.csv`, the pooled illegal branch against the SAME source game's legal
+`results/shared/eval_games.csv`, the pooled illegal branch against the SAME source game's legal
 control, ranked on the score at that game's own t0. That is deliberate rather than incidental:
 **`d` here is the same number as panel (a) of `illegal_move_detector/figures/
 sae_detector_overview.png`**, asserted against `auroc_by_space_l0_matched.csv` on every run, so
@@ -37,8 +37,9 @@ that reason. `d` on the detector corpus is held at the direction this study fixe
 shorter is illegal -- because that is what makes its bar the detector's own number; freeing it
 would move exactly one space, CosineSpaDE, from 0.498 to 0.502, both chance.
 
-Writes results/quantity_ablation_<variant>.csv and figures/quantity_ablation_<variant>.png, or its
-vector .pdf twin with --camera-ready.
+Writes quantity_ablation_<variant>.csv (the l0_matched one, Fig 8's, to
+results/fig08_detector_metric_comparison/; the spliced one to results/ here) and
+figures/quantity_ablation_<variant>.png, or its vector .pdf twin with --camera-ready.
 
 Usage: PYTHONPATH=src python
            analysis/violation_divergence/changepoint_localization/quantity_ablation.py
@@ -54,6 +55,7 @@ import pandas as pd
 import torch
 from matplotlib import pyplot as plt
 
+from spade.common.paths import results_dir
 from spade.common.study import study_dir
 from spade.figures.paper_style import (
     MUTED, NULL, OKABE_ITO, REFERENCE_SPACE, apply_style, save_figure)
@@ -177,8 +179,7 @@ def detector_table(seed: int) -> pd.DataFrame:
     come from the code that wrote `auroc_by_space_l0_matched.csv`, and `main` asserts the
     result against that file.
     """
-    # Local: the detector study is a sibling script directory, not an installed package, and
-    # both directories carry a `make_figures` that must not shadow each other on import.
+    # Local: the detector study is a sibling script directory, not an installed package.
     sys.path.insert(0, str(HERE.parent / "illegal_move_detector"))
     import detector
     from figure_auroc_l0_matched import BOOT_SEED, eval_rows
@@ -264,7 +265,8 @@ def panel(ax, table, value: str, ylabel: str, chance: float, index: int, top: fl
 
 def draw(table: pd.DataFrame, name: str, camera_ready: bool) -> Path:
     """One panel of AUROC. What the bars mean, what orders the spaces, and the localization
-    half of the spliced table all live in QUANTITY_ABLATION.md, which is this figure's
+    half of the spliced table all live in results/fig08_detector_metric_comparison/
+    QUANTITY_ABLATION.md, which is this figure's
     caption; `hit` stays in the CSV."""
     keys = [k for k in BANDS if (table.quantity == k).any()]
     order = (table[table.quantity == "d"].sort_values("auroc_position", ascending=False)
@@ -279,7 +281,7 @@ def draw(table: pd.DataFrame, name: str, camera_ready: bool) -> Path:
 
 def assert_matches_detector(table: pd.DataFrame) -> None:
     """`d` must BE `illegal_move_detector`'s bar, not merely agree with it."""
-    theirs = pd.read_csv(HERE.parent / "illegal_move_detector" / "results" /
+    theirs = pd.read_csv(results_dir("fig04_detector_sae") /
                          "auroc_by_space_l0_matched.csv").set_index("space").auroc
     ours = table[table.quantity == "d"].set_index("space").auroc_position
     gap = (ours - theirs.loc[ours.index]).abs().max()
@@ -319,8 +321,9 @@ def main() -> None:
                   f"-- run curvature_discriminant/branch_norms.py to add them")
         name, values = "quantity_ablation_spliced", ["auroc_position", "hit", "sign"]
 
-    (HERE / "results").mkdir(exist_ok=True)
-    csv = HERE / "results" / f"{name}.csv"
+    out = results_dir("fig08_detector_metric_comparison") if args.l0_matched else HERE / "results"
+    out.mkdir(parents=True, exist_ok=True)
+    csv = out / f"{name}.csv"
     table.round(5).to_csv(csv, index=False)
     apply_style(args.camera_ready)
     print(f"\nwrote {csv}\nwrote {draw(table, name, args.camera_ready)}")

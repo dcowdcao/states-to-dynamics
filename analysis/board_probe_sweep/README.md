@@ -61,13 +61,14 @@ row in the CSV rather than a line on the panel.
 
 ## Reproducing
 
-    python analysis/board_probe_sweep/measure.py                     # results/board_layer_sweep.csv
-    python analysis/board_probe_sweep/layer_sweep.py                 # figures/, from the CSV
+    python analysis/board_probe_sweep/measure.py                     # results/fig05_board_layer_sweep/
+    python analysis/board_probe_sweep/layer_sweep.py                 # figures/ here, from the CSV
     python analysis/board_probe_sweep/layer_sweep.py --camera_ready  # vector PDF
 
 `measure.py` needs `$SPADE_PROBES_DIR` (the 9.5 GB corpus + probes) and a GPU for the
 read-out pass. Both come from `scripts/slurm/studies/probes/`: `submit_probe_corpus.sbatch`
 (`spade.probes.build_corpus`, 20,000 games), then `submit_probe_train.sbatch board`
-(`spade.probes.train --arm board --layers 0-7`). `layer_sweep.py` draws the committed CSV alone, in seconds on a CPU, so the
-figure is a function of that file. Cluster (both steps):
+(`spade.probes.train --arm board --layers 0-7`). `layer_sweep.py` draws the committed CSV
+alone, in seconds on a CPU, so the figure is a function of that file;
+`scripts/stage_figures.py` copies it to `figures/fig05_*`. Cluster (both steps):
 `scripts/slurm/studies/board_probe_sweep/submit_board_layer_sweep.sbatch`.

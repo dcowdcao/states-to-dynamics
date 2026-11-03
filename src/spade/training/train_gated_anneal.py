@@ -15,7 +15,7 @@ from circuits.dictionary_learning.trainers.gated_anneal import GatedAnnealTraine
 INITIAL_SPARSITY_PENALTY = 0.955263
 # The canonical run keeps this name; spade.training.sweep's grid passes a swept
 # one, so a swept point cannot be mistaken for the baseline row that
-# results/acceptance, saes.registry and figures.paper_style match on.
+# the acceptance table, saes.registry and figures.paper_style match on.
 WANDB_NAME = "GatedAnnealTrainer-othello"
 
 

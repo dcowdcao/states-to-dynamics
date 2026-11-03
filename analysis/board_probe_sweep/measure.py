@@ -14,22 +14,21 @@ is scored on would be a ceiling.
 The probes are seed 42 only, so this interval is over held-out data and says nothing
 about the spread over fits.
 
-Writes results/board_layer_sweep.csv, which layer_sweep.py draws.
+Writes results/fig05_board_layer_sweep/board_layer_sweep.csv, which layer_sweep.py draws.
 
 Usage: python analysis/board_probe_sweep/measure.py [--device cuda]
 """
 
 import argparse
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import torch
 
+from spade.common.paths import results_dir
 from spade.probes import load as probes
 from spade.probes.train import BATCH, activations, corpus, game_split, rows
 
-HERE = Path(__file__).resolve().parent
 LAYERS = range(8)
 SEED = 42
 N_TEST_GAMES = 1000     # of the split's 3000; the head of a permutation, so still uniform
@@ -103,7 +102,7 @@ def main() -> None:
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = parser.parse_args()
 
-    csv = HERE / "results" / "board_layer_sweep.csv"
+    csv = results_dir("fig05_board_layer_sweep") / "board_layer_sweep.csv"
     with torch.no_grad():
         table = measure(args.device)
     csv.parent.mkdir(parents=True, exist_ok=True)

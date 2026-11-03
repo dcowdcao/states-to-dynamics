@@ -9,7 +9,7 @@ All three figure sets come out of one run, so `renders/karvonen_only` cannot pic
 points by accident — that directory is what `verify_match.py` checks against his published
 PNGs, and it is the only one still in his type. `styled_karvonen_only` is the same data in
 ours, and is what the combined his-SAEs-only figure is built from.
-His points are his published CSV; ours are the committed `results/l0_operating_point/pooled.csv`
+His points are his published CSV; ours are the committed `results/shared/l0_roster/pooled.csv`
 (`aggregate.py` writes it from the evaluation streams), lowest seed per config. So the figure
 redraws from the repo alone, from the same table the operating point is picked from.
 
@@ -27,13 +27,13 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.colors import Normalize
 
-from spade.common.paths import repo_root
+from spade.common.paths import build_dir
 from spade.l0_operating_point.aggregate import OUT as POOLED_CSV
 from spade.l0_operating_point.load_points import (
     COLUMNS, KARVONEN_CSV, OUR_STREAMS, check_physics, one_per_config, read_f1_results,
 )
 
-RENDERS = repo_root() / "figures/l0_operating_point"
+RENDERS = build_dir("l0_operating_point")
 
 RECON = "recon_f1"
 COVERAGE = "coverage"

@@ -8,8 +8,8 @@ nine branch trajectories are, and hands the fork figure an argmax it can disclos
 
 ```
 python analysis/violation_divergence/game_selection/score_games.py   # game_id < 2000; writes a new --out, never results/
-python analysis/violation_divergence/game_selection/make_figures.py
-python analysis/violation_divergence/game_selection/score_rules.py   # ~15 min, cpu
+python archive/analysis/violation_divergence/game_selection/make_figures.py   # archived
+python archive/analysis/violation_divergence/game_selection/score_rules.py    # archived; ~15 min, cpu
 ```
 
 `score_games.py` answers the **category** question in raw layer 5 and is what
@@ -226,11 +226,17 @@ than one axis.
 
 ## Outputs
 
+`score_games.py` writes the first four rows below, plus `inputs.json` (the sha256 of what it
+scored), into a new `--out` (default `$SPADE_DIVERGENCE_DIR/game_selection`). The ranking B.2
+quotes is committed at `results/fig09_fork_displacement_spliced/ranking.csv` and is never
+rewritten; the committed `transfer_check.csv` and `summary.txt` are under
+`archive/analysis/violation_divergence/game_selection/`.
+
 | file | what |
 |---|---|
-| `results/ranking.csv` | one row per complete game: *t0*, all four scores, rank under each |
-| `results/transfer_check.csv` | the same scores in three SAE spaces, on 302 sampled games |
-| `results/summary.txt` | top-10 tables, Spearman agreement, *t0* placement, transfer ranks |
+| `ranking.csv` | one row per complete game: *t0*, all four scores, rank under each |
+| `transfer_check.csv` | the same scores in three SAE spaces, on 302 sampled games |
+| `summary.txt` | top-10 tables, Spearman agreement, *t0* placement, transfer ranks |
 | `figures/selection_disclosure` | the population the pick came from, the criteria disagreeing, the transfer check |
 | `results/rule_ranking.csv` | the rule-level sweep below: one row per game per space |
 | `results/rule_summary.txt` | its anchors, population spreads, null, and top-10s |

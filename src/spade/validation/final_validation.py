@@ -27,7 +27,7 @@ SRC_DIR = PKG_DIR.parent                             # src
 EXPECTED_D_MODEL = 512
 WIDTH = 64
 
-# The eight trainer families of the L0-matched roster (results/l0_operating_point/picks.csv),
+# The eight trainer families of the L0-matched roster (results/shared/l0_roster/picks.csv),
 # and the substring each one must hit in load_karvonen_sae's dispatch chain.
 EXPECTED_DISPATCH = {
     "StandardTrainer": "Standard",
@@ -327,8 +327,9 @@ def test_constants_single_sourced():
 
 
 NOT_CHECKED = """
-  - no eval is run here. The acceptance eval is in docs/finish_notes/acceptance-eval.md,
-    with its rows in results/acceptance/ (three checkpoints reproduce their reference exactly)
+  - no eval is run here. The acceptance eval is in archive/docs/finish_notes/acceptance-eval.md,
+    with its rows in results/shared/l0_roster/acceptance_all_results.csv (three checkpoints
+    reproduce their reference exactly)
   - no GPU kernel, no nnsight trace, no loss_recovered path is exercised
   - the F1 / coverage / board-reconstruction math is not checked numerically
   - training loops are not run
