@@ -158,7 +158,8 @@ def read_f1_results(path: Path, source: str, ours: bool) -> pd.DataFrame:
         out["dict_size"] = pd.NA
         return out
 
-    ids = pd.DataFrame([identify(Path(p)) for p in df["autoencoder_path"]], index=out.index)
+    # A released stream names its checkpoints relative to REPRO_ROOT, a local one absolutely.
+    ids = pd.DataFrame([identify(REPRO_ROOT / p) for p in df["autoencoder_path"]], index=out.index)
     mismatched = ids["trainer_class"] != df["trainer_class"]
     if mismatched.any():
         raise PointsError(

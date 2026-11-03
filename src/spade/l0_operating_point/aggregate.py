@@ -45,9 +45,11 @@ def _ours(csv: Path, source: str) -> pd.DataFrame:
     """One karvonen_repro f1_results.csv, with both metric families and the sample size.
 
     `path` is relative to `load_points.REPRO_ROOT` (the data root by default), so the
-    committed table names no machine's directories."""
+    committed table names no machine's directories. The released streams name their
+    checkpoints that way too; a local run names them absolutely."""
     df = pd.read_csv(csv)
-    ids = pd.DataFrame([load_points.identify(Path(p)) for p in df["autoencoder_path"]])
+    paths = [load_points.REPRO_ROOT / p for p in df["autoencoder_path"]]
+    ids = pd.DataFrame([load_points.identify(p) for p in paths])
     return pd.DataFrame({
         "family": "ours",
         "trainer_class": ids["trainer_class"],
@@ -65,8 +67,7 @@ def _ours(csv: Path, source: str) -> pd.DataFrame:
         "dict_size": ids["dict_size"],
         "source": source,
         "eval_n_activations": df["eval_n_activations"],
-        "path": [Path(p).relative_to(load_points.REPRO_ROOT).as_posix()
-                 for p in df["autoencoder_path"]],
+        "path": [p.relative_to(load_points.REPRO_ROOT).as_posix() for p in paths],
     })
 
 
