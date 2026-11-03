@@ -1,73 +1,64 @@
-# SpaDE SAE Research
-
-Sparse Autoencoder research on **OthelloGPT**, comparing Karvonen's baseline SAE families
-against two prototype-distance architectures developed here:
-
-- **SpaDE** (Sparsemax-Distance Encoder) — `f = sparsemax(-λ·‖x − Aeᵢ‖²)`, no-bias decode.
-- **CosineSpaDE** — the cosine-similarity variant (γ-scaled, no λ).
-
-All SAEs train and evaluate through Karvonen's `trainSAE()` loop and board-reconstruction
-protocol on OthelloGPT's layer-5 residual stream (`blocks.5.hook_resid_post`, `d_model=512`,
-dictionary `8192` = 16×). The 8 types: PAnneal, Standard, Gated, TopK (k=80), GatedAnneal,
-SpaDE, BatchTopK, CosineSpaDE.
-
-On top of that comparison sit the interpretability studies — whether the model's layer-5
-representations encode the rules of Othello, what happens to a square when it is flipped,
-how an illegal move propagates, whether trajectories straighten with depth, and whether
-SAE features capture concept manifolds or shatter them.
-
-> **Status: ported and running.** All fifteen zones are ported from the pre-port research
-> repo, which stays frozen and read-only; all new work happens here. The package installs, `final_validation` passes 16/17 (one skips without the
-> gitignored weights), and three checkpoints reproduce
-> their published evaluation exactly. Two data-provenance questions are open and affect
-> published numbers — MIGRATION.md questions 14 and 15. See
-> [ARCHITECTURE.md](ARCHITECTURE.md) for the layout and the old→new map,
-> [MIGRATION.md](MIGRATION.md) for what is left and the open questions, and
-> [PROCESS.md](PROCESS.md) for decisions.
-
-## Run it
+# From States to Dynamics: Detecting Rule Violations in OthelloGPT
 
 ```bash
-make setup                       # fetch external/, create .venv, pip install -e . with the pinned deps
-make test                        # fast self-tests: no GPU, no weights
+make setup && make data && make figures   # Python 3.11; redraws the paper's 16 figures on a CPU
+make verify                               # byte-compares figures/ and results/ with manifests/
 ```
-
-`make setup` needs Python 3.11 and uses `python3` by default. If `python3` is another version,
-name the interpreter: `make setup PYTHON=/path/to/python3.11`.
 
 ## Dev setup
 
-`make setup` builds `.venv` from `$(PYTHON)` and installs the pins in `requirements.txt`
-(~2 GB, mostly torch). If a conda env already holds that stack, reuse it instead of
-re-downloading it:
+`make setup` needs Python 3.11 (`make setup PYTHON=/path/to/python3.11` if `python3` is
+another version). It builds `.venv`, installs `requirements.lock` (every transitive pin,
+~2 GB, mostly torch 2.5.1) and then this package editable. It also clones the two
+third-party trees the code imports, which carry no licence to redistribute, into `external/`
+at pinned commits and applies our patches: `SAE_BoardGameEval` (Karvonen's SAE trainers,
+Othello engine and board-reconstruction eval) and `tpr_othello` (the TPR board probe).
 
-```bash
-$CONDA_PREFIX/bin/python -m venv --system-site-packages .venv
-.venv/bin/pip install -e . --no-deps
+Large inputs live under `$SPADE_DATA_ROOT` (default `data/`, gitignored); every study tree
+is a directory there. `make data` fills it in two steps, each sha256-checked:
+- the data release (0.53 GB: our trained SAEs and probes, branch trees, cached
+  intermediates; `manifests/data_release.tsv`) from the Hugging Face dataset named by
+  `SPADE_RELEASE_DATASET`, or from a local copy at `SPADE_RELEASE_DATA_DIR`;
+- Karvonen's released SAEs, two zips (12.3 GB) from Hugging Face at a pinned revision, of
+  which six trainer directories are extracted. Point `SPADE_KARVONEN_ZIPS` at a directory
+  that already holds them to skip the download.
+
+`make figures` needs network access once, for Fig 1(a)'s games. `make test` runs the
+self-tests (no GPU, no data). Recomputing a figure from the public model and corpus is
+`make compute-figNN` and needs a GPU; [REPRODUCE.md](REPRODUCE.md) lists every figure's
+commands, inputs, outputs and runtimes. The SLURM jobs under `scripts/slurm/` read the
+cluster's account, partitions and environment from `scripts/slurm/cluster.env`: copy
+`cluster.env.example` there and fill it in.
+
+## Layout and where to start
+
+```
+figures/        the 16 paper figures, figNN_<name>.png + .pdf; written only by scripts/stage_figures.py
+results/        the tables the paper draws or quotes, one folder per figure, plus shared/ and
+                appendix_numbers/; each writer names which of its outputs go here
+src/spade/      the package
+  common/         config (model, layer, pinned HF revisions), paths, the data root (study.py)
+  othello/        game corpus, board replay, the legality taxonomy
+  saes/ sae_loader/ l0_operating_point/
+                  SAE architectures, checkpoint loading, the L0-matched roster of eight SAEs
+  <study>/        one package per measurement: violation_divergence, straightness,
+                  move_legality, probes, bracket_flip, generation_legality, probe_geometry
+  figures/        shared plotting: paper_style.py holds every colour and marker
+analysis/       per-study scripts that measure from a study tree and draw a figure
+scripts/        stage_figures.py; fetch_external/, fetch_release_data/, download_karvonen_saes/
+                (what make setup and make data run); build_branch_tree.sh; slurm/ (cluster jobs);
+                verify_outputs/; release/ (the export and data-staging tools)
+karvonen_repro/ our checkpoints through Karvonen's board-reconstruction eval (Fig 6)
+checkpoints/    configs and standardization of the seed-42 SAEs the registry checks
+manifests/      sha256 of the data release and of figures/ and results/
 ```
 
-Two third-party runtime dependencies under `external/`: `Karvonen_Research` (`circuits.*` —
-the baseline trainers, the Othello engine, the board-reconstruction eval) and `tpr_othello`
-(the tensor-product board probe). Neither has a licence, so `make setup` clones each at a
-pinned commit and applies our patch (`external/README.md`). Path resolution is
-repo-root-anchored — `spade.common.paths` walks up to `pyproject.toml` — so scripts work from
-anywhere, but only under an editable install. The SLURM jobs are in `scripts/slurm/`; every
-cluster setting is in `scripts/slurm/cluster.env`.
+The private working repository also has `archive/`: every file the paper does not use.
 
-Heavy per-study intermediates and downloaded weights live under `$SPADE_DATA_ROOT`
-(default `data/`), resolved by `spade.common.study`. To reuse an existing copy, point
-`SPADE_DATA_ROOT` at it. A fresh clone cannot regenerate the figures on its own.
-
-## Making changes
-
-Code lives under `src/spade/`. The pipeline stages map 1:1 to its subpackages
-(`extraction → training → evaluation → multiseed → figures`, plus `diagnostics`). Beneath
-them sit the shared layers every study builds on — `othello/` (game corpora, board
-mechanics, the legality taxonomy), `saes/` (the three SpaDE variants and the checkpoint
-registry) and `spaces.py` (the representation-space API). The studies themselves —
-`rules/`, `bracket_flip/`, `violation_divergence/`, `straightness/`, `manifold_capture/` —
-each pair with an `analysis/<study>/` that only draws.
-
-Figures obey [FIGURE_GUIDELINES.md](FIGURE_GUIDELINES.md); color literals live only in
-`spade.figures.paper_style`. Before writing prose about any result, read
-[archive/docs/claims_status.md](archive/docs/claims_status.md) — several headline claims were retired.
+To change a figure, edit the script `make figNN` runs (REPRODUCE.md, or the comment above its
+entry in `scripts/stage_figures.py`), run `make figNN`, and check the result against
+[FIGURE_GUIDELINES.md](FIGURE_GUIDELINES.md); colours and markers come only from
+`spade.figures.paper_style`. A figure is drawn from its `results/` tables and the cached
+intermediates under the data root; the `compute-*` chain upstream of it regenerates those.
+After a deliberate change to an output, `python scripts/verify_outputs/verify.py --update`
+rewrites the manifests, so the diff shows what moved. `make test` must stay green.

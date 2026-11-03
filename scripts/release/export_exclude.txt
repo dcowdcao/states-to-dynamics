@@ -14,8 +14,9 @@ MIGRATION.md
 external/Karvonen_Research/
 external/tpr_othello/
 
-# This cluster's names; the export ships scripts/slurm/cluster.env.example instead.
+# This cluster's names and runbook; the export ships scripts/slurm/cluster.env.example instead.
 scripts/slurm/cluster.env
+docs/*_commands.md
 
 # The scan's own patterns.
 scripts/release/identity_patterns.txt
