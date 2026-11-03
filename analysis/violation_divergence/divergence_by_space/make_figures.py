@@ -98,6 +98,7 @@ SATURATED_R = 8  # rollout: from here the illegal/control ratio is within 0.5% o
 # past the cap is labelled with the value it reaches, so nothing is hidden.
 YMAX = 2.0
 RATIO_YLABEL = "distance from the reference\n(legal control = 1)"
+N_BOOT, BOOT_SEED = 1000, 42  # the percentile bootstrap over source games every band uses
 # --raw has no divisor, so the label has to name the units. R^21's 21 columns are
 # scaled to unit variance per game inside `curvature_plane.fit_plane`, which
 # `measure.curvature_distances` measures both its distances in, so that pair is in
@@ -136,13 +137,14 @@ def rule_means(z, key: str, raw: bool) -> np.ndarray:
                     axis=2)
 
 
-def mean_ci(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Mean over games and the half-width of its 95% CI. Axis 0 is the game, and
-    one game is one item in every series, so no clustering correction is needed."""
-    return x.mean(0), 1.96 * x.std(0, ddof=1) / np.sqrt(len(x))
+def mean_ci(x: np.ndarray, draws: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Mean over games and its 95% percentile bootstrap CI. Axis 0 is the game, and
+    one game is one item in every series, so no clustering correction is needed.
+    `draws` is one index matrix shared by every series and panel."""
+    return x.mean(0), *np.percentile(x[draws].mean(1), [2.5, 97.5], axis=0)
 
 
-def table(z, variant: str, raw: bool) -> pd.DataFrame:
+def table(z, variant: str, raw: bool, draws: np.ndarray) -> pd.DataFrame:
     """Every drawn point, so the README can quote a number without reading a curve."""
     col = "distance" if raw else "ratio"
     rows = []
@@ -150,11 +152,11 @@ def table(z, variant: str, raw: bool) -> pd.DataFrame:
         r = rule_means(z, key, raw)
         for si, space in enumerate(z["space"]):
             for ci, name in enumerate(series_rows(z)):
-                mu, half = mean_ci(r[si, :, ci])
+                mu, lo, hi = mean_ci(r[si, :, ci], draws)
                 rows.append(pd.DataFrame({
                     "variant": variant, "space": space, "series": name,
                     "measured_in": key, "r": z["window"], "n_games": r.shape[1],
-                    col: mu, f"{col}_lo": mu - half, f"{col}_hi": mu + half}))
+                    col: mu, f"{col}_lo": lo, f"{col}_hi": hi}))
     return pd.concat(rows, ignore_index=True)
 
 
@@ -170,9 +172,9 @@ def style_of(name: str) -> dict:
     return branch_style(CATEGORIES.index(RULE_MEMBERS[name][0]), 0, by_rule=True)
 
 
-def draw_series(ax, w, mu, half, name: str, how: dict, offset: int) -> None:
+def draw_series(ax, w, mu, lo, hi, name: str, how: dict, offset: int) -> None:
     st = style_of(name)
-    ax.fill_between(w, mu - half, mu + half, color=st["color"], alpha=0.18, lw=0,
+    ax.fill_between(w, lo, hi, color=st["color"], alpha=0.18, lw=0,
                     zorder=st["zorder"] - 1)
     ax.plot(w, mu, color=st["color"], marker=st["marker"], ls=how["ls"], lw=how["lw"],
             ms=how["ms"], markevery=(offset % 3, 3), zorder=st["zorder"],
@@ -218,7 +220,7 @@ def legend_marks() -> tuple[list, list]:
 
 
 def figure(z, plane: str, variant: str, suffix: str, raw: bool, shared_y: bool,
-           l0_matched: bool, camera_ready: bool) -> Path:
+           l0_matched: bool, camera_ready: bool, draws: np.ndarray) -> Path:
     w = z["window"]
     rollout = variant == "rollout"
     curves = {key: rule_means(z, key, raw) for key in MEASURES}
@@ -236,7 +238,7 @@ def figure(z, plane: str, variant: str, suffix: str, raw: bool, shared_y: bool,
             ax.axhline(1, color=NULL["color"], lw=0.9, ls=(0, (5, 2)), zorder=1)
         for ci, (name, rows) in enumerate(series_rows(z).items()):
             for key, how in MEASURES.items():
-                draw_series(ax, w, *mean_ci(curves[key][si, :, ci]), name, how, ci)
+                draw_series(ax, w, *mean_ci(curves[key][si, :, ci], draws), name, how, ci)
         # The panel letter and the space it draws are one label, centred under the
         # cell and enumerated in the figure's caption (FIGURE_GUIDELINES 5). An
         # xlabel and not a fig.text in figure coordinates: matplotlib already
@@ -322,12 +324,14 @@ def main():
     csv = out / (f"divergence_by_space{tag}"
                  f"{'_' + args.variant if args.variant != 'spliced' else ''}"
                  f"{suffix}{'_raw' if args.raw else ''}{l0}.csv")
-    df = table(z, args.variant, args.raw)
+    n_games = z["plane"].shape[1]
+    draws = np.random.default_rng(BOOT_SEED).integers(n_games, size=(N_BOOT, n_games))
+    df = table(z, args.variant, args.raw, draws)
     df.to_csv(csv, index=False, float_format="%.6g")
 
     col = "distance" if args.raw else "ratio"
     post = df[(df.r >= 0) & (df.series != CONTROL)]
-    print(f"mean over r >= 0, plane / full space, {z['plane'].shape[1]} games:")
+    print(f"mean over r >= 0, plane / full space, {n_games} games:")
     for space in z["space"]:
         cell = post[post.space == space].groupby(["series", "measured_in"])[col].mean()
         print(f"  {space:<34} " + "  ".join(
@@ -336,7 +340,7 @@ def main():
     if "spread" in z:
         print(spread_note(z))
     png = figure(z, args.plane, args.variant, suffix, args.raw, args.shared_y,
-                 args.l0_matched, args.camera_ready)
+                 args.l0_matched, args.camera_ready, draws)
     print(f"wrote {png} and {csv}")
 
 

@@ -104,11 +104,12 @@ t0-stratified games (`illegal_move_detector/results/eval_games.csv`), same at-t0
 statistic: the pooled illegal branch against the SAME source game's legal control, ranked on
 the score at that game's own t0. `d` is therefore not merely close to panel (a) of
 `sae_detector_overview.png` — it **is** that bar, and `assert_matches_detector` fails the run
-if the two ever drift. Figure: `quantity_ablation_l0_matched.png`.
+if the two ever drift. Figure: `quantity_ablation_l0_matched.{png,pdf}`, the PDF being the
+camera-ready twin.
 
 | space | `d` | `norm` | `theta` |
 |---|---|---|---|
-| GatedSAE | 0.754 | 0.703 | 0.564 |
+| GatedSAE | 0.723 | 0.595 | 0.556 |
 | BatchTopK | 0.710 | 0.553 | 0.569 |
 | TopK | 0.708 | 0.554 | 0.566 |
 | GatedAnneal | 0.703 | 0.501 | 0.564 |
@@ -132,7 +133,8 @@ range, so unlike the per-position AUROC nothing here depends on the bands agreei
 
 **The space ordering also changes, as it should.** GatedAnneal is fourth here, a point above
 raw, not the runaway first it is on the seed-42 roster — its lead there was sparsity. GatedSAE
-takes the top. That reversal is `36f452c`'s, reproduced on a third corpus.
+takes the top by point estimate, not separably from BatchTopK (`d` +0.013 [-0.000, +0.027],
+paired; `illegal_move_detector/results/auroc_by_space_l0_matched_paired.csv`). That reversal is `36f452c`'s, reproduced on a third corpus.
 
 ## Reproducing
 
@@ -146,6 +148,7 @@ PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/qua
 sbatch scripts/slurm/studies/violation_divergence/submit_detector_sae_geometry.sbatch \
     --l0-matched --quantities
 PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/quantity_ablation.py --l0-matched
+PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/quantity_ablation.py --l0-matched --camera-ready
 ```
 
 The ablation itself is CPU-only. `branch_norms.py` is the one GPU step, and it is

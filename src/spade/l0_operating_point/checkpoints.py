@@ -6,7 +6,7 @@ places and two naming conventions:
 
   * Karvonen's five are published checkpoints, not in the git tree. `download_saes.sh` fetches
     them; they live on netscratch (see KARVONEN_ROOT). `picks.csv` names them by the
-    `autoencoder_path` of the results table -- `gated/trainer32` is stored as `trainer32-v2`.
+    `autoencoder_path` of the results table, and `matched()` checks each one's sparsity knob.
   * Our three come from the L0 grids on netscratch, named by `wandb_name` minus its
     `_trainer_N` suffix.
   * CosineSpaDE's picks read `beta1-...` because the eval ran after `karvonen/cosine-beta`
@@ -21,6 +21,7 @@ merely inaccurate (`spade.spaces`), so each entry carries its own.
 """
 
 import json
+import math
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -35,11 +36,11 @@ from spade.evaluation.karvonen_adapter import (
 KARVONEN_ROOT = Path("/n/netscratch/ba_lab/Lab/dcao/karvonen_saes")
 GRID_ROOT = Path("/n/netscratch/ba_lab/Lab/dcao")
 PICKS = repo_root() / "results" / "l0_operating_point" / "picks.csv"
+SWEEP_FULL = repo_root() / "karvonen_othello_sweep" / "sweep_full.csv"
 
-# Karvonen's results table records `gated/trainer32`; the archive stores `trainer32-v2`.
 KARVONEN_DIRS = {
     "gated/trainer32": "othello-trained_model-layer_5-2024-05-23/"
-                       "othello-trained_model-layer_5-gated/trainer32-v2",
+                       "othello-trained_model-layer_5-gated/trainer32",
     "gated_anneal/trainer25": "othello-trained_model-layer_5-2024-05-23/"
                               "othello-trained_model-layer_5-gated_anneal/trainer25",
     "p_anneal/trainer22": "othello-trained_model-layer_5-2024-05-23/"
@@ -128,12 +129,28 @@ def _ours(config: str) -> Path:
     raise FileNotFoundError(f"no {trainer_class} checkpoint with {want}")
 
 
+def _karvonen(config: str) -> Path:
+    """His checkpoint for a pick, held to the sparsity knob of the sweep row it was picked from.
+
+    A directory name is not an identity: `gated/` holds `trainer32` and `trainer32-v2` under
+    one wandb_name, at L0 220 and 74.
+    """
+    path = KARVONEN_ROOT / KARVONEN_DIRS[config]
+    sweep = pd.read_csv(SWEEP_FULL)
+    row = sweep.set_index(sweep.group_dir.str.removeprefix("othello-trained_model-layer_5-")
+                          + "/" + sweep.trainer_dir).loc[config]
+    knob = json.loads((path / "config.json").read_text())["trainer"][row.hyperparameter]
+    assert math.isclose(knob, row.hyperparameter_value, rel_tol=1e-6), \
+        f"{config}: {path} has {row.hyperparameter} {knob}, its sweep row {row.hyperparameter_value}"
+    return path
+
+
 def matched() -> list[Matched]:
     picks = pd.read_csv(PICKS)
     out = []
     for _, r in picks.iterrows():
         karvonen = r.config in KARVONEN_DIRS
-        path = KARVONEN_ROOT / KARVONEN_DIRS[r.config] if karvonen else _ours(r.config)
+        path = _karvonen(r.config) if karvonen else _ours(r.config)
         assert (path / "ae.pt").exists(), f"{r.config}: no ae.pt at {path}"
         out.append(Matched(r.trainer_class, r.config, float(r.l0), path, not karvonen))
     return out

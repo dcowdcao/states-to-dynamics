@@ -13,6 +13,10 @@ legal control, ranked on the score at that game's own t0, one value per branch. 
 -- `results/eval_games.csv`, the 500 t0-stratified games that figure wrote down, read here
 rather than re-dealt, so the two panels score one set.
 
+Which bars clear raw, and whether the top bar is separable from the next, are paired contrasts on
+the bars' own draws, not two overlapping intervals (FIGURE_GUIDELINES 4.2): every dictionary minus
+raw and the top bar minus every other dictionary go to results/auroc_by_space_l0_matched_paired.csv.
+
 Bars are sorted by height, because the ordering is the claim (FIGURE_GUIDELINES 4.5), and raw
 layer 5 keeps reference styling wherever it lands. The panel is drawn by
 `changepoint_localization.make_figures.panel`, the same code that study's by-space bars use,
@@ -57,21 +61,41 @@ def eval_rows(data: dict, sel: dict) -> np.ndarray:
     return np.sort(keep)
 
 
-def row(space: str, cand: np.ndarray, sel: dict, keep: np.ndarray, draws: list) -> dict:
-    """One space's bar: AUROC, its CI, and the empirical chance level in that space."""
+def scored(space: str, cand: np.ndarray, sel: dict, keep: np.ndarray) -> dict[str, np.ndarray]:
+    """The illegal arm and both legal controls in one space, each read at its game's own t0."""
     data = detector.load(space)
     s = detector.score(data, cand)
-    at_t0 = lambda arm: detector.at_t0(s, cand, data["t0"], sel[arm][keep])
-    illegal, control, control2 = at_t0("illegal"), at_t0("control"), at_t0("control2")
-    statistic = lambda draw: detector.auroc(illegal[draw], control[draw])
-    lo, hi = detector.ci(statistic, draws)
+    return {arm: detector.at_t0(s, cand, data["t0"], sel[arm][keep])
+            for arm in ("illegal", "control", "control2")}
+
+
+def auroc(x: dict, draw=slice(None)) -> float:
+    return detector.auroc(x["illegal"][draw], x["control"][draw])
+
+
+def row(space: str, x: dict, draws: list) -> dict:
+    """One space's bar: AUROC, its CI, and the empirical chance level in that space."""
+    lo, hi = detector.ci(lambda draw: auroc(x, draw), draws)
     return {"space": space, "l0": roster.L0[space] if space in roster.SPACES else "",
-            "n_games": len(keep), "auroc": detector.auroc(illegal, control),
+            "n_games": len(x["illegal"]), "auroc": auroc(x),
             "auroc_lo": lo, "auroc_hi": hi,
-            "auroc_null": detector.auroc(control2, control)}
+            "auroc_null": detector.auroc(x["control2"], x["control"])}
 
 
-def table() -> pd.DataFrame:
+def paired(scores: dict[str, dict], top: str, draws: list) -> pd.DataFrame:
+    """Every dictionary minus raw, then the top bar minus every other dictionary."""
+    pairs = ([(s, REFERENCE_SPACE) for s in roster.SPACES]
+             + [(top, s) for s in roster.SPACES if s != top])
+    rows = []
+    for a, b in pairs:
+        lo, hi = detector.ci(lambda draw: auroc(scores[a], draw) - auroc(scores[b], draw), draws)
+        rows.append({"space": a, "minus": b, "n_games": len(scores[a]["illegal"]),
+                     "auroc_diff": auroc(scores[a]) - auroc(scores[b]),
+                     "auroc_diff_lo": lo, "auroc_diff_hi": hi})
+    return pd.DataFrame(rows)
+
+
+def table() -> tuple[pd.DataFrame, pd.DataFrame]:
     data = detector.load()
     cand, sel = detector.band(), detector.arms(data)
     game_of = data["game_id"][sel["reference"]]
@@ -81,8 +105,10 @@ def table() -> pd.DataFrame:
     # One row per game per arm, so a cluster bootstrap over source games is a bootstrap over
     # `keep` -- the clusters are singletons here, unlike the per-position tables.
     draws = detector.resamples(len(keep), BOOT_SEED)
-    out = pd.DataFrame([row(s, cand, sel, keep, draws) for s in SPACES])
-    return out.sort_values("auroc", ascending=False).reset_index(drop=True)
+    scores = {s: scored(s, cand, sel, keep) for s in SPACES}
+    out = pd.DataFrame([row(s, scores[s], draws) for s in SPACES])
+    out = out.sort_values("auroc", ascending=False).reset_index(drop=True)
+    return out, paired(scores, out.space.iloc[0], draws)
 
 
 def bars(ax, table: pd.DataFrame) -> None:
@@ -106,11 +132,13 @@ def main() -> None:
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    rows = table()
+    rows, leads = table()
     detector.RESULTS.mkdir(parents=True, exist_ok=True)
     csv = detector.RESULTS / "auroc_by_space_l0_matched.csv"
     rows.round(5).to_csv(csv, index=False)
+    leads.round(5).to_csv(detector.RESULTS / "auroc_by_space_l0_matched_paired.csv", index=False)
     print(rows.round(4).to_string(index=False))
+    print(leads.round(4).to_string(index=False))
     print(csv)
     print(draw(rows, args.camera_ready))
 

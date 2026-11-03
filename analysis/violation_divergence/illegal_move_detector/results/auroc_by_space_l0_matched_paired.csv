@@ -1,0 +1,16 @@
+space,minus,n_games,auroc_diff,auroc_diff_lo,auroc_diff_hi
+l0_BatchTopK-k220,raw,500,0.02933,0.01541,0.04399
+l0_CosineSpaDE-beta1-gam0.05,raw,500,-0.18293,-0.21548,-0.15044
+l0_gated_anneal-trainer25,raw,500,0.02202,0.01118,0.03387
+l0_gated-trainer32,raw,500,0.04209,0.03054,0.05426
+l0_p_anneal-trainer22,raw,500,-0.00388,-0.01911,0.01348
+l0_SpaDE-lam0.001-gam0.005,raw,500,-0.04674,-0.06881,-0.02491
+l0_standard-trainer25-v2,raw,500,-0.06852,-0.0866,-0.04892
+l0_top_k-trainer_61,raw,500,0.02763,0.0154,0.04032
+l0_gated-trainer32,l0_BatchTopK-k220,500,0.01276,-0.00039,0.02694
+l0_gated-trainer32,l0_CosineSpaDE-beta1-gam0.05,500,0.22502,0.19113,0.26046
+l0_gated-trainer32,l0_gated_anneal-trainer25,500,0.02008,0.00682,0.03253
+l0_gated-trainer32,l0_p_anneal-trainer22,500,0.04597,0.03039,0.06119
+l0_gated-trainer32,l0_SpaDE-lam0.001-gam0.005,500,0.08883,0.06652,0.10906
+l0_gated-trainer32,l0_standard-trainer25-v2,500,0.11062,0.08979,0.12949
+l0_gated-trainer32,l0_top_k-trainer_61,500,0.01446,0.00288,0.02669

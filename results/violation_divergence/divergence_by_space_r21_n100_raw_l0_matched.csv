@@ -1,1081 +1,1081 @@
 variant,space,series,measured_in,r,n_games,distance,distance_lo,distance_hi
 spliced,raw layer 5 (reference space),R1 placement,plane,-4,100,0,0,0
 spliced,raw layer 5 (reference space),R1 placement,plane,-2,100,0,0,0
-spliced,raw layer 5 (reference space),R1 placement,plane,0,100,1.48804,1.28826,1.68782
-spliced,raw layer 5 (reference space),R1 placement,plane,2,100,2.29834,2.05718,2.53949
-spliced,raw layer 5 (reference space),R1 placement,plane,4,100,2.72701,2.4716,2.98241
-spliced,raw layer 5 (reference space),R1 placement,plane,6,100,2.95181,2.67102,3.23259
-spliced,raw layer 5 (reference space),R1 placement,plane,8,100,3.35246,3.04478,3.66014
-spliced,raw layer 5 (reference space),R1 placement,plane,10,100,3.72355,3.39521,4.0519
-spliced,raw layer 5 (reference space),R1 placement,plane,12,100,3.8604,3.55507,4.16573
-spliced,raw layer 5 (reference space),R1 placement,plane,14,100,3.13264,2.83155,3.43373
-spliced,raw layer 5 (reference space),R1 placement,plane,16,100,3.00772,2.69873,3.3167
-spliced,raw layer 5 (reference space),R1 placement,plane,18,100,2.90519,2.61993,3.19044
-spliced,raw layer 5 (reference space),R1 placement,plane,20,100,2.89179,2.58935,3.19423
-spliced,raw layer 5 (reference space),R1 placement,plane,22,100,2.65589,2.3688,2.94298
-spliced,raw layer 5 (reference space),R1 placement,plane,24,100,2.60291,2.27777,2.92805
+spliced,raw layer 5 (reference space),R1 placement,plane,0,100,1.48804,1.28791,1.69134
+spliced,raw layer 5 (reference space),R1 placement,plane,2,100,2.29834,2.06458,2.55921
+spliced,raw layer 5 (reference space),R1 placement,plane,4,100,2.72701,2.46836,2.99872
+spliced,raw layer 5 (reference space),R1 placement,plane,6,100,2.95181,2.68509,3.23883
+spliced,raw layer 5 (reference space),R1 placement,plane,8,100,3.35246,3.04576,3.6674
+spliced,raw layer 5 (reference space),R1 placement,plane,10,100,3.72355,3.40265,4.06319
+spliced,raw layer 5 (reference space),R1 placement,plane,12,100,3.8604,3.55703,4.16115
+spliced,raw layer 5 (reference space),R1 placement,plane,14,100,3.13264,2.82802,3.45022
+spliced,raw layer 5 (reference space),R1 placement,plane,16,100,3.00772,2.70229,3.31355
+spliced,raw layer 5 (reference space),R1 placement,plane,18,100,2.90519,2.63166,3.18864
+spliced,raw layer 5 (reference space),R1 placement,plane,20,100,2.89179,2.59135,3.18819
+spliced,raw layer 5 (reference space),R1 placement,plane,22,100,2.65589,2.37885,2.96646
+spliced,raw layer 5 (reference space),R1 placement,plane,24,100,2.60291,2.30036,2.97187
 spliced,raw layer 5 (reference space),R2 bracketing,plane,-4,100,0,0,0
 spliced,raw layer 5 (reference space),R2 bracketing,plane,-2,100,0,0,0
-spliced,raw layer 5 (reference space),R2 bracketing,plane,0,100,1.48667,1.30776,1.66558
-spliced,raw layer 5 (reference space),R2 bracketing,plane,2,100,2.79415,2.52135,3.06694
-spliced,raw layer 5 (reference space),R2 bracketing,plane,4,100,3.17424,2.90368,3.44481
-spliced,raw layer 5 (reference space),R2 bracketing,plane,6,100,3.62008,3.33593,3.90424
-spliced,raw layer 5 (reference space),R2 bracketing,plane,8,100,4.02424,3.72205,4.32644
-spliced,raw layer 5 (reference space),R2 bracketing,plane,10,100,4.41569,4.10706,4.72432
-spliced,raw layer 5 (reference space),R2 bracketing,plane,12,100,4.79335,4.47782,5.10888
-spliced,raw layer 5 (reference space),R2 bracketing,plane,14,100,3.58883,3.31908,3.85857
-spliced,raw layer 5 (reference space),R2 bracketing,plane,16,100,3.40003,3.11144,3.68863
-spliced,raw layer 5 (reference space),R2 bracketing,plane,18,100,3.23436,2.9737,3.49502
-spliced,raw layer 5 (reference space),R2 bracketing,plane,20,100,3.15113,2.88852,3.41374
-spliced,raw layer 5 (reference space),R2 bracketing,plane,22,100,2.90158,2.64568,3.15747
-spliced,raw layer 5 (reference space),R2 bracketing,plane,24,100,2.75172,2.44641,3.05704
+spliced,raw layer 5 (reference space),R2 bracketing,plane,0,100,1.48667,1.31782,1.66492
+spliced,raw layer 5 (reference space),R2 bracketing,plane,2,100,2.79415,2.52802,3.07041
+spliced,raw layer 5 (reference space),R2 bracketing,plane,4,100,3.17424,2.89804,3.43999
+spliced,raw layer 5 (reference space),R2 bracketing,plane,6,100,3.62008,3.34438,3.897
+spliced,raw layer 5 (reference space),R2 bracketing,plane,8,100,4.02424,3.72421,4.32035
+spliced,raw layer 5 (reference space),R2 bracketing,plane,10,100,4.41569,4.10733,4.72766
+spliced,raw layer 5 (reference space),R2 bracketing,plane,12,100,4.79335,4.47554,5.08796
+spliced,raw layer 5 (reference space),R2 bracketing,plane,14,100,3.58883,3.32187,3.85234
+spliced,raw layer 5 (reference space),R2 bracketing,plane,16,100,3.40003,3.12087,3.69299
+spliced,raw layer 5 (reference space),R2 bracketing,plane,18,100,3.23436,2.99932,3.50065
+spliced,raw layer 5 (reference space),R2 bracketing,plane,20,100,3.15113,2.89864,3.41337
+spliced,raw layer 5 (reference space),R2 bracketing,plane,22,100,2.90158,2.63607,3.1776
+spliced,raw layer 5 (reference space),R2 bracketing,plane,24,100,2.75172,2.46598,3.08338
 spliced,raw layer 5 (reference space),R3 turn,plane,-4,100,0,0,0
 spliced,raw layer 5 (reference space),R3 turn,plane,-2,100,0,0,0
-spliced,raw layer 5 (reference space),R3 turn,plane,0,100,1.3746,1.15733,1.59187
-spliced,raw layer 5 (reference space),R3 turn,plane,2,100,2.63401,2.28788,2.98014
-spliced,raw layer 5 (reference space),R3 turn,plane,4,100,3.0034,2.67023,3.33657
-spliced,raw layer 5 (reference space),R3 turn,plane,6,100,3.49371,3.14289,3.84452
-spliced,raw layer 5 (reference space),R3 turn,plane,8,100,3.93045,3.54506,4.31584
-spliced,raw layer 5 (reference space),R3 turn,plane,10,100,4.39343,4.01749,4.76937
-spliced,raw layer 5 (reference space),R3 turn,plane,12,100,4.71597,4.3037,5.12823
-spliced,raw layer 5 (reference space),R3 turn,plane,14,100,3.75605,3.36699,4.1451
-spliced,raw layer 5 (reference space),R3 turn,plane,16,100,3.46334,3.0719,3.85479
-spliced,raw layer 5 (reference space),R3 turn,plane,18,100,3.15623,2.79643,3.51603
-spliced,raw layer 5 (reference space),R3 turn,plane,20,100,3.14567,2.80324,3.4881
-spliced,raw layer 5 (reference space),R3 turn,plane,22,100,2.85406,2.53353,3.17459
-spliced,raw layer 5 (reference space),R3 turn,plane,24,100,2.83344,2.47464,3.19224
+spliced,raw layer 5 (reference space),R3 turn,plane,0,100,1.3746,1.16245,1.59138
+spliced,raw layer 5 (reference space),R3 turn,plane,2,100,2.63401,2.28344,2.97643
+spliced,raw layer 5 (reference space),R3 turn,plane,4,100,3.0034,2.66618,3.33567
+spliced,raw layer 5 (reference space),R3 turn,plane,6,100,3.49371,3.15231,3.83343
+spliced,raw layer 5 (reference space),R3 turn,plane,8,100,3.93045,3.54647,4.33255
+spliced,raw layer 5 (reference space),R3 turn,plane,10,100,4.39343,3.99576,4.78585
+spliced,raw layer 5 (reference space),R3 turn,plane,12,100,4.71597,4.29568,5.13675
+spliced,raw layer 5 (reference space),R3 turn,plane,14,100,3.75605,3.39013,4.17796
+spliced,raw layer 5 (reference space),R3 turn,plane,16,100,3.46334,3.10193,3.86284
+spliced,raw layer 5 (reference space),R3 turn,plane,18,100,3.15623,2.79159,3.50368
+spliced,raw layer 5 (reference space),R3 turn,plane,20,100,3.14567,2.81815,3.48385
+spliced,raw layer 5 (reference space),R3 turn,plane,22,100,2.85406,2.54669,3.18321
+spliced,raw layer 5 (reference space),R3 turn,plane,24,100,2.83344,2.48129,3.19659
 spliced,raw layer 5 (reference space),control_legal,plane,-4,100,0,0,0
 spliced,raw layer 5 (reference space),control_legal,plane,-2,100,0,0,0
-spliced,raw layer 5 (reference space),control_legal,plane,0,100,1.25362,1.06401,1.44322
-spliced,raw layer 5 (reference space),control_legal,plane,2,100,2.17429,1.84856,2.50003
-spliced,raw layer 5 (reference space),control_legal,plane,4,100,2.93622,2.53367,3.33877
-spliced,raw layer 5 (reference space),control_legal,plane,6,100,3.34239,2.94349,3.74129
-spliced,raw layer 5 (reference space),control_legal,plane,8,100,3.65086,3.21274,4.08897
-spliced,raw layer 5 (reference space),control_legal,plane,10,100,4.04201,3.59877,4.48525
-spliced,raw layer 5 (reference space),control_legal,plane,12,100,4.19276,3.75352,4.632
-spliced,raw layer 5 (reference space),control_legal,plane,14,100,3.82566,3.42185,4.22948
-spliced,raw layer 5 (reference space),control_legal,plane,16,100,3.33603,2.9834,3.68866
-spliced,raw layer 5 (reference space),control_legal,plane,18,100,3.15451,2.8119,3.49712
-spliced,raw layer 5 (reference space),control_legal,plane,20,100,3.05605,2.74323,3.36887
-spliced,raw layer 5 (reference space),control_legal,plane,22,100,2.82798,2.55376,3.1022
-spliced,raw layer 5 (reference space),control_legal,plane,24,100,2.80771,2.5078,3.10761
+spliced,raw layer 5 (reference space),control_legal,plane,0,100,1.25362,1.08135,1.44034
+spliced,raw layer 5 (reference space),control_legal,plane,2,100,2.17429,1.86443,2.51273
+spliced,raw layer 5 (reference space),control_legal,plane,4,100,2.93622,2.55364,3.38107
+spliced,raw layer 5 (reference space),control_legal,plane,6,100,3.34239,2.96986,3.75217
+spliced,raw layer 5 (reference space),control_legal,plane,8,100,3.65086,3.20363,4.09398
+spliced,raw layer 5 (reference space),control_legal,plane,10,100,4.04201,3.61733,4.47425
+spliced,raw layer 5 (reference space),control_legal,plane,12,100,4.19276,3.78354,4.63727
+spliced,raw layer 5 (reference space),control_legal,plane,14,100,3.82566,3.44157,4.22112
+spliced,raw layer 5 (reference space),control_legal,plane,16,100,3.33603,2.99003,3.71068
+spliced,raw layer 5 (reference space),control_legal,plane,18,100,3.15451,2.80725,3.49086
+spliced,raw layer 5 (reference space),control_legal,plane,20,100,3.05605,2.75224,3.36449
+spliced,raw layer 5 (reference space),control_legal,plane,22,100,2.82798,2.55371,3.12157
+spliced,raw layer 5 (reference space),control_legal,plane,24,100,2.80771,2.51677,3.13707
 spliced,PAnneal ($L_0$ 260),R1 placement,plane,-4,100,0,0,0
 spliced,PAnneal ($L_0$ 260),R1 placement,plane,-2,100,0,0,0
-spliced,PAnneal ($L_0$ 260),R1 placement,plane,0,100,1.58259,1.37557,1.78961
-spliced,PAnneal ($L_0$ 260),R1 placement,plane,2,100,2.41038,2.13418,2.68659
-spliced,PAnneal ($L_0$ 260),R1 placement,plane,4,100,2.80727,2.56093,3.05361
-spliced,PAnneal ($L_0$ 260),R1 placement,plane,6,100,3.10615,2.82685,3.38545
-spliced,PAnneal ($L_0$ 260),R1 placement,plane,8,100,3.57093,3.26178,3.88009
-spliced,PAnneal ($L_0$ 260),R1 placement,plane,10,100,3.93596,3.61094,4.26099
-spliced,PAnneal ($L_0$ 260),R1 placement,plane,12,100,4.07553,3.76383,4.38722
-spliced,PAnneal ($L_0$ 260),R1 placement,plane,14,100,3.17589,2.88873,3.46306
-spliced,PAnneal ($L_0$ 260),R1 placement,plane,16,100,3.04089,2.74966,3.33213
-spliced,PAnneal ($L_0$ 260),R1 placement,plane,18,100,2.8775,2.59244,3.16257
-spliced,PAnneal ($L_0$ 260),R1 placement,plane,20,100,2.78649,2.48253,3.09045
-spliced,PAnneal ($L_0$ 260),R1 placement,plane,22,100,2.61471,2.32451,2.9049
-spliced,PAnneal ($L_0$ 260),R1 placement,plane,24,100,2.62525,2.30557,2.94493
+spliced,PAnneal ($L_0$ 260),R1 placement,plane,0,100,1.58259,1.37765,1.788
+spliced,PAnneal ($L_0$ 260),R1 placement,plane,2,100,2.41038,2.1354,2.68878
+spliced,PAnneal ($L_0$ 260),R1 placement,plane,4,100,2.80727,2.56704,3.0539
+spliced,PAnneal ($L_0$ 260),R1 placement,plane,6,100,3.10615,2.84041,3.39664
+spliced,PAnneal ($L_0$ 260),R1 placement,plane,8,100,3.57093,3.25501,3.88147
+spliced,PAnneal ($L_0$ 260),R1 placement,plane,10,100,3.93596,3.62865,4.25905
+spliced,PAnneal ($L_0$ 260),R1 placement,plane,12,100,4.07553,3.78391,4.37985
+spliced,PAnneal ($L_0$ 260),R1 placement,plane,14,100,3.17589,2.89827,3.48396
+spliced,PAnneal ($L_0$ 260),R1 placement,plane,16,100,3.04089,2.74307,3.32223
+spliced,PAnneal ($L_0$ 260),R1 placement,plane,18,100,2.8775,2.60553,3.15805
+spliced,PAnneal ($L_0$ 260),R1 placement,plane,20,100,2.78649,2.49214,3.07748
+spliced,PAnneal ($L_0$ 260),R1 placement,plane,22,100,2.61471,2.34291,2.92936
+spliced,PAnneal ($L_0$ 260),R1 placement,plane,24,100,2.62525,2.32374,2.96314
 spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,-4,100,0,0,0
 spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,-2,100,0,0,0
-spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,0,100,1.49771,1.32192,1.67349
-spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,2,100,2.75874,2.50623,3.01124
-spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,4,100,3.15267,2.90762,3.39772
-spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,6,100,3.62471,3.34381,3.9056
-spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,8,100,4.11221,3.81158,4.41284
-spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,10,100,4.54659,4.24346,4.84972
-spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,12,100,4.88684,4.58429,5.18939
-spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,14,100,3.77908,3.52142,4.03674
-spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,16,100,3.6861,3.41211,3.96009
-spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,18,100,3.4516,3.19001,3.71319
-spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,20,100,3.14734,2.88781,3.40686
-spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,22,100,2.87715,2.61992,3.13439
-spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,24,100,2.7744,2.48143,3.06736
+spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,0,100,1.49771,1.31587,1.67627
+spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,2,100,2.75874,2.50439,3.01645
+spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,4,100,3.15267,2.91914,3.40047
+spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,6,100,3.62471,3.36436,3.90848
+spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,8,100,4.11221,3.81624,4.42933
+spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,10,100,4.54659,4.24199,4.85252
+spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,12,100,4.88684,4.594,5.17992
+spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,14,100,3.77908,3.5373,4.06007
+spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,16,100,3.6861,3.4271,3.96847
+spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,18,100,3.4516,3.20759,3.71503
+spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,20,100,3.14734,2.8882,3.39929
+spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,22,100,2.87715,2.62734,3.13243
+spliced,PAnneal ($L_0$ 260),R2 bracketing,plane,24,100,2.7744,2.48665,3.09005
 spliced,PAnneal ($L_0$ 260),R3 turn,plane,-4,100,0,0,0
 spliced,PAnneal ($L_0$ 260),R3 turn,plane,-2,100,0,0,0
-spliced,PAnneal ($L_0$ 260),R3 turn,plane,0,100,1.41637,1.19938,1.63337
-spliced,PAnneal ($L_0$ 260),R3 turn,plane,2,100,2.45799,2.14364,2.77234
-spliced,PAnneal ($L_0$ 260),R3 turn,plane,4,100,2.85414,2.52304,3.18524
-spliced,PAnneal ($L_0$ 260),R3 turn,plane,6,100,3.27472,2.90367,3.64577
-spliced,PAnneal ($L_0$ 260),R3 turn,plane,8,100,3.81896,3.41489,4.22302
-spliced,PAnneal ($L_0$ 260),R3 turn,plane,10,100,4.23677,3.82068,4.65286
-spliced,PAnneal ($L_0$ 260),R3 turn,plane,12,100,4.64885,4.23125,5.06645
-spliced,PAnneal ($L_0$ 260),R3 turn,plane,14,100,3.82561,3.43852,4.2127
-spliced,PAnneal ($L_0$ 260),R3 turn,plane,16,100,3.57282,3.18446,3.96117
-spliced,PAnneal ($L_0$ 260),R3 turn,plane,18,100,3.23323,2.89092,3.57555
-spliced,PAnneal ($L_0$ 260),R3 turn,plane,20,100,3.02491,2.71191,3.3379
-spliced,PAnneal ($L_0$ 260),R3 turn,plane,22,100,2.77374,2.45124,3.09624
-spliced,PAnneal ($L_0$ 260),R3 turn,plane,24,100,2.78233,2.45529,3.10936
+spliced,PAnneal ($L_0$ 260),R3 turn,plane,0,100,1.41637,1.20277,1.63909
+spliced,PAnneal ($L_0$ 260),R3 turn,plane,2,100,2.45799,2.13955,2.7616
+spliced,PAnneal ($L_0$ 260),R3 turn,plane,4,100,2.85414,2.54333,3.18747
+spliced,PAnneal ($L_0$ 260),R3 turn,plane,6,100,3.27472,2.92023,3.64398
+spliced,PAnneal ($L_0$ 260),R3 turn,plane,8,100,3.81896,3.41021,4.22608
+spliced,PAnneal ($L_0$ 260),R3 turn,plane,10,100,4.23677,3.7991,4.65024
+spliced,PAnneal ($L_0$ 260),R3 turn,plane,12,100,4.64885,4.20118,5.08006
+spliced,PAnneal ($L_0$ 260),R3 turn,plane,14,100,3.82561,3.46863,4.22684
+spliced,PAnneal ($L_0$ 260),R3 turn,plane,16,100,3.57282,3.21539,3.96668
+spliced,PAnneal ($L_0$ 260),R3 turn,plane,18,100,3.23323,2.9013,3.56015
+spliced,PAnneal ($L_0$ 260),R3 turn,plane,20,100,3.02491,2.72796,3.35125
+spliced,PAnneal ($L_0$ 260),R3 turn,plane,22,100,2.77374,2.44008,3.08849
+spliced,PAnneal ($L_0$ 260),R3 turn,plane,24,100,2.78233,2.4514,3.11677
 spliced,PAnneal ($L_0$ 260),control_legal,plane,-4,100,0,0,0
 spliced,PAnneal ($L_0$ 260),control_legal,plane,-2,100,0,0,0
-spliced,PAnneal ($L_0$ 260),control_legal,plane,0,100,1.27159,1.07197,1.4712
-spliced,PAnneal ($L_0$ 260),control_legal,plane,2,100,2.35581,2.01432,2.6973
-spliced,PAnneal ($L_0$ 260),control_legal,plane,4,100,2.98388,2.59247,3.37528
-spliced,PAnneal ($L_0$ 260),control_legal,plane,6,100,3.41739,3.01567,3.81911
-spliced,PAnneal ($L_0$ 260),control_legal,plane,8,100,3.80558,3.36573,4.24542
-spliced,PAnneal ($L_0$ 260),control_legal,plane,10,100,4.13647,3.69359,4.57935
-spliced,PAnneal ($L_0$ 260),control_legal,plane,12,100,4.28386,3.83838,4.72935
-spliced,PAnneal ($L_0$ 260),control_legal,plane,14,100,3.84467,3.42971,4.25963
-spliced,PAnneal ($L_0$ 260),control_legal,plane,16,100,3.42175,3.05896,3.78454
-spliced,PAnneal ($L_0$ 260),control_legal,plane,18,100,3.22821,2.87311,3.58331
-spliced,PAnneal ($L_0$ 260),control_legal,plane,20,100,2.96711,2.62977,3.30444
-spliced,PAnneal ($L_0$ 260),control_legal,plane,22,100,2.74339,2.44964,3.03713
-spliced,PAnneal ($L_0$ 260),control_legal,plane,24,100,2.77444,2.45901,3.08987
+spliced,PAnneal ($L_0$ 260),control_legal,plane,0,100,1.27159,1.08727,1.4648
+spliced,PAnneal ($L_0$ 260),control_legal,plane,2,100,2.35581,2.04286,2.7268
+spliced,PAnneal ($L_0$ 260),control_legal,plane,4,100,2.98388,2.60941,3.38723
+spliced,PAnneal ($L_0$ 260),control_legal,plane,6,100,3.41739,3.04052,3.82013
+spliced,PAnneal ($L_0$ 260),control_legal,plane,8,100,3.80558,3.3769,4.26134
+spliced,PAnneal ($L_0$ 260),control_legal,plane,10,100,4.13647,3.7056,4.59216
+spliced,PAnneal ($L_0$ 260),control_legal,plane,12,100,4.28386,3.87153,4.75939
+spliced,PAnneal ($L_0$ 260),control_legal,plane,14,100,3.84467,3.43681,4.25749
+spliced,PAnneal ($L_0$ 260),control_legal,plane,16,100,3.42175,3.06016,3.80666
+spliced,PAnneal ($L_0$ 260),control_legal,plane,18,100,3.22821,2.88532,3.58699
+spliced,PAnneal ($L_0$ 260),control_legal,plane,20,100,2.96711,2.61834,3.29753
+spliced,PAnneal ($L_0$ 260),control_legal,plane,22,100,2.74339,2.44692,3.03632
+spliced,PAnneal ($L_0$ 260),control_legal,plane,24,100,2.77444,2.47211,3.13102
 spliced,Standard ($L_0$ 209),R1 placement,plane,-4,100,0,0,0
 spliced,Standard ($L_0$ 209),R1 placement,plane,-2,100,0,0,0
-spliced,Standard ($L_0$ 209),R1 placement,plane,0,100,1.58076,1.37396,1.78756
-spliced,Standard ($L_0$ 209),R1 placement,plane,2,100,2.32042,2.08217,2.55867
-spliced,Standard ($L_0$ 209),R1 placement,plane,4,100,2.77829,2.51666,3.03992
-spliced,Standard ($L_0$ 209),R1 placement,plane,6,100,3.07649,2.78846,3.36452
-spliced,Standard ($L_0$ 209),R1 placement,plane,8,100,3.49044,3.15929,3.82159
-spliced,Standard ($L_0$ 209),R1 placement,plane,10,100,4.02122,3.6723,4.37014
-spliced,Standard ($L_0$ 209),R1 placement,plane,12,100,4.16708,3.8478,4.48635
-spliced,Standard ($L_0$ 209),R1 placement,plane,14,100,3.37504,3.07724,3.67285
-spliced,Standard ($L_0$ 209),R1 placement,plane,16,100,3.1599,2.87224,3.44756
-spliced,Standard ($L_0$ 209),R1 placement,plane,18,100,3.05263,2.75022,3.35503
-spliced,Standard ($L_0$ 209),R1 placement,plane,20,100,3.02466,2.70783,3.34148
-spliced,Standard ($L_0$ 209),R1 placement,plane,22,100,2.80487,2.50874,3.10099
-spliced,Standard ($L_0$ 209),R1 placement,plane,24,100,2.78202,2.43999,3.12405
+spliced,Standard ($L_0$ 209),R1 placement,plane,0,100,1.58076,1.37018,1.79773
+spliced,Standard ($L_0$ 209),R1 placement,plane,2,100,2.32042,2.08233,2.55998
+spliced,Standard ($L_0$ 209),R1 placement,plane,4,100,2.77829,2.52049,3.05708
+spliced,Standard ($L_0$ 209),R1 placement,plane,6,100,3.07649,2.78097,3.37199
+spliced,Standard ($L_0$ 209),R1 placement,plane,8,100,3.49044,3.15207,3.83661
+spliced,Standard ($L_0$ 209),R1 placement,plane,10,100,4.02122,3.69058,4.36247
+spliced,Standard ($L_0$ 209),R1 placement,plane,12,100,4.16708,3.88119,4.48101
+spliced,Standard ($L_0$ 209),R1 placement,plane,14,100,3.37504,3.08281,3.67519
+spliced,Standard ($L_0$ 209),R1 placement,plane,16,100,3.1599,2.87509,3.43563
+spliced,Standard ($L_0$ 209),R1 placement,plane,18,100,3.05263,2.77497,3.3571
+spliced,Standard ($L_0$ 209),R1 placement,plane,20,100,3.02466,2.72315,3.33617
+spliced,Standard ($L_0$ 209),R1 placement,plane,22,100,2.80487,2.5255,3.12327
+spliced,Standard ($L_0$ 209),R1 placement,plane,24,100,2.78202,2.46568,3.14198
 spliced,Standard ($L_0$ 209),R2 bracketing,plane,-4,100,0,0,0
 spliced,Standard ($L_0$ 209),R2 bracketing,plane,-2,100,0,0,0
-spliced,Standard ($L_0$ 209),R2 bracketing,plane,0,100,1.34135,1.18054,1.50216
-spliced,Standard ($L_0$ 209),R2 bracketing,plane,2,100,2.47552,2.23768,2.71336
-spliced,Standard ($L_0$ 209),R2 bracketing,plane,4,100,2.9311,2.68065,3.18155
-spliced,Standard ($L_0$ 209),R2 bracketing,plane,6,100,3.26303,3.01901,3.50705
-spliced,Standard ($L_0$ 209),R2 bracketing,plane,8,100,3.74044,3.48678,3.99411
-spliced,Standard ($L_0$ 209),R2 bracketing,plane,10,100,4.28526,4.02825,4.54228
-spliced,Standard ($L_0$ 209),R2 bracketing,plane,12,100,4.39787,4.13572,4.66002
-spliced,Standard ($L_0$ 209),R2 bracketing,plane,14,100,3.64443,3.39259,3.89628
-spliced,Standard ($L_0$ 209),R2 bracketing,plane,16,100,3.29703,3.02075,3.5733
-spliced,Standard ($L_0$ 209),R2 bracketing,plane,18,100,3.24596,2.96488,3.52703
-spliced,Standard ($L_0$ 209),R2 bracketing,plane,20,100,3.25523,2.97122,3.53925
-spliced,Standard ($L_0$ 209),R2 bracketing,plane,22,100,3.0287,2.76871,3.28869
-spliced,Standard ($L_0$ 209),R2 bracketing,plane,24,100,3.06552,2.74652,3.38451
+spliced,Standard ($L_0$ 209),R2 bracketing,plane,0,100,1.34135,1.18632,1.50649
+spliced,Standard ($L_0$ 209),R2 bracketing,plane,2,100,2.47552,2.23792,2.71751
+spliced,Standard ($L_0$ 209),R2 bracketing,plane,4,100,2.9311,2.67731,3.19731
+spliced,Standard ($L_0$ 209),R2 bracketing,plane,6,100,3.26303,3.00246,3.51704
+spliced,Standard ($L_0$ 209),R2 bracketing,plane,8,100,3.74044,3.47748,4.00909
+spliced,Standard ($L_0$ 209),R2 bracketing,plane,10,100,4.28526,4.01742,4.53962
+spliced,Standard ($L_0$ 209),R2 bracketing,plane,12,100,4.39787,4.11875,4.66514
+spliced,Standard ($L_0$ 209),R2 bracketing,plane,14,100,3.64443,3.38001,3.90198
+spliced,Standard ($L_0$ 209),R2 bracketing,plane,16,100,3.29703,3.03141,3.57497
+spliced,Standard ($L_0$ 209),R2 bracketing,plane,18,100,3.24596,3.00891,3.52888
+spliced,Standard ($L_0$ 209),R2 bracketing,plane,20,100,3.25523,2.97434,3.53055
+spliced,Standard ($L_0$ 209),R2 bracketing,plane,22,100,3.0287,2.7748,3.31083
+spliced,Standard ($L_0$ 209),R2 bracketing,plane,24,100,3.06552,2.77913,3.41276
 spliced,Standard ($L_0$ 209),R3 turn,plane,-4,100,0,0,0
 spliced,Standard ($L_0$ 209),R3 turn,plane,-2,100,0,0,0
-spliced,Standard ($L_0$ 209),R3 turn,plane,0,100,1.23242,1.04101,1.42383
-spliced,Standard ($L_0$ 209),R3 turn,plane,2,100,2.27488,1.97631,2.57346
-spliced,Standard ($L_0$ 209),R3 turn,plane,4,100,2.86981,2.55302,3.1866
-spliced,Standard ($L_0$ 209),R3 turn,plane,6,100,3.24311,2.92674,3.55949
-spliced,Standard ($L_0$ 209),R3 turn,plane,8,100,3.66672,3.28785,4.04559
-spliced,Standard ($L_0$ 209),R3 turn,plane,10,100,4.22274,3.85531,4.59017
-spliced,Standard ($L_0$ 209),R3 turn,plane,12,100,4.44725,4.05939,4.83511
-spliced,Standard ($L_0$ 209),R3 turn,plane,14,100,3.76498,3.39103,4.13892
-spliced,Standard ($L_0$ 209),R3 turn,plane,16,100,3.45216,3.08823,3.81608
-spliced,Standard ($L_0$ 209),R3 turn,plane,18,100,3.22648,2.83867,3.61429
-spliced,Standard ($L_0$ 209),R3 turn,plane,20,100,3.28211,2.94464,3.61959
-spliced,Standard ($L_0$ 209),R3 turn,plane,22,100,3.178,2.82035,3.53564
-spliced,Standard ($L_0$ 209),R3 turn,plane,24,100,3.10466,2.75296,3.45635
+spliced,Standard ($L_0$ 209),R3 turn,plane,0,100,1.23242,1.05113,1.43491
+spliced,Standard ($L_0$ 209),R3 turn,plane,2,100,2.27488,1.99956,2.59617
+spliced,Standard ($L_0$ 209),R3 turn,plane,4,100,2.86981,2.55108,3.19058
+spliced,Standard ($L_0$ 209),R3 turn,plane,6,100,3.24311,2.91643,3.58969
+spliced,Standard ($L_0$ 209),R3 turn,plane,8,100,3.66672,3.28567,4.03704
+spliced,Standard ($L_0$ 209),R3 turn,plane,10,100,4.22274,3.81982,4.57224
+spliced,Standard ($L_0$ 209),R3 turn,plane,12,100,4.44725,4.06405,4.84237
+spliced,Standard ($L_0$ 209),R3 turn,plane,14,100,3.76498,3.41439,4.16401
+spliced,Standard ($L_0$ 209),R3 turn,plane,16,100,3.45216,3.07479,3.8023
+spliced,Standard ($L_0$ 209),R3 turn,plane,18,100,3.22648,2.84063,3.59607
+spliced,Standard ($L_0$ 209),R3 turn,plane,20,100,3.28211,2.95001,3.61443
+spliced,Standard ($L_0$ 209),R3 turn,plane,22,100,3.178,2.84331,3.51887
+spliced,Standard ($L_0$ 209),R3 turn,plane,24,100,3.10466,2.77985,3.47848
 spliced,Standard ($L_0$ 209),control_legal,plane,-4,100,0,0,0
 spliced,Standard ($L_0$ 209),control_legal,plane,-2,100,0,0,0
-spliced,Standard ($L_0$ 209),control_legal,plane,0,100,1.23791,1.05042,1.4254
-spliced,Standard ($L_0$ 209),control_legal,plane,2,100,2.22721,1.90943,2.54499
-spliced,Standard ($L_0$ 209),control_legal,plane,4,100,2.94564,2.55056,3.34071
-spliced,Standard ($L_0$ 209),control_legal,plane,6,100,3.38463,2.99989,3.76937
-spliced,Standard ($L_0$ 209),control_legal,plane,8,100,3.83418,3.43494,4.23342
-spliced,Standard ($L_0$ 209),control_legal,plane,10,100,4.3814,3.95965,4.80316
-spliced,Standard ($L_0$ 209),control_legal,plane,12,100,4.54533,4.11407,4.97659
-spliced,Standard ($L_0$ 209),control_legal,plane,14,100,4.04576,3.60851,4.48302
-spliced,Standard ($L_0$ 209),control_legal,plane,16,100,3.36942,2.99418,3.74465
-spliced,Standard ($L_0$ 209),control_legal,plane,18,100,3.13979,2.78714,3.49245
-spliced,Standard ($L_0$ 209),control_legal,plane,20,100,3.13779,2.82341,3.45216
-spliced,Standard ($L_0$ 209),control_legal,plane,22,100,2.86187,2.57462,3.14913
-spliced,Standard ($L_0$ 209),control_legal,plane,24,100,3.01651,2.66793,3.36509
+spliced,Standard ($L_0$ 209),control_legal,plane,0,100,1.23791,1.06104,1.43103
+spliced,Standard ($L_0$ 209),control_legal,plane,2,100,2.22721,1.93245,2.53726
+spliced,Standard ($L_0$ 209),control_legal,plane,4,100,2.94564,2.55882,3.37206
+spliced,Standard ($L_0$ 209),control_legal,plane,6,100,3.38463,3.03495,3.76307
+spliced,Standard ($L_0$ 209),control_legal,plane,8,100,3.83418,3.46754,4.22059
+spliced,Standard ($L_0$ 209),control_legal,plane,10,100,4.3814,3.98483,4.80096
+spliced,Standard ($L_0$ 209),control_legal,plane,12,100,4.54533,4.1603,4.95694
+spliced,Standard ($L_0$ 209),control_legal,plane,14,100,4.04576,3.6353,4.4997
+spliced,Standard ($L_0$ 209),control_legal,plane,16,100,3.36942,2.99613,3.75555
+spliced,Standard ($L_0$ 209),control_legal,plane,18,100,3.13979,2.77774,3.49191
+spliced,Standard ($L_0$ 209),control_legal,plane,20,100,3.13779,2.81923,3.44098
+spliced,Standard ($L_0$ 209),control_legal,plane,22,100,2.86187,2.58757,3.16279
+spliced,Standard ($L_0$ 209),control_legal,plane,24,100,3.01651,2.69186,3.37474
 spliced,GatedSAE ($L_0$ 220),R1 placement,plane,-4,100,0,0,0
 spliced,GatedSAE ($L_0$ 220),R1 placement,plane,-2,100,0,0,0
-spliced,GatedSAE ($L_0$ 220),R1 placement,plane,0,100,1.77612,1.58594,1.96629
-spliced,GatedSAE ($L_0$ 220),R1 placement,plane,2,100,2.51465,2.27684,2.75246
-spliced,GatedSAE ($L_0$ 220),R1 placement,plane,4,100,2.9856,2.71598,3.25521
-spliced,GatedSAE ($L_0$ 220),R1 placement,plane,6,100,3.30674,3.01842,3.59507
-spliced,GatedSAE ($L_0$ 220),R1 placement,plane,8,100,3.82337,3.50983,4.13691
-spliced,GatedSAE ($L_0$ 220),R1 placement,plane,10,100,4.15187,3.81318,4.49055
-spliced,GatedSAE ($L_0$ 220),R1 placement,plane,12,100,4.1469,3.84787,4.44593
-spliced,GatedSAE ($L_0$ 220),R1 placement,plane,14,100,3.39809,3.10375,3.69243
-spliced,GatedSAE ($L_0$ 220),R1 placement,plane,16,100,3.23306,2.93257,3.53355
-spliced,GatedSAE ($L_0$ 220),R1 placement,plane,18,100,3.09538,2.79012,3.40065
-spliced,GatedSAE ($L_0$ 220),R1 placement,plane,20,100,3.07555,2.76491,3.38619
-spliced,GatedSAE ($L_0$ 220),R1 placement,plane,22,100,2.93815,2.63973,3.23657
-spliced,GatedSAE ($L_0$ 220),R1 placement,plane,24,100,2.85017,2.51414,3.1862
+spliced,GatedSAE ($L_0$ 220),R1 placement,plane,0,100,1.72024,1.52152,1.92766
+spliced,GatedSAE ($L_0$ 220),R1 placement,plane,2,100,2.46181,2.22982,2.68626
+spliced,GatedSAE ($L_0$ 220),R1 placement,plane,4,100,3.00133,2.74779,3.24551
+spliced,GatedSAE ($L_0$ 220),R1 placement,plane,6,100,3.19454,2.91649,3.47433
+spliced,GatedSAE ($L_0$ 220),R1 placement,plane,8,100,3.64854,3.37163,3.93869
+spliced,GatedSAE ($L_0$ 220),R1 placement,plane,10,100,4.09524,3.78324,4.40557
+spliced,GatedSAE ($L_0$ 220),R1 placement,plane,12,100,4.23083,3.91672,4.54608
+spliced,GatedSAE ($L_0$ 220),R1 placement,plane,14,100,3.38551,3.07193,3.6811
+spliced,GatedSAE ($L_0$ 220),R1 placement,plane,16,100,3.13539,2.862,3.41062
+spliced,GatedSAE ($L_0$ 220),R1 placement,plane,18,100,2.98352,2.69596,3.26111
+spliced,GatedSAE ($L_0$ 220),R1 placement,plane,20,100,3.03662,2.74497,3.31084
+spliced,GatedSAE ($L_0$ 220),R1 placement,plane,22,100,2.88954,2.59567,3.21054
+spliced,GatedSAE ($L_0$ 220),R1 placement,plane,24,100,2.96541,2.64788,3.34534
 spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,-4,100,0,0,0
 spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,-2,100,0,0,0
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,0,100,1.44144,1.29536,1.58753
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,2,100,2.59571,2.37579,2.81563
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,4,100,3.15583,2.91526,3.3964
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,6,100,3.55032,3.28914,3.8115
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,8,100,4.11921,3.84874,4.38968
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,10,100,4.57317,4.29789,4.84846
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,12,100,4.61383,4.36505,4.86261
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,14,100,3.90822,3.64291,4.17353
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,16,100,3.72177,3.44379,3.99976
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,18,100,3.52953,3.25815,3.80091
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,20,100,3.39854,3.12759,3.66949
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,22,100,3.16946,2.90456,3.43436
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,24,100,3.06027,2.7459,3.37464
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,0,100,1.36203,1.20695,1.52211
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,2,100,2.44187,2.22262,2.67617
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,4,100,2.97579,2.75102,3.19525
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,6,100,3.37738,3.12973,3.62278
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,8,100,3.86483,3.62183,4.12908
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,10,100,4.38747,4.1364,4.64503
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,12,100,4.61947,4.34795,4.8702
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,14,100,3.79698,3.53053,4.04197
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,16,100,3.59961,3.34123,3.85588
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,18,100,3.44011,3.19068,3.71058
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,20,100,3.32138,3.06389,3.56777
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,22,100,3.11048,2.85604,3.40942
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,plane,24,100,3.16828,2.85747,3.52131
 spliced,GatedSAE ($L_0$ 220),R3 turn,plane,-4,100,0,0,0
 spliced,GatedSAE ($L_0$ 220),R3 turn,plane,-2,100,0,0,0
-spliced,GatedSAE ($L_0$ 220),R3 turn,plane,0,100,1.3902,1.20516,1.57523
-spliced,GatedSAE ($L_0$ 220),R3 turn,plane,2,100,2.37884,2.11676,2.64091
-spliced,GatedSAE ($L_0$ 220),R3 turn,plane,4,100,2.97285,2.67695,3.26874
-spliced,GatedSAE ($L_0$ 220),R3 turn,plane,6,100,3.36985,3.04137,3.69833
-spliced,GatedSAE ($L_0$ 220),R3 turn,plane,8,100,3.97315,3.59674,4.34956
-spliced,GatedSAE ($L_0$ 220),R3 turn,plane,10,100,4.33474,3.97554,4.69393
-spliced,GatedSAE ($L_0$ 220),R3 turn,plane,12,100,4.40953,4.04616,4.7729
-spliced,GatedSAE ($L_0$ 220),R3 turn,plane,14,100,3.9371,3.55717,4.31704
-spliced,GatedSAE ($L_0$ 220),R3 turn,plane,16,100,3.63003,3.26088,3.99918
-spliced,GatedSAE ($L_0$ 220),R3 turn,plane,18,100,3.34795,2.99839,3.69751
-spliced,GatedSAE ($L_0$ 220),R3 turn,plane,20,100,3.33875,3.0399,3.63761
-spliced,GatedSAE ($L_0$ 220),R3 turn,plane,22,100,3.13825,2.82536,3.45114
-spliced,GatedSAE ($L_0$ 220),R3 turn,plane,24,100,3.0471,2.69352,3.40069
+spliced,GatedSAE ($L_0$ 220),R3 turn,plane,0,100,1.30213,1.1216,1.48837
+spliced,GatedSAE ($L_0$ 220),R3 turn,plane,2,100,2.34484,2.09348,2.61599
+spliced,GatedSAE ($L_0$ 220),R3 turn,plane,4,100,2.85249,2.57791,3.14814
+spliced,GatedSAE ($L_0$ 220),R3 turn,plane,6,100,3.12845,2.82769,3.4537
+spliced,GatedSAE ($L_0$ 220),R3 turn,plane,8,100,3.67373,3.32472,4.02911
+spliced,GatedSAE ($L_0$ 220),R3 turn,plane,10,100,4.27213,3.92403,4.60298
+spliced,GatedSAE ($L_0$ 220),R3 turn,plane,12,100,4.51169,4.144,4.88023
+spliced,GatedSAE ($L_0$ 220),R3 turn,plane,14,100,3.89317,3.53065,4.2557
+spliced,GatedSAE ($L_0$ 220),R3 turn,plane,16,100,3.60231,3.23887,3.9938
+spliced,GatedSAE ($L_0$ 220),R3 turn,plane,18,100,3.40881,3.09435,3.71263
+spliced,GatedSAE ($L_0$ 220),R3 turn,plane,20,100,3.31123,3.021,3.62251
+spliced,GatedSAE ($L_0$ 220),R3 turn,plane,22,100,3.05307,2.74378,3.37652
+spliced,GatedSAE ($L_0$ 220),R3 turn,plane,24,100,3.24265,2.88389,3.6319
 spliced,GatedSAE ($L_0$ 220),control_legal,plane,-4,100,0,0,0
 spliced,GatedSAE ($L_0$ 220),control_legal,plane,-2,100,0,0,0
-spliced,GatedSAE ($L_0$ 220),control_legal,plane,0,100,1.29456,1.09074,1.49839
-spliced,GatedSAE ($L_0$ 220),control_legal,plane,2,100,2.26233,1.93348,2.59118
-spliced,GatedSAE ($L_0$ 220),control_legal,plane,4,100,2.9354,2.53385,3.33695
-spliced,GatedSAE ($L_0$ 220),control_legal,plane,6,100,3.4418,3.06693,3.81668
-spliced,GatedSAE ($L_0$ 220),control_legal,plane,8,100,3.96689,3.57675,4.35703
-spliced,GatedSAE ($L_0$ 220),control_legal,plane,10,100,4.32116,3.95137,4.69094
-spliced,GatedSAE ($L_0$ 220),control_legal,plane,12,100,4.35005,3.97614,4.72395
-spliced,GatedSAE ($L_0$ 220),control_legal,plane,14,100,4.15696,3.75249,4.56143
-spliced,GatedSAE ($L_0$ 220),control_legal,plane,16,100,3.61332,3.2495,3.97713
-spliced,GatedSAE ($L_0$ 220),control_legal,plane,18,100,3.4127,3.08221,3.74319
-spliced,GatedSAE ($L_0$ 220),control_legal,plane,20,100,3.30456,3.02184,3.58727
-spliced,GatedSAE ($L_0$ 220),control_legal,plane,22,100,3.06717,2.78598,3.34837
-spliced,GatedSAE ($L_0$ 220),control_legal,plane,24,100,3.06045,2.71753,3.40338
+spliced,GatedSAE ($L_0$ 220),control_legal,plane,0,100,1.34193,1.14796,1.54654
+spliced,GatedSAE ($L_0$ 220),control_legal,plane,2,100,2.19982,1.90516,2.51527
+spliced,GatedSAE ($L_0$ 220),control_legal,plane,4,100,2.82162,2.45492,3.22202
+spliced,GatedSAE ($L_0$ 220),control_legal,plane,6,100,3.11539,2.75622,3.52047
+spliced,GatedSAE ($L_0$ 220),control_legal,plane,8,100,3.58021,3.18779,4.00401
+spliced,GatedSAE ($L_0$ 220),control_legal,plane,10,100,4.26372,3.85561,4.67804
+spliced,GatedSAE ($L_0$ 220),control_legal,plane,12,100,4.38177,3.96619,4.80161
+spliced,GatedSAE ($L_0$ 220),control_legal,plane,14,100,4.10615,3.72072,4.49831
+spliced,GatedSAE ($L_0$ 220),control_legal,plane,16,100,3.6468,3.29339,4.03187
+spliced,GatedSAE ($L_0$ 220),control_legal,plane,18,100,3.45512,3.08734,3.78684
+spliced,GatedSAE ($L_0$ 220),control_legal,plane,20,100,3.43645,3.11717,3.74073
+spliced,GatedSAE ($L_0$ 220),control_legal,plane,22,100,3.2291,2.92941,3.53319
+spliced,GatedSAE ($L_0$ 220),control_legal,plane,24,100,3.18412,2.86445,3.54004
 spliced,TopK ($L_0$ 220),R1 placement,plane,-4,100,0,0,0
 spliced,TopK ($L_0$ 220),R1 placement,plane,-2,100,0,0,0
-spliced,TopK ($L_0$ 220),R1 placement,plane,0,100,1.60553,1.39546,1.81559
-spliced,TopK ($L_0$ 220),R1 placement,plane,2,100,2.36337,2.10174,2.625
-spliced,TopK ($L_0$ 220),R1 placement,plane,4,100,2.86941,2.58915,3.14967
-spliced,TopK ($L_0$ 220),R1 placement,plane,6,100,3.07821,2.79014,3.36628
-spliced,TopK ($L_0$ 220),R1 placement,plane,8,100,3.48111,3.17764,3.78458
-spliced,TopK ($L_0$ 220),R1 placement,plane,10,100,3.82539,3.5071,4.14368
-spliced,TopK ($L_0$ 220),R1 placement,plane,12,100,3.92189,3.61619,4.22758
-spliced,TopK ($L_0$ 220),R1 placement,plane,14,100,3.16392,2.86956,3.45828
-spliced,TopK ($L_0$ 220),R1 placement,plane,16,100,3.0264,2.73725,3.31556
-spliced,TopK ($L_0$ 220),R1 placement,plane,18,100,2.86136,2.58099,3.14174
-spliced,TopK ($L_0$ 220),R1 placement,plane,20,100,2.79785,2.51725,3.07846
-spliced,TopK ($L_0$ 220),R1 placement,plane,22,100,2.6329,2.33684,2.92895
-spliced,TopK ($L_0$ 220),R1 placement,plane,24,100,2.66488,2.31382,3.01594
+spliced,TopK ($L_0$ 220),R1 placement,plane,0,100,1.60553,1.39947,1.81677
+spliced,TopK ($L_0$ 220),R1 placement,plane,2,100,2.36337,2.11514,2.63564
+spliced,TopK ($L_0$ 220),R1 placement,plane,4,100,2.86941,2.5937,3.16529
+spliced,TopK ($L_0$ 220),R1 placement,plane,6,100,3.07821,2.77759,3.37376
+spliced,TopK ($L_0$ 220),R1 placement,plane,8,100,3.48111,3.17354,3.78798
+spliced,TopK ($L_0$ 220),R1 placement,plane,10,100,3.82539,3.50157,4.14901
+spliced,TopK ($L_0$ 220),R1 placement,plane,12,100,3.92189,3.61078,4.23024
+spliced,TopK ($L_0$ 220),R1 placement,plane,14,100,3.16392,2.8699,3.4658
+spliced,TopK ($L_0$ 220),R1 placement,plane,16,100,3.0264,2.73481,3.31895
+spliced,TopK ($L_0$ 220),R1 placement,plane,18,100,2.86136,2.57337,3.14226
+spliced,TopK ($L_0$ 220),R1 placement,plane,20,100,2.79785,2.51761,3.08237
+spliced,TopK ($L_0$ 220),R1 placement,plane,22,100,2.6329,2.35637,2.95158
+spliced,TopK ($L_0$ 220),R1 placement,plane,24,100,2.66488,2.33203,3.0672
 spliced,TopK ($L_0$ 220),R2 bracketing,plane,-4,100,0,0,0
 spliced,TopK ($L_0$ 220),R2 bracketing,plane,-2,100,0,0,0
-spliced,TopK ($L_0$ 220),R2 bracketing,plane,0,100,1.34298,1.1749,1.51106
-spliced,TopK ($L_0$ 220),R2 bracketing,plane,2,100,2.55187,2.30333,2.80041
-spliced,TopK ($L_0$ 220),R2 bracketing,plane,4,100,3.01747,2.76202,3.27293
-spliced,TopK ($L_0$ 220),R2 bracketing,plane,6,100,3.51804,3.25461,3.78148
-spliced,TopK ($L_0$ 220),R2 bracketing,plane,8,100,3.96175,3.67435,4.24916
-spliced,TopK ($L_0$ 220),R2 bracketing,plane,10,100,4.40773,4.11511,4.70036
-spliced,TopK ($L_0$ 220),R2 bracketing,plane,12,100,4.76959,4.46674,5.07244
-spliced,TopK ($L_0$ 220),R2 bracketing,plane,14,100,3.7482,3.49247,4.00393
-spliced,TopK ($L_0$ 220),R2 bracketing,plane,16,100,3.55674,3.2809,3.83257
-spliced,TopK ($L_0$ 220),R2 bracketing,plane,18,100,3.38232,3.11706,3.64757
-spliced,TopK ($L_0$ 220),R2 bracketing,plane,20,100,3.2393,2.98964,3.48896
-spliced,TopK ($L_0$ 220),R2 bracketing,plane,22,100,2.95148,2.66807,3.23489
-spliced,TopK ($L_0$ 220),R2 bracketing,plane,24,100,2.90921,2.57536,3.24306
+spliced,TopK ($L_0$ 220),R2 bracketing,plane,0,100,1.34298,1.177,1.51297
+spliced,TopK ($L_0$ 220),R2 bracketing,plane,2,100,2.55187,2.32201,2.78367
+spliced,TopK ($L_0$ 220),R2 bracketing,plane,4,100,3.01747,2.74337,3.28076
+spliced,TopK ($L_0$ 220),R2 bracketing,plane,6,100,3.51804,3.25892,3.77139
+spliced,TopK ($L_0$ 220),R2 bracketing,plane,8,100,3.96175,3.6769,4.23922
+spliced,TopK ($L_0$ 220),R2 bracketing,plane,10,100,4.40773,4.12213,4.68272
+spliced,TopK ($L_0$ 220),R2 bracketing,plane,12,100,4.76959,4.4603,5.04475
+spliced,TopK ($L_0$ 220),R2 bracketing,plane,14,100,3.7482,3.48349,4.00808
+spliced,TopK ($L_0$ 220),R2 bracketing,plane,16,100,3.55674,3.29293,3.8375
+spliced,TopK ($L_0$ 220),R2 bracketing,plane,18,100,3.38232,3.12959,3.66746
+spliced,TopK ($L_0$ 220),R2 bracketing,plane,20,100,3.2393,2.99597,3.47566
+spliced,TopK ($L_0$ 220),R2 bracketing,plane,22,100,2.95148,2.67638,3.24234
+spliced,TopK ($L_0$ 220),R2 bracketing,plane,24,100,2.90921,2.58286,3.2777
 spliced,TopK ($L_0$ 220),R3 turn,plane,-4,100,0,0,0
 spliced,TopK ($L_0$ 220),R3 turn,plane,-2,100,0,0,0
-spliced,TopK ($L_0$ 220),R3 turn,plane,0,100,1.34484,1.14149,1.54819
-spliced,TopK ($L_0$ 220),R3 turn,plane,2,100,2.41333,2.09837,2.72829
-spliced,TopK ($L_0$ 220),R3 turn,plane,4,100,2.86352,2.53752,3.18953
-spliced,TopK ($L_0$ 220),R3 turn,plane,6,100,3.22117,2.86932,3.57303
-spliced,TopK ($L_0$ 220),R3 turn,plane,8,100,3.84294,3.48968,4.1962
-spliced,TopK ($L_0$ 220),R3 turn,plane,10,100,4.25523,3.87582,4.63465
-spliced,TopK ($L_0$ 220),R3 turn,plane,12,100,4.64746,4.23293,5.06198
-spliced,TopK ($L_0$ 220),R3 turn,plane,14,100,3.86048,3.48318,4.23778
-spliced,TopK ($L_0$ 220),R3 turn,plane,16,100,3.61473,3.21363,4.01584
-spliced,TopK ($L_0$ 220),R3 turn,plane,18,100,3.24916,2.9216,3.57672
-spliced,TopK ($L_0$ 220),R3 turn,plane,20,100,3.14703,2.83933,3.45473
-spliced,TopK ($L_0$ 220),R3 turn,plane,22,100,2.94001,2.5943,3.28573
-spliced,TopK ($L_0$ 220),R3 turn,plane,24,100,3.01678,2.63944,3.39412
+spliced,TopK ($L_0$ 220),R3 turn,plane,0,100,1.34484,1.1385,1.53654
+spliced,TopK ($L_0$ 220),R3 turn,plane,2,100,2.41333,2.10165,2.72206
+spliced,TopK ($L_0$ 220),R3 turn,plane,4,100,2.86352,2.55709,3.21284
+spliced,TopK ($L_0$ 220),R3 turn,plane,6,100,3.22117,2.86243,3.5866
+spliced,TopK ($L_0$ 220),R3 turn,plane,8,100,3.84294,3.48438,4.19398
+spliced,TopK ($L_0$ 220),R3 turn,plane,10,100,4.25523,3.85308,4.6238
+spliced,TopK ($L_0$ 220),R3 turn,plane,12,100,4.64746,4.227,5.07433
+spliced,TopK ($L_0$ 220),R3 turn,plane,14,100,3.86048,3.47864,4.2467
+spliced,TopK ($L_0$ 220),R3 turn,plane,16,100,3.61473,3.22767,4.01894
+spliced,TopK ($L_0$ 220),R3 turn,plane,18,100,3.24916,2.91547,3.57234
+spliced,TopK ($L_0$ 220),R3 turn,plane,20,100,3.14703,2.86155,3.44658
+spliced,TopK ($L_0$ 220),R3 turn,plane,22,100,2.94001,2.60739,3.29357
+spliced,TopK ($L_0$ 220),R3 turn,plane,24,100,3.01678,2.63969,3.40929
 spliced,TopK ($L_0$ 220),control_legal,plane,-4,100,0,0,0
 spliced,TopK ($L_0$ 220),control_legal,plane,-2,100,0,0,0
-spliced,TopK ($L_0$ 220),control_legal,plane,0,100,1.29011,1.07921,1.50101
-spliced,TopK ($L_0$ 220),control_legal,plane,2,100,2.31514,1.94994,2.68034
-spliced,TopK ($L_0$ 220),control_legal,plane,4,100,2.97315,2.58019,3.36612
-spliced,TopK ($L_0$ 220),control_legal,plane,6,100,3.2241,2.83855,3.60964
-spliced,TopK ($L_0$ 220),control_legal,plane,8,100,3.69445,3.27854,4.11036
-spliced,TopK ($L_0$ 220),control_legal,plane,10,100,4.1755,3.7318,4.61919
-spliced,TopK ($L_0$ 220),control_legal,plane,12,100,4.34068,3.8945,4.78686
-spliced,TopK ($L_0$ 220),control_legal,plane,14,100,3.98864,3.59141,4.38587
-spliced,TopK ($L_0$ 220),control_legal,plane,16,100,3.46114,3.10624,3.81604
-spliced,TopK ($L_0$ 220),control_legal,plane,18,100,3.21382,2.8766,3.55103
-spliced,TopK ($L_0$ 220),control_legal,plane,20,100,3.05416,2.73991,3.36842
-spliced,TopK ($L_0$ 220),control_legal,plane,22,100,2.90067,2.58779,3.21356
-spliced,TopK ($L_0$ 220),control_legal,plane,24,100,2.87036,2.52649,3.21423
+spliced,TopK ($L_0$ 220),control_legal,plane,0,100,1.29011,1.0837,1.50564
+spliced,TopK ($L_0$ 220),control_legal,plane,2,100,2.31514,1.96958,2.67858
+spliced,TopK ($L_0$ 220),control_legal,plane,4,100,2.97315,2.6015,3.38043
+spliced,TopK ($L_0$ 220),control_legal,plane,6,100,3.2241,2.84844,3.62746
+spliced,TopK ($L_0$ 220),control_legal,plane,8,100,3.69445,3.28155,4.12945
+spliced,TopK ($L_0$ 220),control_legal,plane,10,100,4.1755,3.72926,4.61974
+spliced,TopK ($L_0$ 220),control_legal,plane,12,100,4.34068,3.91146,4.8124
+spliced,TopK ($L_0$ 220),control_legal,plane,14,100,3.98864,3.59542,4.3922
+spliced,TopK ($L_0$ 220),control_legal,plane,16,100,3.46114,3.11178,3.83132
+spliced,TopK ($L_0$ 220),control_legal,plane,18,100,3.21382,2.88972,3.54385
+spliced,TopK ($L_0$ 220),control_legal,plane,20,100,3.05416,2.74098,3.37119
+spliced,TopK ($L_0$ 220),control_legal,plane,22,100,2.90067,2.59518,3.22921
+spliced,TopK ($L_0$ 220),control_legal,plane,24,100,2.87036,2.54421,3.25669
 spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,-4,100,0,0,0
 spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,-2,100,0,0,0
-spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,0,100,1.55455,1.35048,1.75861
-spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,2,100,2.38299,2.12645,2.63953
-spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,4,100,2.80553,2.53021,3.08085
-spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,6,100,3.02955,2.73633,3.32276
-spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,8,100,3.44227,3.11961,3.76492
-spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,10,100,3.80049,3.46044,4.14054
-spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,12,100,3.9008,3.56729,4.23431
-spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,14,100,3.28789,2.98451,3.59126
-spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,16,100,3.13868,2.84448,3.43288
-spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,18,100,2.98449,2.6893,3.27967
-spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,20,100,2.88261,2.60476,3.16047
-spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,22,100,2.72828,2.43547,3.02109
-spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,24,100,2.82656,2.4767,3.17642
+spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,0,100,1.55455,1.33975,1.76347
+spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,2,100,2.38299,2.14287,2.64703
+spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,4,100,2.80553,2.52925,3.10603
+spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,6,100,3.02955,2.72489,3.33719
+spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,8,100,3.44227,3.11889,3.75609
+spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,10,100,3.80049,3.46869,4.13473
+spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,12,100,3.9008,3.58465,4.24427
+spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,14,100,3.28789,2.99131,3.59508
+spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,16,100,3.13868,2.85848,3.4296
+spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,18,100,2.98449,2.69424,3.27591
+spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,20,100,2.88261,2.62943,3.15795
+spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,22,100,2.72828,2.45671,3.04669
+spliced,GatedAnneal ($L_0$ 222),R1 placement,plane,24,100,2.82656,2.49495,3.2084
 spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,-4,100,0,0,0
 spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,-2,100,0,0,0
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,0,100,1.2585,1.10645,1.41055
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,2,100,2.4119,2.17173,2.65208
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,4,100,2.92698,2.68742,3.16655
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,6,100,3.45557,3.19646,3.71469
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,8,100,3.85062,3.56622,4.13502
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,10,100,4.23765,3.94076,4.53455
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,12,100,4.48947,4.1959,4.78304
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,14,100,3.85217,3.59086,4.11347
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,16,100,3.6499,3.36898,3.93082
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,18,100,3.52175,3.26995,3.77355
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,20,100,3.22775,2.98937,3.46612
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,22,100,3.01059,2.73842,3.28277
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,24,100,3.03374,2.71688,3.35059
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,0,100,1.2585,1.10532,1.40528
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,2,100,2.4119,2.18128,2.63775
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,4,100,2.92698,2.67892,3.16168
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,6,100,3.45557,3.18364,3.72028
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,8,100,3.85062,3.57099,4.14671
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,10,100,4.23765,3.92684,4.54334
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,12,100,4.48947,4.17867,4.77469
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,14,100,3.85217,3.58705,4.11527
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,16,100,3.6499,3.37669,3.93327
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,18,100,3.52175,3.26654,3.79562
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,20,100,3.22775,2.99593,3.46555
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,22,100,3.01059,2.74559,3.2894
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,plane,24,100,3.03374,2.73583,3.37511
 spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,-4,100,0,0,0
 spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,-2,100,0,0,0
-spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,0,100,1.20478,1.01989,1.38967
-spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,2,100,2.28458,1.98419,2.58498
-spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,4,100,2.75983,2.45217,3.06749
-spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,6,100,3.24209,2.90661,3.57758
-spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,8,100,3.66069,3.29993,4.02145
-spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,10,100,4.14784,3.77068,4.52499
-spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,12,100,4.31178,3.89682,4.72674
-spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,14,100,3.88135,3.48466,4.27803
-spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,16,100,3.71016,3.28179,4.13852
-spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,18,100,3.33552,2.96289,3.70815
-spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,20,100,3.17854,2.85879,3.49829
-spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,22,100,2.94364,2.59788,3.2894
-spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,24,100,3.05371,2.67419,3.43323
+spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,0,100,1.20478,1.02399,1.39673
+spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,2,100,2.28458,1.9942,2.57611
+spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,4,100,2.75983,2.45206,3.08124
+spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,6,100,3.24209,2.88051,3.58448
+spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,8,100,3.66069,3.30059,4.02774
+spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,10,100,4.14784,3.73153,4.52538
+spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,12,100,4.31178,3.90185,4.73561
+spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,14,100,3.88135,3.48322,4.31091
+spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,16,100,3.71016,3.3165,4.15975
+spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,18,100,3.33552,2.94698,3.69869
+spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,20,100,3.17854,2.87719,3.50844
+spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,22,100,2.94364,2.59734,3.30629
+spliced,GatedAnneal ($L_0$ 222),R3 turn,plane,24,100,3.05371,2.70229,3.43584
 spliced,GatedAnneal ($L_0$ 222),control_legal,plane,-4,100,0,0,0
 spliced,GatedAnneal ($L_0$ 222),control_legal,plane,-2,100,0,0,0
-spliced,GatedAnneal ($L_0$ 222),control_legal,plane,0,100,1.19097,1.00094,1.381
-spliced,GatedAnneal ($L_0$ 222),control_legal,plane,2,100,2.21468,1.86857,2.56078
-spliced,GatedAnneal ($L_0$ 222),control_legal,plane,4,100,2.90028,2.48884,3.31172
-spliced,GatedAnneal ($L_0$ 222),control_legal,plane,6,100,3.34864,2.93027,3.76702
-spliced,GatedAnneal ($L_0$ 222),control_legal,plane,8,100,3.87815,3.44832,4.30798
-spliced,GatedAnneal ($L_0$ 222),control_legal,plane,10,100,4.28234,3.82554,4.73915
-spliced,GatedAnneal ($L_0$ 222),control_legal,plane,12,100,4.40772,3.95116,4.86429
-spliced,GatedAnneal ($L_0$ 222),control_legal,plane,14,100,4.01877,3.59872,4.43883
-spliced,GatedAnneal ($L_0$ 222),control_legal,plane,16,100,3.54823,3.171,3.92546
-spliced,GatedAnneal ($L_0$ 222),control_legal,plane,18,100,3.32849,2.95847,3.6985
-spliced,GatedAnneal ($L_0$ 222),control_legal,plane,20,100,3.18384,2.84697,3.52071
-spliced,GatedAnneal ($L_0$ 222),control_legal,plane,22,100,2.95144,2.66659,3.23629
-spliced,GatedAnneal ($L_0$ 222),control_legal,plane,24,100,3.09635,2.75842,3.43427
+spliced,GatedAnneal ($L_0$ 222),control_legal,plane,0,100,1.19097,1.00537,1.37267
+spliced,GatedAnneal ($L_0$ 222),control_legal,plane,2,100,2.21468,1.89354,2.58118
+spliced,GatedAnneal ($L_0$ 222),control_legal,plane,4,100,2.90028,2.49771,3.33506
+spliced,GatedAnneal ($L_0$ 222),control_legal,plane,6,100,3.34864,2.93854,3.77736
+spliced,GatedAnneal ($L_0$ 222),control_legal,plane,8,100,3.87815,3.43162,4.31111
+spliced,GatedAnneal ($L_0$ 222),control_legal,plane,10,100,4.28234,3.8575,4.75651
+spliced,GatedAnneal ($L_0$ 222),control_legal,plane,12,100,4.40772,3.9534,4.87379
+spliced,GatedAnneal ($L_0$ 222),control_legal,plane,14,100,4.01877,3.62962,4.44348
+spliced,GatedAnneal ($L_0$ 222),control_legal,plane,16,100,3.54823,3.17281,3.93448
+spliced,GatedAnneal ($L_0$ 222),control_legal,plane,18,100,3.32849,2.96832,3.68284
+spliced,GatedAnneal ($L_0$ 222),control_legal,plane,20,100,3.18384,2.87241,3.53132
+spliced,GatedAnneal ($L_0$ 222),control_legal,plane,22,100,2.95144,2.66748,3.24328
+spliced,GatedAnneal ($L_0$ 222),control_legal,plane,24,100,3.09635,2.77946,3.45961
 spliced,BatchTopK ($L_0$ 227),R1 placement,plane,-4,100,0,0,0
 spliced,BatchTopK ($L_0$ 227),R1 placement,plane,-2,100,0,0,0
-spliced,BatchTopK ($L_0$ 227),R1 placement,plane,0,100,1.45869,1.26466,1.65273
-spliced,BatchTopK ($L_0$ 227),R1 placement,plane,2,100,2.22649,1.99,2.46299
-spliced,BatchTopK ($L_0$ 227),R1 placement,plane,4,100,2.63658,2.38152,2.89165
-spliced,BatchTopK ($L_0$ 227),R1 placement,plane,6,100,2.86502,2.59612,3.13393
-spliced,BatchTopK ($L_0$ 227),R1 placement,plane,8,100,3.37626,3.06578,3.68675
-spliced,BatchTopK ($L_0$ 227),R1 placement,plane,10,100,3.64552,3.3287,3.96235
-spliced,BatchTopK ($L_0$ 227),R1 placement,plane,12,100,3.77096,3.45723,4.08468
-spliced,BatchTopK ($L_0$ 227),R1 placement,plane,14,100,3.07359,2.79205,3.35512
-spliced,BatchTopK ($L_0$ 227),R1 placement,plane,16,100,3.00287,2.71725,3.28849
-spliced,BatchTopK ($L_0$ 227),R1 placement,plane,18,100,2.94134,2.65415,3.22853
-spliced,BatchTopK ($L_0$ 227),R1 placement,plane,20,100,2.88612,2.60005,3.17219
-spliced,BatchTopK ($L_0$ 227),R1 placement,plane,22,100,2.67092,2.38488,2.95696
-spliced,BatchTopK ($L_0$ 227),R1 placement,plane,24,100,2.62159,2.29692,2.94626
+spliced,BatchTopK ($L_0$ 227),R1 placement,plane,0,100,1.45869,1.26689,1.65747
+spliced,BatchTopK ($L_0$ 227),R1 placement,plane,2,100,2.22649,1.98724,2.4708
+spliced,BatchTopK ($L_0$ 227),R1 placement,plane,4,100,2.63658,2.38752,2.89422
+spliced,BatchTopK ($L_0$ 227),R1 placement,plane,6,100,2.86502,2.60541,3.14497
+spliced,BatchTopK ($L_0$ 227),R1 placement,plane,8,100,3.37626,3.06849,3.68764
+spliced,BatchTopK ($L_0$ 227),R1 placement,plane,10,100,3.64552,3.34571,3.95502
+spliced,BatchTopK ($L_0$ 227),R1 placement,plane,12,100,3.77096,3.42255,4.07364
+spliced,BatchTopK ($L_0$ 227),R1 placement,plane,14,100,3.07359,2.77884,3.35577
+spliced,BatchTopK ($L_0$ 227),R1 placement,plane,16,100,3.00287,2.69601,3.29285
+spliced,BatchTopK ($L_0$ 227),R1 placement,plane,18,100,2.94134,2.66396,3.23083
+spliced,BatchTopK ($L_0$ 227),R1 placement,plane,20,100,2.88612,2.61513,3.17013
+spliced,BatchTopK ($L_0$ 227),R1 placement,plane,22,100,2.67092,2.40242,2.99322
+spliced,BatchTopK ($L_0$ 227),R1 placement,plane,24,100,2.62159,2.3297,2.97688
 spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,-4,100,0,0,0
 spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,-2,100,0,0,0
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,0,100,1.56693,1.37708,1.75678
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,2,100,2.93987,2.64801,3.23172
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,4,100,3.18281,2.90609,3.45954
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,6,100,3.59083,3.30769,3.87396
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,8,100,4.03902,3.73397,4.34407
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,10,100,4.46242,4.14511,4.77972
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,12,100,4.79131,4.44203,5.14059
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,14,100,3.68598,3.43652,3.93543
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,16,100,3.59058,3.31103,3.87012
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,18,100,3.48096,3.21273,3.7492
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,20,100,3.29935,3.04595,3.55275
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,22,100,3.03026,2.77169,3.28884
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,24,100,2.93041,2.62629,3.23453
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,0,100,1.56693,1.38036,1.75559
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,2,100,2.93987,2.65725,3.20694
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,4,100,3.18281,2.91802,3.44988
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,6,100,3.59083,3.31799,3.87566
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,8,100,4.03902,3.73636,4.3374
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,10,100,4.46242,4.14709,4.7686
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,12,100,4.79131,4.45794,5.13989
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,14,100,3.68598,3.45796,3.92573
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,16,100,3.59058,3.32087,3.8764
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,18,100,3.48096,3.23108,3.75633
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,20,100,3.29935,3.05047,3.55136
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,22,100,3.03026,2.77949,3.31102
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,plane,24,100,2.93041,2.64012,3.26705
 spliced,BatchTopK ($L_0$ 227),R3 turn,plane,-4,100,0,0,0
 spliced,BatchTopK ($L_0$ 227),R3 turn,plane,-2,100,0,0,0
-spliced,BatchTopK ($L_0$ 227),R3 turn,plane,0,100,1.3925,1.17009,1.6149
-spliced,BatchTopK ($L_0$ 227),R3 turn,plane,2,100,2.66038,2.29183,3.02893
-spliced,BatchTopK ($L_0$ 227),R3 turn,plane,4,100,2.95993,2.60653,3.31333
-spliced,BatchTopK ($L_0$ 227),R3 turn,plane,6,100,3.32905,2.96566,3.69245
-spliced,BatchTopK ($L_0$ 227),R3 turn,plane,8,100,3.87375,3.4913,4.2562
-spliced,BatchTopK ($L_0$ 227),R3 turn,plane,10,100,4.37181,3.98614,4.75747
-spliced,BatchTopK ($L_0$ 227),R3 turn,plane,12,100,4.63253,4.18603,5.07903
-spliced,BatchTopK ($L_0$ 227),R3 turn,plane,14,100,3.7976,3.41915,4.17606
-spliced,BatchTopK ($L_0$ 227),R3 turn,plane,16,100,3.51554,3.12717,3.90391
-spliced,BatchTopK ($L_0$ 227),R3 turn,plane,18,100,3.18329,2.82999,3.53659
-spliced,BatchTopK ($L_0$ 227),R3 turn,plane,20,100,3.184,2.86216,3.50585
-spliced,BatchTopK ($L_0$ 227),R3 turn,plane,22,100,2.93594,2.58708,3.2848
-spliced,BatchTopK ($L_0$ 227),R3 turn,plane,24,100,2.92907,2.56487,3.29327
+spliced,BatchTopK ($L_0$ 227),R3 turn,plane,0,100,1.3925,1.15962,1.60529
+spliced,BatchTopK ($L_0$ 227),R3 turn,plane,2,100,2.66038,2.28708,3.02726
+spliced,BatchTopK ($L_0$ 227),R3 turn,plane,4,100,2.95993,2.61673,3.3078
+spliced,BatchTopK ($L_0$ 227),R3 turn,plane,6,100,3.32905,2.96072,3.69474
+spliced,BatchTopK ($L_0$ 227),R3 turn,plane,8,100,3.87375,3.49617,4.271
+spliced,BatchTopK ($L_0$ 227),R3 turn,plane,10,100,4.37181,3.97148,4.74597
+spliced,BatchTopK ($L_0$ 227),R3 turn,plane,12,100,4.63253,4.17923,5.07259
+spliced,BatchTopK ($L_0$ 227),R3 turn,plane,14,100,3.7976,3.42707,4.18686
+spliced,BatchTopK ($L_0$ 227),R3 turn,plane,16,100,3.51554,3.1474,3.91582
+spliced,BatchTopK ($L_0$ 227),R3 turn,plane,18,100,3.18329,2.83371,3.54841
+spliced,BatchTopK ($L_0$ 227),R3 turn,plane,20,100,3.184,2.86925,3.48088
+spliced,BatchTopK ($L_0$ 227),R3 turn,plane,22,100,2.93594,2.59461,3.29996
+spliced,BatchTopK ($L_0$ 227),R3 turn,plane,24,100,2.92907,2.57038,3.30884
 spliced,BatchTopK ($L_0$ 227),control_legal,plane,-4,100,0,0,0
 spliced,BatchTopK ($L_0$ 227),control_legal,plane,-2,100,0,0,0
-spliced,BatchTopK ($L_0$ 227),control_legal,plane,0,100,1.19527,0.996509,1.39404
-spliced,BatchTopK ($L_0$ 227),control_legal,plane,2,100,2.10614,1.79568,2.4166
-spliced,BatchTopK ($L_0$ 227),control_legal,plane,4,100,2.77335,2.38827,3.15842
-spliced,BatchTopK ($L_0$ 227),control_legal,plane,6,100,3.09499,2.70519,3.48479
-spliced,BatchTopK ($L_0$ 227),control_legal,plane,8,100,3.6685,3.2652,4.0718
-spliced,BatchTopK ($L_0$ 227),control_legal,plane,10,100,4.09146,3.66984,4.51308
-spliced,BatchTopK ($L_0$ 227),control_legal,plane,12,100,4.22567,3.79863,4.65271
-spliced,BatchTopK ($L_0$ 227),control_legal,plane,14,100,3.8478,3.47529,4.2203
-spliced,BatchTopK ($L_0$ 227),control_legal,plane,16,100,3.37723,3.0291,3.72535
-spliced,BatchTopK ($L_0$ 227),control_legal,plane,18,100,3.19212,2.8445,3.53974
-spliced,BatchTopK ($L_0$ 227),control_legal,plane,20,100,3.08309,2.74211,3.42408
-spliced,BatchTopK ($L_0$ 227),control_legal,plane,22,100,2.87546,2.56759,3.18332
-spliced,BatchTopK ($L_0$ 227),control_legal,plane,24,100,2.85727,2.53649,3.17804
+spliced,BatchTopK ($L_0$ 227),control_legal,plane,0,100,1.19527,1.00282,1.3985
+spliced,BatchTopK ($L_0$ 227),control_legal,plane,2,100,2.10614,1.80352,2.42744
+spliced,BatchTopK ($L_0$ 227),control_legal,plane,4,100,2.77335,2.40034,3.17302
+spliced,BatchTopK ($L_0$ 227),control_legal,plane,6,100,3.09499,2.70228,3.5046
+spliced,BatchTopK ($L_0$ 227),control_legal,plane,8,100,3.6685,3.25577,4.07521
+spliced,BatchTopK ($L_0$ 227),control_legal,plane,10,100,4.09146,3.6676,4.51519
+spliced,BatchTopK ($L_0$ 227),control_legal,plane,12,100,4.22567,3.82684,4.66057
+spliced,BatchTopK ($L_0$ 227),control_legal,plane,14,100,3.8478,3.48436,4.21415
+spliced,BatchTopK ($L_0$ 227),control_legal,plane,16,100,3.37723,3.01755,3.7399
+spliced,BatchTopK ($L_0$ 227),control_legal,plane,18,100,3.19212,2.84227,3.53572
+spliced,BatchTopK ($L_0$ 227),control_legal,plane,20,100,3.08309,2.75837,3.42002
+spliced,BatchTopK ($L_0$ 227),control_legal,plane,22,100,2.87546,2.57973,3.18894
+spliced,BatchTopK ($L_0$ 227),control_legal,plane,24,100,2.85727,2.55338,3.19428
 spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,-4,100,0,0,0
 spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,-2,100,0,0,0
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,0,100,0.760151,0.620635,0.899667
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,2,100,1.46598,1.26418,1.66778
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,4,100,1.99935,1.72735,2.27135
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,6,100,2.30727,2.01717,2.59737
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,8,100,2.46144,2.15932,2.76356
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,10,100,2.68471,2.39169,2.97773
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,12,100,2.84972,2.53455,3.1649
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,14,100,2.66882,2.34886,2.98878
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,16,100,2.48307,2.20698,2.75916
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,18,100,2.40099,2.13449,2.66749
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,20,100,2.29548,2.01141,2.57954
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,22,100,2.1087,1.81287,2.40454
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,24,100,2.05647,1.76229,2.35066
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,0,100,0.760151,0.626618,0.907901
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,2,100,1.46598,1.27136,1.67133
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,4,100,1.99935,1.75498,2.27764
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,6,100,2.30727,2.03121,2.59574
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,8,100,2.46144,2.18443,2.78166
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,10,100,2.68471,2.39049,2.97659
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,12,100,2.84972,2.55066,3.17371
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,14,100,2.66882,2.36283,3.0011
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,16,100,2.48307,2.2116,2.77141
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,18,100,2.40099,2.14474,2.68024
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,20,100,2.29548,2.03123,2.59687
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,22,100,2.1087,1.8405,2.44964
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,plane,24,100,2.05647,1.79452,2.38503
 spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,-4,100,0,0,0
 spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,-2,100,0,0,0
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,0,100,1.91272,1.7503,2.07514
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,2,100,4.46623,4.13251,4.79995
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,4,100,5.02377,4.7046,5.34293
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,6,100,5.11757,4.83359,5.40155
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,8,100,5.37942,5.09924,5.6596
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,10,100,5.80053,5.50446,6.0966
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,12,100,6.15245,5.84869,6.45621
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,14,100,4.03557,3.75474,4.3164
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,16,100,3.04698,2.76267,3.33128
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,18,100,2.69738,2.44118,2.95357
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,20,100,2.48161,2.22338,2.73985
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,22,100,2.33425,2.05089,2.61761
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,24,100,2.19573,1.91723,2.47422
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,0,100,1.91272,1.74738,2.0689
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,2,100,4.46623,4.13434,4.78866
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,4,100,5.02377,4.72377,5.345
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,6,100,5.11757,4.84953,5.38745
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,8,100,5.37942,5.10887,5.64894
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,10,100,5.80053,5.51344,6.09032
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,12,100,6.15245,5.85799,6.44138
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,14,100,4.03557,3.7497,4.31774
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,16,100,3.04698,2.77079,3.34245
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,18,100,2.69738,2.43932,2.96075
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,20,100,2.48161,2.25937,2.73296
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,22,100,2.33425,2.08283,2.64499
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,plane,24,100,2.19573,1.95025,2.51361
 spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,-4,100,0,0,0
 spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,-2,100,0,0,0
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,0,100,1.33965,1.11534,1.56396
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,2,100,3.04667,2.58258,3.51076
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,4,100,3.73336,3.23857,4.22815
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,6,100,3.80329,3.3255,4.28108
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,8,100,4.15277,3.71295,4.59259
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,10,100,4.47706,3.97614,4.97797
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,12,100,4.78694,4.28377,5.29012
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,14,100,3.62656,3.25529,3.99782
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,16,100,2.89976,2.56202,3.2375
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,18,100,2.57033,2.22713,2.91352
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,20,100,2.43746,2.13595,2.73897
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,22,100,2.22655,1.90045,2.55265
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,24,100,2.16446,1.84258,2.48635
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,0,100,1.33965,1.12176,1.56659
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,2,100,3.04667,2.58662,3.51699
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,4,100,3.73336,3.28389,4.20698
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,6,100,3.80329,3.36306,4.27947
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,8,100,4.15277,3.73827,4.55988
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,10,100,4.47706,3.99608,4.94377
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,12,100,4.78694,4.29348,5.27199
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,14,100,3.62656,3.26265,3.98185
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,16,100,2.89976,2.55768,3.23939
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,18,100,2.57033,2.21685,2.92288
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,20,100,2.43746,2.16621,2.73727
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,22,100,2.22655,1.9238,2.56669
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,plane,24,100,2.16446,1.87759,2.51848
 spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,-4,100,0,0,0
 spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,-2,100,0,0,0
-spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,0,100,0.526308,0.40308,0.649536
-spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,2,100,1.41089,1.18865,1.63313
-spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,4,100,2.1438,1.7895,2.4981
-spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,6,100,2.41905,2.03885,2.79925
-spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,8,100,2.67707,2.31378,3.04037
-spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,10,100,3.00153,2.63465,3.3684
-spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,12,100,3.21886,2.84962,3.5881
-spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,14,100,3.193,2.7998,3.5862
-spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,16,100,2.88552,2.57326,3.19778
-spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,18,100,2.62722,2.33741,2.91703
-spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,20,100,2.44063,2.15925,2.72202
-spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,22,100,2.23842,1.95391,2.52293
-spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,24,100,2.26401,1.96856,2.55946
+spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,0,100,0.526308,0.413791,0.660882
+spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,2,100,1.41089,1.19077,1.63806
+spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,4,100,2.1438,1.80712,2.54105
+spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,6,100,2.41905,2.04758,2.81771
+spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,8,100,2.67707,2.30172,3.04694
+spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,10,100,3.00153,2.64678,3.39015
+spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,12,100,3.21886,2.8754,3.60896
+spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,14,100,3.193,2.81886,3.61479
+spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,16,100,2.88552,2.59309,3.18986
+spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,18,100,2.62722,2.34216,2.92248
+spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,20,100,2.44063,2.16234,2.73671
+spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,22,100,2.23842,1.9735,2.52884
+spliced,CosineSpaDE ($L_0$ 184),control_legal,plane,24,100,2.26401,1.98447,2.58036
 spliced,SpaDE ($L_0$ 232),R1 placement,plane,-4,100,0,0,0
 spliced,SpaDE ($L_0$ 232),R1 placement,plane,-2,100,0,0,0
-spliced,SpaDE ($L_0$ 232),R1 placement,plane,0,100,1.73956,1.51427,1.96486
-spliced,SpaDE ($L_0$ 232),R1 placement,plane,2,100,2.36847,2.07835,2.65858
-spliced,SpaDE ($L_0$ 232),R1 placement,plane,4,100,2.67074,2.37888,2.96259
-spliced,SpaDE ($L_0$ 232),R1 placement,plane,6,100,2.93594,2.65265,3.21922
-spliced,SpaDE ($L_0$ 232),R1 placement,plane,8,100,3.33553,3.02737,3.64369
-spliced,SpaDE ($L_0$ 232),R1 placement,plane,10,100,3.6106,3.28591,3.9353
-spliced,SpaDE ($L_0$ 232),R1 placement,plane,12,100,3.83082,3.52225,4.13939
-spliced,SpaDE ($L_0$ 232),R1 placement,plane,14,100,3.28228,2.99785,3.56672
-spliced,SpaDE ($L_0$ 232),R1 placement,plane,16,100,3.16555,2.86577,3.46532
-spliced,SpaDE ($L_0$ 232),R1 placement,plane,18,100,3.02963,2.76577,3.29349
-spliced,SpaDE ($L_0$ 232),R1 placement,plane,20,100,2.94496,2.66914,3.22077
-spliced,SpaDE ($L_0$ 232),R1 placement,plane,22,100,2.92955,2.62822,3.23087
-spliced,SpaDE ($L_0$ 232),R1 placement,plane,24,100,2.99965,2.66582,3.33348
+spliced,SpaDE ($L_0$ 232),R1 placement,plane,0,100,1.73956,1.51135,1.95354
+spliced,SpaDE ($L_0$ 232),R1 placement,plane,2,100,2.36847,2.08021,2.6688
+spliced,SpaDE ($L_0$ 232),R1 placement,plane,4,100,2.67074,2.38091,2.97374
+spliced,SpaDE ($L_0$ 232),R1 placement,plane,6,100,2.93594,2.63074,3.21416
+spliced,SpaDE ($L_0$ 232),R1 placement,plane,8,100,3.33553,3.01909,3.66907
+spliced,SpaDE ($L_0$ 232),R1 placement,plane,10,100,3.6106,3.28668,3.9516
+spliced,SpaDE ($L_0$ 232),R1 placement,plane,12,100,3.83082,3.53175,4.1451
+spliced,SpaDE ($L_0$ 232),R1 placement,plane,14,100,3.28228,2.99087,3.55623
+spliced,SpaDE ($L_0$ 232),R1 placement,plane,16,100,3.16555,2.86638,3.46085
+spliced,SpaDE ($L_0$ 232),R1 placement,plane,18,100,3.02963,2.78327,3.29528
+spliced,SpaDE ($L_0$ 232),R1 placement,plane,20,100,2.94496,2.68321,3.20791
+spliced,SpaDE ($L_0$ 232),R1 placement,plane,22,100,2.92955,2.65185,3.25275
+spliced,SpaDE ($L_0$ 232),R1 placement,plane,24,100,2.99965,2.6908,3.35085
 spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,-4,100,0,0,0
 spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,-2,100,0,0,0
-spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,0,100,1.30285,1.1252,1.4805
-spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,2,100,2.43263,2.16927,2.696
-spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,4,100,2.6572,2.40741,2.90698
-spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,6,100,3.08191,2.83471,3.32912
-spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,8,100,3.59903,3.3335,3.86455
-spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,10,100,4.00277,3.72091,4.28463
-spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,12,100,4.54572,4.25131,4.84012
-spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,14,100,3.51624,3.22834,3.80414
-spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,16,100,3.44153,3.14009,3.74297
-spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,18,100,3.2994,3.02922,3.56958
-spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,20,100,3.25669,2.98896,3.52442
-spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,22,100,3.17403,2.89151,3.45655
-spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,24,100,3.17109,2.85787,3.48432
+spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,0,100,1.30285,1.12839,1.47967
+spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,2,100,2.43263,2.17541,2.70979
+spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,4,100,2.6572,2.40242,2.89284
+spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,6,100,3.08191,2.84007,3.32997
+spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,8,100,3.59903,3.33539,3.86562
+spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,10,100,4.00277,3.72499,4.25725
+spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,12,100,4.54572,4.24674,4.82992
+spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,14,100,3.51624,3.23204,3.80752
+spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,16,100,3.44153,3.14732,3.74417
+spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,18,100,3.2994,3.04358,3.5872
+spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,20,100,3.25669,2.98127,3.52781
+spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,22,100,3.17403,2.90618,3.4937
+spliced,SpaDE ($L_0$ 232),R2 bracketing,plane,24,100,3.17109,2.87471,3.51481
 spliced,SpaDE ($L_0$ 232),R3 turn,plane,-4,100,0,0,0
 spliced,SpaDE ($L_0$ 232),R3 turn,plane,-2,100,0,0,0
-spliced,SpaDE ($L_0$ 232),R3 turn,plane,0,100,1.20277,0.991105,1.41443
-spliced,SpaDE ($L_0$ 232),R3 turn,plane,2,100,2.19392,1.87881,2.50904
-spliced,SpaDE ($L_0$ 232),R3 turn,plane,4,100,2.53403,2.22337,2.84469
-spliced,SpaDE ($L_0$ 232),R3 turn,plane,6,100,2.94165,2.63182,3.25149
-spliced,SpaDE ($L_0$ 232),R3 turn,plane,8,100,3.55393,3.20924,3.89861
-spliced,SpaDE ($L_0$ 232),R3 turn,plane,10,100,3.93801,3.5673,4.30873
-spliced,SpaDE ($L_0$ 232),R3 turn,plane,12,100,4.5291,4.11715,4.94106
-spliced,SpaDE ($L_0$ 232),R3 turn,plane,14,100,3.60414,3.22242,3.98585
-spliced,SpaDE ($L_0$ 232),R3 turn,plane,16,100,3.60777,3.23178,3.98376
-spliced,SpaDE ($L_0$ 232),R3 turn,plane,18,100,3.37071,3.01764,3.72377
-spliced,SpaDE ($L_0$ 232),R3 turn,plane,20,100,3.32753,3.00736,3.6477
-spliced,SpaDE ($L_0$ 232),R3 turn,plane,22,100,3.12033,2.77699,3.46367
-spliced,SpaDE ($L_0$ 232),R3 turn,plane,24,100,3.15547,2.80028,3.51066
+spliced,SpaDE ($L_0$ 232),R3 turn,plane,0,100,1.20277,0.990087,1.40597
+spliced,SpaDE ($L_0$ 232),R3 turn,plane,2,100,2.19392,1.89689,2.52451
+spliced,SpaDE ($L_0$ 232),R3 turn,plane,4,100,2.53403,2.24119,2.85318
+spliced,SpaDE ($L_0$ 232),R3 turn,plane,6,100,2.94165,2.62193,3.26174
+spliced,SpaDE ($L_0$ 232),R3 turn,plane,8,100,3.55393,3.18344,3.89311
+spliced,SpaDE ($L_0$ 232),R3 turn,plane,10,100,3.93801,3.54328,4.31092
+spliced,SpaDE ($L_0$ 232),R3 turn,plane,12,100,4.5291,4.13272,4.93317
+spliced,SpaDE ($L_0$ 232),R3 turn,plane,14,100,3.60414,3.22381,3.97683
+spliced,SpaDE ($L_0$ 232),R3 turn,plane,16,100,3.60777,3.24839,3.97041
+spliced,SpaDE ($L_0$ 232),R3 turn,plane,18,100,3.37071,3.03099,3.68753
+spliced,SpaDE ($L_0$ 232),R3 turn,plane,20,100,3.32753,3.0232,3.63315
+spliced,SpaDE ($L_0$ 232),R3 turn,plane,22,100,3.12033,2.78307,3.48153
+spliced,SpaDE ($L_0$ 232),R3 turn,plane,24,100,3.15547,2.78776,3.51433
 spliced,SpaDE ($L_0$ 232),control_legal,plane,-4,100,0,0,0
 spliced,SpaDE ($L_0$ 232),control_legal,plane,-2,100,0,0,0
-spliced,SpaDE ($L_0$ 232),control_legal,plane,0,100,1.27856,1.04537,1.51175
-spliced,SpaDE ($L_0$ 232),control_legal,plane,2,100,2.18685,1.80151,2.57218
-spliced,SpaDE ($L_0$ 232),control_legal,plane,4,100,2.78849,2.35549,3.22148
-spliced,SpaDE ($L_0$ 232),control_legal,plane,6,100,3.26191,2.8541,3.66971
-spliced,SpaDE ($L_0$ 232),control_legal,plane,8,100,3.61358,3.2159,4.01126
-spliced,SpaDE ($L_0$ 232),control_legal,plane,10,100,4.05142,3.63778,4.46507
-spliced,SpaDE ($L_0$ 232),control_legal,plane,12,100,4.3767,3.94792,4.80547
-spliced,SpaDE ($L_0$ 232),control_legal,plane,14,100,3.90175,3.45188,4.35163
-spliced,SpaDE ($L_0$ 232),control_legal,plane,16,100,3.55195,3.17184,3.93205
-spliced,SpaDE ($L_0$ 232),control_legal,plane,18,100,3.26877,2.93142,3.60611
-spliced,SpaDE ($L_0$ 232),control_legal,plane,20,100,3.12447,2.82242,3.42651
-spliced,SpaDE ($L_0$ 232),control_legal,plane,22,100,2.94445,2.62498,3.26392
-spliced,SpaDE ($L_0$ 232),control_legal,plane,24,100,3.13052,2.76437,3.49667
+spliced,SpaDE ($L_0$ 232),control_legal,plane,0,100,1.27856,1.05713,1.51256
+spliced,SpaDE ($L_0$ 232),control_legal,plane,2,100,2.18685,1.82523,2.57196
+spliced,SpaDE ($L_0$ 232),control_legal,plane,4,100,2.78849,2.36716,3.25202
+spliced,SpaDE ($L_0$ 232),control_legal,plane,6,100,3.26191,2.87602,3.69171
+spliced,SpaDE ($L_0$ 232),control_legal,plane,8,100,3.61358,3.23439,4.03054
+spliced,SpaDE ($L_0$ 232),control_legal,plane,10,100,4.05142,3.6682,4.48385
+spliced,SpaDE ($L_0$ 232),control_legal,plane,12,100,4.3767,3.99027,4.7904
+spliced,SpaDE ($L_0$ 232),control_legal,plane,14,100,3.90175,3.46828,4.34644
+spliced,SpaDE ($L_0$ 232),control_legal,plane,16,100,3.55195,3.17291,3.92486
+spliced,SpaDE ($L_0$ 232),control_legal,plane,18,100,3.26877,2.948,3.60858
+spliced,SpaDE ($L_0$ 232),control_legal,plane,20,100,3.12447,2.83076,3.41226
+spliced,SpaDE ($L_0$ 232),control_legal,plane,22,100,2.94445,2.64841,3.27627
+spliced,SpaDE ($L_0$ 232),control_legal,plane,24,100,3.13052,2.78099,3.49511
 spliced,raw layer 5 (reference space),R1 placement,full,-4,100,0,0,0
 spliced,raw layer 5 (reference space),R1 placement,full,-2,100,0,0,0
-spliced,raw layer 5 (reference space),R1 placement,full,0,100,3.10833,2.81157,3.40508
-spliced,raw layer 5 (reference space),R1 placement,full,2,100,4.334,4.05027,4.61773
-spliced,raw layer 5 (reference space),R1 placement,full,4,100,4.99501,4.7158,5.27423
-spliced,raw layer 5 (reference space),R1 placement,full,6,100,5.41391,5.14151,5.68632
-spliced,raw layer 5 (reference space),R1 placement,full,8,100,5.91755,5.62929,6.2058
-spliced,raw layer 5 (reference space),R1 placement,full,10,100,6.32202,6.03435,6.60968
-spliced,raw layer 5 (reference space),R1 placement,full,12,100,6.26844,5.99776,6.53913
-spliced,raw layer 5 (reference space),R1 placement,full,14,100,5.30163,5.01379,5.58948
-spliced,raw layer 5 (reference space),R1 placement,full,16,100,4.9693,4.69049,5.24811
-spliced,raw layer 5 (reference space),R1 placement,full,18,100,4.72475,4.45148,4.99802
-spliced,raw layer 5 (reference space),R1 placement,full,20,100,4.61825,4.32664,4.90987
-spliced,raw layer 5 (reference space),R1 placement,full,22,100,4.33519,4.05185,4.61854
-spliced,raw layer 5 (reference space),R1 placement,full,24,100,4.24665,3.94639,4.54691
+spliced,raw layer 5 (reference space),R1 placement,full,0,100,3.10833,2.80721,3.40112
+spliced,raw layer 5 (reference space),R1 placement,full,2,100,4.334,4.04879,4.63556
+spliced,raw layer 5 (reference space),R1 placement,full,4,100,4.99501,4.72065,5.29533
+spliced,raw layer 5 (reference space),R1 placement,full,6,100,5.41391,5.14243,5.69712
+spliced,raw layer 5 (reference space),R1 placement,full,8,100,5.91755,5.62637,6.22529
+spliced,raw layer 5 (reference space),R1 placement,full,10,100,6.32202,6.03381,6.61664
+spliced,raw layer 5 (reference space),R1 placement,full,12,100,6.26844,6.00837,6.53746
+spliced,raw layer 5 (reference space),R1 placement,full,14,100,5.30163,5.00411,5.56331
+spliced,raw layer 5 (reference space),R1 placement,full,16,100,4.9693,4.69318,5.22755
+spliced,raw layer 5 (reference space),R1 placement,full,18,100,4.72475,4.4657,4.97559
+spliced,raw layer 5 (reference space),R1 placement,full,20,100,4.61825,4.33074,4.91281
+spliced,raw layer 5 (reference space),R1 placement,full,22,100,4.33519,4.06316,4.6242
+spliced,raw layer 5 (reference space),R1 placement,full,24,100,4.24665,3.94809,4.56857
 spliced,raw layer 5 (reference space),R2 bracketing,full,-4,100,0,0,0
 spliced,raw layer 5 (reference space),R2 bracketing,full,-2,100,0,0,0
-spliced,raw layer 5 (reference space),R2 bracketing,full,0,100,2.98375,2.71352,3.25398
-spliced,raw layer 5 (reference space),R2 bracketing,full,2,100,4.71284,4.43232,4.99336
-spliced,raw layer 5 (reference space),R2 bracketing,full,4,100,5.25128,4.99719,5.50536
-spliced,raw layer 5 (reference space),R2 bracketing,full,6,100,5.81238,5.56311,6.06166
-spliced,raw layer 5 (reference space),R2 bracketing,full,8,100,6.32922,6.08614,6.5723
-spliced,raw layer 5 (reference space),R2 bracketing,full,10,100,6.76285,6.5212,7.0045
-spliced,raw layer 5 (reference space),R2 bracketing,full,12,100,6.98789,6.75862,7.21717
-spliced,raw layer 5 (reference space),R2 bracketing,full,14,100,5.65851,5.44648,5.87053
-spliced,raw layer 5 (reference space),R2 bracketing,full,16,100,5.26028,5.01668,5.50389
-spliced,raw layer 5 (reference space),R2 bracketing,full,18,100,5.05692,4.82725,5.28658
-spliced,raw layer 5 (reference space),R2 bracketing,full,20,100,4.9515,4.72725,5.17574
-spliced,raw layer 5 (reference space),R2 bracketing,full,22,100,4.63556,4.40824,4.86288
-spliced,raw layer 5 (reference space),R2 bracketing,full,24,100,4.59185,4.32372,4.85998
+spliced,raw layer 5 (reference space),R2 bracketing,full,0,100,2.98375,2.71673,3.24056
+spliced,raw layer 5 (reference space),R2 bracketing,full,2,100,4.71284,4.43235,4.98551
+spliced,raw layer 5 (reference space),R2 bracketing,full,4,100,5.25128,5.00199,5.50914
+spliced,raw layer 5 (reference space),R2 bracketing,full,6,100,5.81238,5.56688,6.05413
+spliced,raw layer 5 (reference space),R2 bracketing,full,8,100,6.32922,6.09284,6.57123
+spliced,raw layer 5 (reference space),R2 bracketing,full,10,100,6.76285,6.5147,7.01446
+spliced,raw layer 5 (reference space),R2 bracketing,full,12,100,6.98789,6.76255,7.21087
+spliced,raw layer 5 (reference space),R2 bracketing,full,14,100,5.65851,5.44814,5.88343
+spliced,raw layer 5 (reference space),R2 bracketing,full,16,100,5.26028,5.02151,5.50583
+spliced,raw layer 5 (reference space),R2 bracketing,full,18,100,5.05692,4.83083,5.29248
+spliced,raw layer 5 (reference space),R2 bracketing,full,20,100,4.9515,4.74925,5.16799
+spliced,raw layer 5 (reference space),R2 bracketing,full,22,100,4.63556,4.42484,4.8679
+spliced,raw layer 5 (reference space),R2 bracketing,full,24,100,4.59185,4.32883,4.87158
 spliced,raw layer 5 (reference space),R3 turn,full,-4,100,0,0,0
 spliced,raw layer 5 (reference space),R3 turn,full,-2,100,0,0,0
-spliced,raw layer 5 (reference space),R3 turn,full,0,100,2.73112,2.40291,3.05933
-spliced,raw layer 5 (reference space),R3 turn,full,2,100,4.42573,4.0368,4.81467
-spliced,raw layer 5 (reference space),R3 turn,full,4,100,5.10662,4.75967,5.45358
-spliced,raw layer 5 (reference space),R3 turn,full,6,100,5.71947,5.38308,6.05585
-spliced,raw layer 5 (reference space),R3 turn,full,8,100,6.31723,5.96616,6.66829
-spliced,raw layer 5 (reference space),R3 turn,full,10,100,6.71537,6.37543,7.05532
-spliced,raw layer 5 (reference space),R3 turn,full,12,100,6.89276,6.52082,7.26469
-spliced,raw layer 5 (reference space),R3 turn,full,14,100,5.86116,5.4911,6.23122
-spliced,raw layer 5 (reference space),R3 turn,full,16,100,5.39381,5.01873,5.76889
-spliced,raw layer 5 (reference space),R3 turn,full,18,100,5.08841,4.7574,5.41942
-spliced,raw layer 5 (reference space),R3 turn,full,20,100,4.96707,4.65407,5.28007
-spliced,raw layer 5 (reference space),R3 turn,full,22,100,4.66344,4.35477,4.97212
-spliced,raw layer 5 (reference space),R3 turn,full,24,100,4.69509,4.362,5.02818
+spliced,raw layer 5 (reference space),R3 turn,full,0,100,2.73112,2.41122,3.06753
+spliced,raw layer 5 (reference space),R3 turn,full,2,100,4.42573,4.03083,4.79716
+spliced,raw layer 5 (reference space),R3 turn,full,4,100,5.10662,4.75463,5.46045
+spliced,raw layer 5 (reference space),R3 turn,full,6,100,5.71947,5.39567,6.05954
+spliced,raw layer 5 (reference space),R3 turn,full,8,100,6.31723,5.95579,6.67144
+spliced,raw layer 5 (reference space),R3 turn,full,10,100,6.71537,6.37613,7.0479
+spliced,raw layer 5 (reference space),R3 turn,full,12,100,6.89276,6.51695,7.26145
+spliced,raw layer 5 (reference space),R3 turn,full,14,100,5.86116,5.48714,6.22781
+spliced,raw layer 5 (reference space),R3 turn,full,16,100,5.39381,5.0393,5.76238
+spliced,raw layer 5 (reference space),R3 turn,full,18,100,5.08841,4.7706,5.39995
+spliced,raw layer 5 (reference space),R3 turn,full,20,100,4.96707,4.67079,5.27598
+spliced,raw layer 5 (reference space),R3 turn,full,22,100,4.66344,4.36859,4.97964
+spliced,raw layer 5 (reference space),R3 turn,full,24,100,4.69509,4.35085,5.02158
 spliced,raw layer 5 (reference space),control_legal,full,-4,100,0,0,0
 spliced,raw layer 5 (reference space),control_legal,full,-2,100,0,0,0
-spliced,raw layer 5 (reference space),control_legal,full,0,100,2.65371,2.33009,2.97733
-spliced,raw layer 5 (reference space),control_legal,full,2,100,4.21051,3.78809,4.63293
-spliced,raw layer 5 (reference space),control_legal,full,4,100,5.26382,4.8053,5.72235
-spliced,raw layer 5 (reference space),control_legal,full,6,100,5.92773,5.46118,6.39427
-spliced,raw layer 5 (reference space),control_legal,full,8,100,6.4215,5.96169,6.88132
-spliced,raw layer 5 (reference space),control_legal,full,10,100,6.90762,6.47147,7.34378
-spliced,raw layer 5 (reference space),control_legal,full,12,100,6.94617,6.48966,7.40268
-spliced,raw layer 5 (reference space),control_legal,full,14,100,6.44398,6.0103,6.87765
-spliced,raw layer 5 (reference space),control_legal,full,16,100,5.62677,5.28456,5.96899
-spliced,raw layer 5 (reference space),control_legal,full,18,100,5.26637,4.94281,5.58993
-spliced,raw layer 5 (reference space),control_legal,full,20,100,5.07568,4.78208,5.36928
-spliced,raw layer 5 (reference space),control_legal,full,22,100,4.76133,4.48641,5.03625
-spliced,raw layer 5 (reference space),control_legal,full,24,100,4.76296,4.46961,5.05631
+spliced,raw layer 5 (reference space),control_legal,full,0,100,2.65371,2.33846,2.98276
+spliced,raw layer 5 (reference space),control_legal,full,2,100,4.21051,3.8148,4.63768
+spliced,raw layer 5 (reference space),control_legal,full,4,100,5.26382,4.82061,5.74755
+spliced,raw layer 5 (reference space),control_legal,full,6,100,5.92773,5.47488,6.40648
+spliced,raw layer 5 (reference space),control_legal,full,8,100,6.4215,5.98731,6.89141
+spliced,raw layer 5 (reference space),control_legal,full,10,100,6.90762,6.49787,7.35857
+spliced,raw layer 5 (reference space),control_legal,full,12,100,6.94617,6.51349,7.39907
+spliced,raw layer 5 (reference space),control_legal,full,14,100,6.44398,6.04224,6.88777
+spliced,raw layer 5 (reference space),control_legal,full,16,100,5.62677,5.31418,5.96463
+spliced,raw layer 5 (reference space),control_legal,full,18,100,5.26637,4.96261,5.57945
+spliced,raw layer 5 (reference space),control_legal,full,20,100,5.07568,4.78265,5.35734
+spliced,raw layer 5 (reference space),control_legal,full,22,100,4.76133,4.48264,5.031
+spliced,raw layer 5 (reference space),control_legal,full,24,100,4.76296,4.46468,5.06147
 spliced,PAnneal ($L_0$ 260),R1 placement,full,-4,100,0,0,0
 spliced,PAnneal ($L_0$ 260),R1 placement,full,-2,100,0,0,0
-spliced,PAnneal ($L_0$ 260),R1 placement,full,0,100,3.22942,2.93274,3.52611
-spliced,PAnneal ($L_0$ 260),R1 placement,full,2,100,4.48969,4.18187,4.79751
-spliced,PAnneal ($L_0$ 260),R1 placement,full,4,100,5.11575,4.8284,5.4031
-spliced,PAnneal ($L_0$ 260),R1 placement,full,6,100,5.52644,5.24912,5.80375
-spliced,PAnneal ($L_0$ 260),R1 placement,full,8,100,6.06317,5.78144,6.34489
-spliced,PAnneal ($L_0$ 260),R1 placement,full,10,100,6.50388,6.22028,6.78748
-spliced,PAnneal ($L_0$ 260),R1 placement,full,12,100,6.49189,6.22649,6.75729
-spliced,PAnneal ($L_0$ 260),R1 placement,full,14,100,5.33505,5.06079,5.60931
-spliced,PAnneal ($L_0$ 260),R1 placement,full,16,100,5.01369,4.74535,5.28203
-spliced,PAnneal ($L_0$ 260),R1 placement,full,18,100,4.76827,4.49895,5.03758
-spliced,PAnneal ($L_0$ 260),R1 placement,full,20,100,4.64955,4.35663,4.94247
-spliced,PAnneal ($L_0$ 260),R1 placement,full,22,100,4.3794,4.09579,4.66301
-spliced,PAnneal ($L_0$ 260),R1 placement,full,24,100,4.28703,3.98398,4.59007
+spliced,PAnneal ($L_0$ 260),R1 placement,full,0,100,3.22942,2.92241,3.53829
+spliced,PAnneal ($L_0$ 260),R1 placement,full,2,100,4.48969,4.16486,4.80984
+spliced,PAnneal ($L_0$ 260),R1 placement,full,4,100,5.11575,4.8287,5.40524
+spliced,PAnneal ($L_0$ 260),R1 placement,full,6,100,5.52644,5.25819,5.81272
+spliced,PAnneal ($L_0$ 260),R1 placement,full,8,100,6.06317,5.77845,6.3539
+spliced,PAnneal ($L_0$ 260),R1 placement,full,10,100,6.50388,6.22419,6.78549
+spliced,PAnneal ($L_0$ 260),R1 placement,full,12,100,6.49189,6.22132,6.75206
+spliced,PAnneal ($L_0$ 260),R1 placement,full,14,100,5.33505,5.08038,5.59559
+spliced,PAnneal ($L_0$ 260),R1 placement,full,16,100,5.01369,4.74411,5.25746
+spliced,PAnneal ($L_0$ 260),R1 placement,full,18,100,4.76827,4.51327,5.01134
+spliced,PAnneal ($L_0$ 260),R1 placement,full,20,100,4.64955,4.37729,4.91798
+spliced,PAnneal ($L_0$ 260),R1 placement,full,22,100,4.3794,4.10032,4.66662
+spliced,PAnneal ($L_0$ 260),R1 placement,full,24,100,4.28703,4.00371,4.59029
 spliced,PAnneal ($L_0$ 260),R2 bracketing,full,-4,100,0,0,0
 spliced,PAnneal ($L_0$ 260),R2 bracketing,full,-2,100,0,0,0
-spliced,PAnneal ($L_0$ 260),R2 bracketing,full,0,100,2.91212,2.65497,3.16928
-spliced,PAnneal ($L_0$ 260),R2 bracketing,full,2,100,4.55539,4.28831,4.82247
-spliced,PAnneal ($L_0$ 260),R2 bracketing,full,4,100,5.15833,4.91644,5.40022
-spliced,PAnneal ($L_0$ 260),R2 bracketing,full,6,100,5.71897,5.47071,5.96724
-spliced,PAnneal ($L_0$ 260),R2 bracketing,full,8,100,6.29294,6.04209,6.54379
-spliced,PAnneal ($L_0$ 260),R2 bracketing,full,10,100,6.77021,6.523,7.01742
-spliced,PAnneal ($L_0$ 260),R2 bracketing,full,12,100,6.9702,6.73956,7.20085
-spliced,PAnneal ($L_0$ 260),R2 bracketing,full,14,100,5.78671,5.58071,5.99271
-spliced,PAnneal ($L_0$ 260),R2 bracketing,full,16,100,5.44497,5.2166,5.67334
-spliced,PAnneal ($L_0$ 260),R2 bracketing,full,18,100,5.22526,5.00029,5.45023
-spliced,PAnneal ($L_0$ 260),R2 bracketing,full,20,100,5.00133,4.78134,5.22132
-spliced,PAnneal ($L_0$ 260),R2 bracketing,full,22,100,4.7113,4.48246,4.94014
-spliced,PAnneal ($L_0$ 260),R2 bracketing,full,24,100,4.63116,4.36598,4.89633
+spliced,PAnneal ($L_0$ 260),R2 bracketing,full,0,100,2.91212,2.64402,3.17509
+spliced,PAnneal ($L_0$ 260),R2 bracketing,full,2,100,4.55539,4.28248,4.80995
+spliced,PAnneal ($L_0$ 260),R2 bracketing,full,4,100,5.15833,4.9226,5.409
+spliced,PAnneal ($L_0$ 260),R2 bracketing,full,6,100,5.71897,5.4753,5.96367
+spliced,PAnneal ($L_0$ 260),R2 bracketing,full,8,100,6.29294,6.05288,6.53442
+spliced,PAnneal ($L_0$ 260),R2 bracketing,full,10,100,6.77021,6.52126,7.01234
+spliced,PAnneal ($L_0$ 260),R2 bracketing,full,12,100,6.9702,6.75168,7.19357
+spliced,PAnneal ($L_0$ 260),R2 bracketing,full,14,100,5.78671,5.58173,6.00846
+spliced,PAnneal ($L_0$ 260),R2 bracketing,full,16,100,5.44497,5.22602,5.68451
+spliced,PAnneal ($L_0$ 260),R2 bracketing,full,18,100,5.22526,5.00544,5.44361
+spliced,PAnneal ($L_0$ 260),R2 bracketing,full,20,100,5.00133,4.78744,5.21051
+spliced,PAnneal ($L_0$ 260),R2 bracketing,full,22,100,4.7113,4.49745,4.93259
+spliced,PAnneal ($L_0$ 260),R2 bracketing,full,24,100,4.63116,4.37546,4.91259
 spliced,PAnneal ($L_0$ 260),R3 turn,full,-4,100,0,0,0
 spliced,PAnneal ($L_0$ 260),R3 turn,full,-2,100,0,0,0
-spliced,PAnneal ($L_0$ 260),R3 turn,full,0,100,2.76557,2.44744,3.08371
-spliced,PAnneal ($L_0$ 260),R3 turn,full,2,100,4.16085,3.80839,4.51331
-spliced,PAnneal ($L_0$ 260),R3 turn,full,4,100,4.85939,4.51807,5.2007
-spliced,PAnneal ($L_0$ 260),R3 turn,full,6,100,5.40483,5.0613,5.74836
-spliced,PAnneal ($L_0$ 260),R3 turn,full,8,100,6.10642,5.75188,6.46096
-spliced,PAnneal ($L_0$ 260),R3 turn,full,10,100,6.55255,6.19707,6.90802
-spliced,PAnneal ($L_0$ 260),R3 turn,full,12,100,6.76754,6.39337,7.14172
-spliced,PAnneal ($L_0$ 260),R3 turn,full,14,100,5.84734,5.50073,6.19394
-spliced,PAnneal ($L_0$ 260),R3 turn,full,16,100,5.494,5.1346,5.8534
-spliced,PAnneal ($L_0$ 260),R3 turn,full,18,100,5.17409,4.85968,5.48851
-spliced,PAnneal ($L_0$ 260),R3 turn,full,20,100,4.98523,4.6852,5.28527
-spliced,PAnneal ($L_0$ 260),R3 turn,full,22,100,4.70282,4.40283,5.00281
-spliced,PAnneal ($L_0$ 260),R3 turn,full,24,100,4.64281,4.32143,4.96418
+spliced,PAnneal ($L_0$ 260),R3 turn,full,0,100,2.76557,2.45333,3.09717
+spliced,PAnneal ($L_0$ 260),R3 turn,full,2,100,4.16085,3.80359,4.50963
+spliced,PAnneal ($L_0$ 260),R3 turn,full,4,100,4.85939,4.52873,5.17676
+spliced,PAnneal ($L_0$ 260),R3 turn,full,6,100,5.40483,5.06916,5.73496
+spliced,PAnneal ($L_0$ 260),R3 turn,full,8,100,6.10642,5.75249,6.4566
+spliced,PAnneal ($L_0$ 260),R3 turn,full,10,100,6.55255,6.17805,6.88442
+spliced,PAnneal ($L_0$ 260),R3 turn,full,12,100,6.76754,6.39564,7.12735
+spliced,PAnneal ($L_0$ 260),R3 turn,full,14,100,5.84734,5.50785,6.19564
+spliced,PAnneal ($L_0$ 260),R3 turn,full,16,100,5.494,5.15322,5.8621
+spliced,PAnneal ($L_0$ 260),R3 turn,full,18,100,5.17409,4.86192,5.46866
+spliced,PAnneal ($L_0$ 260),R3 turn,full,20,100,4.98523,4.68614,5.2673
+spliced,PAnneal ($L_0$ 260),R3 turn,full,22,100,4.70282,4.39424,4.98365
+spliced,PAnneal ($L_0$ 260),R3 turn,full,24,100,4.64281,4.31355,4.95245
 spliced,PAnneal ($L_0$ 260),control_legal,full,-4,100,0,0,0
 spliced,PAnneal ($L_0$ 260),control_legal,full,-2,100,0,0,0
-spliced,PAnneal ($L_0$ 260),control_legal,full,0,100,2.69738,2.36703,3.02774
-spliced,PAnneal ($L_0$ 260),control_legal,full,2,100,4.27371,3.85742,4.69
-spliced,PAnneal ($L_0$ 260),control_legal,full,4,100,5.28222,4.84572,5.71872
-spliced,PAnneal ($L_0$ 260),control_legal,full,6,100,5.93584,5.49465,6.37703
-spliced,PAnneal ($L_0$ 260),control_legal,full,8,100,6.48798,6.05462,6.92135
-spliced,PAnneal ($L_0$ 260),control_legal,full,10,100,6.99229,6.57944,7.40514
-spliced,PAnneal ($L_0$ 260),control_legal,full,12,100,7.00406,6.56899,7.43913
-spliced,PAnneal ($L_0$ 260),control_legal,full,14,100,6.48468,6.06332,6.90604
-spliced,PAnneal ($L_0$ 260),control_legal,full,16,100,5.7333,5.38134,6.08526
-spliced,PAnneal ($L_0$ 260),control_legal,full,18,100,5.36546,5.0179,5.71302
-spliced,PAnneal ($L_0$ 260),control_legal,full,20,100,5.039,4.72021,5.35778
-spliced,PAnneal ($L_0$ 260),control_legal,full,22,100,4.75115,4.45703,5.04528
-spliced,PAnneal ($L_0$ 260),control_legal,full,24,100,4.77641,4.46845,5.08436
+spliced,PAnneal ($L_0$ 260),control_legal,full,0,100,2.69738,2.37591,3.03616
+spliced,PAnneal ($L_0$ 260),control_legal,full,2,100,4.27371,3.86633,4.6896
+spliced,PAnneal ($L_0$ 260),control_legal,full,4,100,5.28222,4.86979,5.71648
+spliced,PAnneal ($L_0$ 260),control_legal,full,6,100,5.93584,5.53661,6.37304
+spliced,PAnneal ($L_0$ 260),control_legal,full,8,100,6.48798,6.07909,6.93425
+spliced,PAnneal ($L_0$ 260),control_legal,full,10,100,6.99229,6.61982,7.42348
+spliced,PAnneal ($L_0$ 260),control_legal,full,12,100,7.00406,6.59143,7.43552
+spliced,PAnneal ($L_0$ 260),control_legal,full,14,100,6.48468,6.0674,6.90922
+spliced,PAnneal ($L_0$ 260),control_legal,full,16,100,5.7333,5.39535,6.09043
+spliced,PAnneal ($L_0$ 260),control_legal,full,18,100,5.36546,5.04016,5.70258
+spliced,PAnneal ($L_0$ 260),control_legal,full,20,100,5.039,4.72249,5.34122
+spliced,PAnneal ($L_0$ 260),control_legal,full,22,100,4.75115,4.45712,5.03416
+spliced,PAnneal ($L_0$ 260),control_legal,full,24,100,4.77641,4.44356,5.0994
 spliced,Standard ($L_0$ 209),R1 placement,full,-4,100,0,0,0
 spliced,Standard ($L_0$ 209),R1 placement,full,-2,100,0,0,0
-spliced,Standard ($L_0$ 209),R1 placement,full,0,100,3.18259,2.88549,3.47968
-spliced,Standard ($L_0$ 209),R1 placement,full,2,100,4.30701,4.03149,4.58254
-spliced,Standard ($L_0$ 209),R1 placement,full,4,100,5.02194,4.75,5.29389
-spliced,Standard ($L_0$ 209),R1 placement,full,6,100,5.47025,5.19367,5.74684
-spliced,Standard ($L_0$ 209),R1 placement,full,8,100,6.02004,5.7336,6.30648
-spliced,Standard ($L_0$ 209),R1 placement,full,10,100,6.52304,6.23834,6.80775
-spliced,Standard ($L_0$ 209),R1 placement,full,12,100,6.54633,6.28586,6.8068
-spliced,Standard ($L_0$ 209),R1 placement,full,14,100,5.55342,5.29038,5.81646
-spliced,Standard ($L_0$ 209),R1 placement,full,16,100,5.17785,4.91444,5.44126
-spliced,Standard ($L_0$ 209),R1 placement,full,18,100,4.96462,4.68893,5.24032
-spliced,Standard ($L_0$ 209),R1 placement,full,20,100,4.84587,4.55575,5.13598
-spliced,Standard ($L_0$ 209),R1 placement,full,22,100,4.64526,4.36008,4.93045
-spliced,Standard ($L_0$ 209),R1 placement,full,24,100,4.53335,4.23365,4.83306
+spliced,Standard ($L_0$ 209),R1 placement,full,0,100,3.18259,2.88066,3.49014
+spliced,Standard ($L_0$ 209),R1 placement,full,2,100,4.30701,4.03788,4.59932
+spliced,Standard ($L_0$ 209),R1 placement,full,4,100,5.02194,4.73845,5.29604
+spliced,Standard ($L_0$ 209),R1 placement,full,6,100,5.47025,5.18861,5.74608
+spliced,Standard ($L_0$ 209),R1 placement,full,8,100,6.02004,5.71648,6.30404
+spliced,Standard ($L_0$ 209),R1 placement,full,10,100,6.52304,6.2373,6.80998
+spliced,Standard ($L_0$ 209),R1 placement,full,12,100,6.54633,6.29463,6.80561
+spliced,Standard ($L_0$ 209),R1 placement,full,14,100,5.55342,5.27951,5.80809
+spliced,Standard ($L_0$ 209),R1 placement,full,16,100,5.17785,4.91608,5.41345
+spliced,Standard ($L_0$ 209),R1 placement,full,18,100,4.96462,4.70882,5.20939
+spliced,Standard ($L_0$ 209),R1 placement,full,20,100,4.84587,4.57444,5.11155
+spliced,Standard ($L_0$ 209),R1 placement,full,22,100,4.64526,4.38093,4.93379
+spliced,Standard ($L_0$ 209),R1 placement,full,24,100,4.53335,4.24343,4.83973
 spliced,Standard ($L_0$ 209),R2 bracketing,full,-4,100,0,0,0
 spliced,Standard ($L_0$ 209),R2 bracketing,full,-2,100,0,0,0
-spliced,Standard ($L_0$ 209),R2 bracketing,full,0,100,2.69791,2.47084,2.92498
-spliced,Standard ($L_0$ 209),R2 bracketing,full,2,100,4.27269,4.02606,4.51933
-spliced,Standard ($L_0$ 209),R2 bracketing,full,4,100,4.96178,4.72234,5.20122
-spliced,Standard ($L_0$ 209),R2 bracketing,full,6,100,5.51805,5.29291,5.74319
-spliced,Standard ($L_0$ 209),R2 bracketing,full,8,100,6.02455,5.8089,6.2402
-spliced,Standard ($L_0$ 209),R2 bracketing,full,10,100,6.51527,6.29881,6.73173
-spliced,Standard ($L_0$ 209),R2 bracketing,full,12,100,6.67728,6.46589,6.88868
-spliced,Standard ($L_0$ 209),R2 bracketing,full,14,100,5.89607,5.69927,6.09286
-spliced,Standard ($L_0$ 209),R2 bracketing,full,16,100,5.45226,5.22457,5.67994
-spliced,Standard ($L_0$ 209),R2 bracketing,full,18,100,5.33995,5.11479,5.56511
-spliced,Standard ($L_0$ 209),R2 bracketing,full,20,100,5.25776,5.02303,5.4925
-spliced,Standard ($L_0$ 209),R2 bracketing,full,22,100,5.03982,4.80654,5.27309
-spliced,Standard ($L_0$ 209),R2 bracketing,full,24,100,5.02709,4.75522,5.29895
+spliced,Standard ($L_0$ 209),R2 bracketing,full,0,100,2.69791,2.47413,2.93717
+spliced,Standard ($L_0$ 209),R2 bracketing,full,2,100,4.27269,4.02683,4.53675
+spliced,Standard ($L_0$ 209),R2 bracketing,full,4,100,4.96178,4.71156,5.2139
+spliced,Standard ($L_0$ 209),R2 bracketing,full,6,100,5.51805,5.28606,5.75057
+spliced,Standard ($L_0$ 209),R2 bracketing,full,8,100,6.02455,5.79626,6.23762
+spliced,Standard ($L_0$ 209),R2 bracketing,full,10,100,6.51527,6.28659,6.72708
+spliced,Standard ($L_0$ 209),R2 bracketing,full,12,100,6.67728,6.45862,6.87231
+spliced,Standard ($L_0$ 209),R2 bracketing,full,14,100,5.89607,5.6928,6.08881
+spliced,Standard ($L_0$ 209),R2 bracketing,full,16,100,5.45226,5.22974,5.67863
+spliced,Standard ($L_0$ 209),R2 bracketing,full,18,100,5.33995,5.1298,5.56793
+spliced,Standard ($L_0$ 209),R2 bracketing,full,20,100,5.25776,5.02637,5.49048
+spliced,Standard ($L_0$ 209),R2 bracketing,full,22,100,5.03982,4.81251,5.27612
+spliced,Standard ($L_0$ 209),R2 bracketing,full,24,100,5.02709,4.75232,5.31701
 spliced,Standard ($L_0$ 209),R3 turn,full,-4,100,0,0,0
 spliced,Standard ($L_0$ 209),R3 turn,full,-2,100,0,0,0
-spliced,Standard ($L_0$ 209),R3 turn,full,0,100,2.49761,2.20854,2.78669
-spliced,Standard ($L_0$ 209),R3 turn,full,2,100,4.03982,3.69195,4.38769
-spliced,Standard ($L_0$ 209),R3 turn,full,4,100,4.84538,4.50422,5.18654
-spliced,Standard ($L_0$ 209),R3 turn,full,6,100,5.40652,5.08848,5.72456
-spliced,Standard ($L_0$ 209),R3 turn,full,8,100,6.01072,5.67221,6.34922
-spliced,Standard ($L_0$ 209),R3 turn,full,10,100,6.50947,6.17516,6.84378
-spliced,Standard ($L_0$ 209),R3 turn,full,12,100,6.65943,6.29412,7.02474
-spliced,Standard ($L_0$ 209),R3 turn,full,14,100,5.99758,5.66245,6.33271
-spliced,Standard ($L_0$ 209),R3 turn,full,16,100,5.58168,5.23487,5.9285
-spliced,Standard ($L_0$ 209),R3 turn,full,18,100,5.34259,5.00278,5.6824
-spliced,Standard ($L_0$ 209),R3 turn,full,20,100,5.28039,4.9661,5.59468
-spliced,Standard ($L_0$ 209),R3 turn,full,22,100,5.11135,4.79256,5.43015
-spliced,Standard ($L_0$ 209),R3 turn,full,24,100,5.02764,4.70589,5.34939
+spliced,Standard ($L_0$ 209),R3 turn,full,0,100,2.49761,2.20325,2.79283
+spliced,Standard ($L_0$ 209),R3 turn,full,2,100,4.03982,3.71045,4.38553
+spliced,Standard ($L_0$ 209),R3 turn,full,4,100,4.84538,4.52625,5.18365
+spliced,Standard ($L_0$ 209),R3 turn,full,6,100,5.40652,5.10631,5.73034
+spliced,Standard ($L_0$ 209),R3 turn,full,8,100,6.01072,5.66962,6.34009
+spliced,Standard ($L_0$ 209),R3 turn,full,10,100,6.50947,6.17825,6.82784
+spliced,Standard ($L_0$ 209),R3 turn,full,12,100,6.65943,6.29129,7.00359
+spliced,Standard ($L_0$ 209),R3 turn,full,14,100,5.99758,5.65163,6.33162
+spliced,Standard ($L_0$ 209),R3 turn,full,16,100,5.58168,5.23713,5.92252
+spliced,Standard ($L_0$ 209),R3 turn,full,18,100,5.34259,4.99854,5.65077
+spliced,Standard ($L_0$ 209),R3 turn,full,20,100,5.28039,4.97287,5.57399
+spliced,Standard ($L_0$ 209),R3 turn,full,22,100,5.11135,4.79459,5.41692
+spliced,Standard ($L_0$ 209),R3 turn,full,24,100,5.02764,4.71533,5.3389
 spliced,Standard ($L_0$ 209),control_legal,full,-4,100,0,0,0
 spliced,Standard ($L_0$ 209),control_legal,full,-2,100,0,0,0
-spliced,Standard ($L_0$ 209),control_legal,full,0,100,2.55204,2.24704,2.85705
-spliced,Standard ($L_0$ 209),control_legal,full,2,100,4.08955,3.6934,4.4857
-spliced,Standard ($L_0$ 209),control_legal,full,4,100,5.15952,4.70315,5.61589
-spliced,Standard ($L_0$ 209),control_legal,full,6,100,5.84086,5.4035,6.27822
-spliced,Standard ($L_0$ 209),control_legal,full,8,100,6.42636,5.98999,6.86273
-spliced,Standard ($L_0$ 209),control_legal,full,10,100,7.09204,6.68845,7.49563
-spliced,Standard ($L_0$ 209),control_legal,full,12,100,7.13784,6.71422,7.56145
-spliced,Standard ($L_0$ 209),control_legal,full,14,100,6.62594,6.19376,7.05812
-spliced,Standard ($L_0$ 209),control_legal,full,16,100,5.86873,5.53582,6.20164
-spliced,Standard ($L_0$ 209),control_legal,full,18,100,5.48675,5.16854,5.80496
-spliced,Standard ($L_0$ 209),control_legal,full,20,100,5.25682,4.95722,5.55641
-spliced,Standard ($L_0$ 209),control_legal,full,22,100,4.99956,4.7109,5.28822
-spliced,Standard ($L_0$ 209),control_legal,full,24,100,5.04287,4.71726,5.36848
+spliced,Standard ($L_0$ 209),control_legal,full,0,100,2.55204,2.25391,2.84559
+spliced,Standard ($L_0$ 209),control_legal,full,2,100,4.08955,3.69593,4.49222
+spliced,Standard ($L_0$ 209),control_legal,full,4,100,5.15952,4.721,5.61936
+spliced,Standard ($L_0$ 209),control_legal,full,6,100,5.84086,5.43723,6.27014
+spliced,Standard ($L_0$ 209),control_legal,full,8,100,6.42636,6.01601,6.8773
+spliced,Standard ($L_0$ 209),control_legal,full,10,100,7.09204,6.71428,7.49633
+spliced,Standard ($L_0$ 209),control_legal,full,12,100,7.13784,6.74966,7.58683
+spliced,Standard ($L_0$ 209),control_legal,full,14,100,6.62594,6.21174,7.09161
+spliced,Standard ($L_0$ 209),control_legal,full,16,100,5.86873,5.5495,6.2181
+spliced,Standard ($L_0$ 209),control_legal,full,18,100,5.48675,5.14551,5.81409
+spliced,Standard ($L_0$ 209),control_legal,full,20,100,5.25682,4.94773,5.55232
+spliced,Standard ($L_0$ 209),control_legal,full,22,100,4.99956,4.70283,5.29005
+spliced,Standard ($L_0$ 209),control_legal,full,24,100,5.04287,4.72715,5.36161
 spliced,GatedSAE ($L_0$ 220),R1 placement,full,-4,100,0,0,0
 spliced,GatedSAE ($L_0$ 220),R1 placement,full,-2,100,0,0,0
-spliced,GatedSAE ($L_0$ 220),R1 placement,full,0,100,3.56055,3.29106,3.83004
-spliced,GatedSAE ($L_0$ 220),R1 placement,full,2,100,4.59655,4.32218,4.87092
-spliced,GatedSAE ($L_0$ 220),R1 placement,full,4,100,5.26715,4.99487,5.53944
-spliced,GatedSAE ($L_0$ 220),R1 placement,full,6,100,5.72729,5.44968,6.00489
-spliced,GatedSAE ($L_0$ 220),R1 placement,full,8,100,6.23493,5.95052,6.51935
-spliced,GatedSAE ($L_0$ 220),R1 placement,full,10,100,6.66651,6.38593,6.94709
-spliced,GatedSAE ($L_0$ 220),R1 placement,full,12,100,6.62364,6.36588,6.8814
-spliced,GatedSAE ($L_0$ 220),R1 placement,full,14,100,5.50435,5.248,5.7607
-spliced,GatedSAE ($L_0$ 220),R1 placement,full,16,100,5.17223,4.90409,5.44038
-spliced,GatedSAE ($L_0$ 220),R1 placement,full,18,100,4.91466,4.63653,5.19279
-spliced,GatedSAE ($L_0$ 220),R1 placement,full,20,100,4.79402,4.50629,5.08175
-spliced,GatedSAE ($L_0$ 220),R1 placement,full,22,100,4.62085,4.33363,4.90807
-spliced,GatedSAE ($L_0$ 220),R1 placement,full,24,100,4.56149,4.25596,4.86702
+spliced,GatedSAE ($L_0$ 220),R1 placement,full,0,100,3.396,3.11514,3.67467
+spliced,GatedSAE ($L_0$ 220),R1 placement,full,2,100,4.54962,4.25318,4.81271
+spliced,GatedSAE ($L_0$ 220),R1 placement,full,4,100,5.22806,4.95776,5.50197
+spliced,GatedSAE ($L_0$ 220),R1 placement,full,6,100,5.65652,5.38649,5.90446
+spliced,GatedSAE ($L_0$ 220),R1 placement,full,8,100,6.14474,5.86885,6.40753
+spliced,GatedSAE ($L_0$ 220),R1 placement,full,10,100,6.6563,6.35974,6.9261
+spliced,GatedSAE ($L_0$ 220),R1 placement,full,12,100,6.6532,6.38724,6.91524
+spliced,GatedSAE ($L_0$ 220),R1 placement,full,14,100,5.55232,5.28348,5.82446
+spliced,GatedSAE ($L_0$ 220),R1 placement,full,16,100,5.21816,4.97595,5.44784
+spliced,GatedSAE ($L_0$ 220),R1 placement,full,18,100,4.9174,4.67184,5.14279
+spliced,GatedSAE ($L_0$ 220),R1 placement,full,20,100,4.88414,4.60285,5.13635
+spliced,GatedSAE ($L_0$ 220),R1 placement,full,22,100,4.66835,4.39148,4.9559
+spliced,GatedSAE ($L_0$ 220),R1 placement,full,24,100,4.60193,4.30749,4.93202
 spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,-4,100,0,0,0
 spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,-2,100,0,0,0
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,0,100,2.95733,2.75452,3.16014
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,2,100,4.38923,4.1532,4.62526
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,4,100,5.14541,4.93529,5.35553
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,6,100,5.7075,5.48811,5.92689
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,8,100,6.26731,6.04763,6.48699
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,10,100,6.77148,6.56905,6.97391
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,12,100,6.86755,6.67474,7.06036
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,14,100,5.98756,5.78778,6.18734
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,16,100,5.62156,5.3938,5.84933
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,18,100,5.39217,5.16349,5.62085
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,20,100,5.27444,5.03601,5.51287
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,22,100,4.98801,4.74433,5.23168
-spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,24,100,4.92103,4.63403,5.20803
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,0,100,2.69099,2.46127,2.91378
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,2,100,4.1583,3.9289,4.40331
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,4,100,4.89931,4.69264,5.09966
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,6,100,5.51535,5.30793,5.71063
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,8,100,6.09258,5.88482,6.28408
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,10,100,6.58865,6.38449,6.7661
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,12,100,6.77006,6.56545,6.94928
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,14,100,5.91707,5.71435,6.1116
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,16,100,5.56396,5.35215,5.79087
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,18,100,5.37678,5.17853,5.59403
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,20,100,5.27795,5.07816,5.47456
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,22,100,5.00582,4.79118,5.24843
+spliced,GatedSAE ($L_0$ 220),R2 bracketing,full,24,100,4.97582,4.70787,5.26716
 spliced,GatedSAE ($L_0$ 220),R3 turn,full,-4,100,0,0,0
 spliced,GatedSAE ($L_0$ 220),R3 turn,full,-2,100,0,0,0
-spliced,GatedSAE ($L_0$ 220),R3 turn,full,0,100,2.78877,2.50784,3.0697
-spliced,GatedSAE ($L_0$ 220),R3 turn,full,2,100,4.11179,3.78747,4.43612
-spliced,GatedSAE ($L_0$ 220),R3 turn,full,4,100,4.8901,4.59095,5.18924
-spliced,GatedSAE ($L_0$ 220),R3 turn,full,6,100,5.48472,5.17968,5.78977
-spliced,GatedSAE ($L_0$ 220),R3 turn,full,8,100,6.13667,5.80566,6.46768
-spliced,GatedSAE ($L_0$ 220),R3 turn,full,10,100,6.5664,6.26512,6.86768
-spliced,GatedSAE ($L_0$ 220),R3 turn,full,12,100,6.66165,6.32381,6.99949
-spliced,GatedSAE ($L_0$ 220),R3 turn,full,14,100,6.02964,5.68848,6.37079
-spliced,GatedSAE ($L_0$ 220),R3 turn,full,16,100,5.57471,5.21538,5.93404
-spliced,GatedSAE ($L_0$ 220),R3 turn,full,18,100,5.26958,4.95896,5.58019
-spliced,GatedSAE ($L_0$ 220),R3 turn,full,20,100,5.17469,4.88054,5.46885
-spliced,GatedSAE ($L_0$ 220),R3 turn,full,22,100,5.00588,4.72382,5.28794
-spliced,GatedSAE ($L_0$ 220),R3 turn,full,24,100,4.98343,4.66183,5.30503
+spliced,GatedSAE ($L_0$ 220),R3 turn,full,0,100,2.69318,2.40146,2.95765
+spliced,GatedSAE ($L_0$ 220),R3 turn,full,2,100,4.03005,3.73918,4.31984
+spliced,GatedSAE ($L_0$ 220),R3 turn,full,4,100,4.8131,4.54079,5.08509
+spliced,GatedSAE ($L_0$ 220),R3 turn,full,6,100,5.38249,5.10885,5.65107
+spliced,GatedSAE ($L_0$ 220),R3 turn,full,8,100,6.06016,5.76312,6.35638
+spliced,GatedSAE ($L_0$ 220),R3 turn,full,10,100,6.54565,6.259,6.83133
+spliced,GatedSAE ($L_0$ 220),R3 turn,full,12,100,6.67975,6.37035,7.00145
+spliced,GatedSAE ($L_0$ 220),R3 turn,full,14,100,5.99278,5.63247,6.34844
+spliced,GatedSAE ($L_0$ 220),R3 turn,full,16,100,5.61679,5.25727,5.97672
+spliced,GatedSAE ($L_0$ 220),R3 turn,full,18,100,5.37267,5.07283,5.66941
+spliced,GatedSAE ($L_0$ 220),R3 turn,full,20,100,5.23413,4.94247,5.4971
+spliced,GatedSAE ($L_0$ 220),R3 turn,full,22,100,4.96407,4.64975,5.2674
+spliced,GatedSAE ($L_0$ 220),R3 turn,full,24,100,5.02482,4.67781,5.35817
 spliced,GatedSAE ($L_0$ 220),control_legal,full,-4,100,0,0,0
 spliced,GatedSAE ($L_0$ 220),control_legal,full,-2,100,0,0,0
-spliced,GatedSAE ($L_0$ 220),control_legal,full,0,100,2.67417,2.32906,3.01928
-spliced,GatedSAE ($L_0$ 220),control_legal,full,2,100,4.22933,3.82336,4.63529
-spliced,GatedSAE ($L_0$ 220),control_legal,full,4,100,5.21001,4.7874,5.63262
-spliced,GatedSAE ($L_0$ 220),control_legal,full,6,100,5.89578,5.4738,6.31777
-spliced,GatedSAE ($L_0$ 220),control_legal,full,8,100,6.50211,6.08955,6.91467
-spliced,GatedSAE ($L_0$ 220),control_legal,full,10,100,6.98529,6.59291,7.37768
-spliced,GatedSAE ($L_0$ 220),control_legal,full,12,100,7.0253,6.63041,7.42019
-spliced,GatedSAE ($L_0$ 220),control_legal,full,14,100,6.60583,6.20056,7.01109
-spliced,GatedSAE ($L_0$ 220),control_legal,full,16,100,5.93318,5.59805,6.26831
-spliced,GatedSAE ($L_0$ 220),control_legal,full,18,100,5.61743,5.30844,5.92641
-spliced,GatedSAE ($L_0$ 220),control_legal,full,20,100,5.40077,5.11836,5.68318
-spliced,GatedSAE ($L_0$ 220),control_legal,full,22,100,5.03762,4.7512,5.32403
-spliced,GatedSAE ($L_0$ 220),control_legal,full,24,100,5.01849,4.70121,5.33578
+spliced,GatedSAE ($L_0$ 220),control_legal,full,0,100,2.74647,2.40807,3.0906
+spliced,GatedSAE ($L_0$ 220),control_legal,full,2,100,4.15701,3.77085,4.5608
+spliced,GatedSAE ($L_0$ 220),control_legal,full,4,100,5.18012,4.76476,5.60888
+spliced,GatedSAE ($L_0$ 220),control_legal,full,6,100,5.81771,5.44106,6.23903
+spliced,GatedSAE ($L_0$ 220),control_legal,full,8,100,6.37788,6.00901,6.80457
+spliced,GatedSAE ($L_0$ 220),control_legal,full,10,100,7.00515,6.62875,7.43343
+spliced,GatedSAE ($L_0$ 220),control_legal,full,12,100,7.10275,6.712,7.51151
+spliced,GatedSAE ($L_0$ 220),control_legal,full,14,100,6.61318,6.23123,7.03259
+spliced,GatedSAE ($L_0$ 220),control_legal,full,16,100,5.97515,5.63518,6.32295
+spliced,GatedSAE ($L_0$ 220),control_legal,full,18,100,5.68816,5.34872,6.02416
+spliced,GatedSAE ($L_0$ 220),control_legal,full,20,100,5.47263,5.17119,5.76349
+spliced,GatedSAE ($L_0$ 220),control_legal,full,22,100,5.1612,4.85466,5.43137
+spliced,GatedSAE ($L_0$ 220),control_legal,full,24,100,5.12172,4.82007,5.45288
 spliced,TopK ($L_0$ 220),R1 placement,full,-4,100,0,0,0
 spliced,TopK ($L_0$ 220),R1 placement,full,-2,100,0,0,0
-spliced,TopK ($L_0$ 220),R1 placement,full,0,100,3.28261,2.98659,3.57862
-spliced,TopK ($L_0$ 220),R1 placement,full,2,100,4.44991,4.15872,4.7411
-spliced,TopK ($L_0$ 220),R1 placement,full,4,100,5.15002,4.85791,5.44213
-spliced,TopK ($L_0$ 220),R1 placement,full,6,100,5.54263,5.26245,5.82281
-spliced,TopK ($L_0$ 220),R1 placement,full,8,100,6.00855,5.71758,6.29952
-spliced,TopK ($L_0$ 220),R1 placement,full,10,100,6.45128,6.15872,6.74384
-spliced,TopK ($L_0$ 220),R1 placement,full,12,100,6.40276,6.13872,6.6668
-spliced,TopK ($L_0$ 220),R1 placement,full,14,100,5.31333,5.05116,5.5755
-spliced,TopK ($L_0$ 220),R1 placement,full,16,100,4.97387,4.715,5.23275
-spliced,TopK ($L_0$ 220),R1 placement,full,18,100,4.74252,4.48494,5.00011
-spliced,TopK ($L_0$ 220),R1 placement,full,20,100,4.64284,4.36779,4.9179
-spliced,TopK ($L_0$ 220),R1 placement,full,22,100,4.41678,4.13032,4.70324
-spliced,TopK ($L_0$ 220),R1 placement,full,24,100,4.39642,4.08309,4.70975
+spliced,TopK ($L_0$ 220),R1 placement,full,0,100,3.28261,2.99255,3.59987
+spliced,TopK ($L_0$ 220),R1 placement,full,2,100,4.44991,4.16237,4.75526
+spliced,TopK ($L_0$ 220),R1 placement,full,4,100,5.15002,4.8643,5.46435
+spliced,TopK ($L_0$ 220),R1 placement,full,6,100,5.54263,5.25373,5.82413
+spliced,TopK ($L_0$ 220),R1 placement,full,8,100,6.00855,5.7074,6.29688
+spliced,TopK ($L_0$ 220),R1 placement,full,10,100,6.45128,6.15658,6.74984
+spliced,TopK ($L_0$ 220),R1 placement,full,12,100,6.40276,6.14902,6.6516
+spliced,TopK ($L_0$ 220),R1 placement,full,14,100,5.31333,5.06829,5.58036
+spliced,TopK ($L_0$ 220),R1 placement,full,16,100,4.97387,4.72923,5.21825
+spliced,TopK ($L_0$ 220),R1 placement,full,18,100,4.74252,4.49639,4.97296
+spliced,TopK ($L_0$ 220),R1 placement,full,20,100,4.64284,4.37266,4.903
+spliced,TopK ($L_0$ 220),R1 placement,full,22,100,4.41678,4.14224,4.7008
+spliced,TopK ($L_0$ 220),R1 placement,full,24,100,4.39642,4.09038,4.72116
 spliced,TopK ($L_0$ 220),R2 bracketing,full,-4,100,0,0,0
 spliced,TopK ($L_0$ 220),R2 bracketing,full,-2,100,0,0,0
-spliced,TopK ($L_0$ 220),R2 bracketing,full,0,100,2.73384,2.48781,2.97987
-spliced,TopK ($L_0$ 220),R2 bracketing,full,2,100,4.34463,4.08359,4.60567
-spliced,TopK ($L_0$ 220),R2 bracketing,full,4,100,4.98823,4.75019,5.22626
-spliced,TopK ($L_0$ 220),R2 bracketing,full,6,100,5.58265,5.34827,5.81703
-spliced,TopK ($L_0$ 220),R2 bracketing,full,8,100,6.14482,5.90979,6.37986
-spliced,TopK ($L_0$ 220),R2 bracketing,full,10,100,6.62895,6.40261,6.85529
-spliced,TopK ($L_0$ 220),R2 bracketing,full,12,100,6.84984,6.62574,7.07394
-spliced,TopK ($L_0$ 220),R2 bracketing,full,14,100,5.81267,5.61601,6.00933
-spliced,TopK ($L_0$ 220),R2 bracketing,full,16,100,5.44256,5.21561,5.66951
-spliced,TopK ($L_0$ 220),R2 bracketing,full,18,100,5.26399,5.043,5.48499
-spliced,TopK ($L_0$ 220),R2 bracketing,full,20,100,5.09898,4.8851,5.31286
-spliced,TopK ($L_0$ 220),R2 bracketing,full,22,100,4.82634,4.59029,5.06239
-spliced,TopK ($L_0$ 220),R2 bracketing,full,24,100,4.83517,4.54987,5.12047
+spliced,TopK ($L_0$ 220),R2 bracketing,full,0,100,2.73384,2.47779,2.97708
+spliced,TopK ($L_0$ 220),R2 bracketing,full,2,100,4.34463,4.08855,4.58871
+spliced,TopK ($L_0$ 220),R2 bracketing,full,4,100,4.98823,4.74549,5.22733
+spliced,TopK ($L_0$ 220),R2 bracketing,full,6,100,5.58265,5.35279,5.80995
+spliced,TopK ($L_0$ 220),R2 bracketing,full,8,100,6.14482,5.91521,6.36666
+spliced,TopK ($L_0$ 220),R2 bracketing,full,10,100,6.62895,6.40544,6.84262
+spliced,TopK ($L_0$ 220),R2 bracketing,full,12,100,6.84984,6.61935,7.06346
+spliced,TopK ($L_0$ 220),R2 bracketing,full,14,100,5.81267,5.61313,6.01792
+spliced,TopK ($L_0$ 220),R2 bracketing,full,16,100,5.44256,5.22759,5.68339
+spliced,TopK ($L_0$ 220),R2 bracketing,full,18,100,5.26399,5.05202,5.49717
+spliced,TopK ($L_0$ 220),R2 bracketing,full,20,100,5.09898,4.89428,5.30088
+spliced,TopK ($L_0$ 220),R2 bracketing,full,22,100,4.82634,4.58763,5.07436
+spliced,TopK ($L_0$ 220),R2 bracketing,full,24,100,4.83517,4.561,5.14054
 spliced,TopK ($L_0$ 220),R3 turn,full,-4,100,0,0,0
 spliced,TopK ($L_0$ 220),R3 turn,full,-2,100,0,0,0
-spliced,TopK ($L_0$ 220),R3 turn,full,0,100,2.75877,2.43716,3.08037
-spliced,TopK ($L_0$ 220),R3 turn,full,2,100,4.22441,3.86627,4.58255
-spliced,TopK ($L_0$ 220),R3 turn,full,4,100,4.93789,4.60981,5.26597
-spliced,TopK ($L_0$ 220),R3 turn,full,6,100,5.52851,5.20802,5.84901
-spliced,TopK ($L_0$ 220),R3 turn,full,8,100,6.22484,5.89813,6.55156
-spliced,TopK ($L_0$ 220),R3 turn,full,10,100,6.67177,6.34871,6.99482
-spliced,TopK ($L_0$ 220),R3 turn,full,12,100,6.81205,6.44095,7.18315
-spliced,TopK ($L_0$ 220),R3 turn,full,14,100,5.94376,5.57868,6.30883
-spliced,TopK ($L_0$ 220),R3 turn,full,16,100,5.54107,5.15496,5.92717
-spliced,TopK ($L_0$ 220),R3 turn,full,18,100,5.26584,4.95139,5.58028
-spliced,TopK ($L_0$ 220),R3 turn,full,20,100,5.1457,4.84818,5.44323
-spliced,TopK ($L_0$ 220),R3 turn,full,22,100,4.90792,4.59708,5.21876
-spliced,TopK ($L_0$ 220),R3 turn,full,24,100,4.92261,4.57179,5.27343
+spliced,TopK ($L_0$ 220),R3 turn,full,0,100,2.75877,2.42177,3.06336
+spliced,TopK ($L_0$ 220),R3 turn,full,2,100,4.22441,3.87117,4.57767
+spliced,TopK ($L_0$ 220),R3 turn,full,4,100,4.93789,4.60991,5.27948
+spliced,TopK ($L_0$ 220),R3 turn,full,6,100,5.52851,5.22056,5.85602
+spliced,TopK ($L_0$ 220),R3 turn,full,8,100,6.22484,5.88075,6.56071
+spliced,TopK ($L_0$ 220),R3 turn,full,10,100,6.67177,6.35494,6.98509
+spliced,TopK ($L_0$ 220),R3 turn,full,12,100,6.81205,6.43041,7.18744
+spliced,TopK ($L_0$ 220),R3 turn,full,14,100,5.94376,5.57432,6.3281
+spliced,TopK ($L_0$ 220),R3 turn,full,16,100,5.54107,5.17051,5.92216
+spliced,TopK ($L_0$ 220),R3 turn,full,18,100,5.26584,4.96738,5.55263
+spliced,TopK ($L_0$ 220),R3 turn,full,20,100,5.1457,4.85723,5.42881
+spliced,TopK ($L_0$ 220),R3 turn,full,22,100,4.90792,4.59864,5.19652
+spliced,TopK ($L_0$ 220),R3 turn,full,24,100,4.92261,4.55381,5.25747
 spliced,TopK ($L_0$ 220),control_legal,full,-4,100,0,0,0
 spliced,TopK ($L_0$ 220),control_legal,full,-2,100,0,0,0
-spliced,TopK ($L_0$ 220),control_legal,full,0,100,2.72952,2.3867,3.07234
-spliced,TopK ($L_0$ 220),control_legal,full,2,100,4.29093,3.85953,4.72232
-spliced,TopK ($L_0$ 220),control_legal,full,4,100,5.35059,4.89757,5.80361
-spliced,TopK ($L_0$ 220),control_legal,full,6,100,5.92412,5.47139,6.37685
-spliced,TopK ($L_0$ 220),control_legal,full,8,100,6.46009,6.0116,6.90858
-spliced,TopK ($L_0$ 220),control_legal,full,10,100,7.01794,6.58,7.45589
-spliced,TopK ($L_0$ 220),control_legal,full,12,100,7.08848,6.64464,7.53233
-spliced,TopK ($L_0$ 220),control_legal,full,14,100,6.56234,6.14444,6.98024
-spliced,TopK ($L_0$ 220),control_legal,full,16,100,5.7438,5.41582,6.07178
-spliced,TopK ($L_0$ 220),control_legal,full,18,100,5.38613,5.07231,5.69995
-spliced,TopK ($L_0$ 220),control_legal,full,20,100,5.15531,4.8495,5.46111
-spliced,TopK ($L_0$ 220),control_legal,full,22,100,4.90949,4.60412,5.21485
-spliced,TopK ($L_0$ 220),control_legal,full,24,100,4.94368,4.62486,5.26251
+spliced,TopK ($L_0$ 220),control_legal,full,0,100,2.72952,2.38893,3.08133
+spliced,TopK ($L_0$ 220),control_legal,full,2,100,4.29093,3.87029,4.70781
+spliced,TopK ($L_0$ 220),control_legal,full,4,100,5.35059,4.89532,5.83033
+spliced,TopK ($L_0$ 220),control_legal,full,6,100,5.92412,5.49112,6.40776
+spliced,TopK ($L_0$ 220),control_legal,full,8,100,6.46009,6.04233,6.92974
+spliced,TopK ($L_0$ 220),control_legal,full,10,100,7.01794,6.5999,7.47795
+spliced,TopK ($L_0$ 220),control_legal,full,12,100,7.08848,6.653,7.53586
+spliced,TopK ($L_0$ 220),control_legal,full,14,100,6.56234,6.16885,6.98512
+spliced,TopK ($L_0$ 220),control_legal,full,16,100,5.7438,5.413,6.08101
+spliced,TopK ($L_0$ 220),control_legal,full,18,100,5.38613,5.0942,5.70026
+spliced,TopK ($L_0$ 220),control_legal,full,20,100,5.15531,4.85236,5.44503
+spliced,TopK ($L_0$ 220),control_legal,full,22,100,4.90949,4.5862,5.20111
+spliced,TopK ($L_0$ 220),control_legal,full,24,100,4.94368,4.61838,5.27539
 spliced,GatedAnneal ($L_0$ 222),R1 placement,full,-4,100,0,0,0
 spliced,GatedAnneal ($L_0$ 222),R1 placement,full,-2,100,0,0,0
-spliced,GatedAnneal ($L_0$ 222),R1 placement,full,0,100,3.19358,2.9011,3.48606
-spliced,GatedAnneal ($L_0$ 222),R1 placement,full,2,100,4.35773,4.06072,4.65475
-spliced,GatedAnneal ($L_0$ 222),R1 placement,full,4,100,5.03716,4.74903,5.32529
-spliced,GatedAnneal ($L_0$ 222),R1 placement,full,6,100,5.4721,5.1839,5.7603
-spliced,GatedAnneal ($L_0$ 222),R1 placement,full,8,100,5.97492,5.68441,6.26542
-spliced,GatedAnneal ($L_0$ 222),R1 placement,full,10,100,6.42949,6.13485,6.72413
-spliced,GatedAnneal ($L_0$ 222),R1 placement,full,12,100,6.40139,6.13416,6.66862
-spliced,GatedAnneal ($L_0$ 222),R1 placement,full,14,100,5.46416,5.18642,5.74191
-spliced,GatedAnneal ($L_0$ 222),R1 placement,full,16,100,5.07934,4.80931,5.34936
-spliced,GatedAnneal ($L_0$ 222),R1 placement,full,18,100,4.8913,4.62083,5.16178
-spliced,GatedAnneal ($L_0$ 222),R1 placement,full,20,100,4.76998,4.49199,5.04798
-spliced,GatedAnneal ($L_0$ 222),R1 placement,full,22,100,4.56095,4.28097,4.84092
-spliced,GatedAnneal ($L_0$ 222),R1 placement,full,24,100,4.54061,4.22722,4.85399
+spliced,GatedAnneal ($L_0$ 222),R1 placement,full,0,100,3.19358,2.89118,3.49789
+spliced,GatedAnneal ($L_0$ 222),R1 placement,full,2,100,4.35773,4.05123,4.67319
+spliced,GatedAnneal ($L_0$ 222),R1 placement,full,4,100,5.03716,4.72826,5.35454
+spliced,GatedAnneal ($L_0$ 222),R1 placement,full,6,100,5.4721,5.18181,5.75043
+spliced,GatedAnneal ($L_0$ 222),R1 placement,full,8,100,5.97492,5.68681,6.273
+spliced,GatedAnneal ($L_0$ 222),R1 placement,full,10,100,6.42949,6.1291,6.73121
+spliced,GatedAnneal ($L_0$ 222),R1 placement,full,12,100,6.40139,6.14208,6.65955
+spliced,GatedAnneal ($L_0$ 222),R1 placement,full,14,100,5.46416,5.18434,5.72118
+spliced,GatedAnneal ($L_0$ 222),R1 placement,full,16,100,5.07934,4.81543,5.3211
+spliced,GatedAnneal ($L_0$ 222),R1 placement,full,18,100,4.8913,4.62938,5.15161
+spliced,GatedAnneal ($L_0$ 222),R1 placement,full,20,100,4.76998,4.50588,5.05277
+spliced,GatedAnneal ($L_0$ 222),R1 placement,full,22,100,4.56095,4.29785,4.85241
+spliced,GatedAnneal ($L_0$ 222),R1 placement,full,24,100,4.54061,4.23598,4.86816
 spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,-4,100,0,0,0
 spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,-2,100,0,0,0
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,0,100,2.58692,2.34698,2.82686
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,2,100,4.13471,3.87984,4.38959
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,4,100,4.81619,4.59247,5.03991
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,6,100,5.46591,5.24299,5.68884
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,8,100,6.0168,5.79431,6.2393
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,10,100,6.46656,6.24329,6.68984
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,12,100,6.64178,6.42642,6.85713
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,14,100,5.90181,5.69331,6.11031
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,16,100,5.51866,5.28884,5.74847
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,18,100,5.36836,5.15522,5.58149
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,20,100,5.1608,4.94911,5.37248
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,22,100,4.93123,4.69564,5.16682
-spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,24,100,4.94876,4.67361,5.22391
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,0,100,2.58692,2.34663,2.82327
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,2,100,4.13471,3.88402,4.37953
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,4,100,4.81619,4.58903,5.03403
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,6,100,5.46591,5.24328,5.6959
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,8,100,6.0168,5.79309,6.23863
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,10,100,6.46656,6.23362,6.67961
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,12,100,6.64178,6.42701,6.85148
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,14,100,5.90181,5.69019,6.11402
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,16,100,5.51866,5.29963,5.75594
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,18,100,5.36836,5.17005,5.58746
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,20,100,5.1608,4.96509,5.36169
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,22,100,4.93123,4.7127,5.16687
+spliced,GatedAnneal ($L_0$ 222),R2 bracketing,full,24,100,4.94876,4.67984,5.23011
 spliced,GatedAnneal ($L_0$ 222),R3 turn,full,-4,100,0,0,0
 spliced,GatedAnneal ($L_0$ 222),R3 turn,full,-2,100,0,0,0
-spliced,GatedAnneal ($L_0$ 222),R3 turn,full,0,100,2.58261,2.28191,2.88332
-spliced,GatedAnneal ($L_0$ 222),R3 turn,full,2,100,3.99382,3.65959,4.32805
-spliced,GatedAnneal ($L_0$ 222),R3 turn,full,4,100,4.78075,4.47251,5.08899
-spliced,GatedAnneal ($L_0$ 222),R3 turn,full,6,100,5.39895,5.09324,5.70467
-spliced,GatedAnneal ($L_0$ 222),R3 turn,full,8,100,6.07457,5.75746,6.39167
-spliced,GatedAnneal ($L_0$ 222),R3 turn,full,10,100,6.50111,6.18536,6.81687
-spliced,GatedAnneal ($L_0$ 222),R3 turn,full,12,100,6.68167,6.32488,7.03846
-spliced,GatedAnneal ($L_0$ 222),R3 turn,full,14,100,6.01913,5.64633,6.39192
-spliced,GatedAnneal ($L_0$ 222),R3 turn,full,16,100,5.6409,5.24868,6.03311
-spliced,GatedAnneal ($L_0$ 222),R3 turn,full,18,100,5.3634,5.02295,5.70385
-spliced,GatedAnneal ($L_0$ 222),R3 turn,full,20,100,5.21456,4.91028,5.51884
-spliced,GatedAnneal ($L_0$ 222),R3 turn,full,22,100,4.97409,4.64697,5.30121
-spliced,GatedAnneal ($L_0$ 222),R3 turn,full,24,100,5.03269,4.68811,5.37728
+spliced,GatedAnneal ($L_0$ 222),R3 turn,full,0,100,2.58261,2.28458,2.8912
+spliced,GatedAnneal ($L_0$ 222),R3 turn,full,2,100,3.99382,3.67235,4.31258
+spliced,GatedAnneal ($L_0$ 222),R3 turn,full,4,100,4.78075,4.47396,5.08705
+spliced,GatedAnneal ($L_0$ 222),R3 turn,full,6,100,5.39895,5.10224,5.73154
+spliced,GatedAnneal ($L_0$ 222),R3 turn,full,8,100,6.07457,5.76632,6.38703
+spliced,GatedAnneal ($L_0$ 222),R3 turn,full,10,100,6.50111,6.18902,6.79817
+spliced,GatedAnneal ($L_0$ 222),R3 turn,full,12,100,6.68167,6.331,7.02497
+spliced,GatedAnneal ($L_0$ 222),R3 turn,full,14,100,6.01913,5.65009,6.3971
+spliced,GatedAnneal ($L_0$ 222),R3 turn,full,16,100,5.6409,5.27775,6.02504
+spliced,GatedAnneal ($L_0$ 222),R3 turn,full,18,100,5.3634,5.02767,5.6987
+spliced,GatedAnneal ($L_0$ 222),R3 turn,full,20,100,5.21456,4.91738,5.50773
+spliced,GatedAnneal ($L_0$ 222),R3 turn,full,22,100,4.97409,4.65849,5.28996
+spliced,GatedAnneal ($L_0$ 222),R3 turn,full,24,100,5.03269,4.68355,5.37794
 spliced,GatedAnneal ($L_0$ 222),control_legal,full,-4,100,0,0,0
 spliced,GatedAnneal ($L_0$ 222),control_legal,full,-2,100,0,0,0
-spliced,GatedAnneal ($L_0$ 222),control_legal,full,0,100,2.54658,2.22414,2.86901
-spliced,GatedAnneal ($L_0$ 222),control_legal,full,2,100,4.1818,3.75085,4.61275
-spliced,GatedAnneal ($L_0$ 222),control_legal,full,4,100,5.28372,4.81104,5.7564
-spliced,GatedAnneal ($L_0$ 222),control_legal,full,6,100,5.99881,5.52757,6.47004
-spliced,GatedAnneal ($L_0$ 222),control_legal,full,8,100,6.51915,6.06116,6.97714
-spliced,GatedAnneal ($L_0$ 222),control_legal,full,10,100,7.07328,6.62808,7.51847
-spliced,GatedAnneal ($L_0$ 222),control_legal,full,12,100,7.1598,6.69682,7.62278
-spliced,GatedAnneal ($L_0$ 222),control_legal,full,14,100,6.67726,6.23008,7.12443
-spliced,GatedAnneal ($L_0$ 222),control_legal,full,16,100,5.83083,5.47914,6.18253
-spliced,GatedAnneal ($L_0$ 222),control_legal,full,18,100,5.49399,5.15531,5.83267
-spliced,GatedAnneal ($L_0$ 222),control_legal,full,20,100,5.28409,4.96699,5.60119
-spliced,GatedAnneal ($L_0$ 222),control_legal,full,22,100,4.99053,4.70039,5.28067
-spliced,GatedAnneal ($L_0$ 222),control_legal,full,24,100,5.06872,4.74393,5.3935
+spliced,GatedAnneal ($L_0$ 222),control_legal,full,0,100,2.54658,2.22758,2.85852
+spliced,GatedAnneal ($L_0$ 222),control_legal,full,2,100,4.1818,3.77123,4.61026
+spliced,GatedAnneal ($L_0$ 222),control_legal,full,4,100,5.28372,4.83408,5.78725
+spliced,GatedAnneal ($L_0$ 222),control_legal,full,6,100,5.99881,5.54995,6.4913
+spliced,GatedAnneal ($L_0$ 222),control_legal,full,8,100,6.51915,6.0866,6.99717
+spliced,GatedAnneal ($L_0$ 222),control_legal,full,10,100,7.07328,6.66546,7.52502
+spliced,GatedAnneal ($L_0$ 222),control_legal,full,12,100,7.1598,6.74205,7.6413
+spliced,GatedAnneal ($L_0$ 222),control_legal,full,14,100,6.67726,6.25212,7.12598
+spliced,GatedAnneal ($L_0$ 222),control_legal,full,16,100,5.83083,5.473,6.18265
+spliced,GatedAnneal ($L_0$ 222),control_legal,full,18,100,5.49399,5.16221,5.83428
+spliced,GatedAnneal ($L_0$ 222),control_legal,full,20,100,5.28409,4.96513,5.60787
+spliced,GatedAnneal ($L_0$ 222),control_legal,full,22,100,4.99053,4.71679,5.28613
+spliced,GatedAnneal ($L_0$ 222),control_legal,full,24,100,5.06872,4.76589,5.41912
 spliced,BatchTopK ($L_0$ 227),R1 placement,full,-4,100,0,0,0
 spliced,BatchTopK ($L_0$ 227),R1 placement,full,-2,100,0,0,0
-spliced,BatchTopK ($L_0$ 227),R1 placement,full,0,100,3.07321,2.78671,3.3597
-spliced,BatchTopK ($L_0$ 227),R1 placement,full,2,100,4.28103,4.00409,4.55797
-spliced,BatchTopK ($L_0$ 227),R1 placement,full,4,100,4.89993,4.62111,5.17875
-spliced,BatchTopK ($L_0$ 227),R1 placement,full,6,100,5.33342,5.06005,5.6068
-spliced,BatchTopK ($L_0$ 227),R1 placement,full,8,100,5.8301,5.54425,6.11594
-spliced,BatchTopK ($L_0$ 227),R1 placement,full,10,100,6.27888,5.99926,6.5585
-spliced,BatchTopK ($L_0$ 227),R1 placement,full,12,100,6.26188,5.9935,6.53027
-spliced,BatchTopK ($L_0$ 227),R1 placement,full,14,100,5.20986,4.93232,5.4874
-spliced,BatchTopK ($L_0$ 227),R1 placement,full,16,100,4.88725,4.62275,5.15174
-spliced,BatchTopK ($L_0$ 227),R1 placement,full,18,100,4.68493,4.41751,4.95235
-spliced,BatchTopK ($L_0$ 227),R1 placement,full,20,100,4.60507,4.32679,4.88335
-spliced,BatchTopK ($L_0$ 227),R1 placement,full,22,100,4.33311,4.04975,4.61647
-spliced,BatchTopK ($L_0$ 227),R1 placement,full,24,100,4.26875,3.96095,4.57654
+spliced,BatchTopK ($L_0$ 227),R1 placement,full,0,100,3.07321,2.79512,3.37583
+spliced,BatchTopK ($L_0$ 227),R1 placement,full,2,100,4.28103,4.00888,4.56295
+spliced,BatchTopK ($L_0$ 227),R1 placement,full,4,100,4.89993,4.63172,5.18918
+spliced,BatchTopK ($L_0$ 227),R1 placement,full,6,100,5.33342,5.04906,5.60529
+spliced,BatchTopK ($L_0$ 227),R1 placement,full,8,100,5.8301,5.53894,6.12462
+spliced,BatchTopK ($L_0$ 227),R1 placement,full,10,100,6.27888,5.99893,6.54853
+spliced,BatchTopK ($L_0$ 227),R1 placement,full,12,100,6.26188,6.00544,6.51604
+spliced,BatchTopK ($L_0$ 227),R1 placement,full,14,100,5.20986,4.92876,5.47989
+spliced,BatchTopK ($L_0$ 227),R1 placement,full,16,100,4.88725,4.61776,5.1416
+spliced,BatchTopK ($L_0$ 227),R1 placement,full,18,100,4.68493,4.43641,4.92685
+spliced,BatchTopK ($L_0$ 227),R1 placement,full,20,100,4.60507,4.34038,4.86376
+spliced,BatchTopK ($L_0$ 227),R1 placement,full,22,100,4.33311,4.06484,4.63368
+spliced,BatchTopK ($L_0$ 227),R1 placement,full,24,100,4.26875,3.97766,4.58343
 spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,-4,100,0,0,0
 spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,-2,100,0,0,0
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,0,100,3.01867,2.74473,3.29262
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,2,100,4.76795,4.47798,5.05792
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,4,100,5.24352,4.98897,5.49807
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,6,100,5.80864,5.55899,6.0583
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,8,100,6.3342,6.08749,6.58092
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,10,100,6.83229,6.59131,7.07326
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,12,100,7.05992,6.82456,7.29527
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,14,100,5.75256,5.56055,5.94456
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,16,100,5.38223,5.14624,5.61821
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,18,100,5.22158,4.99704,5.44613
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,20,100,5.08203,4.86617,5.29788
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,22,100,4.76473,4.52894,5.00051
-spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,24,100,4.74219,4.46727,5.01712
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,0,100,3.01867,2.74535,3.29019
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,2,100,4.76795,4.48805,5.02899
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,4,100,5.24352,4.98718,5.47994
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,6,100,5.80864,5.56942,6.04545
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,8,100,6.3342,6.07932,6.58355
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,10,100,6.83229,6.59786,7.07585
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,12,100,7.05992,6.83695,7.29483
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,14,100,5.75256,5.56042,5.9524
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,16,100,5.38223,5.15345,5.61565
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,18,100,5.22158,5.00997,5.44577
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,20,100,5.08203,4.8754,5.29702
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,22,100,4.76473,4.53289,5.0043
+spliced,BatchTopK ($L_0$ 227),R2 bracketing,full,24,100,4.74219,4.47659,5.03539
 spliced,BatchTopK ($L_0$ 227),R3 turn,full,-4,100,0,0,0
 spliced,BatchTopK ($L_0$ 227),R3 turn,full,-2,100,0,0,0
-spliced,BatchTopK ($L_0$ 227),R3 turn,full,0,100,2.80028,2.45135,3.14921
-spliced,BatchTopK ($L_0$ 227),R3 turn,full,2,100,4.38252,3.9772,4.78785
-spliced,BatchTopK ($L_0$ 227),R3 turn,full,4,100,5.00911,4.64705,5.37117
-spliced,BatchTopK ($L_0$ 227),R3 turn,full,6,100,5.55588,5.20962,5.90215
-spliced,BatchTopK ($L_0$ 227),R3 turn,full,8,100,6.20877,5.86139,6.55615
-spliced,BatchTopK ($L_0$ 227),R3 turn,full,10,100,6.67395,6.33367,7.01422
-spliced,BatchTopK ($L_0$ 227),R3 turn,full,12,100,6.90672,6.52694,7.28649
-spliced,BatchTopK ($L_0$ 227),R3 turn,full,14,100,5.78888,5.43479,6.14297
-spliced,BatchTopK ($L_0$ 227),R3 turn,full,16,100,5.35697,4.98316,5.73078
-spliced,BatchTopK ($L_0$ 227),R3 turn,full,18,100,5.1004,4.77012,5.43068
-spliced,BatchTopK ($L_0$ 227),R3 turn,full,20,100,5.00779,4.6978,5.31779
-spliced,BatchTopK ($L_0$ 227),R3 turn,full,22,100,4.75267,4.42912,5.07622
-spliced,BatchTopK ($L_0$ 227),R3 turn,full,24,100,4.71481,4.36739,5.06222
+spliced,BatchTopK ($L_0$ 227),R3 turn,full,0,100,2.80028,2.43818,3.14854
+spliced,BatchTopK ($L_0$ 227),R3 turn,full,2,100,4.38252,3.95146,4.79512
+spliced,BatchTopK ($L_0$ 227),R3 turn,full,4,100,5.00911,4.64595,5.38995
+spliced,BatchTopK ($L_0$ 227),R3 turn,full,6,100,5.55588,5.22194,5.90614
+spliced,BatchTopK ($L_0$ 227),R3 turn,full,8,100,6.20877,5.85428,6.5628
+spliced,BatchTopK ($L_0$ 227),R3 turn,full,10,100,6.67395,6.32353,7.01703
+spliced,BatchTopK ($L_0$ 227),R3 turn,full,12,100,6.90672,6.5215,7.28052
+spliced,BatchTopK ($L_0$ 227),R3 turn,full,14,100,5.78888,5.42495,6.14028
+spliced,BatchTopK ($L_0$ 227),R3 turn,full,16,100,5.35697,4.99212,5.72441
+spliced,BatchTopK ($L_0$ 227),R3 turn,full,18,100,5.1004,4.78207,5.41444
+spliced,BatchTopK ($L_0$ 227),R3 turn,full,20,100,5.00779,4.68844,5.28686
+spliced,BatchTopK ($L_0$ 227),R3 turn,full,22,100,4.75267,4.41337,5.06999
+spliced,BatchTopK ($L_0$ 227),R3 turn,full,24,100,4.71481,4.35597,5.05915
 spliced,BatchTopK ($L_0$ 227),control_legal,full,-4,100,0,0,0
 spliced,BatchTopK ($L_0$ 227),control_legal,full,-2,100,0,0,0
-spliced,BatchTopK ($L_0$ 227),control_legal,full,0,100,2.58386,2.2523,2.91542
-spliced,BatchTopK ($L_0$ 227),control_legal,full,2,100,4.00005,3.60642,4.39367
-spliced,BatchTopK ($L_0$ 227),control_legal,full,4,100,5.04634,4.62268,5.47
-spliced,BatchTopK ($L_0$ 227),control_legal,full,6,100,5.65936,5.22922,6.08949
-spliced,BatchTopK ($L_0$ 227),control_legal,full,8,100,6.26743,5.84167,6.69318
-spliced,BatchTopK ($L_0$ 227),control_legal,full,10,100,6.84194,6.42718,7.25669
-spliced,BatchTopK ($L_0$ 227),control_legal,full,12,100,6.92473,6.50038,7.34907
-spliced,BatchTopK ($L_0$ 227),control_legal,full,14,100,6.47226,6.07208,6.87243
-spliced,BatchTopK ($L_0$ 227),control_legal,full,16,100,5.70924,5.37872,6.03977
-spliced,BatchTopK ($L_0$ 227),control_legal,full,18,100,5.43232,5.09433,5.77031
-spliced,BatchTopK ($L_0$ 227),control_legal,full,20,100,5.22713,4.90537,5.54888
-spliced,BatchTopK ($L_0$ 227),control_legal,full,22,100,4.8761,4.56763,5.18456
-spliced,BatchTopK ($L_0$ 227),control_legal,full,24,100,4.85259,4.52763,5.17756
+spliced,BatchTopK ($L_0$ 227),control_legal,full,0,100,2.58386,2.26391,2.91676
+spliced,BatchTopK ($L_0$ 227),control_legal,full,2,100,4.00005,3.6351,4.37528
+spliced,BatchTopK ($L_0$ 227),control_legal,full,4,100,5.04634,4.64227,5.48166
+spliced,BatchTopK ($L_0$ 227),control_legal,full,6,100,5.65936,5.24879,6.09531
+spliced,BatchTopK ($L_0$ 227),control_legal,full,8,100,6.26743,5.88476,6.69697
+spliced,BatchTopK ($L_0$ 227),control_legal,full,10,100,6.84194,6.46272,7.27585
+spliced,BatchTopK ($L_0$ 227),control_legal,full,12,100,6.92473,6.52108,7.36081
+spliced,BatchTopK ($L_0$ 227),control_legal,full,14,100,6.47226,6.08751,6.86776
+spliced,BatchTopK ($L_0$ 227),control_legal,full,16,100,5.70924,5.39454,6.04045
+spliced,BatchTopK ($L_0$ 227),control_legal,full,18,100,5.43232,5.1045,5.7548
+spliced,BatchTopK ($L_0$ 227),control_legal,full,20,100,5.22713,4.90137,5.55726
+spliced,BatchTopK ($L_0$ 227),control_legal,full,22,100,4.8761,4.58547,5.17484
+spliced,BatchTopK ($L_0$ 227),control_legal,full,24,100,4.85259,4.53388,5.20141
 spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,-4,100,0,0,0
 spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,-2,100,0,0,0
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,0,100,1.87491,1.67785,2.07197
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,2,100,2.99606,2.74624,3.24588
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,4,100,3.76351,3.45899,4.06804
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,6,100,4.29019,3.97778,4.60259
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,8,100,4.69766,4.3893,5.00602
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,10,100,5.0569,4.75032,5.36347
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,12,100,5.12571,4.81772,5.4337
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,14,100,4.75047,4.43209,5.06885
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,16,100,4.46186,4.19126,4.73246
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,18,100,4.18186,3.92049,4.44324
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,20,100,3.97557,3.6853,4.26585
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,22,100,3.68804,3.3981,3.97798
-spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,24,100,3.57642,3.28248,3.87037
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,0,100,1.87491,1.67292,2.07511
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,2,100,2.99606,2.75834,3.24458
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,4,100,3.76351,3.47561,4.06375
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,6,100,4.29019,3.98355,4.59507
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,8,100,4.69766,4.41104,5.00604
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,10,100,5.0569,4.76237,5.3563
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,12,100,5.12571,4.82097,5.42851
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,14,100,4.75047,4.43485,5.07549
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,16,100,4.46186,4.18671,4.74359
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,18,100,4.18186,3.92319,4.45732
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,20,100,3.97557,3.70176,4.28065
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,22,100,3.68804,3.41239,4.00609
+spliced,CosineSpaDE ($L_0$ 184),R1 placement,full,24,100,3.57642,3.31537,3.88315
 spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,-4,100,0,0,0
 spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,-2,100,0,0,0
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,0,100,3.71399,3.45847,3.96951
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,2,100,6.17043,5.82603,6.51483
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,4,100,6.82653,6.51595,7.13711
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,6,100,7.2411,6.95996,7.52224
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,8,100,7.62602,7.34743,7.90462
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,10,100,7.99365,7.73047,8.25682
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,12,100,8.22024,7.9718,8.46868
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,14,100,6.21655,6.00297,6.43012
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,16,100,5.01278,4.76386,5.2617
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,18,100,4.60505,4.3723,4.8378
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,20,100,4.22983,3.98417,4.47549
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,22,100,3.96969,3.69469,4.24468
-spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,24,100,3.85979,3.58464,4.13493
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,0,100,3.71399,3.44759,3.9488
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,2,100,6.17043,5.80746,6.4925
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,4,100,6.82653,6.50825,7.12183
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,6,100,7.2411,6.95376,7.50607
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,8,100,7.62602,7.35339,7.88559
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,10,100,7.99365,7.7352,8.24926
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,12,100,8.22024,7.99111,8.47003
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,14,100,6.21655,6.00407,6.43881
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,16,100,5.01278,4.77163,5.2839
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,18,100,4.60505,4.37532,4.83866
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,20,100,4.22983,3.99037,4.47085
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,22,100,3.96969,3.70876,4.25819
+spliced,CosineSpaDE ($L_0$ 184),R2 bracketing,full,24,100,3.85979,3.60269,4.15198
 spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,-4,100,0,0,0
 spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,-2,100,0,0,0
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,0,100,2.73925,2.3825,3.09601
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,2,100,4.50416,3.98843,5.01989
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,4,100,5.34701,4.85505,5.83896
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,6,100,5.78689,5.30641,6.26736
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,8,100,6.28184,5.83528,6.7284
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,10,100,6.63939,6.17552,7.10325
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,12,100,6.81362,6.34334,7.2839
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,14,100,5.70773,5.35909,6.05637
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,16,100,4.82994,4.50312,5.15675
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,18,100,4.50403,4.18851,4.81955
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,20,100,4.17699,3.8633,4.49068
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,22,100,3.95855,3.63213,4.28498
-spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,24,100,3.94438,3.62324,4.26552
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,0,100,2.73925,2.3881,3.10382
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,2,100,4.50416,3.97558,5.00148
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,4,100,5.34701,4.87682,5.82282
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,6,100,5.78689,5.32207,6.2567
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,8,100,6.28184,5.8399,6.70504
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,10,100,6.63939,6.1762,7.07103
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,12,100,6.81362,6.3585,7.26852
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,14,100,5.70773,5.358,6.04119
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,16,100,4.82994,4.50163,5.16321
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,18,100,4.50403,4.18961,4.83256
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,20,100,4.17699,3.88478,4.50389
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,22,100,3.95855,3.65698,4.30585
+spliced,CosineSpaDE ($L_0$ 184),R3 turn,full,24,100,3.94438,3.64061,4.27458
 spliced,CosineSpaDE ($L_0$ 184),control_legal,full,-4,100,0,0,0
 spliced,CosineSpaDE ($L_0$ 184),control_legal,full,-2,100,0,0,0
-spliced,CosineSpaDE ($L_0$ 184),control_legal,full,0,100,1.33552,1.13484,1.5362
-spliced,CosineSpaDE ($L_0$ 184),control_legal,full,2,100,2.9055,2.58459,3.22642
-spliced,CosineSpaDE ($L_0$ 184),control_legal,full,4,100,3.91663,3.52222,4.31105
-spliced,CosineSpaDE ($L_0$ 184),control_legal,full,6,100,4.59415,4.18514,5.00316
-spliced,CosineSpaDE ($L_0$ 184),control_legal,full,8,100,5.03776,4.65149,5.42403
-spliced,CosineSpaDE ($L_0$ 184),control_legal,full,10,100,5.51507,5.1377,5.89244
-spliced,CosineSpaDE ($L_0$ 184),control_legal,full,12,100,5.69009,5.30522,6.07496
-spliced,CosineSpaDE ($L_0$ 184),control_legal,full,14,100,5.58375,5.20772,5.95979
-spliced,CosineSpaDE ($L_0$ 184),control_legal,full,16,100,5.09387,4.78189,5.40585
-spliced,CosineSpaDE ($L_0$ 184),control_legal,full,18,100,4.65606,4.36389,4.94822
-spliced,CosineSpaDE ($L_0$ 184),control_legal,full,20,100,4.37893,4.09719,4.66067
-spliced,CosineSpaDE ($L_0$ 184),control_legal,full,22,100,4.08365,3.80449,4.36281
-spliced,CosineSpaDE ($L_0$ 184),control_legal,full,24,100,4.03358,3.73468,4.33249
+spliced,CosineSpaDE ($L_0$ 184),control_legal,full,0,100,1.33552,1.14406,1.54198
+spliced,CosineSpaDE ($L_0$ 184),control_legal,full,2,100,2.9055,2.5851,3.2353
+spliced,CosineSpaDE ($L_0$ 184),control_legal,full,4,100,3.91663,3.52633,4.33724
+spliced,CosineSpaDE ($L_0$ 184),control_legal,full,6,100,4.59415,4.17955,5.0281
+spliced,CosineSpaDE ($L_0$ 184),control_legal,full,8,100,5.03776,4.65012,5.4324
+spliced,CosineSpaDE ($L_0$ 184),control_legal,full,10,100,5.51507,5.15105,5.90824
+spliced,CosineSpaDE ($L_0$ 184),control_legal,full,12,100,5.69009,5.33734,6.07798
+spliced,CosineSpaDE ($L_0$ 184),control_legal,full,14,100,5.58375,5.23891,5.96865
+spliced,CosineSpaDE ($L_0$ 184),control_legal,full,16,100,5.09387,4.81135,5.40709
+spliced,CosineSpaDE ($L_0$ 184),control_legal,full,18,100,4.65606,4.3813,4.96336
+spliced,CosineSpaDE ($L_0$ 184),control_legal,full,20,100,4.37893,4.10434,4.66882
+spliced,CosineSpaDE ($L_0$ 184),control_legal,full,22,100,4.08365,3.80195,4.36494
+spliced,CosineSpaDE ($L_0$ 184),control_legal,full,24,100,4.03358,3.73398,4.34654
 spliced,SpaDE ($L_0$ 232),R1 placement,full,-4,100,0,0,0
 spliced,SpaDE ($L_0$ 232),R1 placement,full,-2,100,0,0,0
-spliced,SpaDE ($L_0$ 232),R1 placement,full,0,100,3.35311,3.04056,3.66567
-spliced,SpaDE ($L_0$ 232),R1 placement,full,2,100,4.28343,3.94995,4.61691
-spliced,SpaDE ($L_0$ 232),R1 placement,full,4,100,4.90837,4.6041,5.21265
-spliced,SpaDE ($L_0$ 232),R1 placement,full,6,100,5.32958,5.05247,5.6067
-spliced,SpaDE ($L_0$ 232),R1 placement,full,8,100,5.78798,5.4967,6.07926
-spliced,SpaDE ($L_0$ 232),R1 placement,full,10,100,6.21614,5.92997,6.5023
-spliced,SpaDE ($L_0$ 232),R1 placement,full,12,100,6.37336,6.11718,6.62955
-spliced,SpaDE ($L_0$ 232),R1 placement,full,14,100,5.51526,5.2522,5.77833
-spliced,SpaDE ($L_0$ 232),R1 placement,full,16,100,5.15574,4.89279,5.41869
-spliced,SpaDE ($L_0$ 232),R1 placement,full,18,100,4.89174,4.62741,5.15607
-spliced,SpaDE ($L_0$ 232),R1 placement,full,20,100,4.72658,4.44345,5.00971
-spliced,SpaDE ($L_0$ 232),R1 placement,full,22,100,4.59223,4.29102,4.89343
-spliced,SpaDE ($L_0$ 232),R1 placement,full,24,100,4.49714,4.18194,4.81234
+spliced,SpaDE ($L_0$ 232),R1 placement,full,0,100,3.35311,3.02836,3.66917
+spliced,SpaDE ($L_0$ 232),R1 placement,full,2,100,4.28343,3.93132,4.62549
+spliced,SpaDE ($L_0$ 232),R1 placement,full,4,100,4.90837,4.59925,5.22395
+spliced,SpaDE ($L_0$ 232),R1 placement,full,6,100,5.32958,5.04373,5.62752
+spliced,SpaDE ($L_0$ 232),R1 placement,full,8,100,5.78798,5.50523,6.113
+spliced,SpaDE ($L_0$ 232),R1 placement,full,10,100,6.21614,5.93485,6.51888
+spliced,SpaDE ($L_0$ 232),R1 placement,full,12,100,6.37336,6.13028,6.63277
+spliced,SpaDE ($L_0$ 232),R1 placement,full,14,100,5.51526,5.25673,5.77173
+spliced,SpaDE ($L_0$ 232),R1 placement,full,16,100,5.15574,4.88088,5.40107
+spliced,SpaDE ($L_0$ 232),R1 placement,full,18,100,4.89174,4.64551,5.15211
+spliced,SpaDE ($L_0$ 232),R1 placement,full,20,100,4.72658,4.45033,5.01752
+spliced,SpaDE ($L_0$ 232),R1 placement,full,22,100,4.59223,4.29965,4.91107
+spliced,SpaDE ($L_0$ 232),R1 placement,full,24,100,4.49714,4.21178,4.83554
 spliced,SpaDE ($L_0$ 232),R2 bracketing,full,-4,100,0,0,0
 spliced,SpaDE ($L_0$ 232),R2 bracketing,full,-2,100,0,0,0
-spliced,SpaDE ($L_0$ 232),R2 bracketing,full,0,100,2.66576,2.41717,2.91435
-spliced,SpaDE ($L_0$ 232),R2 bracketing,full,2,100,4.2556,3.97379,4.53741
-spliced,SpaDE ($L_0$ 232),R2 bracketing,full,4,100,4.88615,4.62296,5.14934
-spliced,SpaDE ($L_0$ 232),R2 bracketing,full,6,100,5.47217,5.22375,5.72059
-spliced,SpaDE ($L_0$ 232),R2 bracketing,full,8,100,6.03045,5.78218,6.27873
-spliced,SpaDE ($L_0$ 232),R2 bracketing,full,10,100,6.50155,6.26005,6.74305
-spliced,SpaDE ($L_0$ 232),R2 bracketing,full,12,100,6.91607,6.6686,7.16355
-spliced,SpaDE ($L_0$ 232),R2 bracketing,full,14,100,5.76184,5.52764,5.99604
-spliced,SpaDE ($L_0$ 232),R2 bracketing,full,16,100,5.45439,5.21097,5.69782
-spliced,SpaDE ($L_0$ 232),R2 bracketing,full,18,100,5.30666,5.07998,5.53333
-spliced,SpaDE ($L_0$ 232),R2 bracketing,full,20,100,5.15593,4.9174,5.39446
-spliced,SpaDE ($L_0$ 232),R2 bracketing,full,22,100,4.96818,4.71247,5.22388
-spliced,SpaDE ($L_0$ 232),R2 bracketing,full,24,100,4.9139,4.62984,5.19797
+spliced,SpaDE ($L_0$ 232),R2 bracketing,full,0,100,2.66576,2.4221,2.89789
+spliced,SpaDE ($L_0$ 232),R2 bracketing,full,2,100,4.2556,3.95695,4.52953
+spliced,SpaDE ($L_0$ 232),R2 bracketing,full,4,100,4.88615,4.61624,5.14617
+spliced,SpaDE ($L_0$ 232),R2 bracketing,full,6,100,5.47217,5.22316,5.714
+spliced,SpaDE ($L_0$ 232),R2 bracketing,full,8,100,6.03045,5.77959,6.26417
+spliced,SpaDE ($L_0$ 232),R2 bracketing,full,10,100,6.50155,6.24816,6.73192
+spliced,SpaDE ($L_0$ 232),R2 bracketing,full,12,100,6.91607,6.67546,7.15827
+spliced,SpaDE ($L_0$ 232),R2 bracketing,full,14,100,5.76184,5.52526,5.99718
+spliced,SpaDE ($L_0$ 232),R2 bracketing,full,16,100,5.45439,5.22175,5.70717
+spliced,SpaDE ($L_0$ 232),R2 bracketing,full,18,100,5.30666,5.09373,5.53917
+spliced,SpaDE ($L_0$ 232),R2 bracketing,full,20,100,5.15593,4.93215,5.39012
+spliced,SpaDE ($L_0$ 232),R2 bracketing,full,22,100,4.96818,4.72264,5.24174
+spliced,SpaDE ($L_0$ 232),R2 bracketing,full,24,100,4.9139,4.62835,5.20142
 spliced,SpaDE ($L_0$ 232),R3 turn,full,-4,100,0,0,0
 spliced,SpaDE ($L_0$ 232),R3 turn,full,-2,100,0,0,0
-spliced,SpaDE ($L_0$ 232),R3 turn,full,0,100,2.50192,2.19572,2.80812
-spliced,SpaDE ($L_0$ 232),R3 turn,full,2,100,3.96719,3.60065,4.33373
-spliced,SpaDE ($L_0$ 232),R3 turn,full,4,100,4.67947,4.35359,5.00536
-spliced,SpaDE ($L_0$ 232),R3 turn,full,6,100,5.23396,4.915,5.55293
-spliced,SpaDE ($L_0$ 232),R3 turn,full,8,100,5.95333,5.62463,6.28202
-spliced,SpaDE ($L_0$ 232),R3 turn,full,10,100,6.43495,6.10568,6.76422
-spliced,SpaDE ($L_0$ 232),R3 turn,full,12,100,6.79541,6.4233,7.16752
-spliced,SpaDE ($L_0$ 232),R3 turn,full,14,100,5.90815,5.56746,6.24884
-spliced,SpaDE ($L_0$ 232),R3 turn,full,16,100,5.62898,5.29638,5.96158
-spliced,SpaDE ($L_0$ 232),R3 turn,full,18,100,5.40568,5.0945,5.71686
-spliced,SpaDE ($L_0$ 232),R3 turn,full,20,100,5.27104,4.9591,5.58298
-spliced,SpaDE ($L_0$ 232),R3 turn,full,22,100,5.02587,4.70905,5.34269
-spliced,SpaDE ($L_0$ 232),R3 turn,full,24,100,4.93717,4.61454,5.25979
+spliced,SpaDE ($L_0$ 232),R3 turn,full,0,100,2.50192,2.20759,2.79838
+spliced,SpaDE ($L_0$ 232),R3 turn,full,2,100,3.96719,3.61657,4.33652
+spliced,SpaDE ($L_0$ 232),R3 turn,full,4,100,4.67947,4.35074,4.98597
+spliced,SpaDE ($L_0$ 232),R3 turn,full,6,100,5.23396,4.91174,5.54454
+spliced,SpaDE ($L_0$ 232),R3 turn,full,8,100,5.95333,5.6225,6.27222
+spliced,SpaDE ($L_0$ 232),R3 turn,full,10,100,6.43495,6.09094,6.74498
+spliced,SpaDE ($L_0$ 232),R3 turn,full,12,100,6.79541,6.41242,7.17216
+spliced,SpaDE ($L_0$ 232),R3 turn,full,14,100,5.90815,5.56091,6.2524
+spliced,SpaDE ($L_0$ 232),R3 turn,full,16,100,5.62898,5.30575,5.94922
+spliced,SpaDE ($L_0$ 232),R3 turn,full,18,100,5.40568,5.10111,5.69808
+spliced,SpaDE ($L_0$ 232),R3 turn,full,20,100,5.27104,4.97296,5.55528
+spliced,SpaDE ($L_0$ 232),R3 turn,full,22,100,5.02587,4.7198,5.32349
+spliced,SpaDE ($L_0$ 232),R3 turn,full,24,100,4.93717,4.62396,5.26744
 spliced,SpaDE ($L_0$ 232),control_legal,full,-4,100,0,0,0
 spliced,SpaDE ($L_0$ 232),control_legal,full,-2,100,0,0,0
-spliced,SpaDE ($L_0$ 232),control_legal,full,0,100,2.48356,2.15843,2.8087
-spliced,SpaDE ($L_0$ 232),control_legal,full,2,100,4.08692,3.63338,4.54046
-spliced,SpaDE ($L_0$ 232),control_legal,full,4,100,4.9988,4.51864,5.47895
-spliced,SpaDE ($L_0$ 232),control_legal,full,6,100,5.63622,5.16825,6.10419
-spliced,SpaDE ($L_0$ 232),control_legal,full,8,100,6.22251,5.77369,6.67133
-spliced,SpaDE ($L_0$ 232),control_legal,full,10,100,6.7515,6.33244,7.17055
-spliced,SpaDE ($L_0$ 232),control_legal,full,12,100,6.97773,6.5253,7.43015
-spliced,SpaDE ($L_0$ 232),control_legal,full,14,100,6.50549,6.06109,6.9499
-spliced,SpaDE ($L_0$ 232),control_legal,full,16,100,5.81005,5.44879,6.17132
-spliced,SpaDE ($L_0$ 232),control_legal,full,18,100,5.39856,5.08351,5.71361
-spliced,SpaDE ($L_0$ 232),control_legal,full,20,100,5.13891,4.85976,5.41807
-spliced,SpaDE ($L_0$ 232),control_legal,full,22,100,4.95651,4.65712,5.2559
-spliced,SpaDE ($L_0$ 232),control_legal,full,24,100,4.94747,4.60983,5.28512
+spliced,SpaDE ($L_0$ 232),control_legal,full,0,100,2.48356,2.1644,2.83145
+spliced,SpaDE ($L_0$ 232),control_legal,full,2,100,4.08692,3.64344,4.55508
+spliced,SpaDE ($L_0$ 232),control_legal,full,4,100,4.9988,4.5434,5.50665
+spliced,SpaDE ($L_0$ 232),control_legal,full,6,100,5.63622,5.18935,6.11339
+spliced,SpaDE ($L_0$ 232),control_legal,full,8,100,6.22251,5.81486,6.68573
+spliced,SpaDE ($L_0$ 232),control_legal,full,10,100,6.7515,6.37114,7.18322
+spliced,SpaDE ($L_0$ 232),control_legal,full,12,100,6.97773,6.54417,7.45075
+spliced,SpaDE ($L_0$ 232),control_legal,full,14,100,6.50549,6.05553,6.94617
+spliced,SpaDE ($L_0$ 232),control_legal,full,16,100,5.81005,5.46296,6.14524
+spliced,SpaDE ($L_0$ 232),control_legal,full,18,100,5.39856,5.09623,5.72412
+spliced,SpaDE ($L_0$ 232),control_legal,full,20,100,5.13891,4.87557,5.40844
+spliced,SpaDE ($L_0$ 232),control_legal,full,22,100,4.95651,4.66619,5.25682
+spliced,SpaDE ($L_0$ 232),control_legal,full,24,100,4.94747,4.61118,5.30541

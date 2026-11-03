@@ -37,7 +37,8 @@ that reason. `d` on the detector corpus is held at the direction this study fixe
 shorter is illegal -- because that is what makes its bar the detector's own number; freeing it
 would move exactly one space, CosineSpaDE, from 0.498 to 0.502, both chance.
 
-Writes results/quantity_ablation_<variant>.csv and figures/quantity_ablation_<variant>.png.
+Writes results/quantity_ablation_<variant>.csv and figures/quantity_ablation_<variant>.png, or its
+vector .pdf twin with --camera-ready.
 
 Usage: PYTHONPATH=src python
            analysis/violation_divergence/changepoint_localization/quantity_ablation.py
