@@ -16,9 +16,8 @@ representations encode the rules of Othello, what happens to a square when it is
 how an illegal move propagates, whether trajectories straighten with depth, and whether
 SAE features capture concept manifolds or shatter them.
 
-> **Status: ported and running.** All fifteen zones are ported from
-> `../Spade_Research_David_Sumedh_Ba`, which stays frozen and read-only; all new work happens
-> here. The package installs, `final_validation` passes 16/17 (one skips without the
+> **Status: ported and running.** All fifteen zones are ported from the pre-port research
+> repo, which stays frozen and read-only; all new work happens here. The package installs, `final_validation` passes 16/17 (one skips without the
 > gitignored weights), and three checkpoints reproduce
 > their published evaluation exactly. Two data-provenance questions are open and affect
 > published numbers — MIGRATION.md questions 14 and 15. See
@@ -39,8 +38,8 @@ name the interpreter: `make setup PYTHON=/path/to/python3.11`.
 ## Dev setup
 
 `make setup` builds `.venv` from `$(PYTHON)` and installs the pins in `requirements.txt`
-(~2 GB, mostly torch). On FASRC that stack already exists in the `spade_env` conda env, so
-reuse it instead of re-downloading it:
+(~2 GB, mostly torch). If a conda env already holds that stack, reuse it instead of
+re-downloading it:
 
 ```bash
 $CONDA_PREFIX/bin/python -m venv --system-site-packages .venv
