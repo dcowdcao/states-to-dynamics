@@ -84,6 +84,10 @@ RELEASE_PLAN §5 items, so each paper figure recomputes or redraws without anoth
   except plot_pareto's sort. Every other column is byte-identical. Verified: `aggregate`
   regenerates the rewritten pooled.csv byte for byte, `pick` regenerates picks.csv byte for
   byte, and all 12 panels and the composite PNG are byte-identical (PDF: `/CreationDate`).
+- **C23: the board arm no longer imports `tpr_othello`.** `probes.train` imported
+  `probes.tpr` (and so `external/tpr_othello`, which has no licence to redistribute) at
+  module level; the TPR arm now imports it on use. Checked: `probes.train`, the board arm and
+  Fig 5's `measure.py` load no `tpr` module; the TPR arm still constructs.
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 

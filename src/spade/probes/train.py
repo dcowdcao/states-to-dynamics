@@ -33,7 +33,6 @@ import torch.nn.functional as F
 
 
 from spade.probes.study_dir import probes_dir
-from spade.probes.tpr import TPR
 
 MAX_EPOCHS = 400
 PATIENCE = 20
@@ -67,7 +66,14 @@ class Board(torch.nn.Module):
         return {"weight": self.weight.detach().cpu()}
 
 
-ARMS = {"board": Board, "tpr": TPR}
+def _tpr(d_model: int, seed: int) -> torch.nn.Module:
+    # Imported on use: probes.tpr loads external/tpr_othello (no licence to redistribute),
+    # which the board arm, and so Fig 5, must run without.
+    from spade.probes.tpr import TPR
+    return TPR(d_model, seed)
+
+
+ARMS = {"board": Board, "tpr": _tpr}
 
 
 @dataclass
