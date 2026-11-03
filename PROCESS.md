@@ -57,6 +57,16 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
   `datasets_version`.
   Not pinned: `taufeeque/othellogpt` (training; no revision on record) and the loads inside
   `external/` (`circuits.utils.get_model`, the eval's own `load_dataset`).
+- **C28, stale caches.** `compute_divergence` skipped any `divergence/<space>.npz` that
+  existed, so a rerun after `extend_branches` silently kept the smaller tree's rows. It now
+  refuses one whose saved row metadata (`row`, `game_id`, `t0`, `category`, `is_control`,
+  `n_flipped`[, `rollout`]) differs from the current branches.pt's. That is the branches.pt key
+  the plan asked for, read from what the existing npz already carry, so the 34 caches on disk
+  pass without a rewrite (a stored sha256 would have rejected all of them). Left alone:
+  `rule_curvature` (the population file is keyed on t0, and `rule_descriptors/` being a
+  2,000-game subset is deliberate, docs/finish_notes/t0-20-population.md), the caches that
+  note calls correct-but-partial, `divergence_by_space` (another branch), and a
+  concurrent-writer lock (one incident, no guard asked for).
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 

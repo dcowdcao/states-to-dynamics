@@ -5,7 +5,8 @@ Spaces: token_embed + resid_post_0..7 from `$DIR/acts/`, and the 8 seed-42 SAEs
 (minus SpaDE γ=1e-2, as in the straightness study) encoding resid_post_5. One
 output row per non-reference branch, paired with its game's reference row by
 game_id; reference rows are dropped, their divergence being zero by definition.
-Resumable: a space whose npz exists is skipped.
+Resumable: a space whose npz exists is skipped, and refused if its rows are not this
+branches.pt's (an extended tree; extend_branches appends rows).
 
 `$DIR/divergence/<space>.npz`, float32 unless noted.
 Event-locked, [n_branch, 33] at offsets r = s - t0:
@@ -218,6 +219,9 @@ def main():
     for space, entry in spaces:
         path = out_dir / f"{space}.npz"
         if path.exists():
+            cached = np.load(path)
+            assert all(np.array_equal(cached[k], v) for k, v in row_meta.items()), \
+                f"{path} holds other rows than {base}/branches/branches.pt; delete it to rebuild"
             print(f"skip {space} (exists)")
             continue
         Z = torch.load(base / "acts" / f"{SAE_SOURCE if entry else space}.pt",
