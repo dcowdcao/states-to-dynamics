@@ -19,6 +19,7 @@ from random import Random
 
 import torch
 
+from spade.common.config import provenance
 from spade.common.net import force_ipv4
 from spade.common.paths import add_karvonen_to_path
 
@@ -44,7 +45,6 @@ def main():
     parser.add_argument("--dataset_name", default="adamkarvonen/othello_45MB_games")
     args = parser.parse_args()
 
-    import datasets as hf_datasets
     rng = Random(args.seed)
     games = stream_games(args.dataset_name, args.seed)
     skips = Counter()
@@ -113,7 +113,6 @@ def main():
     manifest = {
         "seed": args.seed,
         "dataset": args.dataset_name,
-        "datasets_version": hf_datasets.__version__,
         "n_prefixes": args.n_prefixes,
         "n_items": len(rows["t"]),
         "category_counts": dict(counts),
@@ -122,6 +121,7 @@ def main():
         "categories": CATEGORIES,
         "note": "t assigned to accepted prefixes; skips retry the same t, so "
                 "late-t prefixes are conditioned on pass-free non-forfeit games",
+        **provenance(),
     }
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2))
     print(f"wrote {len(rows['t'])} items to {out_dir}")

@@ -291,12 +291,13 @@ def square_means(rules: dict) -> np.ndarray:
 
 def embedding_by_square() -> dict[int, np.ndarray]:
     """W_E of each move token, keyed by the engine square it plays. Token 0 is pass."""
-    from spade.common.config import MODEL_NAME  # only this step needs the model
+    from spade.common.config import HF_REVISIONS, MODEL_NAME  # only this step needs the model
     from spade.common.net import force_ipv4
     from transformer_lens import HookedTransformer
 
     force_ipv4()
-    w = HookedTransformer.from_pretrained(MODEL_NAME, device="cpu").W_E[1:].detach()
+    w = HookedTransformer.from_pretrained(
+        MODEL_NAME, revision=HF_REVISIONS[MODEL_NAME], device="cpu").W_E[1:].detach()
     return dict(zip(engine_square(np.arange(1, 61)).tolist(), w.double().numpy()))
 
 

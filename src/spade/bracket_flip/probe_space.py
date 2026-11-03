@@ -34,7 +34,7 @@ import pandas as pd
 import torch
 from torch import Tensor
 
-from spade.common.config import MODEL_NAME
+from spade.common.config import HF_REVISIONS, MODEL_NAME
 from spade.common.device import select_device
 from spade.common.paths import add_karvonen_to_path, repo_root
 from spade.common.study import study_dir, variant_dir
@@ -114,7 +114,8 @@ def embed_weights() -> tuple[Tensor, Tensor]:
     force_ipv4()
     from transformer_lens import HookedTransformer
 
-    model = HookedTransformer.from_pretrained(MODEL_NAME, device="cpu")
+    model = HookedTransformer.from_pretrained(
+        MODEL_NAME, revision=HF_REVISIONS[MODEL_NAME], device="cpu")
     w = {"W_E": model.W_E.clone(), "W_pos": model.W_pos.clone()}
     path.parent.mkdir(parents=True, exist_ok=True)
     torch.save(w, path)

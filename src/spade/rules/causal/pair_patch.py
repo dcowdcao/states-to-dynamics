@@ -18,7 +18,7 @@ import argparse
 import pandas as pd
 import torch
 
-from spade.common.config import MODEL_NAME
+from spade.common.config import HF_REVISIONS, MODEL_NAME
 from spade.common.device import select_device
 from spade.common.net import force_ipv4
 from spade.common.paths import repo_root
@@ -86,7 +86,8 @@ def main():
 
     from transformer_lens import HookedTransformer
     torch.set_grad_enabled(False)
-    model = HookedTransformer.from_pretrained(MODEL_NAME, device=device)
+    model = HookedTransformer.from_pretrained(
+        MODEL_NAME, revision=HF_REVISIONS[MODEL_NAME], device=device)
     model.eval()
 
     records = []

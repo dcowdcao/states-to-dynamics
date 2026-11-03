@@ -20,7 +20,7 @@ import numpy as np
 import torch
 
 
-from spade.common.config import MODEL_NAME
+from spade.common.config import HF_REVISIONS, MODEL_NAME
 from spade.common.paths import add_karvonen_to_path
 from spade.probes.study_dir import probes_dir
 
@@ -43,7 +43,7 @@ def games(n: int, seed: int) -> np.ndarray:
     """[n, 60] vocab ids, pass-free. Materialized before the model runs, because the
     streaming parquet reader faults during interpreter shutdown if left open."""
     from datasets import load_dataset
-    stream = load_dataset(DATASET, split="train", streaming=True)
+    stream = load_dataset(DATASET, split="train", streaming=True, revision=HF_REVISIONS[DATASET])
     it = iter(stream.shuffle(seed=seed, buffer_size=10000))
     out, skipped = [], 0
     while len(out) < n:
@@ -101,7 +101,8 @@ def main():
 
     torch.set_grad_enabled(False)
     from transformer_lens import HookedTransformer
-    model = HookedTransformer.from_pretrained(MODEL_NAME, device=args.device)
+    model = HookedTransformer.from_pretrained(
+        MODEL_NAME, revision=HF_REVISIONS[MODEL_NAME], device=args.device)
     acts = activations(model, tokens, args.device)
 
     torch.save({"state": torch.from_numpy(state), "mover": torch.from_numpy(mover),

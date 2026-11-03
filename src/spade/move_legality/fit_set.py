@@ -37,7 +37,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from spade.common.config import CTX_LEN
+from spade.common.config import CTX_LEN, provenance
 from spade.common.paths import repo_root
 from spade.common.study import study_dir
 from spade.legality_probe.fit_set import branch_tokens
@@ -190,6 +190,7 @@ def main() -> None:
         "row_of": "residual at `position` of tokens[game_id] with `token` spliced in at it",
         "disjoint_from": str(study_dir("divergence") / "branches" / "branches.pt"),
         "skips": dict(skips),
+        **provenance(),
     }, indent=2))
 
     results = repo_root() / "analysis" / "move_legality" / "results"

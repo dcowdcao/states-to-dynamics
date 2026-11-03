@@ -32,7 +32,7 @@ force_ipv4()
 
 from circuits.othello_engine_utils import OthelloBoardState, to_string
 
-from spade.common.config import CTX_LEN
+from spade.common.config import CTX_LEN, provenance
 
 POSITIONS = range(1, CTX_LEN)  # position 0 dropped (attention sink)
 
@@ -97,6 +97,7 @@ def main():
         "skips": dict(skips),
         "n_flipped_hist": dict(Counter(data["n_flipped"].tolist())),
         "n_legal_zero_rows": int((data["n_legal"] == 0).sum()),
+        **provenance(),
     }
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2))
     print(f"wrote {n} rows ({args.n_games} games) to {out_dir}")

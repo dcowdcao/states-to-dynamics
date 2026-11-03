@@ -26,7 +26,7 @@ from random import Random
 
 import torch
 
-from spade.common.config import CTX_LEN, MODEL_NAME
+from spade.common.config import CTX_LEN, HF_REVISIONS, MODEL_NAME, provenance
 from spade.common.device import select_device
 from spade.common.study import study_dir
 from spade.othello.games import collect_legal, first_illegal_pos, stream_games
@@ -167,7 +167,8 @@ def main():
     for seq in legal[:50]:
         assert first_illegal_pos(seq) == -1, "legal-class game fails engine replay"
 
-    model = HookedTransformer.from_pretrained(MODEL_NAME, device=device).eval()
+    model = HookedTransformer.from_pretrained(
+        MODEL_NAME, revision=HF_REVISIONS[MODEL_NAME], device=device).eval()
     rollouts, first_illegal = sample_rollouts(model, device, n, args.seed)
     violations = build_violations(legal, n, rng, skips)
     randoms = [rng.sample(range(1, 61), CTX_LEN) for _ in range(n)]
@@ -202,6 +203,7 @@ def main():
         "skips": dict(skips),
         "note": "violation = no-flip placement at t0 + turn passed + random legal "
                 "continuation; rollout legality stops being tracked at first_illegal",
+        **provenance(),
     }
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2))
     print(f"wrote {len(CLASSES) * n} games to {out_dir}")

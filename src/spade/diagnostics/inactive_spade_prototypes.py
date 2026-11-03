@@ -25,6 +25,7 @@ import torch as t
 from datasets import load_dataset
 from transformer_lens import HookedTransformer
 
+from spade.common.config import HF_REVISIONS
 from spade.common.device import select_device
 from spade.common.paths import repo_root
 from spade.saes.spade import SpaDEAutoEncoder
@@ -119,7 +120,8 @@ def main():
     print(f"  mean.shape={tuple(mean.shape)}  scale={scale:.6f}  d_model={d_model}")
 
     print(f"Loading {args.model_name}...")
-    model = HookedTransformer.from_pretrained(args.model_name)
+    model = HookedTransformer.from_pretrained(
+        args.model_name, revision=HF_REVISIONS[args.model_name])
     model.to(device).eval()
 
     n_games = (args.n_tokens + args.ctx_len - 1) // args.ctx_len

@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from spade.common.config import CTX_LEN, MODEL_NAME
+from spade.common.config import CTX_LEN, HF_REVISIONS, MODEL_NAME
 from spade.common.device import select_device
 from spade.common.net import force_ipv4
 from spade.common.study import study_dir
@@ -107,7 +107,8 @@ def main() -> None:
 
     device = select_device()
     torch.set_grad_enabled(False)
-    model = HookedTransformer.from_pretrained(MODEL_NAME, device=device).eval()
+    model = HookedTransformer.from_pretrained(
+        MODEL_NAME, revision=HF_REVISIONS[MODEL_NAME], device=device).eval()
     assert model.cfg.d_vocab == D_VOCAB, f"vocab is {model.cfg.d_vocab}, not {D_VOCAB}"
 
     frame = table(next_move_probs(model, tokens, device), cats, game_id, t)

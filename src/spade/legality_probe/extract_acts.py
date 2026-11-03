@@ -13,7 +13,7 @@ Usage: python -m spade.legality_probe.extract_acts
 import numpy as np
 import torch
 
-from spade.common.config import CTX_LEN, D_MODEL, HOOK_POINT, MODEL_NAME
+from spade.common.config import CTX_LEN, D_MODEL, HF_REVISIONS, HOOK_POINT, MODEL_NAME
 from spade.common.device import select_device
 from spade.common.net import force_ipv4
 from spade.common.study import study_dir
@@ -37,7 +37,8 @@ def main() -> None:
 
     device = select_device()
     torch.set_grad_enabled(False)
-    model = HookedTransformer.from_pretrained(MODEL_NAME, device=device).eval()
+    model = HookedTransformer.from_pretrained(
+        MODEL_NAME, revision=HF_REVISIONS[MODEL_NAME], device=device).eval()
 
     acts = torch.empty(n_games, len(POSITIONS), D_MODEL)
     predicted = torch.empty(n_games, len(POSITIONS), dtype=torch.long)

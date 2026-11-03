@@ -47,6 +47,16 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
   115 pins, the CUDA wheels and triton behind torch's Linux x86_64 marker. A PyPI dry-run of
   `pip install -e . -r requirements.lock` resolves exactly those 115 and nothing else, and every
   module imports with site-packages cut down to them.
+- **C9, the HF commits.** `config.HF_REVISIONS` pins the model (`30e9176f…`) and
+  `adamkarvonen/othello_45MB_games` (`caafaff9…`, the revision datasets 4.8.4 resolved: its
+  builder cache is keyed by it). Every `HookedTransformer.from_pretrained` and every load of
+  that corpus passes `revision=HF_REVISIONS[name]`, so an unpinned name is a KeyError. Pinned and
+  `main` give the same weights (state-dict sha256) and the same first 3,000 `stream_games`
+  games. `config.provenance()` (both commits plus datasets/numpy/torch/transformer-lens versions)
+  is now in all 17 manifests (15 files) the corpus and model steps write; it replaces
+  `datasets_version`.
+  Not pinned: `taufeeque/othellogpt` (training; no revision on record) and the loads inside
+  `external/` (`circuits.utils.get_model`, the eval's own `load_dataset`).
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 

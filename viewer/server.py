@@ -21,7 +21,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from spade.common.config import CTX_LEN, DICT_SIZE, HOOK_POINT, MODEL_NAME
+from spade.common.config import CTX_LEN, DICT_SIZE, HF_REVISIONS, HOOK_POINT, MODEL_NAME
 from spade.common.device import select_device
 from spade.common.net import force_ipv4
 from spade.evaluation.karvonen_adapter import (
@@ -45,7 +45,8 @@ def model():
         from transformer_lens import HookedTransformer
         force_ipv4()
         torch.set_grad_enabled(False)
-        _model = HookedTransformer.from_pretrained(MODEL_NAME, device=DEVICE)
+        _model = HookedTransformer.from_pretrained(
+            MODEL_NAME, revision=HF_REVISIONS[MODEL_NAME], device=DEVICE)
         _model.eval()
     return _model
 

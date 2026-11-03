@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from spade.common.config import CTX_LEN
+from spade.common.config import CTX_LEN, provenance
 from spade.common.study import study_dir, variant_dir
 from spade.othello.boards import flip_set, next_mover, rays_touch, regular_moves, replay
 from spade.othello.games import T_MAX, T_MIN, stream_games  # imports force_ipv4() + karvonen path
@@ -245,7 +245,7 @@ def mine_only(games, args, skips: Counter) -> None:
          "variant": args.variant, "one_event_per_game": True,
          "t_histogram": events.t.value_counts().sort_index().to_dict(),
          "control_kind": events.control_kind.value_counts().to_dict(),
-         **yields, "skips": dict(skips)}, indent=2))
+         **yields, "skips": dict(skips), **provenance()}, indent=2))
     print(f"{len(events)} events -> {out_dir}")
 
 
@@ -286,6 +286,7 @@ def main():
         "mover_next": "engine-derived colour to move at t+1 (+1 black, -1 white)",
         "parity_mismatch": mismatch,
         "skips": dict(probe_skips),
+        **provenance(),
     }, indent=2))
     print(f"probe set: {probe['move_indices'].shape[0]} positions from "
           f"{args.n_probe_games} games -> {probe_dir}")
@@ -316,6 +317,7 @@ def main():
         **yields,
         "candidates_per_1000_games": round(
             1000 * yields["candidate_events"] / yields["games_scanned"], 1),
+        **provenance(),
     }, indent=2))
     print(f"wrote {len(events)} events from {yields['games_scanned']} games to {out_dir}")
     print(json.dumps({"rejections": dict(event_skips), **yields}, indent=2))

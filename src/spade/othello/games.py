@@ -17,7 +17,7 @@ depend on force_ipv4 having run before the first request.
 
 from collections import Counter
 
-from spade.common.config import CTX_LEN
+from spade.common.config import CTX_LEN, HF_REVISIONS
 from spade.common.net import force_ipv4
 from spade.common.paths import add_karvonen_to_path
 
@@ -44,7 +44,8 @@ def stream_games(dataset_name: str, seed: int):
     and the measurements behind both: docs/game_corpus.md.
     """
     from datasets import load_dataset
-    dataset = load_dataset(dataset_name, split="train", streaming=True)
+    dataset = load_dataset(dataset_name, split="train", streaming=True,
+                           revision=HF_REVISIONS[dataset_name])
     return iter(dataset.shuffle(seed=seed, buffer_size=10000))
 
 
