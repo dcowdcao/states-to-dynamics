@@ -10,7 +10,7 @@ marker walk finds no repo root and fails late — at the first karvonen_root() c
 install time. If that ever needs to work, read $SPADE_REPO first and keep the walk as a
 fallback; $SPADE_REPO is already the convention in the cluster job scripts.
 
-Study working dirs are NOT here — they live outside the repo, see spade.common.study.
+The data root and the study working dirs are NOT here — see spade.common.study.
 """
 
 import os
@@ -58,10 +58,6 @@ def add_tpr_to_path() -> None:
     for p in (str(src), str(src / "hook_utils")):
         if p not in sys.path:
             sys.path.insert(0, p)
-
-
-def data_dir() -> Path:
-    return repo_root() / "data"
 
 
 def linear_probe_activations() -> Path:

@@ -6,6 +6,17 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## A clean clone: one data root, pinned seats, pinned versions (2026-11-03)
+
+`release/clean-clone-env`, RELEASE_PLAN.md §5 items C2-C5, C7, C9, C28.
+
+- **C3, the data root.** `$SPADE_DATA_ROOT` (default `<repo>/data`, gitignored) holds every
+  study tree and the downloaded weights; `study_dir(name)` is `$SPADE_<NAME>_DIR`, else
+  `data_root()/spade_<name>`. The `$USER` lookup is gone. With
+  `SPADE_DATA_ROOT=/n/netscratch/ba_lab/Lab/dcao` all 11 study names resolve to exactly the
+  paths the old netscratch default gave. The unused `paths.data_dir()`, which ignored the env,
+  became `study.data_root()`.
+
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 
 `curvature_rules_{tree}_combined` and `curvature_rules_{tree}_population_combined` read cell to

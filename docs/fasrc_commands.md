@@ -14,7 +14,8 @@ For the job layout, the log-path and `--export` gotchas, and which directory
 holds which program, see [`scripts/slurm/README.md`](../scripts/slurm/README.md).
 
 ```bash
-export SPADE_REPO="$HOME/spade_sae"      # put this in ~/.bashrc
+export SPADE_REPO="$HOME/spade_sae"      # put both in ~/.bashrc
+export SPADE_DATA_ROOT=/n/netscratch/ba_lab/Lab/dcao   # study trees + weights (spade.common.study)
 ```
 
 ## 1. Create the environment (once)
@@ -150,10 +151,9 @@ index**: sweep directories restart `trainer_N` at 0, and three different
 experiments each contain a `trainer_0` from a different λ/γ grid.
 
 Big study intermediates never come back over scp. They live on netscratch under
-`/n/netscratch/ba_lab/Lab/$USER/spade_<study>`, resolved by
-`spade.common.study.study_dir()` and overridable with `SPADE_<STUDY>_DIR`. That
-tier is on **90-day retention**; back up anything you need to keep, seeds 43–46
-above all.
+`$SPADE_DATA_ROOT/spade_<study>`, resolved by `spade.common.study.study_dir()` and
+overridable with `SPADE_<STUDY>_DIR`. That tier is on **90-day retention**; back up
+anything you need to keep, seeds 43–46 above all.
 
 ---
 

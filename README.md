@@ -49,8 +49,10 @@ the baseline trainers, the Othello engine, the board-reconstruction eval) and `t
 walks to the `CLAUDE.md` / `.git` marker — so scripts work from anywhere, but only under an
 editable install. Cluster (FASRC SLURM) commands live in `docs/fasrc_commands.md`.
 
-Heavy per-study intermediates live outside the repo on netscratch, resolved by
-`spade.common.study.study_dir()`. A fresh clone cannot regenerate the figures on its own.
+Heavy per-study intermediates and downloaded weights live under `$SPADE_DATA_ROOT`
+(default `data/`), resolved by `spade.common.study`. On FASRC they already exist on
+netscratch, so set `export SPADE_DATA_ROOT=/n/netscratch/ba_lab/Lab/dcao`. A fresh clone
+cannot regenerate the figures on its own.
 
 ## Making changes
 

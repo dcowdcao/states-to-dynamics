@@ -28,7 +28,7 @@ python analysis/violation_divergence/fork_population/measure.py     # the fork o
 python analysis/violation_divergence/fork_population/make_figures.py
 ```
 
-`$DIR` = `$SPADE_DIVERGENCE_DIR` (default `/n/netscratch/ba_lab/Lab/$USER/spade_divergence`).
+`$DIR` = `$SPADE_DIVERGENCE_DIR` (default `$SPADE_DATA_ROOT/spade_divergence`).
 t0 ∈ [10, 34], window r ∈ [−8, 24], so **every game contributes to every offset** —
 n is constant across the whole x-axis, verified, with zero off-board NaN.
 
