@@ -1,6 +1,6 @@
 """Repo-root-anchored path resolution + external-fork sys.path injection.
 
-Walk up from this file to the repo root (marker: CLAUDE.md / .git) so scripts resolve
+Walk up from this file to the repo root (marker: pyproject.toml) so scripts resolve
 paths regardless of where they're invoked. With the package installed (`pip install -e .`)
 intra-repo imports no longer need sys.path tricks; the remaining injections put the two
 vendored forks on the path so `import circuits.*` and the TPR probe modules resolve.
@@ -17,14 +17,14 @@ import os
 import sys
 from pathlib import Path
 
-_MARKERS = ("CLAUDE.md", ".git")
+_MARKER = "pyproject.toml"
 
 
 def repo_root() -> Path:
     for d in Path(__file__).resolve().parents:
-        if any((d / m).exists() for m in _MARKERS):
+        if (d / _MARKER).exists():
             return d
-    raise FileNotFoundError(f"no repo-root marker {_MARKERS} above {__file__}")
+    raise FileNotFoundError(f"no repo-root marker {_MARKER} above {__file__}")
 
 
 def karvonen_root() -> Path:
