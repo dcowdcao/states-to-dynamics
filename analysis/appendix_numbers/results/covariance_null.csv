@@ -1,0 +1,4 @@
+null,mean_abs_cos,n_pairs
+isotropic_analytic,0.03526,0
+isotropic,0.0355,50000
+covariance_matched,0.08837,50000

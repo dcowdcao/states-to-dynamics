@@ -1,0 +1,11 @@
+{
+ "dataset": "adamkarvonen/othello_45MB_games",
+ "revision": "caafaff9fd273cd1783e146d039e262f97c9f5f8",
+ "n_games": 990623,
+ "n_illegal_games": 0,
+ "first_illegal": [],
+ "n_forfeit_moves": 442349,
+ "n_games_with_forfeit": 341394,
+ "engine_check_games": 2999,
+ "engine_check_mismatches": 0
+}

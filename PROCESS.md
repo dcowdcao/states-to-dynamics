@@ -88,6 +88,23 @@ RELEASE_PLAN §5 items, so each paper figure recomputes or redraws without anoth
   `probes.tpr` (and so `external/tpr_othello`, which has no licence to redistribute) at
   module level; the TPR arm now imports it on use. Checked: `probes.train`, the board arm and
   Fig 5's `measure.py` load no `tpr` module; the TPR arm still constructs.
+- **C27: `analysis/appendix_numbers/` gives the figureless appendix numbers a committed
+  source**, one script and one `results/` file each (table in its README). Reproduced: A.2's
+  splits, 60 plies, e6 10.78%, χ² 106,901 and the uniformity rejects (one at k = 2, 3, 4; none
+  with n ≥ 400 at k = 5; at k = 1, which A.2 does not state, c4 also rejects at p = 6e-4);
+  the stream window (first N draws stay under row N + 10,000; seeds 7 and 1234 keep 20.5% /
+  20.3%); A.4's covariance-matched floor 0.088 (quote ≈ 0.09, D17);
+  B.2's cut (≤ 0.39% past r = 8, crossing at 13, on games < 2000; r = 9 on the whole tree);
+  234×, 536× and 1.37×, read off the committed by-space CSVs. New: **no game in the full
+  corpus is illegal** (990,623 replayed; 442,349 forfeit moves in 341,394 games), by a
+  vectorized replay whose final boards match the engine's on 2,999 games. The engine's own
+  `umpire` cannot referee: it accepts any move that flips for the opponent.
+  **The rule panel is not reproducible by rule.** 1,918 positions meet A.9's criteria (with
+  the drawn categories; the audit's 1,983 counted any R1 member). No ranking over one or two
+  of closed directions, discs flipped, square separation, per-rule candidate counts or legal
+  moves (ties to lowest game, t) picks 606/16. The script ranks by separation, then
+  directions, then (game, t): game 21, t = 26 first, 606/16 at 1,075. A.9 should say
+  hand-picked (D23). Fig 4's τ and paired CSVs are left to the Gated fix.
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 
