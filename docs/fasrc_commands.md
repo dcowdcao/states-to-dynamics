@@ -73,9 +73,9 @@ export HF_DATASETS_CACHE="$TMPDIR/hf_datasets"
 ## 2. Upload
 
 `external/Karvonen_Research` and `external/tpr_othello` are runtime dependencies
-and must go up with the code; three files inside `Karvonen_Research` are hidden
-from git by its own vendored `.gitignore` and by the root ignore, so a
-`git clone` alone yields a broken `circuits`.
+and go up with the code. A checkout without them gets them from `make setup`,
+which clones each upstream at its pinned commit and applies our patch
+(`external/README.md`).
 
 ```bash
 # locally; SPADE_LOCAL is your working copy

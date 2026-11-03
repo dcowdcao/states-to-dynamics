@@ -1,6 +1,6 @@
 # external/
 
-Two vendored forks, both hard runtime dependencies. `spade.common.paths` puts each on
+Two third-party trees, both hard runtime dependencies. `spade.common.paths` puts each on
 `sys.path`; neither is pip-installed, because their own pin sets (torch, TransformerLens,
 nnsight) would fight ours.
 
@@ -10,17 +10,19 @@ PAnneal, Gated, GatedAnneal, TopK, BatchTopK), the Othello engine and ground-tru
 utilities, the board-reconstruction eval, and NNsight activation capture. SpaDE plugs in as
 a `circuits` `Dictionary` subclass.
 
-**`tpr_othello/`** — the tensor-product board probe used by the bracket-flip study, pinned
-at `cc90cea`. No upstream license; treat as all-rights-reserved and do not redistribute.
+**`tpr_othello/`** — the tensor-product board probe used by the bracket-flip study.
 
-Neither is vendored into this skeleton yet. When they are, three things must be got right,
-because the source repo got them wrong:
+Neither upstream has a licence, so neither is redistributed. `make setup` runs
+`scripts/fetch_external/fetch.sh`, which clones each at its pinned commit and applies our
+patch from `scripts/fetch_external/patches/`. A tree that is already here is left alone.
 
-- **Pin `Karvonen_Research`.** It carries no commit, no provenance file, a flattened
-  submodule and a dangling `.git` pointer. Capture the upstream SHA before copying.
-- **Bring the files git cannot see.** The vendored `.gitignore` is still honoured inside
-  our repo and hides `circuits/resources/meta.pkl` and a downloader script;
-  `linear_probes/*.pth` is hidden by ours. A fresh clone yields a `circuits` that imports
-  and then fails at runtime.
-- **Do not re-clone from upstream to "clean it up"** without diffing first — the fork has
-  been instrumented in place before, and a fresh clone silently reverts that.
+| tree | upstream | commit | our patch |
+|---|---|---|---|
+| `Karvonen_Research` | github.com/adamkarvonen/SAE_BoardGameEval | `7187d4a` | drops `.gitmodules` and 18 `ae.pt`; re-run walkthrough notebook |
+| `Karvonen_Research/circuits/dictionary_learning` | github.com/saprmarks/dictionary_learning (MIT) | `43421f5` | per-trainer device moves, dead-neuron logging |
+| `tpr_othello` | github.com/ajyl/tpr_othello | `cc90cea` | adds `PROVENANCE.md`; drops upstream's game pickles |
+
+A fetched tree is a git checkout of its pin, so after editing one, regenerate its patch from
+inside it: `git add -A && git diff --cached --full-index > <its patch>`. Keep
+`--full-index` and leave out `--binary`: a deleted binary then carries only its blob id, no
+upstream bytes, and `git apply` still checks and deletes it.

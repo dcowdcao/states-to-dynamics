@@ -1,0 +1,80 @@
+diff --git a/trainers/batch_top_k.py b/trainers/batch_top_k.py
+index 686dc0ab61f87bdfebffff4d90aa0ce8fe4a1c50..faae80a878f5ae90c97ec24e54110f82f2d5efdb 100644
+--- a/trainers/batch_top_k.py
++++ b/trainers/batch_top_k.py
+@@ -243,12 +243,15 @@ class BatchTopKTrainer(SAETrainer):
+             )
+ 
+     def update(self, step, x):
++        x = x.to(self.device)
++
++        # step-0 median must be computed after the device move so b_dec.data
++        # lands on this trainer's GPU
+         if step == 0:
+             median = self.geometric_median(x)
+             median = median.to(self.ae.b_dec.dtype)
+             self.ae.b_dec.data = median
+ 
+-        x = x.to(self.device)
+         loss = self.loss(x, step=step)
+         loss.backward()
+ 
+diff --git a/trainers/top_k.py b/trainers/top_k.py
+index f6f56926ac16277b7fed7276ee22cad580e7d0c6..179429dc5c11244070c62279dbd9fb102006be3b 100644
+--- a/trainers/top_k.py
++++ b/trainers/top_k.py
+@@ -310,14 +310,16 @@ class TopKTrainer(SAETrainer):
+             )
+ 
+     def update(self, step, x):
+-        # Initialise the decoder bias
++        x = x.to(self.device)
++
++        # Initialise the decoder bias (x already on self.device so the
++        # median assigned into b_dec.data lands on the right GPU)
+         if step == 0:
+             median = geometric_median(x)
+             median = median.to(self.ae.b_dec.dtype)
+             self.ae.b_dec.data = median
+ 
+         # compute the loss
+-        x = x.to(self.device)
+         loss = self.loss(x, step=step)
+         loss.backward()
+ 
+diff --git a/training.py b/training.py
+index 50f20ee9d7931e522942e53965d54e8c66758e92..5c70c0cb8bed9a0b306cf226778f134600f5759c 100644
+--- a/training.py
++++ b/training.py
+@@ -42,11 +42,13 @@ def log_stats(
+     verbose: bool=False,
+ ):
+     with t.no_grad():
+-        # quick hack to make sure all trainers get the same x
+-        z = act.clone()
++        # each trainer gets its own copy of x, on its own device (trainers may
++        # live on different GPUs; their update()/loss() already self-move x,
++        # but loss() is called here directly)
++        z = act
+         for i, trainer in enumerate(trainers):
+             log = {}
+-            act = z.clone()
++            act = z.to(getattr(trainer, "device", z.device), copy=True)
+             if activations_split_by_head:  # x.shape: [batch, pos, n_heads, d_head]
+                 act = act[..., i, :]
+             if not transcoder:
+@@ -65,6 +67,14 @@ def log_stats(
+                 # L0
+                 l0 = (f != 0).float().sum(dim=-1).mean().item()
+ 
++            # Dead neuron tracking: cumulative fraction of neurons that have
++            # never activated across all logged batches so far.
++            if not hasattr(trainer, '_neuron_ever_fired'):
++                trainer._neuron_ever_fired = t.zeros(f.shape[-1], dtype=t.bool, device=f.device)
++            trainer._neuron_ever_fired |= (f != 0).any(dim=0)
++            frac_dead = 1.0 - trainer._neuron_ever_fired.float().mean().item()
++            log["frac_dead_neurons"] = frac_dead
++
+             if verbose:
+                 print(f"Step {step}: L0 = {l0}, frac_variance_explained = {frac_variance_explained}")
+ 

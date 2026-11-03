@@ -28,7 +28,7 @@ SAE features capture concept manifolds or shatter them.
 ## Run it
 
 ```bash
-make setup                       # create .venv, pip install -e . with the pinned deps
+make setup                       # fetch external/, create .venv, pip install -e . with the pinned deps
 make run                         # full pipeline: train → extract → eval → figures
 ```
 
@@ -43,9 +43,10 @@ $CONDA_PREFIX/bin/python -m venv --system-site-packages .venv
 .venv/bin/pip install -e . --no-deps
 ```
 
-Two vendored runtime dependencies under `external/`: `Karvonen_Research` (`circuits.*` —
+Two third-party runtime dependencies under `external/`: `Karvonen_Research` (`circuits.*` —
 the baseline trainers, the Othello engine, the board-reconstruction eval) and `tpr_othello`
-(the tensor-product board probe). Path resolution is repo-root-anchored — `spade.common.paths`
+(the tensor-product board probe). Neither has a licence, so `make setup` clones each at a
+pinned commit and applies our patch (`external/README.md`). Path resolution is repo-root-anchored — `spade.common.paths`
 walks to the `CLAUDE.md` / `.git` marker — so scripts work from anywhere, but only under an
 editable install. Cluster (FASRC SLURM) commands live in `docs/fasrc_commands.md`.
 

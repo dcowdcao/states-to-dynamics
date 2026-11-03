@@ -9,7 +9,8 @@ export SPADE_REPO = $(CURDIR)
 
 .PHONY: setup run test
 
-setup:              ## create .venv and install spade editable with the pinned deps
+setup:              ## fetch external/, create .venv and install spade editable with the pinned deps
+	bash scripts/fetch_external/fetch.sh
 	$(PYTHON) -m venv $(VENV)
 	$(PY) -m pip install --upgrade pip
 	$(PY) -m pip install -e .
