@@ -33,8 +33,8 @@ make setup                       # fetch external/, create .venv, pip install -e
 make run                         # full pipeline: train → extract → eval → figures
 ```
 
-`make setup` needs Python 3.11 and uses `python3` by default. If `python3` is another version
-(on FASRC it is 3.6), name the interpreter: `make setup PYTHON=/path/to/python3.11`.
+`make setup` needs Python 3.11 and uses `python3` by default. If `python3` is another version,
+name the interpreter: `make setup PYTHON=/path/to/python3.11`.
 
 ## Dev setup
 
@@ -52,13 +52,12 @@ the baseline trainers, the Othello engine, the board-reconstruction eval) and `t
 (the tensor-product board probe). Neither has a licence, so `make setup` clones each at a
 pinned commit and applies our patch (`external/README.md`). Path resolution is
 repo-root-anchored — `spade.common.paths` walks up to `pyproject.toml` — so scripts work from
-anywhere, but only under an editable install. Cluster (FASRC SLURM) commands live in
-`archive/docs/fasrc_commands.md`.
+anywhere, but only under an editable install. The SLURM jobs are in `scripts/slurm/`; every
+cluster setting is in `scripts/slurm/cluster.env`.
 
 Heavy per-study intermediates and downloaded weights live under `$SPADE_DATA_ROOT`
-(default `data/`), resolved by `spade.common.study`. On FASRC they already exist on
-netscratch, so set `export SPADE_DATA_ROOT=/n/netscratch/ba_lab/Lab/dcao`. A fresh clone
-cannot regenerate the figures on its own.
+(default `data/`), resolved by `spade.common.study`. To reuse an existing copy, point
+`SPADE_DATA_ROOT` at it. A fresh clone cannot regenerate the figures on its own.
 
 ## Making changes
 

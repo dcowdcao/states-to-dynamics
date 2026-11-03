@@ -45,12 +45,13 @@ spade_sae/
 ├── external/                 vendored runtime deps: Karvonen_Research/, tpr_othello/
 ├── archive/                  everything the paper does not use, at archive/<old path>;
 │                             archive/legacy/ is the port's own archive
-└── build/  data/             gitignored: owner renders + non-paper tables; data_dir()
+└── build/  data/             gitignored: owner renders + non-paper tables; $SPADE_DATA_ROOT default
 ```
 
 **Outside git, and load-bearing.** Six studies keep their heavy artifacts under
 `$SPADE_DATA_ROOT/spade_<study>` (default `data/`), resolved by `spade.common.study.study_dir()`
-and overridable per study with `SPADE_<STUDY>_DIR`. On FASRC that tier is netscratch: ~92 GB,
+and overridable per study with `SPADE_<STUDY>_DIR`. On FASRC that tier is netscratch
+(`SPADE_DATA_ROOT=/n/netscratch/ba_lab/Lab/dcao`): ~92 GB,
 including the seeds 43–46 behind every error bar, on **90-day retention** running from
 2026-07-22. The repo alone cannot reproduce the figures.
 

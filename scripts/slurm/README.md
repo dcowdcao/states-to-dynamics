@@ -17,8 +17,9 @@ that shell first (`-A` / `-p` on the command line still win). On another cluster
 Chains use `sbatch --parsable` + `--dependency=afterok`. Modules are invoked as
 `python -m spade.<module>`. `archive/scripts/slurm/studies/linear_probe` deviates and says why
 in its header: it is seven CPU-minutes, so it goes to `$SPADE_CPU_PARTITION` rather than
-queueing for an H100 it does not need. On FASRC, `kempner_requeue` includes Blackwell nodes that torch 2.5.1+cu124 has no
-kernels for, so a GPU job sent there must pin `--gres=gpu:nvidia_h100_80gb_hbm3:1`.
+queueing for an H100 it does not need. torch 2.5.1+cu124 has no kernels for Blackwell nodes,
+so a GPU job sent to a partition that includes them must pin
+`--gres=gpu:nvidia_h100_80gb_hbm3:1`.
 
 - `l0_grids/`    — the 20-config L0 grid per architecture, trained then evaluated
 - `sweeps/`      — the CosineSpaDE-only training run
