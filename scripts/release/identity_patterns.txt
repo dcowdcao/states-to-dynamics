@@ -1,0 +1,32 @@
+# Identity patterns for identity_scan.py. This file is excluded from the public export.
+# One `category<TAB>regex` per line, Python re; a leading (?i) makes it case-insensitive.
+
+author	\bDavid\b
+author	\bCao\b
+author	(?i)davidcao
+author	(?i)sumedh
+author	(?i)hindupur
+author	(?i)\bdemba\b
+author	\bBa\b
+collaborator	(?i)\banish\b
+handle	(?i)dcao
+handle	(?i)dcow
+handle	(?i)deb884
+email	(?i)[\w.+-]+@(?!example\.com\b)[\w-]+(?:\.[\w-]+)*\.(?:com|edu|org|net|io|ai|dev|co|me|gov|uk)\b
+affiliation	(?i)harvard
+cluster	(?i)ba_lab
+cluster	(?i)kempner
+cluster	(?i)\bfas[ _-]?rc
+cluster	/n/netscratch
+cluster	/n/home
+cluster	(?i)\bholy\w+
+cluster	(?i)boslogin
+cluster	(?i)\bsapphire\b
+cluster	(?i)rc\.fas\.harvard\.edu
+repo	(?i)Spade_Research_David_Sumedh_Ba
+coauthor_trailer	(?i)co-authored-by
+wandb	(?i)spade_david_sumedh_ba
+wandb	(?i)wandb\.ai/[\w-]+
+wandb	(?i)(?<![a-z])entity["']?\s*[:=]\s*["'][^"'\s]+
+hf_space	(?i)huggingface\.co/spaces/
+hf_space	(?i)othello-sae-viewer
