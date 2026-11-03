@@ -30,7 +30,7 @@ SAE features capture concept manifolds or shatter them.
 
 ```bash
 make setup                       # fetch external/, create .venv, pip install -e . with the pinned deps
-make run                         # full pipeline: train → extract → eval → figures
+make test                        # fast self-tests: no GPU, no weights
 ```
 
 `make setup` needs Python 3.11 and uses `python3` by default. If `python3` is another version,

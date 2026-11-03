@@ -20,5 +20,3 @@ DIR="$(python -m spade.common.study straightness)"
 [ -f "$DIR/games/games.pt" ] || python -m spade.straightness.build_games
 [ -f "$DIR/traj/resid_post_7.pt" ] || python -m spade.straightness.extract_traj
 python -m spade.straightness.compute_geometry
-python -m spade.straightness.classify
-python analysis/straightness/make_figures.py

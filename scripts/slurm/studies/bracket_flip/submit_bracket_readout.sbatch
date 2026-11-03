@@ -24,4 +24,3 @@ BRACKET_DIR="$(python -m spade.common.study bracket)"
 }
 
 python -m spade.bracket_flip.probe_space      # M1/M2 read-out tables
-python -m spade.bracket_flip.geometry_tables  # M3/M4 activation-geometry tables

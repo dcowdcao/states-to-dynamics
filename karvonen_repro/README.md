@@ -37,7 +37,7 @@ it cannot be misread later.
 To reproduce his table (the validation tooling is archived, see below):
 
 ```bash
-python -m karvonen_repro.validation_checkpoints --released-root DIR   # the 15 checkpoints
+python archive/karvonen_repro/validation_checkpoints.py --released-root DIR   # the 15 checkpoints
 python -m karvonen_repro.evaluate --mode repro --output-dir OUT $(...)
 python archive/karvonen_repro/compare_to_published.py --harness OUT/f1_results.csv
 ```

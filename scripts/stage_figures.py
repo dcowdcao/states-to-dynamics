@@ -37,7 +37,7 @@ SOURCES = {
     "fig05_board_layer_sweep": "analysis/board_probe_sweep/figures/board_layer_sweep",
     # python -m spade.l0_operating_point.plot_pareto, then .combine_figure
     "fig06_karvonen_sae_sweep": "build/l0_operating_point/figure4_othello_with_spade",
-    # analysis/bracket_flip/make_figures.py, its Fig 1
+    # analysis/bracket_flip/make_figures.py --only fig1
     "fig07_flanking": "analysis/bracket_flip/figures/fig1_flip_and_basis",
     # changepoint_localization/quantity_ablation.py --l0-matched
     "fig08_detector_metric_comparison": ("analysis/violation_divergence/changepoint_localization/"

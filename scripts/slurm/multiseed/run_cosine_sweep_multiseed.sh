@@ -1,13 +1,11 @@
 #!/bin/bash
 # ==========================================================================
 # Multi-seed CosineSpaDE gamma sweep: seeds 42-46 x one gamma grid, for error
-# bars on the Karvonen plot.
+# bars on the Karvonen plot. One training array task per seed (3 GPUs each); the
+# paper evaluates the checkpoints with karvonen_repro/submit_eval.sbatch, and the
+# old per-seed eval arrays are archived.
 #
-#   train array (1 task/seed, 3 GPUs each)
-#     -> per-seed eval array (1 task/gamma, 1 GPU each), chained afterok
-#
-# Each sweep segment gets its own directory because trainer indices restart at
-# 0; spade.multiseed.aggregate_cosine_sweep globs them all back together.
+# Each sweep segment gets its own directory because trainer indices restart at 0.
 # Segments run so far:
 #   cosine_spade_sweep            0.05,0.1,0.2,0.5,1,1.5,2,3,5   (MSE-dominated)
 #   cosine_spade_sweep_highgamma  the default grid below         (spans collapse)
@@ -37,11 +35,6 @@ N_GAMMAS=$(awk -F',' '{print NF}' <<< "${GAMMAS}")
 
 cd "${SPADE_REPO:?}"
 
-if [ ! -f "${BASE}/data/activations/test_activations.pt" ]; then
-    echo "ERROR: eval data missing at ${BASE}/data/activations/ (stage it first)"
-    exit 1
-fi
-
 for SEED in "${SEEDS[@]}"; do
     if [ -d "${BASE}/seed_${SEED}/autoencoders_${SWEEP}" ]; then
         echo "ERROR: ${BASE}/seed_${SEED}/autoencoders_${SWEEP} exists — pick a new"
@@ -50,7 +43,7 @@ for SEED in "${SEEDS[@]}"; do
     fi
 done
 
-mkdir -p "${LOGS}/cos_train" "${LOGS}/cos_eval"
+mkdir -p "${LOGS}/cos_train"
 echo "Segment: ${SWEEP}"
 echo "Gammas:  ${GAMMAS}  (${N_GAMMAS} configs)"
 
@@ -66,22 +59,4 @@ TRAIN_JOB=$(sbatch --parsable \
     --error="${LOGS}/cos_train/${SWEEP}_seed_%a_%j.err" \
     scripts/slurm/multiseed/submit_cosine_sweep_train.sbatch)
 echo "Training array: ${TRAIN_JOB} (tasks = seeds ${SEEDS[*]})"
-
-for SEED in "${SEEDS[@]}"; do
-    export SEED
-    EVAL_JOB=$(sbatch --parsable \
-        --dependency="afterok:${TRAIN_JOB}_${SEED}" \
-        --array="0-$((N_GAMMAS - 1))" \
-        --export=ALL \
-        --output="${LOGS}/cos_eval/${SWEEP}_seed_${SEED}_trainer_%a_%j.out" \
-        --error="${LOGS}/cos_eval/${SWEEP}_seed_${SEED}_trainer_%a_%j.err" \
-        scripts/slurm/multiseed/submit_cosine_sweep_eval.sbatch)
-    echo "Eval array for seed ${SEED}: ${EVAL_JOB} (after ${TRAIN_JOB}_${SEED})"
-done
-
-echo ""
 echo "Monitor:  squeue -u \$USER"
-echo "When all evals finish, aggregate + plot (login node, no GPU):"
-echo "  python -m spade.multiseed.aggregate_cosine_sweep"
-echo "  python -m spade.figures.figure_karvonen_extension --results_csv results/multiseed/aggregate_cosine_sweep.csv --output_dir figures/cosine_spade_sweep"
-echo "  python -m spade.figures.figure_cosine_gamma_response"

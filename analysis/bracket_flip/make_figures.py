@@ -10,8 +10,8 @@ Fig 2 is not in the paper and reads results/ here, whose committed copies are ar
 archive/analysis/bracket_flip/. The SAE arm is drawn by its archived sae_pca_figure.py.
 Conventions: FIGURE_GUIDELINES.md 4.4 and 4.7.
 
-Usage: python analysis/bracket_flip/make_figures.py [--only fig1] [--camera-ready]
-       (fig1 is the paper's Fig 7)
+Usage: python analysis/bracket_flip/make_figures.py [--only fig1|fig2] [--camera-ready]
+       (fig1, the default, is the paper's Fig 7; fig2 needs its build CSVs regenerated)
 """
 
 import argparse
@@ -323,13 +323,12 @@ DRAW = {"fig1": figure_one, "fig2": figure_two}
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--only", choices=list(DRAW), help="draw one figure")
+    ap.add_argument("--only", choices=list(DRAW), default="fig1", help="the figure to draw")
     ap.add_argument("--camera-ready", action="store_true",
                     help="vector PDF, no in-figure title")
     args = ap.parse_args()
     apply_style(camera_ready=args.camera_ready)
-    for name in [args.only] if args.only else DRAW:
-        DRAW[name](args.camera_ready)
+    DRAW[args.only](args.camera_ready)
 
 
 if __name__ == "__main__":
