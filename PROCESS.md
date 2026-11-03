@@ -6,6 +6,55 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The six release branches are one branch, release/integration (2026-11-03)
+
+Merged with `--no-ff` in the order gated fix, vendored-deps fetch, public export, clean-clone
+env, clean-clone pipeline, reorganize. Every branch's entry below is kept, last merged first.
+
+**Calls the merges needed.**
+- `checkpoints.py` merged cleanly: the Gated re-seat and knob assert sit beside the data-root
+  paths and pinned seats, and the assert reads `results/shared/l0_roster/karvonen_sweep_full.csv`.
+- `probes/build_corpus.py` takes `GAMES_DATASET` from `common.config` (the env branch added it)
+  with its revision pin; `final_validation`'s single-source check now covers that name.
+- `score_games.py` keeps the pipeline's rule over reorganize's: it writes a new `--out` and never
+  rewrites the committed `results/fig09_*/ranking.csv`.
+- Git placed four added files by directory guess. The Fig 8 PDF goes to `figures/fig08_*.pdf`,
+  not archive/; Fig 4's tau and paired CSVs go to `results/fig04_detector_sae/`, not fig03; the
+  Karvonen extraction hashes go to `scripts/download_karvonen_saes/extracted_files.tsv`, not
+  archive/ (reorganize emptied `manifests/`).
+- `analysis/appendix_numbers/results/` is `results/appendix_numbers/`. Re-run over the Gated
+  tables, `span_stats.csv` moved in one row B.2 does not quote (Fig 16 control mean, 1.391 ->
+  1.377).
+- The study READMEs the env and pipeline branches edited, which reorganize archived, are in
+  archive/ with those edits.
+
+**Follow-ups.** The Karvonen patch drops upstream's notebook: fetch + patch matches the vendored
+trees in all 135 files and modes except that notebook. `dictionary_learning.patch` names its MIT
+source. The Karvonen SAEs download to `$SPADE_DATA_ROOT/karvonen_saes`, where the loader reads,
+and `SPADE_KARVONEN_SAES` is gone. Six paper-path jobs no longer run archived steps.
+`bracket_flip/make_figures.py` draws Fig 7 by default. `make run` (the seed-42 pipeline) is gone
+until a figure-redraw target replaces it. LICENSE names "Anonymous Authors" for the review export.
+
+**Verified on the merged tree** (SLURM jobs on `test`):
+- All 156 non-archive modules and scripts import.
+- `final_validation` passes 16/17, with the weights test skipped.
+- `stage_figures.py` gives 32/32 files byte-identical: the 20 Gated files equal the gated
+  branch's, the other 12 equal new-architecture's.
+- Redrawing Figs 1, 2, 5, 6 and 7 from the committed CSVs gives byte-identical PNGs, and PDFs
+  that differ only in `/CreationDate`.
+- `make setup` in a fresh clone, with external/ removed so the pinned fetch runs: the default
+  `python3` (3.6) is refused, `PYTHON=<3.11>` fetches, installs in 11 min and `make test`
+  passes 16/17.
+- The export stops on 6 hits, all in `scripts/slurm/cluster.env`.
+
+**Open.**
+- `cluster.env` is the cluster's names by design. Either export a template in its place, or
+  exclude it.
+- `make setup` installs `-e .`, not `requirements.lock`, so transitive versions float.
+- Six `export_exclude.txt` patterns no longer match anything; their paths are under archive/.
+
+---
+
 ## Release layout: figures/ and results/ hold only the paper, the rest is in archive/ (2026-11-03)
 
 Moves only, per `spade_release_audit/release_move_list.tsv` (1,076 rows). `figures/` is the 16
