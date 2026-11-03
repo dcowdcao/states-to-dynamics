@@ -25,7 +25,7 @@ from t0 in every game.
 Source games are disjoint by exact token match from the violation-divergence branch tree
 the probe is read out on; `legality_probe.fit_set.branch_tokens` is that set.
 
-Usage: python -m spade.move_legality.fit_set [--n_games 500]
+Usage: python -m spade.move_legality.fit_set [--n_games 800]
 """
 
 import argparse
@@ -158,7 +158,7 @@ def item_table(fit: dict, split: torch.Tensor) -> pd.DataFrame:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--n_games", type=int, default=500)
+    parser.add_argument("--n_games", type=int, default=800)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--dataset_name", default="adamkarvonen/othello_45MB_games")
     args = parser.parse_args()
