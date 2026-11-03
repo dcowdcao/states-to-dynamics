@@ -57,12 +57,15 @@ job and live in README.md's `## Figure notes` (FIGURE_GUIDELINES 5). Lifted into
 a talk without that entry the panels read as a result, which is the cost that
 rule names and accepts.
 
+It reads the game's activations from game_acts.py's slice, not the full tensor.
+
 Usage: python analysis/violation_divergence/fork_and_board/make_figures.py
        [--game 1235] [--plane displacement|r21|d7] [--embedding pca|isomap]
        [--variant spliced|rollout] [--l0-matched] [--camera-ready]
 """
 
 import argparse
+import sys
 from dataclasses import dataclass, replace
 from pathlib import Path
 from string import ascii_lowercase
@@ -85,6 +88,9 @@ from spade.violation_divergence.fork_plane import (
 from spade.violation_divergence.population import paired_mean
 from spade.violation_divergence.rule_groups import rule_rows, spread_ratio
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import game_acts  # noqa: E402  (sibling module, not an installed package)
+
 FIG_DIR = Path(__file__).resolve().parent / "figures"
 NCOL = 3
 CELL_W, CELL_H = 3.7, 3.5  # one fork cell, as in ../game_trajectory's grid
@@ -95,7 +101,6 @@ LEGEND_H = 1.3             # the strip under the grid: the bottom row's labels,
 # down from the cell's bottom edge; `hspace` below is what buys that gap.
 SUBCAP_Y = 0.016
 PLANES = ("displacement", "r21", "d7")
-VARIANTS = {"spliced": "", "rollout": "rollout"}
 # Past r = +8 the rollout set's illegal and control δ̂ agree to within 0.5% and
 # cross over by r = +13, so the extra offsets draw separation that is not there.
 ROLLOUT_RMAX = 8
@@ -235,7 +240,7 @@ def main():
     parser.add_argument("--game", type=int, default=FIGURE_GAME)
     parser.add_argument("--plane", default="displacement", choices=PLANES)
     parser.add_argument("--embedding", default="pca", choices=list(EMBEDDINGS))
-    parser.add_argument("--variant", default="spliced", choices=list(VARIANTS),
+    parser.add_argument("--variant", default="spliced", choices=list(game_acts.VARIANTS),
                         help="rollout: every branch samples its own continuation, "
                              "K rows per branch, averaged over K")
     parser.add_argument("--l0-matched", dest="l0_matched", action="store_true",
@@ -248,17 +253,15 @@ def main():
 
     apply_style(args.camera_ready)
     device = select_device()
-    variant = VARIANTS[args.variant]
+    variant = game_acts.VARIANTS[args.variant]
     base = variant_dir("divergence", variant=variant)
     meta = torch.load(base / "branches" / "branches.pt", weights_only=True)
-    # mmap: the rollout tensor is 4.2 GB and eight branches of one game are read
-    # out of it. The spliced tensor reads the same values either way.
-    acts = torch.load(base / "acts" / "resid_post_5.pt", weights_only=True, mmap=True)
     K = int(meta["rollout"].max()) + 1 if "rollout" in meta else 1
 
     assert args.game in complete_games(meta), \
         f"game {args.game} does not carry every branch type"
     g = load_game(meta, args.game)
+    acts = game_acts.load(base, g)
     # One control, not two: control 2 is the null *for* control 1 and belongs
     # where control 1 is measured, not in an illustration of the construction.
     keep = [i for i, r in enumerate(g.rows) if r["is_control"] != 2]
@@ -269,7 +272,7 @@ def main():
     pos = positions(g.t0, 0 if args.plane == "displacement" else W - 1)
     if variant:
         pos = pos[pos - g.t0 <= ROLLOUT_RMAX]
-    Z = acts[g.idx][:, pos, :].float().numpy()
+    Z = acts[keep][:, pos, :].float().numpy()
     # Z keeps all K rows of every branch, and each reduction below is over them.
     # g carries one row per branch from here on: the metadata is the branch's.
     g = replace(g, idx=g.idx[::K], rows=g.rows[::K])
