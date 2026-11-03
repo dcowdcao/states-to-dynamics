@@ -10,12 +10,13 @@ export SPADE_REPO = $(CURDIR)
 
 .PHONY: setup test
 
-setup:              ## fetch external/, create .venv and install spade editable with the pinned deps
+setup:              ## fetch external/, create .venv, install requirements.lock, then spade editable
 	@$(PYTHON) -c 'import sys; v = "%d.%d" % sys.version_info[:2]; sys.exit(v != "3.11" and "$(PYTHON) is Python " + v + ", setup needs 3.11: make setup PYTHON=/path/to/python3.11")'
 	bash scripts/fetch_external/fetch.sh
 	$(PYTHON) -m venv $(VENV)
 	$(PY) -m pip install --upgrade pip
-	$(PY) -m pip install -e .
+	$(PY) -m pip install -r requirements.lock
+	$(PY) -m pip install -e . --no-deps
 	$(PY) -c "import spade.common.paths as p; p.karvonen_root(); p.tpr_root(); print('spade ready at', p.repo_root())"
 
 test:               ## fast self-tests (no GPU, no weights)
