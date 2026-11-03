@@ -9,6 +9,9 @@ Trained SAE weights, one subtree per experiment. Weight files (`ae.pt`) are giti
 - `spade_sweep/`   — SpaDE λ/γ sweep checkpoints                 (was `autoencoders_spade_sweep/`)
 - `spade_revival/` — **the default SpaDE config**, λ=1e-3 γ=1e-4
                                         (was `autoencoders_spade_lam1e-03_gam1e-04/`)
+- `karvonen_saes/` — Karvonen's released roster SAEs, wholly untracked; filled by
+                     `scripts/download_karvonen_saes/download.sh`, hashes in
+                     `manifests/checkpoints/karvonen_saes.tsv`
 
 Each holds `trainer_<i>/` subfolders, with `standardization_params.json` at *this* level,
 not inside them — the loader searches a checkpoint dir and its parent, and the file lives

@@ -6,6 +6,57 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Karvonen's roster SAEs download from a pinned HF revision (2026-11-03)
+
+`download_saes.sh`, upstream's script, pulled `resolve/main` unpinned. It skipped the
+`2024-07-10_topk` zip that holds TopK trainer_61 and fetched a chess zip nothing reads.
+`scripts/download_karvonen_saes/download.sh` fetches only the 05-23 and 07-10_topk zips at HF
+revision `f997cba` (the repo head, last changed 2025-01-30) and checks them against
+`zips.sha256`. It then extracts the six roster dirs into `$SPADE_KARVONEN_SAES` (default
+`checkpoints/karvonen_saes`). Both Gated dirs are included: the roster picks trainer32, and the
+published L0-matched figures encoded trainer32-v2.
+
+The netscratch zips match HF's LFS sha256 at that revision, so they are the published bytes
+and nothing needed re-downloading. Extracting from them reproduces the audit's own extraction
+file for file. Per-file hashes are in `manifests/checkpoints/karvonen_saes.tsv`.
+`checkpoints.py` still reads its netscratch `KARVONEN_ROOT`, and its docstring still points
+at `download_saes.sh`. Pointing both at this root is the path-unification step.
+
+---
+
+## external/ is fetched at pinned commits and patched, not shipped (2026-11-03)
+
+Neither `adamkarvonen/SAE_BoardGameEval` nor `ajyl/tpr_othello` has a licence, so the public
+tree cannot ship `external/` (release decision D4). `make setup` now runs
+`scripts/fetch_external/fetch.sh`. It clones each upstream at its pin and applies our patch,
+but only where `external/<tree>` is absent.
+
+**The pins.** SAE_BoardGameEval `7187d4a`: the source repo carried it as a submodule gitlink
+at exactly this SHA from 2026-03-19 until the 2026-07-13 flatten. Its `dictionary_learning`
+submodule is at `43421f5` (MIT). tpr_othello is at `cc90cea`. A scan of every upstream commit
+agrees: each pin is uniquely closest to the vendored copy (20, 3 and 5 differing files; the
+runners-up differ in 21, 4 and 13).
+
+**What the patches hold.** dictionary_learning has the per-trainer device moves and the
+dead-neuron log that the multi-GPU sweep needs. SAE_BoardGameEval loses `.gitmodules` and 18
+`ae.pt`: 16 empty placeholders and two 16 MB test fixtures that our root `*.pt` ignore kept out,
+and nothing of ours reads any of them. tpr_othello gains `PROVENANCE.md` and loses upstream's
+48 MB of game pickles. A patch made with `--full-index` and without `--binary` records a
+deleted binary by its blob id alone. So the patches hold no upstream binaries.
+
+**Verified byte for byte.** Fetch + patch into an empty root reproduces both vendored trees
+under `diff -r` (135 files, file modes included). That covers `meta.pkl`, the probe `.pth` and
+the two `.sh` that the runbook called git-invisible. Those files have been force-added since
+`96dcc83`, and upstream tracks them too.
+
+**Open.** The notebook hunk is 26 KB of upstream's `full_pipeline_walkthrough.ipynb`, because
+our re-run re-saved every line. Nothing imports the notebook, so dropping the hunk costs
+nothing if the public patch should hold no upstream text beyond diff context. The vendored
+copies still run in this private repo. Deleting them, so that this repo fetches like a public
+clone, **needs the owner's sign-off**.
+
+---
+
 ## The GatedSAE pick was loading `trainer32-v2`; the L0-matched paper outputs are re-seated (2026-11-03)
 
 `checkpoints.KARVONEN_DIRS` sent the pick `gated/trainer32` (l1 0.705, L0 219.93) to

@@ -1,0 +1,46 @@
+diff --git a/PROVENANCE.md b/PROVENANCE.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..37c2e460bf24472bff3969f08073c31912c98057
+--- /dev/null
++++ b/PROVENANCE.md
+@@ -0,0 +1,24 @@
++# Vendored: tpr_othello
++
++This file is ours; everything else in this directory is upstream and unmodified.
++
++- Upstream: https://github.com/ajyl/tpr_othello
++- Pinned commit: `cc90cead6cf66a8d3e25ceec6c0951112066fbdf` (2026-04-29)
++- Paper: Lee, Viégas & Wattenberg, *Tensor Product Representation Probes Reveal
++  Shared Structure Across Linear Directions*, arXiv:2605.09967
++- Used by: `src/bracket_flip/` (see `docs/bracket_flip_design.md`)
++
++Omitted from the vendored copy, recoverable by cloning at the pinned commit:
++`.git` (29 MB), `train_data/` (26 MB) and `test_data/` (8.6 MB) — their own
++Othello game pickles. We train on our corpus and our checkpoint
++(`Baidicoot/Othello-GPT-Transformer-Lens`), so their data is dead weight.
++
++`ckpts/` and `probes/` upstream contain only placeholder files: no pretrained
++probe and no model checkpoint ship with the repo, so the TPR is trained here
++rather than loaded. That also rules out reusing their probes directly, which
++would have been unsafe anyway — TransformerLens folds LayerNorm and centers
++writing weights, so our residual stream is not in the same basis as the raw
++HuggingFace model theirs was fit on.
++
++Upstream carries **no LICENSE file**. Treat it as all-rights-reserved research
++code: fine to read and run for our own research, not to redistribute.
+diff --git a/test_data/test_data.pkl b/test_data/test_data.pkl
+deleted file mode 100644
+index 9912ea642c241f1b921c3f3e931081917d0e3c63..0000000000000000000000000000000000000000
+Binary files a/test_data/test_data.pkl and /dev/null differ
+diff --git a/train_data/data1.pickle b/train_data/data1.pickle
+deleted file mode 100644
+index 5a5ef3fa07ea3f89cb22b813f8089b2185852e4a..0000000000000000000000000000000000000000
+Binary files a/train_data/data1.pickle and /dev/null differ
+diff --git a/train_data/data2.pickle b/train_data/data2.pickle
+deleted file mode 100644
+index 18b13b52317c6e82ad47bb8c6f139495d6b22fd3..0000000000000000000000000000000000000000
+Binary files a/train_data/data2.pickle and /dev/null differ
+diff --git a/train_data/data3.pickle b/train_data/data3.pickle
+deleted file mode 100644
+index 0648782df7df312bae57b8d791fe48eefcd6731d..0000000000000000000000000000000000000000
+Binary files a/train_data/data3.pickle and /dev/null differ
