@@ -62,6 +62,9 @@ RELEASE_PLAN §5 items, so each paper figure recomputes or redraws without anoth
   `study_dir("divergence")`), refusing one that exists. The committed `results/` stay as the
   selection's provenance: the acts were re-extracted after it, so a re-score moves S3 by
   ≤6e-7. Not re-run here (the audit's re-score took 4 h on the login node).
+- **C25:** `submit_rollout_branches.sbatch` guarded extraction on `rollout/acts/acts.pt`,
+  which `extract_acts` never writes, so it re-extracted 8.35 GB every run; it now guards on
+  `resid_post_5.pt`.
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 

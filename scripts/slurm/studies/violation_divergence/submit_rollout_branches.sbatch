@@ -30,4 +30,4 @@ DIR="${SPADE_DIVERGENCE_DIR:-/n/netscratch/ba_lab/Lab/$USER/spade_divergence}"
 
 # Tokens alone draw nothing. K=4 rollouts per row, so this pass is 4x the spliced
 # tree's; the wall clock above covers it.
-[ -f "$DIR/rollout/acts/acts.pt" ] || python -m spade.violation_divergence.extract_acts --variant rollout
+[ -f "$DIR/rollout/acts/resid_post_5.pt" ] || python -m spade.violation_divergence.extract_acts --variant rollout
