@@ -6,6 +6,24 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Karvonen's roster SAEs download from a pinned HF revision (2026-11-03)
+
+`download_saes.sh`, upstream's script, pulled `resolve/main` unpinned. It skipped the
+`2024-07-10_topk` zip that holds TopK trainer_61 and fetched a chess zip nothing reads.
+`scripts/download_karvonen_saes/download.sh` fetches only the 05-23 and 07-10_topk zips at HF
+revision `f997cba` (the repo head, last changed 2025-01-30) and checks them against
+`zips.sha256`. It then extracts the six roster dirs into `$SPADE_KARVONEN_SAES` (default
+`checkpoints/karvonen_saes`). Both Gated dirs are included: the roster picks trainer32, and the
+published L0-matched figures encoded trainer32-v2.
+
+The netscratch zips match HF's LFS sha256 at that revision, so they are the published bytes
+and nothing needed re-downloading. Extracting from them reproduces the audit's own extraction
+file for file. Per-file hashes are in `manifests/checkpoints/karvonen_saes.tsv`.
+`checkpoints.py` still reads its netscratch `KARVONEN_ROOT`, and its docstring still points
+at `download_saes.sh`. Pointing both at this root is the path-unification step.
+
+---
+
 ## external/ is fetched at pinned commits and patched, not shipped (2026-11-03)
 
 Neither `adamkarvonen/SAE_BoardGameEval` nor `ajyl/tpr_othello` has a licence, so the public
