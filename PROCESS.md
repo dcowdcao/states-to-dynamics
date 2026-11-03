@@ -10,6 +10,15 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 RELEASE_PLAN §5 items, so each paper figure recomputes or redraws without another study's data.
 
+- **C8 + C30: `final_validation` passes again, over the paper pipeline only.** Five model
+  constants were redefined outside `common.config` (`probe_geometry/probes.py` D_MODEL,
+  `probes/load.py` LAYER, `sae_loader/test_trace_safe_encode.py` MODEL_NAME/LAYER, and
+  `probes/build_corpus.py` DATASET); the check stopped at the first. The last is a different
+  dataset from `config.DATASET` (HF games, not the SAE stream), so it is renamed
+  `GAMES_DATASET` rather than imported. Removed from the suite, since what they check goes to
+  `archive/`: the multiseed config lists and seed-42 CSV paths, the sweep merge, the
+  `karvonen_plot` type map, and three schedule checks that exercised torch, not repo code.
+  16/17 pass; the checkpoint round-trip skips without weights.
 - **C11: Fig 7(b)'s field corpus has a command.** `submit_bracket_field.sbatch` now mines it
   (`events --variant field --n_events 4000`) before extracting; the default 2000 events fail
   `probe_space`'s quota assert.

@@ -28,7 +28,7 @@ add_karvonen_to_path()
 
 from circuits.othello_engine_utils import OthelloBoardState, to_string
 
-DATASET = "adamkarvonen/othello_45MB_games"
+GAMES_DATASET = "adamkarvonen/othello_45MB_games"
 MOVES = 60          # every game in this corpus is a full game
 KEEP = 58           # the model is fed tokens[:-1], so positions 0..57 carry a board
 BATCH = 256
@@ -43,7 +43,7 @@ def games(n: int, seed: int) -> np.ndarray:
     """[n, 60] vocab ids, pass-free. Materialized before the model runs, because the
     streaming parquet reader faults during interpreter shutdown if left open."""
     from datasets import load_dataset
-    stream = load_dataset(DATASET, split="train", streaming=True)
+    stream = load_dataset(GAMES_DATASET, split="train", streaming=True)
     it = iter(stream.shuffle(seed=seed, buffer_size=10000))
     out, skipped = [], 0
     while len(out) < n:
@@ -105,7 +105,7 @@ def main():
     acts = activations(model, tokens, args.device)
 
     torch.save({"state": torch.from_numpy(state), "mover": torch.from_numpy(mover),
-                "tokens": torch.from_numpy(tokens), "dataset": DATASET,
+                "tokens": torch.from_numpy(tokens), "dataset": GAMES_DATASET,
                 "seed": args.seed, "n_games": len(tokens), "positions": KEEP},
                out / "labels.pt")
     for layer, tensor in acts.items():

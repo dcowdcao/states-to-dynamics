@@ -18,6 +18,7 @@ import os
 import torch as t
 from sparsemax import Sparsemax
 
+from spade.common.config import LAYER, MODEL_NAME
 from spade.common.paths import add_karvonen_to_path
 from spade.sae_loader.load_sae import load_sae
 from spade.sae_loader.trace_safe_spade import sparsemax
@@ -26,8 +27,6 @@ add_karvonen_to_path()
 import circuits.eval_sae_as_classifier as eval_sae  # noqa: E402
 import circuits.utils as cutils  # noqa: E402
 
-MODEL_NAME = "Baidicoot/Othello-GPT-Transformer-Lens"
-LAYER = 5
 N_GAMES = 25
 # His stage indexes the code by a list of alive features; any list exercises the same path.
 N_DIMS = 8
