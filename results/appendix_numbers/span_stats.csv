@@ -2,6 +2,6 @@ figure,statistic,max_space,max,min_space,min,ratio
 fig14_displacement,control_mean,raw layer 5 (reference space),8.4856,SpaDE ($L_0$ 232),0.0361981,234.421
 fig14_displacement,every_value,raw layer 5 (reference space),13.157,CosineSpaDE ($L_0$ 184),0.0245286,536.394
 fig14_displacement,panel_peak,raw layer 5 (reference space),13.157,SpaDE ($L_0$ 232),0.0611197,215.266
-fig16_r21,control_mean,GatedSAE ($L_0$ 220),3.3221,CosineSpaDE ($L_0$ 184),2.38818,1.39106
+fig16_r21,control_mean,GatedSAE ($L_0$ 220),3.2894,CosineSpaDE ($L_0$ 184),2.38818,1.37737
 fig16_r21,every_value,CosineSpaDE ($L_0$ 184),6.15245,CosineSpaDE ($L_0$ 184),0.526308,11.6898
 fig16_r21,panel_peak,CosineSpaDE ($L_0$ 184),6.15245,GatedAnneal ($L_0$ 222),4.48947,1.37042
