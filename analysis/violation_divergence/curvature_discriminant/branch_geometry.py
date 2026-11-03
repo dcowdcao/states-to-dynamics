@@ -43,7 +43,6 @@ from spade.common.device import select_device
 from spade.common.study import study_dir, variant_dir
 from spade.saes.registry import seed42_entries
 from spade.spaces import EXCLUDED_SAE
-from spade.straightness.build_games import CLASSES
 from spade.straightness.geometry import temporal_geometry
 from spade.violation_divergence.branches import complete_games
 from spade.violation_divergence.compute_divergence import sae_encoder
@@ -61,7 +60,9 @@ def out_dir(variant: str = "") -> Path:
 def straightness_legal_index(meta: dict) -> np.ndarray:
     """Straightness legal-game index of each divergence game_id, -1 if absent."""
     g = torch.load(study_dir("straightness") / "games" / "games.pt", weights_only=True)
-    n = len(g["cls"]) // len(CLASSES)
+    # Counted, not len // 5: the data release's games.pt holds the legal block alone.
+    n = int((g["cls"] == 0).sum())
+    assert (g["cls"][:n] == 0).all(), "the legal games are not the leading block of games.pt"
     key = {tuple(row): i for i, row in enumerate(g["tokens"][:n].long().tolist())}
     is_ref = (meta["category"] == 0) & (meta["is_control"] == 0)
     out = np.full(int(meta["game_id"].max()) + 1, -1)

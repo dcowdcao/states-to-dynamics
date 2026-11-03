@@ -38,7 +38,6 @@ import torch
 from spade.common.device import select_device
 from spade.common.study import study_dir
 from spade.l0_operating_point.checkpoints import matched
-from spade.straightness.build_games import CLASSES
 from spade.straightness.geometry import temporal_geometry
 
 GAME_BATCH = 32
@@ -47,7 +46,7 @@ GAME_BATCH = 32
 def trajectories() -> tuple[torch.Tensor, int]:
     """Every straightness game as [n, 58, 512] with the sink dropped, and the class size."""
     cls = torch.load(study_dir("straightness") / "games" / "games.pt", weights_only=True)["cls"]
-    n = len(cls) // len(CLASSES)
+    n = int((cls == 0).sum())  # counted, not len // 5: a released games.pt is this block alone
     assert (cls[:n] == 0).all(), "the legal games are not the leading block of games.pt"
     traj = torch.load(study_dir("straightness") / "traj" / "resid_post_5.pt",
                       weights_only=True, mmap=True)
