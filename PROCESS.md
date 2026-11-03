@@ -23,6 +23,14 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
   must agree on class, seed and knobs. Old and new resolve ae.pt, config.json and
   standardization_params.json to the same real files. `KARVONEN_ROOT` is
   `data_root()/karvonen_saes`; `GRID_ROOT` went with the rglob.
+- **C5, the cluster.** Account, partition, `module load` and `source activate spade_env` came
+  out of all 55 `.sbatch` files and the `run_*.sh` submitters into `scripts/slurm/cluster.env`.
+  `#SBATCH` lines cannot read a variable, so the file exports `SBATCH_ACCOUNT` /
+  `SBATCH_PARTITION`, which sbatch reads as `--account` / `--partition` (env beats the script,
+  the command line beats env). Jobs source it for the stack; submitters source it before
+  `sbatch`. Without it, FASRC's sbatch refuses the job ("allocation failure"), so a forgotten
+  source fails at submit time. The one CPU job is submitted with `$SPADE_CPU_ACCOUNT` /
+  `$SPADE_CPU_PARTITION` from the same file.
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 

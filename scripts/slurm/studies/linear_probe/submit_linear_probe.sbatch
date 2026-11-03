@@ -1,9 +1,8 @@
 #!/bin/bash
-# CPU, not kempner_h100: 45 quick probes plus one full probe is seven minutes on 16 cores, and
-# the login node gives one. A GPU rerun is fine but will differ in the last 1e-4.
+# CPU, not a GPU partition: 45 quick probes plus one full probe is seven minutes on 16 cores, and
+# the login node gives one. A GPU rerun is fine but will differ in the last 1e-4. Submit with
+#   sbatch -A "$SPADE_CPU_ACCOUNT" -p "$SPADE_CPU_PARTITION" scripts/slurm/studies/linear_probe/submit_linear_probe.sbatch
 #SBATCH --job-name=linear_probe
-#SBATCH --account=ba_lab
-#SBATCH --partition=sapphire
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=32G
 #SBATCH --time=0-01:00:00
@@ -11,8 +10,7 @@
 #SBATCH --error=logs/linear_probe/%x_%j.err
 
 set -e
-module load python
-source activate spade_env
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 export PYTHONUNBUFFERED=1
 export HF_USE_SOFTFILELOCK=1
 export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK}"

@@ -1,7 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=cos_sweep_train
-#SBATCH --account=kempner_ba_lab
-#SBATCH --partition=kempner_h100
 #SBATCH --gres=gpu:3
 #SBATCH --cpus-per-task=12
 #SBATCH --mem=80G
@@ -20,9 +18,7 @@
 
 set -e
 
-module load python
-module load cuda/12.4.1-fasrc01
-source activate spade_env
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 export PYTHONUNBUFFERED=1
 export WANDB_MODE=online
 # HF datasets cache lives on NFS; hard flocks fail under concurrent array tasks

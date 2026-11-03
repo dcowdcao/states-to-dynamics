@@ -1,7 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=bracket_sae_pca
-#SBATCH --account=kempner_ba_lab
-#SBATCH --partition=kempner_h100
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=64G
@@ -10,8 +8,7 @@
 #SBATCH --error=logs/bracket/%x_%j.err
 
 set -e
-module load python
-source activate spade_env
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 export PYTHONUNBUFFERED=1
 
 cd "${SPADE_REPO:?}"

@@ -17,6 +17,7 @@
 # ==========================================================================
 
 set -euo pipefail
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 
 BASE="${SPADE_MULTISEED_DIR:-/n/netscratch/ba_lab/Lab/${USER}/spade_multiseed}"
 LOGS="${BASE}/logs"

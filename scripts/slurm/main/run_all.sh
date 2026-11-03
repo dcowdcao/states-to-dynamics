@@ -1,13 +1,9 @@
 #!/bin/bash
 # ==========================================================================
-# Master script to run the full OthelloGPT SAE pipeline on FAS RC.
-#
-# Kempner AI Cluster — H100 GPUs
-# Account: kempner_ba_lab
-# Partition: kempner_h100 (3-day limit, 96 cores / 1.5TB per node)
+# Master script to run the full OthelloGPT SAE pipeline on SLURM.
 #
 # BEFORE RUNNING — you must:
-#   1. Create conda env "spade_env" (see docs/fasrc_commands.md)
+#   1. Set scripts/slurm/cluster.env for your cluster and build the env it activates
 #   2. Export SPADE_REPO to this checkout
 #
 # Usage:
@@ -25,6 +21,7 @@
 # ==========================================================================
 
 set -e
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 
 cd "${SPADE_REPO:?}"
 
@@ -34,8 +31,8 @@ mkdir -p "${LOG_DIR}"/{training,extraction,karvonen,figures,diagnostics}
 mkdir -p checkpoints/main data/activations results/main figures
 
 echo "=============================================="
-echo " OthelloGPT SAE Pipeline — Kempner H100"
-echo " Account: kempner_ba_lab"
+echo " OthelloGPT SAE Pipeline"
+echo " Account: ${SBATCH_ACCOUNT}, partition ${SBATCH_PARTITION}"
 echo " Experiment dir: ${SPADE_REPO}"
 echo "=============================================="
 echo ""
@@ -100,7 +97,7 @@ echo "  SpaDE sweep eval:   $SWEEP_EVAL_JOB"
 echo "  Per-game diag:      $DIAG_JOB"
 echo ""
 echo "Monitor with:"
-echo "  squeue -u \$USER -A kempner_ba_lab"
+echo "  squeue -u \$USER"
 echo "  sacct -j $TRAIN_JOB,$EXTRACT_JOB,$EVAL_JOB --format=JobID,JobName%25,Elapsed,State,MaxRSS"
 echo ""
 echo "View logs:"

@@ -1,7 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=cos_sweep_eval
-#SBATCH --account=kempner_ba_lab
-#SBATCH --partition=kempner_h100
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=96G
@@ -17,9 +15,7 @@
 
 set -e
 
-module load python
-module load cuda/12.4.1-fasrc01
-source activate spade_env
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 export PYTHONUNBUFFERED=1
 # The datasets builder hard-flocks its cache, and flock on NFS dies with
 # "Errno 116 Stale file handle" when concurrent array tasks hit it (~1 task per

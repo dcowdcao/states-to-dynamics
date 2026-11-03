@@ -4,8 +4,6 @@
 # is the cost. The scripts are memory-bounded (one game, one space at a time), but
 # a login node caps a user at 8 GB and holds no GPU, so this is a job.
 #SBATCH --job-name=three_rules_selection
-#SBATCH --account=kempner_ba_lab
-#SBATCH --partition=kempner_h100
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
@@ -14,9 +12,7 @@
 #SBATCH --error=logs/violation_divergence/%x_%j.err
 
 set -e
-module load python
-module load cuda/12.4.1-fasrc01
-source activate spade_env
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 export PYTHONUNBUFFERED=1
 
 cd "${SPADE_REPO:?}"

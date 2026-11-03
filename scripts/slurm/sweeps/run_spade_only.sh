@@ -12,6 +12,7 @@
 # ==========================================================================
 
 set -e
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 
 cd "${SPADE_REPO:?}"
 
@@ -21,8 +22,8 @@ mkdir -p "${LOG_DIR}"/{training,karvonen}
 mkdir -p checkpoints/spade_v2 results/spade_v2
 
 echo "=============================================="
-echo " SpaDE-Only Retrain + Eval — Kempner H100"
-echo " Account: kempner_ba_lab"
+echo " SpaDE-Only Retrain + Eval"
+echo " Account: ${SBATCH_ACCOUNT}, partition ${SBATCH_PARTITION}"
 echo " lambda_init=1e-3, gamma_reg=1e-2"
 echo "=============================================="
 echo ""

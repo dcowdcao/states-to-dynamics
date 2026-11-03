@@ -5,8 +5,6 @@
 # GPU pass over ~185k spliced sequences. Skip-if-exists is not implemented -- a rerun
 # rewrites both, and renumbers game_id, so do not rerun over a tree a probe was fit on.
 #SBATCH --job-name=move_legality_fit_set
-#SBATCH --account=kempner_ba_lab
-#SBATCH --partition=kempner_h100
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=96G
@@ -15,9 +13,7 @@
 #SBATCH --error=logs/move_legality/%x_%j.err
 
 set -e
-module load python
-module load cuda/12.4.1-fasrc01
-source activate spade_env
+source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 export PYTHONUNBUFFERED=1
 # The builder's hard flock dies on NFS; give the job a node-local datasets cache and
 # leave HF_HOME on NFS so the LM is not refetched (PROCESS.md).
