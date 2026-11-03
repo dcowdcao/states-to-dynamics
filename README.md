@@ -46,7 +46,7 @@ $CONDA_PREFIX/bin/python -m venv --system-site-packages .venv
 Two vendored runtime dependencies under `external/`: `Karvonen_Research` (`circuits.*` —
 the baseline trainers, the Othello engine, the board-reconstruction eval) and `tpr_othello`
 (the tensor-product board probe). Path resolution is repo-root-anchored — `spade.common.paths`
-walks to the `CLAUDE.md` / `.git` marker — so scripts work from anywhere, but only under an
+walks up to `pyproject.toml` — so scripts work from anywhere, but only under an
 editable install. Cluster (FASRC SLURM) commands live in `archive/docs/fasrc_commands.md`.
 
 Heavy per-study intermediates live outside the repo on netscratch, resolved by

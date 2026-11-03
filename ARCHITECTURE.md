@@ -12,77 +12,40 @@ only to be ported from. See [MIGRATION.md](MIGRATION.md) for the rule and the po
 
 ```
 spade_sae/
-├── pyproject.toml            installable package `spade` (pip install -e .)
-├── Makefile                  make setup / make run
+├── pyproject.toml            installable package `spade` (pip install -e .); the repo-root marker
+├── Makefile  requirements.txt  LICENSE.txt  .gitignore
 ├── README.md                 tiered: run it / dev setup / architecture
-├── ARCHITECTURE.md           this file — layout + old→new migration map
-├── MIGRATION.md              port order, working rules, what must not break
 ├── FIGURE_GUIDELINES.md      normative figure rules (no color literals outside paper_style)
-├── PROCESS.md                running log of processes + critical decisions
-├── CLAUDE.md  LICENSE.txt  requirements.txt  .gitignore
+├── ARCHITECTURE.md  MIGRATION.md  PROCESS.md  CLAUDE.md    working docs, private repo only
+│
+├── figures/                  ONLY the paper's 16 figures: figNN_<name>.png + its .pdf twin
+├── results/                  ONLY the tables the paper draws or quotes
+│   ├── figNN_<name>/             one folder per figure that has any
+│   └── shared/                   cross-figure inputs: eval_games.csv, l0_roster/
 │
 ├── src/spade/                the code package (one import root: `import spade.*`)
-│   ├── common/               config, paths, device, net, study dirs  (leaf; everything imports these)
-│   ├── othello/              game/board layer shared by every study
-│   │   ├── games.py              stream games from HF, legal-prefix collection (docs/game_corpus.md)
-│   │   ├── boards.py             replay, flip_set, regular_moves, rays_touch, tokens_of
-│   │   └── taxonomy.py           the 7-category legality taxonomy, mapped to rules R1–R3
-│   ├── saes/                 ALL SAE definitions + the checkpoint registry
-│   │   ├── spade_base.py         shared base: sparsemax encode + no-bias decode + trainer
-│   │   ├── spade.py              distance SpaDE  (score = -λ·‖x-Aeᵢ‖²)
-│   │   ├── spade_cosine.py       CosineSpaDE     (score = cosine sim, γ-scaled)
-│   │   └── registry.py           the verified checkpoint roster (was rules/sae_registry.py)
-│   │   # the 5 Karvonen baselines + BatchTopK are NOT redefined here — they come from
-│   │   # external/Karvonen_Research (circuits.dictionary_learning).
-│   ├── spaces.py             the representation-space API: load_space, representative_spaces,
-│   │                         batched_apply, center_by_t  (was rules/embed.py's shared half)
-│   ├── extraction/           stream games → cache layer-5 activations + board labels
-│   ├── training/             ONE core loop + one thin entrypoint per SAE type + sweep driver
-│   │   ├── core.py               shared: standardization, data-init, trainSAE plumbing
-│   │   ├── sweep.py              λ/γ grid drivers (grids span multiple checkpoint trees)
-│   │   ├── train_standard.py     train_panneal.py  train_gated.py  train_gated_anneal.py
-│   │   ├── train_topk.py         train_batch_topk.py
-│   │   └── train_spade.py        train_cosine_spade.py
-│   ├── evaluation/           karvonen_adapter.py + run_eval.py + merge_revival_results.py
-│   ├── multiseed/            aggregate_seeds.py  aggregate_cosine_sweep.py
-│   ├── figures/              paper_style.py (the style contract) + shared panels + entrypoints
-│   ├── diagnostics/          SpaDE norm / dead-prototype / per-game MSE studies
-│   ├── validation/           final_validation.py fast self-tests
-│   │
-│   │   ── studies: each owns a netscratch dir, numbered resumable steps, and one
-│   │      analysis/<study>/make_figures.py that only draws ──
-│   ├── rules/                rules-of-Othello program (R1–R5): pairs, embeddings, causal
-│   │   └── causal/               patch battery, un-flip edit, pair patching, forfeits
-│   ├── bracket_flip/         TPR read-out of a flanked square (+ external/tpr_othello)
-│   ├── violation_divergence/ one prefix branched into legal/illegal futures
-│   ├── straightness/         ReStraV trajectory geometry
-│   └── manifold_capture/     concept-manifold capture vs tiling
+│   ├── common/               config, paths (repo_root, results_dir, build_dir), device, study dirs
+│   ├── othello/  saes/  spaces.py   game/board layer, SAE definitions + registry, space API
+│   ├── training/  evaluation/  multiseed/  sae_loader/   SAE training, loading, config lists
+│   ├── figures/              paper_style.py (the style contract), shared panels, Fig 1
+│   ├── l0_operating_point/   the L0-matched roster (picks.csv) and Fig 6
+│   ├── generation_legality/  move_legality/  legality_probe/  probe_geometry/  probes/
+│   ├── bracket_flip/  violation_divergence/  straightness/  rules/
+│   └── validation/           final_validation.py fast self-tests
 │
-├── scripts/                  shell orchestration
-│   ├── run_pipeline.sh  smoke_test.sh  clean_smoke_test.sh
-│   └── slurm/{main,sweeps,multiseed,studies/<study>,diagnostics}/   FASRC jobs
-│
-├── analysis/                 downstream studies (code + outputs co-located, one per dir)
-│   ├── spade_vs_baselines.md
-│   ├── linear_probe/             gold-standard board probe (~0.99 acc)
-│   ├── geometry/                 13 self-contained sub-studies (older generation)
-│   ├── rules_manifolds/  rules_causal/  bracket_flip/  violation_divergence/
-│   ├── straightness/  manifold_capture/  cosine_spade_gamma_sweep/
-│   └── <each>: README.md + make_figures.py + figures/ + results/
-│
-├── viewer/                   the interactive SAE feature viewer (a deployable, not a package)
-│   ├── web/                      static HF Space: hand-written JS forward pass + SAE encode
-│   └── server.py static/         cluster FastAPI variant
-├── docs/                     pipeline, rules spec, study designs, cluster runbook, session_logs/
+├── analysis/<study>/         measure + draw entrypoints; their figures/ and results/ are
+│                             gitignored build output (a paper table is written to results/)
+├── karvonen_repro/           Karvonen's own eval, run on our checkpoints (Fig 6's streams)
+├── karvonen_othello_sweep/   rebuilds his sweep table into results/shared/l0_roster/
+├── checkpoints/<experiment>/ configs + standardization params (weights gitignored)
+├── scripts/
+│   ├── stage_figures.py          copies the 16 owner renders into figures/, the only writer there
+│   └── slurm/                    the FASRC jobs the paper's pipeline runs
+├── docs/                     game_corpus.md (A.2), othello_rules.md (A.3)
 ├── external/                 vendored runtime deps: Karvonen_Research/, tpr_othello/
-├── reference/                papers, ARENA exercises, PDFs
-│
-│   ── generated outputs (weights/tensors gitignored; small CSVs + figures tracked) ──
-├── checkpoints/<experiment>/  trained SAE weights
-├── data/activations/          extracted .pt + metadata.json
-├── results/<experiment>/      eval CSVs/tensors
-├── figures/                   canonical cross-study figures only
-└── archive/                   superseded configs, run records and docs — provenance only
+├── archive/                  everything the paper does not use, at archive/<old path>;
+│                             archive/legacy/ is the port's own archive
+└── build/  data/             gitignored: owner renders + non-paper tables; data_dir()
 ```
 
 **Outside the repo, and load-bearing.** Six studies keep their heavy artifacts on netscratch
@@ -92,6 +55,9 @@ seeds 43–46 behind every error bar, and it is on **90-day retention** running 
 2026-07-22. The repo alone cannot reproduce the figures.
 
 ## Old → new migration map
+
+This map predates the release layout: whatever it names that the paper does not use is now
+at `archive/<that path>`, and its `archive/` is `archive/legacy/`.
 
 Source repo: `../Spade_Research_David_Sumedh_Ba` (branch `cosine-spade-gamma-sweep`).
 

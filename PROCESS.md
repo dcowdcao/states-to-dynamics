@@ -6,6 +6,51 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Release layout: figures/ and results/ hold only the paper, the rest is in archive/ (2026-11-03)
+
+Moves only, per `spade_release_audit/release_move_list.tsv` (1,076 rows). `figures/` is the 16
+paper figures as `figNN_<name>.{png,pdf}` (31 files; Fig 8 has no PDF yet). `results/` is the
+41 tables the paper draws or quotes, one folder per figure plus `results/shared/`
+(`eval_games.csv`; `l0_roster/` = picks, pooled, Karvonen's sweep and coverage, the acceptance
+table). 801 files went to `archive/<old path>`; the port-era `archive/` is `archive/legacy/`.
+
+**A figure reaches figures/ only through `scripts/stage_figures.py`** (was
+`figures/paper/stage.py`, now mapping all 16; D6, C29). Owners still render where they did,
+`analysis/<study>/figures/`, now gitignored; the four that drew into `figures/<study>/` draw
+into `build/<study>/`, which is where the Fig 6 panels live now (D9). **A table reaches
+results/ from its writer directly**: each writer names which of its outputs the paper uses
+(`PAPER_TABLES`, `PAPER_CSV`, `FLANKING`, ...). The rest stay where they were, now gitignored
+build output (`analysis/**/results/`), or move to `build/` if that was `results/`, so a re-run
+cannot put a non-paper table in results/.
+
+`repo_root()` keys on `pyproject.toml` (C22): an exported tree has neither CLAUDE.md nor .git.
+The two modules imported by the bare name `make_figures`, which 29 files share, are
+`probe_geometry_figures.py` and `changepoint_figures.py` now (C24).
+
+**Owner flags, all resolved as recommended.** PAPER results: `TABLES.md`, `bootstrap.json`
+(provenance, until F2's "not needed" is confirmed), `PROBE_REPORT.md` (D21, while A.4 quotes the
+gauge angles), `ranking.csv` (D14). Kept as SUPPORT in place: `score_games.py` (D14),
+`probe_geometry/robustness.py` (D17), `docs/game_corpus.md` + `docs/othello_rules.md` (D11), the
+`board_probe_sweep` and `game_selection` READMEs, the vendored `external/` trees (D4).
+Archived: the eight Fig 6 panel PNGs (D9). Kept at the root: CLAUDE, PROCESS, ARCHITECTURE,
+MIGRATION (D12; the public export drops them).
+
+**One correction to the move list:** the seven seed-42 `checkpoints/{main/trainer_0-5,
+batch_topk/trainer_0}/config.json` stay. `saes.registry._verify` reads them whenever
+`seed42_entries()` runs, and `extract_geometry.py`'s main calls it on every paper run.
+
+**Broken by the archive, left for the owner** (each is outside the paper's path):
+- `analysis/bracket_flip/make_figures.py` draws Fig 7, then fails on its non-paper Fig 2, whose
+  CSVs are archived. C19's `--only fig1` fixes it.
+- `final_validation`: two tests exercise archived code (`merge_baseline_results.py`,
+  `spade.figures.karvonen_plot`). C30 trims them.
+- Job steps that call archived code: `submit_spade_revival.sbatch` after training,
+  `submit_straightness.sbatch` (`classify`, `make_figures`), `submit_bracket_readout.sbatch`
+  (`geometry_tables`), the eval arrays of `run_multiseed.sh` / `run_cosine_sweep_multiseed.sh`,
+  the validation branches of `karvonen_repro/submit_eval.sbatch`; `make run`.
+- Gitignored files that git does not move are left beside archived configs in the main checkout:
+  `checkpoints/spade_sweep/trainer_{4,6}/ae.pt`, `results/acceptance/*/f1_TFRRC*.pt`.
+
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 
 `curvature_rules_{tree}_combined` and `curvature_rules_{tree}_population_combined` read cell to
