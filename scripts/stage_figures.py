@@ -9,12 +9,12 @@ figure in the study that owns it, re-render there, then stage.
 
 Copies, not symlinks: figures/ is what gets uploaded, and a symlink does not survive the trip.
 Each figure is a `.png` (what the paper embeds) and the `.pdf` its owner renders under its
-camera-ready flag; a missing file is reported and skipped.
+camera-ready flag; a missing file stops the run. Name figures (fig03 ...) to stage only those.
 
-Usage: python scripts/stage_figures.py
+Usage: python scripts/stage_figures.py [figNN ...]
 """
 
-import shutil
+import shutil, sys
 
 from spade.common.paths import figures_dir, repo_root
 
@@ -55,16 +55,24 @@ SOURCES = {
 }
 
 
-def main() -> None:
-    for name, stem in SOURCES.items():
+def main() -> int:
+    wanted = sys.argv[1:] or [name[:5] for name in SOURCES]
+    names = [name for name in SOURCES if name[:5] in wanted]
+    unknown = set(wanted) - {name[:5] for name in names}
+    if unknown:
+        print(f"error: no figure {', '.join(sorted(unknown))}; figures are fig01-fig16", file=sys.stderr)
+        return 1
+    for name in names:
         for suffix in (".png", ".pdf"):
-            src = repo_root() / (stem + suffix)
+            src = repo_root() / (SOURCES[name] + suffix)
             if not src.exists():
-                print(f"missing  {stem}{suffix}")
-                continue
+                print(f"error: {src} missing: render it with the command above its SOURCES entry",
+                      file=sys.stderr)
+                return 1
             shutil.copy2(src, figures_dir() / (name + suffix))
-            print(f"staged   {name}{suffix}  <- {stem}{suffix}")
+            print(f"staged   {name}{suffix}  <- {SOURCES[name]}{suffix}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
