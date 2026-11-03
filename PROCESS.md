@@ -27,6 +27,7 @@ RELEASE_PLAN §5 items, so each paper figure recomputes or redraws without anoth
   sha256 `6e5a0253…` (the corpus audit rebuilt it byte-identically this way, CPU ~32 min).
   The README's `branches` + `--t0 20` gave a different 3920-game tree. The script refuses
   to run over an existing `branches.pt`, since `branches` overwrites it.
+  Both sbatch files that built a missing tree with bare `branches` now call the script.
 - **C13:** `move_legality.fit_set` defaults to the paper's 800 games.
 - **C14: raw and L0-matched runs no longer open the seed-42 SAE registry.**
   `registry.entries()` / `seed42_entries()` assert every seed-42 `ae.pt` (gitignored) and,
