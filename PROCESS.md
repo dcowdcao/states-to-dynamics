@@ -27,7 +27,9 @@ FIGURE_GUIDELINES.md ships: 43 `.py` files cite it by section and it names no on
 CLAUDE.md leaves `.git` as `repo_root()`'s only marker, which a 4open zip download lacks (M19).
 On `new-architecture` the scan finds 8,536 hits in 132 files; 99 of them are ARCHIVE in the move
 list and leave with the reorganization, 33 need string fixes. The per-file list is
-`spade_release_audit/export_scan_report.md`.
+`spade_release_audit/export_scan_report.md`. On the D4 branch the fetch scripts and patches ship
+with no hits, but the Karvonen patch's notebook hunk is ~1,470 lines of the unlicensed upstream
+notebook: same licence question as vendoring, so drop that hunk before release.
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 
