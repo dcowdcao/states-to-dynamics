@@ -20,5 +20,5 @@ mkdir -p logs/violation_divergence
 
 DIR="$(python -m spade.common.study divergence)"
 
-[ -f "$DIR/branches/branches.pt" ] || python -m spade.violation_divergence.branches
+[ -f "$DIR/branches/branches.pt" ] || bash scripts/build_branch_tree.sh
 [ -f "$DIR/acts/logits.pt" ] || python -m spade.violation_divergence.extract_acts

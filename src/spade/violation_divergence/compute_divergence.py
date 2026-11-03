@@ -199,10 +199,12 @@ def main():
     out_dir = base / "divergence"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    spaces = [(s, None) for s in FILE_SPACES] + \
-        [(f"sae_{e.config}", e) for e in seed42_entries() if e.config not in EXCLUDED_SAE]
-    if args.spaces:
-        keep = args.spaces.split(",")
+    keep = args.spaces.split(",") if args.spaces else None
+    spaces = [(s, None) for s in FILE_SPACES]
+    # the SAE registry asserts every seed-42 checkpoint, so open it only when a filter needs one
+    if keep is None or set(keep) - set(FILE_SPACES):
+        spaces += [(f"sae_{e.config}", e) for e in seed42_entries() if e.config not in EXCLUDED_SAE]
+    if keep:
         spaces = [s for s in spaces if s[0] in keep]
     # Round-robin, not contiguous blocks: the list is 9 cheap raw spaces then 8
     # SAE ones that carry the encode, so a block split loads every expensive

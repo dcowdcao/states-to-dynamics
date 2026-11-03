@@ -26,6 +26,7 @@ import pandas as pd
 import torch.nn.functional as F
 
 from spade.common.paths import repo_root
+from spade.common.study import study_dir
 from spade.saes.spade import softplus_inverse
 
 SAVED_DATA = repo_root() / "external/Karvonen_Research/autoencoders/saved_data"
@@ -35,8 +36,9 @@ RANDOM_CSV = SAVED_DATA / "othello-6-10-random-f1_results.csv"
 # Each value is a karvonen_repro.evaluate output directory: `f1_results.csv` once the
 # whole set is aggregated, `per_checkpoint/**/f1_results.csv` while it is still running.
 # A new sweep is a new entry here and needs no other change.
+# The streams sit directly in the data root every study dir lives under, not in a study dir.
 REPRO_ROOT = Path(
-    os.environ.get("SPADE_KARVONEN_REPRO_DIR", f"/n/netscratch/ba_lab/Lab/{os.environ['USER']}")
+    os.environ.get("SPADE_KARVONEN_REPRO_DIR", study_dir("karvonen_repro").parent)
 )
 # His five types come from his own sweep, so `karvonen_repro_ours_baselines` is
 # deliberately absent: identify() has no DIALS entry for Standard/Gated/PAnneal/

@@ -274,7 +274,7 @@ chance) and `rule_posterior_raw.csv` (mean 4-class posterior at *t0* per arm).
 ## Reproducing
 
 ```bash
-sbatch scripts/slurm/studies/move_legality/submit_move_legality_fit_set.sbatch --n_games 800
+sbatch scripts/slurm/studies/move_legality/submit_move_legality_fit_set.sbatch
 sbatch --dependency=afterok:<id> scripts/slurm/studies/move_legality/submit_move_legality_readout.sbatch
 python -m spade.move_legality.model_baseline
 python analysis/move_legality/localization.py --space raw

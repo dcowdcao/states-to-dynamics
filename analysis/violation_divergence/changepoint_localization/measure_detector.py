@@ -9,7 +9,7 @@ scored here, on that corpus and those 500 games, rather than on the other one.
 
 The statistic is unchanged: `measure.threshold_row`, the same score read as a per-position
 detector over every candidate ground truth covers. Only the population moves, and
-`results/eval_games.csv` -- written by `illegal_move_detector.figure_auroc` -- is what says the
+`results/eval_games.csv` -- written by `illegal_move_detector/eval_games.py` -- is what says the
 population is the same one, checked here rather than assumed.
 
 `--l0-matched` swaps the seed-42 roster for the eight `l0_operating_point` picks, one

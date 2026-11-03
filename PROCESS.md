@@ -6,6 +6,106 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Clean-clone pipeline fixes (2026-11-03)
+
+RELEASE_PLAN §5 items, so each paper figure recomputes or redraws without another study's data.
+
+- **C8 + C30: `final_validation` passes again, over the paper pipeline only.** Five model
+  constants were redefined outside `common.config` (`probe_geometry/probes.py` D_MODEL,
+  `probes/load.py` LAYER, `sae_loader/test_trace_safe_encode.py` MODEL_NAME/LAYER, and
+  `probes/build_corpus.py` DATASET); the check stopped at the first. The last is a different
+  dataset from `config.DATASET` (HF games, not the SAE stream), so it is renamed
+  `GAMES_DATASET` rather than imported. Removed from the suite, since what they check goes to
+  `archive/`: the multiseed config lists and seed-42 CSV paths, the sweep merge, the
+  `karvonen_plot` type map, and three schedule checks that exercised torch, not repo code.
+  16/17 pass; the checkpoint round-trip skips without weights.
+- **C11: Fig 7(b)'s field corpus has a command.** `submit_bracket_field.sbatch` now mines it
+  (`events --variant field --n_events 4000`) before extracting; the default 2000 events fail
+  `probe_space`'s quota assert.
+- **C12: the branch tree is one script.** `scripts/build_branch_tree.sh` runs
+  `branches --n_prefixes 2003` then `extend_branches --t0 20 --target 2000` and checks
+  sha256 `6e5a0253…` (the corpus audit rebuilt it byte-identically this way, CPU ~32 min).
+  The README's `branches` + `--t0 20` gave a different 3920-game tree. The script refuses
+  to run over an existing `branches.pt`, since `branches` overwrites it.
+  Both sbatch files that built a missing tree with bare `branches` now call the script.
+- **C13:** `move_legality.fit_set` defaults to the paper's 800 games.
+- **C14: raw and L0-matched runs no longer open the seed-42 SAE registry.**
+  `registry.entries()` / `seed42_entries()` assert every seed-42 `ae.pt` (gitignored) and,
+  through `roster()`, all 56 multiseed checkpoints. `move_legality.readout --spaces raw` now
+  resolves raw and the nulls without `roster()`, and loads the 2.1 GB branch acts after the
+  first fit instead of before it. `extract_geometry.py` returns before `seed42_entries()`
+  when no `--spaces` is given. The asserts themselves stay: the seed-42 studies want them.
+  `straightness.compute_geometry` (Fig 3's legal profile) and `compute_divergence` (B.2's
+  rollout δ̂) filter `--spaces` the same way, so `--spaces resid_post_5` needs no SAE.
+- **C15: `eval_games.csv` has one writer.** `illegal_move_detector/eval_games.py` writes the
+  500 t0-stratified games; `figure_auroc.py` (and so `figure_overview.py`) now asserts its
+  draw against the file instead of rewriting it on every render. Re-render: `eval_games.csv`,
+  `auroc_by_rule.{csv,png}` and `detector_overview.png` byte-identical.
+- **C16: Fig 1(b) recomputes without the corpus arm.** `generation_legality.aggregate
+  --rollout-only` writes `rollout_by_move.csv` from the rollout scan alone; the corpus scan
+  needs `branches.pt`. Both modes give the same bytes as the old code. Three CSVs
+  (`by_move`, `rollout_by_move`, `survival`) differ from the committed ones by ≤3e-14 under
+  the old code too, as the Fig 1 audit found.
+- **C17: Fig 5 redraws from its CSV.** `board_probe_sweep/measure.py` re-measures from the
+  9.5 GB probe corpus; `layer_sweep.py` now only draws `results/board_layer_sweep.csv`, with
+  no torch. Redraw: PNG byte-identical, PDF differs only in `/CreationDate`.
+- **C19: Fig 7 has its own entry point and recomputes on a CPU.** `make_figures.py --only
+  fig1` draws the paper's figure without fig2's CSVs or `kde_ci`'s torch import (now lazy).
+  `probe_space.local()` loads cached arms with `map_location="cpu"`; a CPU run now finishes,
+  and `m2_field`, `f2_event` and `m2_displacements` differ from the GPU tables by ~1e-7
+  relative (float32 device noise), the rest byte-identical. **Not done:** giving `field()` its
+  own `default_rng(42)`. It would change `m2_field.csv`'s CIs in the third decimal (A.8
+  quotes them), so the call order stays as is and A.8 needs the note instead.
+- **C20: `score_games.py` scores B.2's population and cannot overwrite its ranking.** It
+  takes branch-complete games with `game_id < 2000` (the 1550 game 1235 was chosen from;
+  today's tree has 3185) and writes `ranking.csv`, `transfer_check.csv`, `summary.txt` and an
+  `inputs.json` of the branches/acts sha256 into a new `--out` (default under
+  `study_dir("divergence")`), refusing one that exists. The committed `results/` stay as the
+  selection's provenance: the acts were re-extracted after it, so a re-score moves S3 by
+  ≤6e-7. Not re-run here (the audit's re-score took 4 h on the login node).
+- **C25:** `submit_rollout_branches.sbatch` guarded extraction on `rollout/acts/acts.pt`,
+  which `extract_acts` never writes, so it re-extracted 8.35 GB every run; it now guards on
+  `resid_post_5.pt`.
+- **C26: the probe pipeline has launchers again.** `scripts/slurm/studies/probes/` ports the
+  frozen repo's `shell/probes/submit_{corpus,train,tpr_weight_decay}.sh` to
+  `python -m spade.probes.*`; the three module docstrings pointed at `src/probes/*.py`.
+- **C18: Fig 6 redraws from the committed `pooled.csv`.** `plot_pareto` drew our points from
+  seven netscratch eval streams through `identify()`, which opens each checkpoint's absolute
+  `config.json`. It now takes our rows from `pooled.csv` (lowest seed per config, as before)
+  and his from his published CSV. Draw order matters: overlapping markers in the 3-var panels
+  change pixels when reordered, and pooled.csv is sorted by L0. Sorting by (stream in
+  `OUR_STREAMS` order, path) reproduces the streams' order exactly, checked per trainer class.
+  `combine_figure` builds only `with_spade` by default (`--variants` adds the archive-bound
+  `karvonen_only`), so `styled_karvonen_only/` is no longer required. `REPRO_ROOT` defaults to
+  the data root `study_dir` resolves, not a `$USER` path.
+  **pooled.csv's `path` column is now relative to `REPRO_ROOT`** (196 rows,
+  `karvonen_repro_*/checkpoints/...`; the anonymous export cannot carry
+  `/n/netscratch/.../dcao`). `aggregate` writes it that way; nothing reads the column back
+  except plot_pareto's sort. Every other column is byte-identical. Verified: `aggregate`
+  regenerates the rewritten pooled.csv byte for byte, `pick` regenerates picks.csv byte for
+  byte, and all 12 panels and the composite PNG are byte-identical (PDF: `/CreationDate`).
+- **C23: the board arm no longer imports `tpr_othello`.** `probes.train` imported
+  `probes.tpr` (and so `external/tpr_othello`, which has no licence to redistribute) at
+  module level; the TPR arm now imports it on use. Checked: `probes.train`, the board arm and
+  Fig 5's `measure.py` load no `tpr` module; the TPR arm still constructs.
+- **C27: `analysis/appendix_numbers/` gives the figureless appendix numbers a committed
+  source**, one script and one `results/` file each (table in its README). Reproduced: A.2's
+  splits, 60 plies, e6 10.78%, χ² 106,901 and the uniformity rejects (one at k = 2, 3, 4; none
+  with n ≥ 400 at k = 5; at k = 1, which A.2 does not state, c4 also rejects at p = 6e-4);
+  the stream window (first N draws stay under row N + 10,000; seeds 7 and 1234 keep 20.5% /
+  20.3%); A.4's covariance-matched floor 0.088 (quote ≈ 0.09, D17);
+  B.2's cut (≤ 0.39% past r = 8, crossing at 13, on games < 2000; r = 9 on the whole tree);
+  234×, 536× and 1.37×, read off the committed by-space CSVs. New: **no game in the full
+  corpus is illegal** (990,623 replayed; 442,349 forfeit moves in 341,394 games), by a
+  vectorized replay whose final boards match the engine's on 2,999 games. The engine's own
+  `umpire` cannot referee: it accepts any move that flips for the opponent.
+  **The rule panel is not reproducible by rule.** 1,918 positions meet A.9's criteria (with
+  the drawn categories; the audit's 1,983 counted any R1 member). No ranking over one or two
+  of closed directions, discs flipped, square separation, per-rule candidate counts or legal
+  moves (ties to lowest game, t) picks 606/16. The script ranks by separation, then
+  directions, then (game, t): game 21, t = 26 first, 606/16 at 1,075. A.9 should say
+  hand-picked (D23). Fig 4's τ and paired CSVs are left to the Gated fix.
+
 ## A clean clone: one data root, pinned seats, pinned versions (2026-11-03)
 
 `release/clean-clone-env`, RELEASE_PLAN.md §5 items C2-C5, C7, C9, C28.

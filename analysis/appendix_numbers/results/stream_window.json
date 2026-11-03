@@ -1,0 +1,17 @@
+{
+ "dataset": "adamkarvonen/othello_45MB_games",
+ "datasets_version": "4.8.4",
+ "buffer_size": 10000,
+ "max_row_of_first_n": {
+  "400": 10377,
+  "800": 10753,
+  "2000": 11810,
+  "2400": 12333,
+  "4000": 13872
+ },
+ "seed42_repeats": true,
+ "shared_with_seed42": {
+  "7": 0.20541666666666666,
+  "1234": 0.20291666666666666
+ }
+}

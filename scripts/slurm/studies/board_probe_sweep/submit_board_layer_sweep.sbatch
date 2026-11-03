@@ -20,5 +20,6 @@ mkdir -p logs/board_probe_sweep
 # does not decide which tree a worktree's job imports from.
 export PYTHONPATH="${SPADE_REPO}/src:${PYTHONPATH:-}"
 
+python analysis/board_probe_sweep/measure.py
 python analysis/board_probe_sweep/layer_sweep.py
 python analysis/board_probe_sweep/layer_sweep.py --camera_ready

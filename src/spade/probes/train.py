@@ -19,7 +19,8 @@ the bilinear tensor-product read-out of `probes.tpr`. An arm is an nn.Module
 with `forward([n, d_model]) -> [n, 64, 3]` plus `loss`, `optimizer`, `card` and
 `max_epochs`; everything else here is arm-agnostic.
 
-Usage: python src/probes/train.py [--arm board|tpr] [--layers 0-7] [--seed 42]
+Usage: python -m spade.probes.train [--arm board|tpr] [--layers 0-7] [--seed 42]
+       (cluster: scripts/slurm/studies/probes/submit_probe_train.sbatch)
 """
 
 import argparse
@@ -32,7 +33,6 @@ import torch.nn.functional as F
 
 
 from spade.probes.study_dir import probes_dir
-from spade.probes.tpr import TPR
 
 MAX_EPOCHS = 400
 PATIENCE = 20
@@ -66,7 +66,14 @@ class Board(torch.nn.Module):
         return {"weight": self.weight.detach().cpu()}
 
 
-ARMS = {"board": Board, "tpr": TPR}
+def _tpr(d_model: int, seed: int) -> torch.nn.Module:
+    # Imported on use: probes.tpr loads external/tpr_othello (no licence to redistribute),
+    # which the board arm, and so Fig 5, must run without.
+    from spade.probes.tpr import TPR
+    return TPR(d_model, seed)
+
+
+ARMS = {"board": Board, "tpr": _tpr}
 
 
 @dataclass

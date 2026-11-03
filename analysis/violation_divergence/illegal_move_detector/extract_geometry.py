@@ -155,6 +155,8 @@ def main() -> None:
                 print(f"wrote {path.name}  theta {theta.shape} norm {norm.shape}", flush=True)
 
     wanted = [c for c in args.spaces.split(",") if c]
+    if not wanted:
+        return
     entries = {e.config: e for e in seed42_entries()}
     for config in wanted:
         assert config in entries, f"unknown space {config}; have {sorted(entries)}"

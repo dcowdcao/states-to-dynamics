@@ -18,7 +18,8 @@ Bars stay in rule order rather than sorting by height (FIGURE_GUIDELINES 4.5): R
 ordered variable, and the finding is that the AUROC ordering is NOT monotone in it, which a
 sort would hide.
 
-Numbers, with n per bar, go to results/auroc_by_rule.csv.
+Numbers, with n per bar, go to results/auroc_by_rule.csv. The games are asserted against
+results/eval_games.csv, which `eval_games.py` writes.
 
 Usage: python analysis/violation_divergence/illegal_move_detector/figure_auroc.py
            [--camera-ready]
@@ -66,7 +67,7 @@ def measure(positive: np.ndarray, negative: np.ndarray, game: np.ndarray, arm: s
     return Bar(arm, detector.auroc(positive, negative), lo, hi, len(game))
 
 
-def table() -> tuple[list[Bar], Path]:
+def table() -> list[Bar]:
     data = detector.load()
     cand, sel = detector.band(), detector.arms(data)
     s = detector.score(data, cand)
@@ -77,8 +78,8 @@ def table() -> tuple[list[Bar], Path]:
     at_t0 = lambda arm: detector.at_t0(s, cand, data["t0"], sel[arm][keep])
     negative = at_t0("control")
     game = data["game_id"][sel["reference"][keep]]
-    return ([measure(at_t0(arm), negative, game, arm) for arm in detector.ARMS],
-            write_eval_games(data, sel, keep))
+    detector.assert_eval_set(game, data["t0"][sel["reference"][keep]])
+    return [measure(at_t0(arm), negative, game, arm) for arm in detector.ARMS]
 
 
 def panel(ax, rows: list[Bar]) -> None:
@@ -111,23 +112,6 @@ def draw(rows: list[Bar], camera_ready: bool):
     return save_figure(fig, detector.FIGURES / "auroc_by_rule", camera_ready)
 
 
-def write_eval_games(data: dict, sel: dict, keep: np.ndarray) -> Path:
-    """The evaluation set itself, so another study can score the SAME games.
-
-    `move_legality.detection_auroc` reads this for its paired bars: the two figures are read
-    side by side, and "the same 500 games" is only checkable if one of them writes them down.
-    """
-    detector.RESULTS.mkdir(parents=True, exist_ok=True)
-    out = detector.RESULTS / "eval_games.csv"
-    game = data["game_id"][sel["reference"][keep]]
-    t0 = data["t0"][sel["reference"][keep]]
-    with out.open("w", newline="") as fh:
-        writer = csv.writer(fh)
-        writer.writerow(["game_id", "t0"])
-        writer.writerows(sorted(zip(game.tolist(), t0.tolist())))
-    return out
-
-
 def write_csv(rows: list[Bar]) -> Path:
     detector.RESULTS.mkdir(parents=True, exist_ok=True)
     out = detector.RESULTS / "auroc_by_rule.csv"
@@ -145,8 +129,7 @@ def main() -> None:
     args = parser.parse_args()
 
     apply_style(args.camera_ready)
-    rows, games = table()
-    print(games)
+    rows = table()
     print(write_csv(rows))
     print(draw(rows, args.camera_ready))
 

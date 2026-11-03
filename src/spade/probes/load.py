@@ -16,9 +16,9 @@ from pathlib import Path
 import torch
 
 
+from spade.common.config import LAYER
 from spade.probes.study_dir import probes_dir
 
-LAYER = 5           # the project's hook point; layers 5-7 are within 0.001 of each other
 CLASSES = ("empty", "theirs", "mine")
 
 

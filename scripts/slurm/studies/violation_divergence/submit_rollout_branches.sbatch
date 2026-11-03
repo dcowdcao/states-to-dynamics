@@ -21,9 +21,9 @@ DIR="$(python -m spade.common.study divergence)"
 # batched pass, times K=4 rollouts, and with no KV cache each step re-runs the
 # whole prefix (see the module docstring) -- ~5 PFLOP total, so under 15 min of
 # H100 at batch 1024. The hour is model download plus headroom.
-[ -f "$DIR/branches/branches.pt" ] || python -m spade.violation_divergence.branches
+[ -f "$DIR/branches/branches.pt" ] || bash scripts/build_branch_tree.sh
 [ -f "$DIR/rollout/branches/branches.pt" ] || python -m spade.violation_divergence.rollout_branches
 
 # Tokens alone draw nothing. K=4 rollouts per row, so this pass is 4x the spliced
 # tree's; the wall clock above covers it.
-[ -f "$DIR/rollout/acts/acts.pt" ] || python -m spade.violation_divergence.extract_acts --variant rollout
+[ -f "$DIR/rollout/acts/resid_post_5.pt" ] || python -m spade.violation_divergence.extract_acts --variant rollout

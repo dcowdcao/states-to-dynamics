@@ -9,7 +9,7 @@ after *t0* is attributable to that token. Design: `docs/violation_divergence_des
 ## Pipeline
 
 ```
-python -m spade.violation_divergence.branches        # 2000 games -> 15531 branches
+bash scripts/build_branch_tree.sh                    # 3923 games -> 34546 branches, sha256-checked, CPU ~32 min
 python -m spade.violation_divergence.extract_acts    # resid 0-7 + W_E + logits -> $DIR/acts/
 sbatch scripts/slurm/studies/violation_divergence/submit_violation_divergence.sh        # the two steps above, on a GPU
 sbatch scripts/slurm/studies/violation_divergence/submit_violation_divergence_spaces.sh # 17 spaces, 6-way H100 array
@@ -56,9 +56,14 @@ all forked at ***t0* = 20**, were drawn from the same stream at the same seed an
 games / 34546 branch rows, 3920 rule-complete, 2000 of them at *t0* = 20.
 
 ```
-sbatch scripts/slurm/studies/violation_divergence/submit_extend_branches.sbatch         # + re-extract acts
+bash scripts/build_branch_tree.sh   # branches --n_prefixes 2003, then extend_branches --t0 20 --target 2000
 sbatch scripts/slurm/studies/violation_divergence/submit_extend_rollout_branches.sbatch # + re-extract rollout acts
 ```
+
+The round-robin block is 2003 games, not 2000: three more were appended round-robin
+before the *t0* = 20 block, by an `extend_branches` mode that no longer exists. They
+drew no rejections, so one 2003-game `branches` run reproduces both passes byte for
+byte. `branches` then the default 2000 plus `--t0 20` gives a different 3920-game tree.
 
 **Appended, never redrawn.** `game_id` is the accepted-game index, so redrawing
 under a rule-complete acceptance test renumbers every game — moving `FIGURE_GAME`,

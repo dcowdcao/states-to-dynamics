@@ -59,7 +59,7 @@ def overview(spec: dict, camera_ready: bool) -> Path:
     sel = detector.arms(data)
     tau = detector.operating_point(s, cand, data, sel)
     rows = subset(data, sel)
-    bars, _ = auroc_table()
+    bars = auroc_table()
 
     # One grid of 15 columns rather than two nested ones: 5 boards at 3 columns each over 3
     # plots at 5, which `tight_layout` can lay out and a subgridspec cannot.

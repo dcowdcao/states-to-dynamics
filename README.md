@@ -18,7 +18,8 @@ SAE features capture concept manifolds or shatter them.
 
 > **Status: ported and running.** All fifteen zones are ported from
 > `../Spade_Research_David_Sumedh_Ba`, which stays frozen and read-only; all new work happens
-> here. The package installs, `final_validation` is 25/25, and three checkpoints reproduce
+> here. The package installs, `final_validation` passes 16/17 (one skips without the
+> gitignored weights), and three checkpoints reproduce
 > their published evaluation exactly. Two data-provenance questions are open and affect
 > published numbers — MIGRATION.md questions 14 and 15. See
 > [ARCHITECTURE.md](ARCHITECTURE.md) for the layout and the old→new map,

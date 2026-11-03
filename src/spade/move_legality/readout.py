@@ -31,6 +31,7 @@ Usage: python -m spade.move_legality.readout [--spaces raw] [--smoke]
 import argparse
 import json
 from dataclasses import asdict
+from functools import cache
 
 import pandas as pd
 import torch
@@ -61,12 +62,17 @@ def fit_set() -> tuple[dict, torch.Tensor]:
     return fit, acts
 
 
-def branch_set() -> tuple[dict, torch.Tensor]:
+@cache
+def branch_set(smoke: bool) -> tuple[dict, torch.Tensor]:
+    """The read-out tree and its 2.1 GB of acts, loaded once and only when a probe needs them."""
     d = study_dir("divergence")
     meta = torch.load(d / "branches" / "branches.pt", map_location="cpu", weights_only=True)
     acts = torch.load(d / "acts" / f"resid_post_{LAYER}.pt", map_location="cpu",
                       weights_only=True)
     assert acts.shape[:2] == (len(meta["t0"]), CTX_LEN), acts.shape
+    if smoke:
+        keep = slice(0, SMOKE_ROWS)
+        meta, acts = {k: v[keep] for k, v in meta.items()}, acts[keep]
     return meta, acts
 
 
@@ -138,15 +144,14 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
 
     fit, fit_acts = fit_set()
-    meta, branch_acts = branch_set()
-    if args.smoke:
-        keep = slice(0, SMOKE_ROWS)
-        meta, branch_acts = {k: v[keep] for k, v in meta.items()}, branch_acts[keep]
 
-    chosen = roster() + [(n, None) for n in NULLS]
-    if args.spaces:
-        keep = set(args.spaces.split(","))
-        chosen = [s for s in chosen if s[0] in keep]
+    keep = set(args.spaces.split(",")) if args.spaces else None
+    # raw and the nulls need no checkpoint, so a filter to them never opens the SAE registry
+    if keep is not None and keep <= {"raw", *NULLS}:
+        chosen = [(n, None) for n in ("raw", *NULLS) if n in keep]
+    else:
+        chosen = [s for s in roster() + [(n, None) for n in NULLS]
+            if keep is None or s[0] in keep]
 
     for name, entry in chosen:
         report_path = out / f"scores_{name}.json"
@@ -168,6 +173,7 @@ def main() -> None:
                   f"macro-F1 {test['macro_f1']:.4f}  AUROC {test['auroc']:.4f}", flush=True)
         del feats
 
+        meta, branch_acts = branch_set(args.smoke)
         read = read_branches(probes, fn, branch_acts, meta["game_id"], device)
         for key, tensor in read.items():
             torch.save(tensor, out / f"{key}_{name}.pt")

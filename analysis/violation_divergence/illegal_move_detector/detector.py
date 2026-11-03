@@ -150,7 +150,7 @@ def stratified(data: dict, sel: dict, n_games: int = N_EVAL) -> np.ndarray:
 def assert_eval_set(game: np.ndarray, t0: np.ndarray) -> int:
     """Fail unless these are exactly the games results/eval_games.csv names. Returns n.
 
-    `figure_auroc.write_eval_games` writes that file out of `stratified`; every figure read
+    `eval_games.py` writes that file out of `stratified`; every figure read
     beside those bars -- here and in `changepoint_localization` -- checks its own draw against
     it rather than trusting that two calls of `stratified` agree.
     """

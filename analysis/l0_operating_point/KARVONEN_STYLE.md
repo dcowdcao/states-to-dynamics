@@ -13,12 +13,13 @@ FIGURE_GUIDELINES are deliberately not applied. See *Where this violates FIGURE_
 python load_points.py    # what landed, the L0 coverage table, the physics check
 python plot_pareto.py    # renders/{karvonen_only, styled_karvonen_only, with_spade}
 python verify_match.py   # pixel diff of renders/karvonen_only against his PNGs
-python combine_figure.py # the two 2x2 composites the paper prints
+python combine_figure.py # the with_spade 2x2 the paper prints; --variants karvonen_only adds his
 ```
 
 All three figure sets come out of one `plot_pareto.py` run: `renders/karvonen_only` is
 rendered from `source == "karvonen"` rows of the same frame, so our data cannot leak into the
-figure `verify_match.py` checks. `--ours` narrows the streams; `--karvonen-csv` swaps his CSV.
+figure `verify_match.py` checks. Our rows are the committed `pooled.csv`, drawn stream by
+stream in path order; `--pooled-csv` swaps that table, `--karvonen-csv` his CSV.
 
 ## Data
 

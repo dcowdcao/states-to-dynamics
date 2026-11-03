@@ -9,10 +9,11 @@ All three figure sets come out of one run, so `renders/karvonen_only` cannot pic
 points by accident — that directory is what `verify_match.py` checks against his published
 PNGs, and it is the only one still in his type. `styled_karvonen_only` is the same data in
 ours, and is what the combined his-SAEs-only figure is built from.
-`load_points.py` decides which of our rows are points; run it alone to see what landed.
+His points are his published CSV; ours are the committed `results/l0_operating_point/pooled.csv`
+(`aggregate.py` writes it from the evaluation streams), lowest seed per config. So the figure
+redraws from the repo alone, from the same table the operating point is picked from.
 
-  python plot_pareto.py                     # every stream in load_points.OUR_STREAMS
-  python plot_pareto.py --ours '<glob>'     # only these result dirs or f1_results.csv files
+  python -m spade.l0_operating_point.plot_pareto
 """
 
 import argparse
@@ -27,8 +28,9 @@ import pandas as pd
 from matplotlib.colors import Normalize
 
 from spade.common.paths import repo_root
+from spade.l0_operating_point.aggregate import OUT as POOLED_CSV
 from spade.l0_operating_point.load_points import (
-    KARVONEN_CSV, check_physics, load, one_per_config, streams,
+    COLUMNS, KARVONEN_CSV, OUR_STREAMS, check_physics, one_per_config, read_f1_results,
 )
 
 RENDERS = repo_root() / "figures/l0_operating_point"
@@ -231,14 +233,27 @@ def render(df: pd.DataFrame, out_dir: Path, our_type: bool = False,
           + (f": {dict(off.trainer_class.value_counts())}" if len(off) else ""))
 
 
+def points(karvonen_csv: Path = KARVONEN_CSV, pooled_csv: Path = POOLED_CSV) -> pd.DataFrame:
+    """His published rows, then our rows of the pooled table, one point per config."""
+    his = read_f1_results(karvonen_csv, "karvonen", ours=False)
+    ours = pd.read_csv(pooled_csv).query("family == 'ours'")
+    # Stream by stream, each in path order: the order the evaluation streams list their
+    # checkpoints, so overlapping markers stack as they did when drawn from the streams.
+    ours = ours.assign(stream=ours["source"].map(list(OUR_STREAMS).index)) \
+        .sort_values(["stream", "path"], kind="stable")
+    df = pd.concat([his[COLUMNS], ours[COLUMNS]], ignore_index=True)
+    df["seed"] = df["seed"].astype("Int64")
+    return one_per_config(df)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--karvonen-csv", type=Path, default=KARVONEN_CSV)
-    ap.add_argument("--ours", nargs="*", help="result dirs or f1_results.csv paths, globs allowed")
+    ap.add_argument("--pooled-csv", type=Path, default=POOLED_CSV)
     ap.add_argument("--out-dir", type=Path, default=RENDERS)
     args = ap.parse_args()
 
-    df = one_per_config(load(streams(args.ours), args.karvonen_csv))
+    df = points(args.karvonen_csv, args.pooled_csv)
     print(df["trainer_class"].value_counts().to_string())
 
     flagged = check_physics(df)

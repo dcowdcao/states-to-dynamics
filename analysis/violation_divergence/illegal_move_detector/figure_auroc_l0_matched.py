@@ -10,7 +10,7 @@ removes the second.
 
 Same statistic as `figure_auroc.py`: the pooled illegal branch against the SAME source game's
 legal control, ranked on the score at that game's own t0, one value per branch. Same games too
--- `results/eval_games.csv`, the 500 t0-stratified games that figure wrote down, read here
+-- `results/eval_games.csv`, the 500 t0-stratified games `eval_games.py` wrote down, read here
 rather than re-dealt, so the two panels score one set.
 
 Which bars clear raw, and whether the top bar is separable from the next, are paired contrasts on
@@ -49,7 +49,7 @@ def eval_rows(data: dict, sel: dict) -> np.ndarray:
     """Positions into every arm's index array for the games of `results/eval_games.csv`.
 
     That file is the evaluation set, not a recipe for one: `detector.stratified` deals an
-    equal quota of games at every t0 and `figure_auroc` writes the result down, so reading it
+    equal quota of games at every t0 and `eval_games.py` writes the result down, so reading it
     back is what makes "the same 500 games" checkable instead of merely reproducible.
     """
     want = pd.read_csv(detector.RESULTS / "eval_games.csv")

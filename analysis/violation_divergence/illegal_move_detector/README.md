@@ -196,6 +196,7 @@ the supervised probe in `analysis/move_legality` finds by an unrelated route, wh
 PY=analysis/violation_divergence/illegal_move_detector
 PYTHONPATH=src python $PY/extract_geometry.py     # GPU optional; raw needs no SAE encode
 PYTHONPATH=src python $PY/select_game.py          # -> figure_game.json
+PYTHONPATH=src python $PY/eval_games.py           # -> results/eval_games.csv, which every figure asserts
 PYTHONPATH=src python $PY/figure_boards.py     [--camera-ready]
 PYTHONPATH=src python $PY/figure_trace.py      [--camera-ready]
 PYTHONPATH=src python $PY/figure_auroc.py      [--camera-ready]

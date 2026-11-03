@@ -33,6 +33,7 @@ import numpy as np
 import torch
 
 
+from spade.common.config import D_MODEL
 from spade.common.paths import add_karvonen_to_path, repo_root
 from spade.common.study import study_dir
 from spade.move_legality import probe
@@ -44,7 +45,6 @@ add_karvonen_to_path()
 
 from circuits.othello_engine_utils import stoi_indices  # vocab token i+1 <-> engine square
 
-D_MODEL = 512
 COLS = "ABCDEFGH"
 BOARD_CLASSES = ("empty", "theirs", "mine")
 RULE_CLASSES = ("legal", "R1", "R2", "R3")

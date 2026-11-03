@@ -5,7 +5,8 @@ carries all nine branch types. That resolves to game 0, t0=10, the *minimum* t0
 over the 1550 complete games (median 21): the least typical game available,
 picked by list order and not by any criterion.
 
-This sweeps every complete game and scores how distinct its nine branch
+This sweeps every complete game of the tree's first 2000 (the 1550 B.2 selected
+from; later appends are not candidates) and scores how distinct its nine branch
 trajectories are, so the illustration can be drawn on the clearest example and
 say so.
 
@@ -57,10 +58,18 @@ branch's displacements over those 13 positions into one vector X_b in R^(13*512)
 S3's ceiling is sqrt(2): six equal-length mutually orthogonal displacements.
 Zero means the six illegal branches move identically.
 
-Usage: python analysis/violation_divergence/game_selection/score_games.py
+Writes ranking.csv, transfer_check.csv, summary.txt and inputs.json (the sha256 of
+branches.pt and the activations it scored) into a new `--out` directory. The committed
+results/ are the provenance of B.2's choice and are never rewritten: the activations were
+re-extracted after they were scored, which moves S3 by up to 6e-7.
+
+Usage: python analysis/violation_divergence/game_selection/score_games.py [--out DIR]
 """
 
+import argparse
 import csv
+import hashlib
+import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -75,7 +84,7 @@ from spade.othello.taxonomy import CATEGORIES
 from spade.saes.registry import seed42_entries
 from spade.violation_divergence.compute_divergence import sae_encoder
 
-OUT_DIR = Path(__file__).resolve().parent / "results"
+SELECTION_GAMES = 2000            # game_id below this: the tree B.2's game was chosen on
 STRIDE, WINDOW = 2, (-8, 24)      # mirrors game_trajectory/make_figures.py, the
 FIRST_POS, LAST_POS = 1, 58       # figure this selects for; keep the two in sync
 CRITERIA = ["s1_illegal_vs_control", "s2_branch_distinctness",
@@ -170,6 +179,14 @@ def write_csv(path: Path, rows: list[dict]) -> Path:
     return path
 
 
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as f:
+        for block in iter(lambda: f.read(1 << 24), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
 def ranked(scores: list[Scores]) -> list[dict]:
     """One row per game, with a 1-based descending rank under every criterion."""
     rows = [asdict(s) for s in scores]
@@ -194,7 +211,8 @@ def summary(rows: list[dict], t0s: np.ndarray, sae: dict[str, list[Scores]]) -> 
     incumbent = next(r for r in rows if r["game"] == INCUMBENT)
     n = len(rows)
     lines = [
-        f"n = {n} complete games (all nine branch types), scored in raw layer 5, full R^512.",
+        f"n = {n} complete games (all nine branch types) with game_id < {SELECTION_GAMES}, "
+        "scored in raw layer 5, full R^512.",
         f"recommendation criterion: {RECOMMENDED} (argmax).",
         "",
         f"SELECTED game {pick['game']}, t0={pick['t0']}  "
@@ -248,19 +266,32 @@ def summary(rows: list[dict], t0s: np.ndarray, sae: dict[str, list[Scores]]) -> 
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--out", type=Path, default=study_dir("divergence") / "game_selection",
+                        help="a directory that does not exist yet")
+    args = parser.parse_args()
+    if args.out.exists():
+        raise SystemExit(f"{args.out} exists; pass a new --out rather than overwrite a ranking")
+
     device = select_device()
     base = study_dir("divergence")
-    meta = torch.load(base / "branches" / "branches.pt", weights_only=True)
-    acts = torch.load(base / "acts" / "resid_post_5.pt", weights_only=True)
+    inputs = {path: base / path for path in ("branches/branches.pt", "acts/resid_post_5.pt")}
+    meta = torch.load(inputs["branches/branches.pt"], weights_only=True)
+    acts = torch.load(inputs["acts/resid_post_5.pt"], weights_only=True)
 
     n_types = len(CATEGORIES) + 2
     complete = [g for g in meta["game_id"].unique().tolist()
-        if int((meta["game_id"] == g).sum()) == n_types]
-    print(f"{len(complete)} complete games")
+        if g < SELECTION_GAMES
+        and int((meta["game_id"] == g).sum()) == n_types]
+    print(f"{len(complete)} complete games with game_id < {SELECTION_GAMES}")
 
+    args.out.mkdir(parents=True)
+    (args.out / "inputs.json").write_text(json.dumps(
+        {"game_id_below": SELECTION_GAMES,
+         "sha256": {name: sha256(path) for name, path in inputs.items()}}, indent=2))
     scores = sweep(meta, acts, complete)
     rows = ranked(scores)
-    print(f"wrote {write_csv(OUT_DIR / 'ranking.csv', rows)}")
+    print(f"wrote {write_csv(args.out / 'ranking.csv', rows)}")
 
     pick = rows[0]["game"]
     rng = np.random.default_rng(TRANSFER_SEED)
@@ -268,12 +299,12 @@ def main():
                     | set(rng.choice(complete, TRANSFER_SAMPLE, replace=False).tolist()))
     print(f"transfer check on {len(sample)} games x {len(TRANSFER_CONFIGS)} SAE spaces")
     sae = transfer(meta, acts, sample, device)
-    write_csv(OUT_DIR / "transfer_check.csv",
+    write_csv(args.out / "transfer_check.csv",
               [{"space": c, **asdict(s)} for c, rs in sae.items() for s in rs])
 
     t0s = np.array([r["t0"] for r in rows])
     text = summary(rows, t0s, sae)
-    (OUT_DIR / "summary.txt").write_text(text)
+    (args.out / "summary.txt").write_text(text)
     print(text)
 
 

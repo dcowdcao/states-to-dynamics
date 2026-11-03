@@ -13,7 +13,6 @@ import importlib
 import json
 import py_compile
 import re
-import subprocess
 import sys
 import tempfile
 import traceback
@@ -28,8 +27,8 @@ SRC_DIR = PKG_DIR.parent                             # src
 EXPECTED_D_MODEL = 512
 WIDTH = 64
 
-# The eight trainer types the whole pipeline is defined over, and the substring each
-# one must hit in load_karvonen_sae's dispatch chain.
+# The eight trainer families of the L0-matched roster (results/l0_operating_point/picks.csv),
+# and the substring each one must hit in load_karvonen_sae's dispatch chain.
 EXPECTED_DISPATCH = {
     "StandardTrainer": "Standard",
     "PAnnealTrainer": "PAnneal",
@@ -315,7 +314,7 @@ def test_config_consistent():
 @test("model constants are defined only in spade.common.config")
 def test_constants_single_sourced():
     owned = ("D_MODEL", "DICT_SIZE", "HOOK_POINT", "LAYER", "EXPANSION",
-             "MODEL_NAME", "DATASET", "CTX_LEN")
+             "MODEL_NAME", "DATASET", "GAMES_DATASET", "CTX_LEN")
     pattern = re.compile(rf"^({'|'.join(owned)})\s*=")
     for path in sorted(PKG_DIR.rglob("*.py")):
         if path.resolve() in (Path(__file__).resolve(),
@@ -327,136 +326,12 @@ def test_constants_single_sourced():
                                f"{match.group(1)}; it belongs to spade.common.config")
 
 
-@test("config lists are single-sourced in spade.multiseed.aggregate_seeds")
-def test_config_lists_single_sourced():
-    from spade.multiseed.aggregate_seeds import (
-        BASELINE_CONFIGS, SWEEP_CONFIGS, FIGURE_CONFIGS, config_key)
-
-    assert len(BASELINE_CONFIGS) == 8, f"expected 8 baseline configs, got {len(BASELINE_CONFIGS)}"
-    assert len(SWEEP_CONFIGS) == 6, f"expected 6 sweep configs, got {len(SWEEP_CONFIGS)}"
-    assert FIGURE_CONFIGS == BASELINE_CONFIGS + SWEEP_CONFIGS
-    assert config_key("SpaDETrainer-othello_trainer_5") == "SpaDETrainer-othello"
-
-    defs = [path.relative_to(SRC_DIR) for path in sorted(PKG_DIR.rglob("*.py"))
-        if path.resolve() != Path(__file__).resolve()
-        and re.search(r"^BASELINE_CONFIGS\s*=", path.read_text(), re.M)]
-    assert defs == [Path("spade/multiseed/aggregate_seeds.py")], \
-        f"BASELINE_CONFIGS must be defined once, found in {defs}"
-
-
-@test("BASELINE_CONFIGS names the same 8 trainer classes as the dispatch")
-def test_baseline_configs_match_dispatch():
-    from spade.multiseed.aggregate_seeds import BASELINE_CONFIGS
-
-    named = {c.split("-")[0] for c in BASELINE_CONFIGS}
-    assert named == set(EXPECTED_DISPATCH), \
-        f"baseline configs {sorted(named)} != dispatch roster {sorted(EXPECTED_DISPATCH)}"
-
-
-@test("seed-42 result CSVs point at the new results/<experiment> names")
-def test_seed42_csv_paths():
-    from spade.multiseed.aggregate_seeds import SEED42_CSVS
-
-    assert len(SEED42_CSVS) == 6, \
-        "all six CSVs are live; entries 5 and 6 carry seed 42 for five sweep configs"
-    for rel in SEED42_CSVS:
-        assert rel.startswith("results/"), f"{rel} is not under results/"
-        assert "karvonen" not in rel, f"{rel} still uses the old results/karvonen* name"
-        assert not rel.startswith(("lambda_sweep_results", "gamma_sweep_results"))
-
-
-@test("the sweep merge keeps CosineSpaDE as a baseline")
-def test_sweep_merge_family_filter():
-    merge = SRC_DIR.parent / "scripts/slurm/sweeps/merge_baseline_results.py"
-    with tempfile.TemporaryDirectory() as tmp:
-        sweep = Path(tmp) / "sweep"
-        sweep.mkdir()
-        baseline = Path(tmp) / "all_results.csv"
-        baseline.write_text("sae_name,sae_type\n"
-                            + "".join(f"x,{c}\n" for c in EXPECTED_DISPATCH))
-        (sweep / "all_results.csv").write_text("sae_name,sae_type\ns,SpaDETrainer\n")
-        subprocess.run([sys.executable, str(merge), "--results_dir", str(sweep),
-                        "--baseline_csv", str(baseline)], check=True, capture_output=True)
-        combined = (sweep / "combined_results.csv").read_text()
-
-    assert "CosineSpaDETrainer" in combined, \
-        "the baseline filter matched CosineSpaDE on the SpaDE substring"
-    assert combined.count(",SpaDETrainer\n") == 1, \
-        "the baseline SpaDE row is superseded by the sweep's own and must be dropped"
-
-
-@test("the figure type map covers all 8 trainer classes")
-def test_figure_type_map():
-    from spade.figures.karvonen_plot import TRAINER_CLASS_MAP, SAE_CONFIG
-
-    for trainer_class in EXPECTED_DISPATCH:
-        assert trainer_class in TRAINER_CLASS_MAP, \
-            f"karvonen_plot has no mapping for {trainer_class}"
-    assert len(SAE_CONFIG) == 8, f"expected 8 SAE display configs, got {len(SAE_CONFIG)}"
-
-
-# ── Training schedule (Karvonen-matched) ────────────────────────────────────
-
-@test("LR warmup is monotonically increasing")
-def test_lr_warmup_monotonic():
-    model = nn.Linear(EXPECTED_D_MODEL, WIDTH)
-    opt = torch.optim.Adam(model.parameters(), lr=3e-4)
-    warmup_steps = 100
-    sched = torch.optim.lr_scheduler.LambdaLR(
-        opt, lr_lambda=lambda step: min(step / max(warmup_steps, 1), 1.0))
-
-    lrs = []
-    x = torch.randn(4, EXPECTED_D_MODEL)
-    for _ in range(warmup_steps):
-        opt.zero_grad()
-        model(x).sum().backward()
-        opt.step()
-        sched.step()
-        lrs.append(opt.param_groups[0]["lr"])
-
-    for i in range(1, len(lrs)):
-        assert lrs[i] >= lrs[i - 1] - 1e-10, f"LR not monotonic at step {i}"
-
-
-@test("LR is constant after warmup")
-def test_production_scheduler():
-    lr = 3e-4
-    warmup_steps = 100
-    model = nn.Linear(EXPECTED_D_MODEL, WIDTH)
-    opt = torch.optim.Adam(model.parameters(), lr=lr)
-    sched = torch.optim.lr_scheduler.LambdaLR(
-        opt, lr_lambda=lambda step: min(step / max(warmup_steps, 1), 1.0))
-
-    x = torch.randn(4, EXPECTED_D_MODEL)
-    for _ in range(warmup_steps + 50):
-        opt.zero_grad()
-        model(x).sum().backward()
-        opt.step()
-        sched.step()
-
-    assert abs(opt.param_groups[0]["lr"] - lr) < 1e-5, \
-        f"LR should hold at {lr} after warmup, got {opt.param_groups[0]['lr']}"
-
-
-@test("p-annealing produces valid p values on a nondecreasing step grid")
-def test_p_anneal_state():
-    n_updates, total_steps, anneal_start = 10, 100, 10
-    p_values = torch.linspace(1.0, 0.0, n_updates)
-    update_steps = [int(anneal_start + i * (total_steps - anneal_start) / n_updates)
-        for i in range(n_updates)]
-
-    assert all(0.0 <= p <= 1.0 for p in p_values)
-    assert len(update_steps) == n_updates
-    for i in range(1, len(update_steps)):
-        assert update_steps[i] >= update_steps[i - 1]
-
-
 NOT_CHECKED = """
   - no eval is run here. The acceptance eval is in docs/finish_notes/acceptance-eval.md,
     with its rows in results/acceptance/ (three checkpoints reproduce their reference exactly)
   - no GPU kernel, no nnsight trace, no loss_recovered path is exercised
   - the F1 / coverage / board-reconstruction math is not checked numerically
-  - training loops are not run; only the LR schedule shape is checked
+  - training loops are not run
   - checkpoint state_dict key compatibility is only checked if weights are present
 """
 

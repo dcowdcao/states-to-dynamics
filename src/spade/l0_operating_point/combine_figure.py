@@ -40,7 +40,8 @@ PANELS = [
 PANEL_WIDTH_IN = 10   # plot_pareto's figsize; each panel lands in a cell narrower than that
 
 # Which panel directory each combined figure is built from. The his-SAEs-only figure takes
-# the styled render, not the byte-identical one verify_match checks.
+# the styled render, not the byte-identical one verify_match checks. The paper prints
+# with_spade alone, so that is all the default needs.
 SOURCES = {"karvonen_only": "styled_karvonen_only", "with_spade": "with_spade"}
 
 
@@ -83,10 +84,11 @@ def _compose(panel_dir: Path, out_stem: Path, dpi: int) -> Path:
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--renders", type=Path, default=RENDERS)
+    ap.add_argument("--variants", nargs="+", choices=list(SOURCES), default=["with_spade"])
     args = ap.parse_args()
 
-    for variant, source in SOURCES.items():
-        panel_dir = args.renders / source
+    for variant in args.variants:
+        panel_dir = args.renders / SOURCES[variant]
         if not panel_dir.is_dir():
             raise FileNotFoundError(f"{panel_dir} -- run spade.l0_operating_point.plot_pareto first")
         out = combine(panel_dir, args.renders / f"figure4_othello_{variant}")
