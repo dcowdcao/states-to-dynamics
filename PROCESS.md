@@ -36,6 +36,10 @@ RELEASE_PLAN §5 items, so each paper figure recomputes or redraws without anoth
   when no `--spaces` is given. The asserts themselves stay: the seed-42 studies want them.
   `straightness.compute_geometry` (Fig 3's legal profile) and `compute_divergence` (B.2's
   rollout δ̂) filter `--spaces` the same way, so `--spaces resid_post_5` needs no SAE.
+- **C15: `eval_games.csv` has one writer.** `illegal_move_detector/eval_games.py` writes the
+  500 t0-stratified games; `figure_auroc.py` (and so `figure_overview.py`) now asserts its
+  draw against the file instead of rewriting it on every render. Re-render: `eval_games.csv`,
+  `auroc_by_rule.{csv,png}` and `detector_overview.png` byte-identical.
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 
