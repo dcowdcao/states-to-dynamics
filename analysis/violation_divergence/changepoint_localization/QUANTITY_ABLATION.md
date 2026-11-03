@@ -104,7 +104,8 @@ t0-stratified games (`illegal_move_detector/results/eval_games.csv`), same at-t0
 statistic: the pooled illegal branch against the SAME source game's legal control, ranked on
 the score at that game's own t0. `d` is therefore not merely close to panel (a) of
 `sae_detector_overview.png` — it **is** that bar, and `assert_matches_detector` fails the run
-if the two ever drift. Figure: `quantity_ablation_l0_matched.png`.
+if the two ever drift. Figure: `quantity_ablation_l0_matched.{png,pdf}`, the PDF being the
+camera-ready twin.
 
 | space | `d` | `norm` | `theta` |
 |---|---|---|---|
@@ -146,6 +147,7 @@ PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/qua
 sbatch scripts/slurm/studies/violation_divergence/submit_detector_sae_geometry.sbatch \
     --l0-matched --quantities
 PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/quantity_ablation.py --l0-matched
+PYTHONPATH=src python analysis/violation_divergence/changepoint_localization/quantity_ablation.py --l0-matched --camera-ready
 ```
 
 The ablation itself is CPU-only. `branch_norms.py` is the one GPU step, and it is
