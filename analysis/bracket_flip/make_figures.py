@@ -8,7 +8,8 @@ Fig 2  that the displacement carries a flip-specific direction, and that editing
 Drawing only: everything is read from the committed CSVs in results/. The SAE
 arm is drawn by sae_pca_figure.py. Conventions: FIGURE_GUIDELINES.md 4.4 and 4.7.
 
-Usage: python analysis/bracket_flip/make_figures.py [--camera-ready]
+Usage: python analysis/bracket_flip/make_figures.py [--only fig1] [--camera-ready]
+       (fig1 is the paper's Fig 7)
 """
 
 import argparse
@@ -24,7 +25,6 @@ from spade.figures.othello_board import draw_board, mark_square, square_xy
 from spade.figures.paper_style import (
     INK, MUTED, NULL, PROBE_STYLE, SQUARE_ROLE_STYLE, apply_style, letters_topleft,
     save_figure)
-from spade.figures.straightness_panels import kde_ci
 
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE / "results"
@@ -194,6 +194,9 @@ def specificity_panel(ax, cos: pd.DataFrame, shares: pd.DataFrame) -> None:
     discs: a median is the tighter estimator, and against it the separation is
     partly arithmetic rather than evidence.
     """
+    # Here, not at the top: straightness_panels imports the straightness study (and torch),
+    # which Fig 1 does not need.
+    from spade.figures.straightness_panels import kde_ci
     d = cos[cos.control_kind == "strict"]
     series = [("cos_flip_after_control_tpr", PROBE_STYLE["tpr"],
                "flipped sq., TPR direction"),
@@ -311,14 +314,18 @@ def figure_two(camera_ready: bool) -> None:
     save_figure(fig, FIGURES / "fig2_direction_and_cause", camera_ready)
 
 
+DRAW = {"fig1": figure_one, "fig2": figure_two}
+
+
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--only", choices=list(DRAW), help="draw one figure")
     ap.add_argument("--camera-ready", action="store_true",
                     help="vector PDF, no in-figure title")
     args = ap.parse_args()
     apply_style(camera_ready=args.camera_ready)
-    figure_one(args.camera_ready)
-    figure_two(args.camera_ready)
+    for name in [args.only] if args.only else DRAW:
+        DRAW[name](args.camera_ready)
 
 
 if __name__ == "__main__":

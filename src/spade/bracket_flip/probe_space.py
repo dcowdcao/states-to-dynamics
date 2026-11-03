@@ -185,7 +185,7 @@ def local(arm_class, layer: int, basis: str) -> torch.nn.Module:
     acts = probe_acts(layer)
     arm = arm_class(acts.shape[-1], SEED)
     if path.exists():
-        arm.load_state_dict(torch.load(path, weights_only=True))
+        arm.load_state_dict(torch.load(path, map_location="cpu", weights_only=True))
         return arm.requires_grad_(False)
 
     tr, va = fit_split()

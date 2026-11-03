@@ -48,6 +48,13 @@ RELEASE_PLAN §5 items, so each paper figure recomputes or redraws without anoth
 - **C17: Fig 5 redraws from its CSV.** `board_probe_sweep/measure.py` re-measures from the
   9.5 GB probe corpus; `layer_sweep.py` now only draws `results/board_layer_sweep.csv`, with
   no torch. Redraw: PNG byte-identical, PDF differs only in `/CreationDate`.
+- **C19: Fig 7 has its own entry point and recomputes on a CPU.** `make_figures.py --only
+  fig1` draws the paper's figure without fig2's CSVs or `kde_ci`'s torch import (now lazy).
+  `probe_space.local()` loads cached arms with `map_location="cpu"`; a CPU run now finishes,
+  and `m2_field`, `f2_event` and `m2_displacements` differ from the GPU tables by ~1e-7
+  relative (float32 device noise), the rest byte-identical. **Not done:** giving `field()` its
+  own `default_rng(42)`. It would change `m2_field.csv`'s CIs in the third decimal (A.8
+  quotes them), so the call order stays as is and A.8 needs the note instead.
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 
