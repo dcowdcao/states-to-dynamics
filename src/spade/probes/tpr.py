@@ -12,7 +12,7 @@ target, 4 for `legality_probe`'s legal/R1/R2/R3. Upstream sizes
 that it imported *by value*, and there is no per-probe override, so
 `filler_classes` rebinds it around the two places that read it.
 
-WEIGHT_DECAY is re-selected on validation by src/probes/tpr_weight_decay.py;
+WEIGHT_DECAY is re-selected on validation by spade.probes.tpr_weight_decay;
 2.0 was tuned for 8,000 rows and there are now ~812,000.
 """
 

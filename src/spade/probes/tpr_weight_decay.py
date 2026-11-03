@@ -9,7 +9,8 @@ here can leak into the reported number.
 One layer only: the sweep is for the regularization strength, not the layer, and
 5 is the project's hook point.
 
-Usage: python src/probes/tpr_weight_decay.py [--layer 5]
+Usage: python -m spade.probes.tpr_weight_decay [--layer 5]
+       (cluster: scripts/slurm/studies/probes/submit_tpr_weight_decay.sbatch)
 """
 
 import argparse

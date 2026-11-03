@@ -9,7 +9,8 @@ Positions 0..57 are all kept. The window a probe trains on is the trainer's
 choice, not the corpus's — the opening is near-forced and the endgame has no
 empty squares, and a trainer that wants to exclude them should say so itself.
 
-Usage: python src/probes/build_corpus.py [--n-games 10000] [--seed 42]
+Usage: python -m spade.probes.build_corpus [--n-games 20000] [--seed 42]
+       (cluster: scripts/slurm/studies/probes/submit_probe_corpus.sbatch)
 """
 
 import argparse

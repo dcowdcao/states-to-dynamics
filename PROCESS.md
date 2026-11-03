@@ -66,6 +66,9 @@ RELEASE_PLAN §5 items, so each paper figure recomputes or redraws without anoth
 - **C25:** `submit_rollout_branches.sbatch` guarded extraction on `rollout/acts/acts.pt`,
   which `extract_acts` never writes, so it re-extracted 8.35 GB every run; it now guards on
   `resid_post_5.pt`.
+- **C26: the probe pipeline has launchers again.** `scripts/slurm/studies/probes/` ports the
+  frozen repo's `shell/probes/submit_{corpus,train,tpr_weight_decay}.sh` to
+  `python -m spade.probes.*`; the three module docstrings pointed at `src/probes/*.py`.
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 

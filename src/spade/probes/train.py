@@ -19,7 +19,8 @@ the bilinear tensor-product read-out of `probes.tpr`. An arm is an nn.Module
 with `forward([n, d_model]) -> [n, 64, 3]` plus `loss`, `optimizer`, `card` and
 `max_epochs`; everything else here is arm-agnostic.
 
-Usage: python src/probes/train.py [--arm board|tpr] [--layers 0-7] [--seed 42]
+Usage: python -m spade.probes.train [--arm board|tpr] [--layers 0-7] [--seed 42]
+       (cluster: scripts/slurm/studies/probes/submit_probe_train.sbatch)
 """
 
 import argparse
