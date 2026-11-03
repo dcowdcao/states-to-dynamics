@@ -41,6 +41,7 @@ wandb/
 
 # transient locks
 *.lock
+!requirements.lock
 
 # Reduced probe-geometry runs; only a full run owns results/*.csv
 analysis/probe_geometry/results/partial_*/

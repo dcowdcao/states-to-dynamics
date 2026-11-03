@@ -38,6 +38,15 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
   rule in bash; each resolves to its old value under the FASRC data root. `REPORT.md` now
   names the default as `$SPADE_DATA_ROOT/karvonen_released`, so it no longer embeds whoever's
   root regenerated it. `load_points.py:39` is left to the pipeline-decoupling branch.
+- **C7, the versions.** `requirements.txt` pins `datasets==4.8.4`, `pyarrow==23.0.1`,
+  `huggingface_hub==0.36.2` (the stream order is the game set), `scikit-learn==1.8.0`,
+  `scipy==1.17.1` (MDS) and `torchvision==0.20.1`; all but torchvision equal spade_env, which
+  lacks torchvision although nnsight requires it. Two imports were undeclared and a clean venv
+  would have died on them: `typeguard` (transformer_lens's `__init__` imports it) and
+  `zstandard` (circuits.utils). `requirements.lock` is spade_env's freeze cut to that closure:
+  115 pins, the CUDA wheels and triton behind torch's Linux x86_64 marker. A PyPI dry-run of
+  `pip install -e . -r requirements.lock` resolves exactly those 115 and nothing else, and every
+  module imports with site-packages cut down to them.
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 
