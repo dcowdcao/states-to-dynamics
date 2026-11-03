@@ -19,6 +19,12 @@ RELEASE_PLAN §5 items, so each paper figure recomputes or redraws without anoth
   The README's `branches` + `--t0 20` gave a different 3920-game tree. The script refuses
   to run over an existing `branches.pt`, since `branches` overwrites it.
 - **C13:** `move_legality.fit_set` defaults to the paper's 800 games.
+- **C14: raw and L0-matched runs no longer open the seed-42 SAE registry.**
+  `registry.entries()` / `seed42_entries()` assert every seed-42 `ae.pt` (gitignored) and,
+  through `roster()`, all 56 multiseed checkpoints. `move_legality.readout --spaces raw` now
+  resolves raw and the nulls without `roster()`, and loads the 2.1 GB branch acts after the
+  first fit instead of before it. `extract_geometry.py` returns before `seed42_entries()`
+  when no `--spaces` is given. The asserts themselves stay: the seed-42 studies want them.
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 
