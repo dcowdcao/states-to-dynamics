@@ -47,7 +47,7 @@ Two vendored runtime dependencies under `external/`: `Karvonen_Research` (`circu
 the baseline trainers, the Othello engine, the board-reconstruction eval) and `tpr_othello`
 (the tensor-product board probe). Path resolution is repo-root-anchored — `spade.common.paths`
 walks to the `CLAUDE.md` / `.git` marker — so scripts work from anywhere, but only under an
-editable install. Cluster (FASRC SLURM) commands live in `docs/fasrc_commands.md`.
+editable install. Cluster (FASRC SLURM) commands live in `archive/docs/fasrc_commands.md`.
 
 Heavy per-study intermediates live outside the repo on netscratch, resolved by
 `spade.common.study.study_dir()`. A fresh clone cannot regenerate the figures on its own.
@@ -64,4 +64,4 @@ each pair with an `analysis/<study>/` that only draws.
 
 Figures obey [FIGURE_GUIDELINES.md](FIGURE_GUIDELINES.md); color literals live only in
 `spade.figures.paper_style`. Before writing prose about any result, read
-[docs/claims_status.md](docs/claims_status.md) — several headline claims were retired.
+[archive/docs/claims_status.md](archive/docs/claims_status.md) — several headline claims were retired.

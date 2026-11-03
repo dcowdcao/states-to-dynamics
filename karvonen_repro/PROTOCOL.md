@@ -3,9 +3,10 @@
 ```
 karvonen_repro/
   PROTOCOL.md            this file: data protocol, pass criteria, failure modes
+archive/karvonen_repro/
   validation_set.csv     the 15 released checkpoints to re-evaluate
-  compare_to_published.py  python karvonen_repro/compare_to_published.py --harness <run>/results.csv
-  probe_eval_batch.py    evidence for section 2; python karvonen_repro/probe_eval_batch.py --trainers trainer_0 trainer_5
+  compare_to_published.py  python archive/karvonen_repro/compare_to_published.py --harness <run>/results.csv
+  probe_eval_batch.py    evidence for section 2; python archive/karvonen_repro/probe_eval_batch.py --trainers trainer_0 trainer_5
 ```
 
 The target is `external/Karvonen_Research/autoencoders/saved_data/06-10-othello-trained-results_with_07-10_topk.csv`

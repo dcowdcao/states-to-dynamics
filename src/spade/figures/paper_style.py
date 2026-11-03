@@ -30,7 +30,7 @@ CEILING = {"color": "#4d4d4d", "marker": "h", "ls": (0, (1, 1.6)), "lw": 1.5, "z
 
 # Straightness-study game classes, in legend order: the figures draw exactly
 # these. random_tokens is a block of games.pt but has no entry here, so it is
-# neither drawn nor scored (docs/claims_status.md).
+# neither drawn nor scored (archive/docs/claims_status.md).
 # color = class identity, marker = redundant cue.
 CLASS_STYLE = {
     "legal":         {"color": "#000000", "marker": "o", "label": "legal (baseline)"},
@@ -169,7 +169,7 @@ POPULATION_STYLE = {
                 "short": "random dir.\n(null)", "label": "random direction (null)"},
 }
 
-# Bracket-flip study (docs/bracket_flip_design.md). Absolute disc colors draw
+# Bracket-flip study (archive/docs/bracket_flip_design.md). Absolute disc colors draw
 # themselves: a black disc is a filled black circle, a white disc an open one,
 # so the panel needs almost no legend and reads identically in grayscale.
 DISC_STYLE = {

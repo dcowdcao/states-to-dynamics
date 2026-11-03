@@ -15,7 +15,7 @@ from the reference in every representation space, and what the model does next.
 
 The study's founding premise turned out to be false — an illegal branch diverges *less*
 than a legal alternative — and several of its metrics were shown to be max-of-noise.
-Read docs/claims_status.md before describing any of it.
+Read archive/docs/claims_status.md before describing any of it.
 
 Working dir: study_dir("divergence"). Figures: analysis/violation_divergence/.
 """

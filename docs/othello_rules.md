@@ -55,7 +55,7 @@ Violation: `opponent_only` (legal for the opponent only — turn confusion).
 it is at every position — is defined but deferred.
 
 The three constraint rules are drawn on one board in
-`figures/othello_rules/rules_legal_and_illegal.png`
+`archive/figures/othello_rules/rules_legal_and_illegal.png`
 (`src/spade/figures/figure_othello_rules.py`). One panel carries the move a corpus
 game actually played, ticked, and one violation of each rule at the *same position*,
 each crossed — an occupied square, a line of opponent discs that nothing of the mover's
@@ -138,4 +138,4 @@ source repo's git history under `src/legality/`.
 
 One result here is retired and must not be restated: **R3's directional
 prediction is falsified** — the `opponent_only` category shows no parity
-signature (agreement 0.9930, mid-pack). See `docs/claims_status.md`.
+signature (agreement 0.9930, mid-pack). See `archive/docs/claims_status.md`.

@@ -39,7 +39,7 @@ from spade.violation_divergence.branches import ROLE_NAMES, role
 from circuits.othello_engine_utils import to_string
 
 N_BOOT = 1000
-# analysis/violation_divergence/README.md, "What does not hold, and why", measured
+# archive/analysis/violation_divergence/README.md, "What does not hold, and why", measured
 # by the red team on the earlier one-control branch set (15531 rows).
 README_CONTROL = {"p_first_move_legal": 0.768, "median_moves_legal": 2}
 

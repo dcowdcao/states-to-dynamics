@@ -34,17 +34,17 @@ The board-state stage is identical in both modes — always 1000 games x 59 posi
 Every row carries `eval_protocol_mode`, `eval_n_batches` and `eval_n_activations` so
 it cannot be misread later.
 
-To reproduce his table:
+To reproduce his table (the validation tooling is archived, see below):
 
 ```bash
 python -m karvonen_repro.validation_checkpoints --released-root DIR   # the 15 checkpoints
 python -m karvonen_repro.evaluate --mode repro --output-dir OUT $(...)
-python karvonen_repro/compare_to_published.py --harness OUT/f1_results.csv
+python archive/karvonen_repro/compare_to_published.py --harness OUT/f1_results.csv
 ```
 
 ## Why this exists
 
-`src/spade/evaluation/run_eval.py` reimplements the protocol and drifts from it —
+`archive/src/spade/evaluation/run_eval.py` reimplements the protocol and drifts from it —
 no >=0.95-precision / >=10-firings feature gate, one label per feature instead of
 many, a per-feature threshold instead of one global one, macro-averaging over cells
 instead of micro-pooling. Worth about 0.2 absolute F1. This harness does not
@@ -81,13 +81,13 @@ index columns pandas wrote into it.
 - `patches.py` — the four module-level rebinds that let his pipeline see our
   checkpoints. Read this file; it is the entire divergence surface.
 - loader: `spade.sae_loader.load_sae`, shared with the rest of the reproduction work.
-- `validation_checkpoints.py` — validation_set.csv to paths in a released download.
-- `spade_set.csv` + `spade_checkpoints.py` — the same for the study's 44 SpaDE and
-  CosineSpaDE checkpoints, resolved against `$SPADE_MULTISEED_DIR`. Each row is
-  cross-checked against its own config.json, so a re-indexed sweep fails loudly.
 - `submit_eval.sbatch` — SLURM.
-- `PROTOCOL.md`, `validation_set.csv`, `compare_to_published.py`, `probe_eval_batch.py`
-  — the pass/fail spec and its evidence, from the validation agent.
+- `PROTOCOL.md` — the pass/fail spec.
+- Archived under `archive/karvonen_repro/` (the paper runs the harness on a checkpoint
+  glob only): `validation_checkpoints.py` + `validation_set.csv` (the 15 released
+  checkpoints), `spade_checkpoints.py` + `spade_set.csv` (the study's 44 SpaDE and
+  CosineSpaDE checkpoints), and the spec's evidence `compare_to_published.py`,
+  `probe_eval_batch.py`.
 
 `OUT/` holds `checkpoints/<sweep parent>/<group>/<trainer>/` (symlinks to `ae.pt`,
 `config.json` and the sweep's `standardization_params.json`, plus every pkl his

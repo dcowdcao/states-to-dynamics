@@ -8,14 +8,10 @@ whether the model uses it.
   extract_acts.py    step 2: 8-layer resid_post for before / after / matched control
   probe_space.py     read-out measurements; the canonical probes, plus the arms
                      (absolute basis, layer -1) the canonical corpus cannot supply
-  act_geometry.py    raw layer-5 flip geometry
-  geometry_tables.py the flip-geometry tables, for make_figures.py to draw
-  sae_arm.py         the same read-out fit in each SAE latent space
-  tpr_intervene.py   the un-flip edit, cross-checked against the linear-probe version
-  robustness.py      refit across seed / weight decay / role dimension
-  redteam.py         independent re-derivation of the headline numbers
+  (act_geometry, geometry_tables, sae_arm, tpr_intervene, robustness, redteam: archived
+  under archive/src/spade/bracket_flip/; the paper uses none of them)
 
-Read docs/claims_status.md before writing anything about this study: its original headline
+Read archive/docs/claims_status.md before writing anything about this study: its original headline
 was retired, and three narrower findings survive in its place.
 
 Working dir: study_dir("bracket"). Figures: analysis/bracket_flip/.

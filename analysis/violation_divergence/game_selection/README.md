@@ -8,8 +8,8 @@ nine branch trajectories are, and hands the fork figure an argmax it can disclos
 
 ```
 python analysis/violation_divergence/game_selection/score_games.py   # ~4 min, cpu
-python analysis/violation_divergence/game_selection/make_figures.py
-python analysis/violation_divergence/game_selection/score_rules.py   # ~15 min, cpu
+python archive/analysis/violation_divergence/game_selection/make_figures.py   # archived
+python archive/analysis/violation_divergence/game_selection/score_rules.py    # archived; ~15 min, cpu
 ```
 
 `score_games.py` answers the **category** question in raw layer 5 and is what

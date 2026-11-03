@@ -452,7 +452,7 @@ def test_p_anneal_state():
 
 
 NOT_CHECKED = """
-  - no eval is run here. The acceptance eval is in docs/finish_notes/acceptance-eval.md,
+  - no eval is run here. The acceptance eval is in archive/docs/finish_notes/acceptance-eval.md,
     with its rows in results/acceptance/ (three checkpoints reproduce their reference exactly)
   - no GPU kernel, no nnsight trace, no loss_recovered path is exercised
   - the F1 / coverage / board-reconstruction math is not checked numerically

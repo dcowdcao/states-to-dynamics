@@ -37,7 +37,7 @@ the split itself is a random one.
   dozen book lines, which would collapse those 1,817 games onto a handful.
 
 So any claim conditioned on this distribution is a claim about random legal play.
-`docs/restrav_summary.md` contrasts a synthetic arm against real championship play;
+`archive/docs/restrav_summary.md` contrasts a synthetic arm against real championship play;
 this corpus is the synthetic side of that contrast, for every study here.
 
 ## 2. The `e6` opening is missing 64% of its games
