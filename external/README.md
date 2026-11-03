@@ -18,7 +18,7 @@ patch from `scripts/fetch_external/patches/`. A tree that is already here is lef
 
 | tree | upstream | commit | our patch |
 |---|---|---|---|
-| `Karvonen_Research` | github.com/adamkarvonen/SAE_BoardGameEval | `7187d4a` | drops `.gitmodules` and 18 `ae.pt`; re-run walkthrough notebook |
+| `Karvonen_Research` | github.com/adamkarvonen/SAE_BoardGameEval | `7187d4a` | drops `.gitmodules` and 18 `ae.pt` |
 | `Karvonen_Research/circuits/dictionary_learning` | github.com/saprmarks/dictionary_learning (MIT) | `43421f5` | per-trainer device moves, dead-neuron logging |
 | `tpr_othello` | github.com/ajyl/tpr_othello | `cc90cea` | adds `PROVENANCE.md`; drops upstream's game pickles |
 
