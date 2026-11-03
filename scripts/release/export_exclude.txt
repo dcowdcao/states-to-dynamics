@@ -1,0 +1,28 @@
+# Paths export_public.py drops from the public export.
+# `dir/` drops a directory; any other line is an fnmatch pattern on the repo path (`*` crosses `/`).
+
+# Everything not in the paper.
+archive/
+
+# Private process docs.
+CLAUDE.md
+PROCESS.md
+ARCHITECTURE.md
+MIGRATION.md
+
+# Unlicensed vendored repos; `make setup` fetches them at pinned SHAs.
+external/Karvonen_Research/
+external/tpr_othello/
+
+# Third-party course material.
+reference/
+
+# Paper drafts; the anonymised final source goes to paper/.
+paper.tex
+Spade_Othello_NeurIPS.tex
+Spade_Othello_NeurIPS.pdf
+Spade_Othello___Neurips___*.zip
+paper/experimental_setup.tex
+
+# The scan's own patterns.
+scripts/release/identity_patterns.txt

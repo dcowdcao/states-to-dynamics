@@ -6,6 +6,29 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The public code is one anonymous commit, scanned before it exists (2026-11-03)
+
+`scripts/release/export_public.py REF OUT_DIR` builds the double-blind release (D5). It takes
+the tracked tree at REF through `git archive`, never the working tree or the history, drops
+`export_exclude.txt` (archive/, the four process docs, the two unlicensed vendored repos,
+reference/, the paper drafts) and runs `identity_scan.py` over the rest. Any hit stops it before
+`git init`, so a half-clean tree never becomes a commit. A clean tree gets `MANIFEST.sha256` and
+one commit by `Anonymous <anonymous@example.com>` at a fixed date with user and system git config
+switched off, so one tree always gives one SHA.
+
+**The patterns sit in `identity_patterns.txt`, committed here and excluded from the export.**
+The tool and its exclude list ship and are scanned like everything else, so no shipped file may
+spell a name. Binaries are read too: PNG text chunks, PDF objects and inflated non-image streams,
+notebook images. Any other binary, and any PDF not rendered by matplotlib, is itself a hit.
+**Blind spot:** text drawn inside figures. The paper figures use `pdf.fonttype=42`, whose glyph
+codes are not text, and PNG pixels are pixels; drawn text comes from scanned code and CSVs.
+
+FIGURE_GUIDELINES.md ships: 43 `.py` files cite it by section and it names no one. Excluding
+CLAUDE.md leaves `.git` as `repo_root()`'s only marker, which a 4open zip download lacks (M19).
+On `new-architecture` the scan finds 8,536 hits in 132 files; 99 of them are ARCHIVE in the move
+list and leave with the reorganization, 33 need string fixes. The per-file list is
+`spade_release_audit/export_scan_report.md`.
+
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 
 `curvature_rules_{tree}_combined` and `curvature_rules_{tree}_population_combined` read cell to
