@@ -1,3 +1,4 @@
+Modifies github.com/saprmarks/dictionary_learning @ 43421f5 (MIT License, Copyright (c) 2024 saprmarks; see its LICENSE).
 diff --git a/trainers/batch_top_k.py b/trainers/batch_top_k.py
 index 686dc0ab61f87bdfebffff4d90aa0ce8fe4a1c50..faae80a878f5ae90c97ec24e54110f82f2d5efdb 100644
 --- a/trainers/batch_top_k.py
