@@ -8,7 +8,7 @@
 #SBATCH --error=logs/straightness/%x_%j.err
 
 set -e
-source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
+source "${SPADE_REPO:?}/scripts/slurm/cluster.sh"
 export PYTHONUNBUFFERED=1
 export HF_USE_SOFTFILELOCK=1
 

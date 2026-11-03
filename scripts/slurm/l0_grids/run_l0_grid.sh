@@ -28,7 +28,7 @@
 # ==========================================================================
 
 set -euo pipefail
-source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
+source "${SPADE_REPO:?}/scripts/slurm/cluster.sh"
 
 ARCH="${1:?spade | cosine_spade | batch_topk | standard | gated | panneal | gated_anneal | topk}"
 SEED="${2:-42}"

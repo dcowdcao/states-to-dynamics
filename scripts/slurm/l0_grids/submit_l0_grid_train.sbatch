@@ -17,7 +17,7 @@
 
 set -e
 
-source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
+source "${SPADE_REPO:?}/scripts/slurm/cluster.sh"
 export PYTHONUNBUFFERED=1
 export WANDB_MODE=online
 # HF datasets cache lives on NFS; hard flocks fail under concurrent array tasks

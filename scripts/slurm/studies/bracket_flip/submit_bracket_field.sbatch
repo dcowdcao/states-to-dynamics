@@ -7,7 +7,7 @@
 #SBATCH --output=logs/bracket_flip/%x_%j.out
 #SBATCH --error=logs/bracket_flip/%x_%j.err
 set -e
-source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
+source "${SPADE_REPO:?}/scripts/slurm/cluster.sh"
 export PYTHONUNBUFFERED=1
 cd "${SPADE_REPO:?}"
 export PYTHONPATH="${SPADE_REPO}/src:${PYTHONPATH:-}"

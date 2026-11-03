@@ -13,7 +13,7 @@
 #SBATCH --error=logs/move_legality/%x_%j.err
 
 set -e
-source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
+source "${SPADE_REPO:?}/scripts/slurm/cluster.sh"
 export PYTHONUNBUFFERED=1
 # The builder's hard flock dies on NFS; give the job a node-local datasets cache and
 # leave HF_HOME on NFS so the LM is not refetched (PROCESS.md).

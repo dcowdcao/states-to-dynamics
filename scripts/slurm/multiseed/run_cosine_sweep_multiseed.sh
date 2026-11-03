@@ -23,7 +23,7 @@
 # ==========================================================================
 
 set -euo pipefail
-source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
+source "${SPADE_REPO:?}/scripts/slurm/cluster.sh"
 
 BASE="$(python -m spade.common.study multiseed)"
 LOGS="${BASE}/logs"

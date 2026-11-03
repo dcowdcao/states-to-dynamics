@@ -8,7 +8,7 @@
 #SBATCH --error=logs/violation_divergence/%x_%j.err
 
 set -e
-source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
+source "${SPADE_REPO:?}/scripts/slurm/cluster.sh"
 export PYTHONUNBUFFERED=1
 # HF_USE_SOFTFILELOCK is not honored by this datasets/filelock version and the
 # builder's hard flock dies on NFS; give the job a node-local datasets cache and

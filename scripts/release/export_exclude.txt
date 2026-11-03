@@ -14,15 +14,8 @@ MIGRATION.md
 external/Karvonen_Research/
 external/tpr_othello/
 
-# Third-party course material.
-reference/
-
-# Paper drafts; the anonymised final source goes to paper/.
-paper.tex
-Spade_Othello_NeurIPS.tex
-Spade_Othello_NeurIPS.pdf
-Spade_Othello___Neurips___*.zip
-paper/experimental_setup.tex
+# This cluster's names; the export ships scripts/slurm/cluster.env.example instead.
+scripts/slurm/cluster.env
 
 # The scan's own patterns.
 scripts/release/identity_patterns.txt

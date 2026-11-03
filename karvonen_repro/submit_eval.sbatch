@@ -33,7 +33,7 @@
 
 set -euo pipefail
 
-source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
+source "${SPADE_REPO:?}/scripts/slurm/cluster.sh"
 export PYTHONUNBUFFERED=1
 
 cd "${SPADE_REPO:?}"

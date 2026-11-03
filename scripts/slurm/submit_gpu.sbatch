@@ -15,7 +15,8 @@
 #   sbatch --job-name=r21_spliced scripts/slurm/submit_gpu.sbatch \
 #       python analysis/violation_divergence/divergence_by_space/measure.py --plane r21 ...
 set -e
-source "$SLURM_SUBMIT_DIR/scripts/slurm/cluster.env"
+export SPADE_REPO="$SLURM_SUBMIT_DIR"
+source "$SPADE_REPO/scripts/slurm/cluster.sh"
 export PYTHONUNBUFFERED=1
 export PYTHONPATH="$SLURM_SUBMIT_DIR/src:${PYTHONPATH:-}"
 "$@"

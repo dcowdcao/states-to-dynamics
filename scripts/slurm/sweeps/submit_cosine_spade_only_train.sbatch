@@ -29,7 +29,7 @@
 set -e
 
 # ---- Environment setup ----
-source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
+source "${SPADE_REPO:?}/scripts/slurm/cluster.sh"
 export PYTHONUNBUFFERED=1
 
 export WANDB_MODE=online

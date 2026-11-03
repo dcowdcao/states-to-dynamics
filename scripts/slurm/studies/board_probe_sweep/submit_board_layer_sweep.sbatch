@@ -10,7 +10,7 @@
 #SBATCH --error=logs/board_probe_sweep/%x_%j.err
 
 set -e
-source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
+source "${SPADE_REPO:?}/scripts/slurm/cluster.sh"
 export PYTHONUNBUFFERED=1
 
 cd "${SPADE_REPO:?}"

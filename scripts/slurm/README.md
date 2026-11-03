@@ -7,12 +7,12 @@ eleven scripts that `cd` to a path deleted in July; under `set -e` they abort wh
 submitter reports success. Do not reintroduce any of that.
 
 Everything cluster-specific is in `cluster.env`: the account and partition, the modules and
-the env to activate. No script names a cluster. `#SBATCH` lines cannot read a variable, so the
-account and partition are `SBATCH_ACCOUNT` / `SBATCH_PARTITION`, which sbatch reads in place
-of `--account` / `--partition`. Every job sources `cluster.env` for its software stack and
-every `run_*.sh` sources it before submitting; to `sbatch` one script by hand, source it in
-that shell first (`-A` / `-p` on the command line still win). On another cluster, edit
-`cluster.env` and nothing else.
+the env to activate. Make it from `cluster.env.example`; no script names a cluster.
+`#SBATCH` lines cannot read a variable, so the account and partition are `SBATCH_ACCOUNT` /
+`SBATCH_PARTITION`, which sbatch reads in place of `--account` / `--partition`. Every job and
+every `run_*.sh` sources `cluster.sh`, which loads `cluster.env` or stops with a pointer to the
+example; to `sbatch` one script by hand, source `cluster.sh` in that shell first (`-A` / `-p`
+on the command line still win).
 
 Chains use `sbatch --parsable` + `--dependency=afterok`. Modules are invoked as
 `python -m spade.<module>`. `archive/scripts/slurm/studies/linear_probe` deviates and says why

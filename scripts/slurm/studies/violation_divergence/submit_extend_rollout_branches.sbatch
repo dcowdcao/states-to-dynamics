@@ -13,7 +13,7 @@
 #SBATCH --error=logs/violation_divergence/%x_%j.err
 
 set -e
-source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
+source "${SPADE_REPO:?}/scripts/slurm/cluster.sh"
 export PYTHONUNBUFFERED=1
 
 cd "${SPADE_REPO:?}"

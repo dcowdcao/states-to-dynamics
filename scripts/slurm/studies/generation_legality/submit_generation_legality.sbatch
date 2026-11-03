@@ -8,7 +8,7 @@
 #SBATCH --error=logs/generation_legality/%x_%j.err
 
 set -e
-source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
+source "${SPADE_REPO:?}/scripts/slurm/cluster.sh"
 export PYTHONUNBUFFERED=1
 # Node-local datasets cache: the builder's hard flock dies on NFS (PROCESS.md).
 export HF_DATASETS_CACHE="${TMPDIR:-/tmp}/hf_datasets_${SLURM_JOB_ID}"

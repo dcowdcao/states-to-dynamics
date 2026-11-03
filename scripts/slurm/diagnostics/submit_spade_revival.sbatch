@@ -10,7 +10,7 @@
 # karvonen_repro/submit_eval.sbatch; the old eval and the geometry/rules figures are archived.
 
 set -e
-source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
+source "${SPADE_REPO:?}/scripts/slurm/cluster.sh"
 export PYTHONUNBUFFERED=1
 export HF_USE_SOFTFILELOCK=1
 
