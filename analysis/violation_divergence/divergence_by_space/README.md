@@ -21,7 +21,8 @@ python analysis/violation_divergence/divergence_by_space/make_figures.py  [--pla
 `measure.py` writes `$SPADE_DIVERGENCE_DIR[/rollout]/divergence_by_space/curves.npz`
 (~35 min spliced, ~45 min rollout on one core, I/O-bound); `make_figures.py` reads it and
 writes the figure plus `results/violation_divergence/divergence_by_space[_rollout].csv`,
-one row per (space, series, measured_in, r) with the mean and its 95% CI.
+one row per (space, series, measured_in, r) with the mean and its 95% percentile bootstrap
+CI (1000 resamples of the source games, seed 42).
 
 `--n_games N` draws the study's **shared N-game population** instead of the whole tree:
 the first N branch-complete games forking at t₀ = 20 (`branches.games_at_t0`, 1696 exist),
@@ -49,7 +50,8 @@ panel is drawn in** (solid, filled markers), with the same distance in that cell
 space underneath (dotted, open markers); both divided by the same cell's own legal
 control, so the null sits at 1 on average over r ≥ 0. One curve per constraint rule, the
 mean over its member categories (n = 2, 3, 1), with the count in the legend entry;
-`control_legal` is the null, in gray. Bands are 95% CIs of the mean over **n = 1553
+`control_legal` is the null, in gray. Bands are 95% percentile bootstrap CIs of the mean
+(1000 resamples of the source games, seed 42) over **n = 1553
 branch-complete source games** — one game is one item, so no clustering correction — and
 are about ±0.015 wide, hairline at this n. t₀ round-robins over [10, 34] and the window
 is r ∈ [−8, +24] sampled every 2 plies at t₀'s parity, so every game contributes to every
