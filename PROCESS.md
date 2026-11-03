@@ -45,6 +45,9 @@ RELEASE_PLAN §5 items, so each paper figure recomputes or redraws without anoth
   needs `branches.pt`. Both modes give the same bytes as the old code. Three CSVs
   (`by_move`, `rollout_by_move`, `survival`) differ from the committed ones by ≤3e-14 under
   the old code too, as the Fig 1 audit found.
+- **C17: Fig 5 redraws from its CSV.** `board_probe_sweep/measure.py` re-measures from the
+  9.5 GB probe corpus; `layer_sweep.py` now only draws `results/board_layer_sweep.csv`, with
+  no torch. Redraw: PNG byte-identical, PDF differs only in `/CreationDate`.
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 
