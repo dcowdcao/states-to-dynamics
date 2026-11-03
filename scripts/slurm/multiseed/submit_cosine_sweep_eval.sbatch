@@ -24,7 +24,7 @@ export PYTHONUNBUFFERED=1
 # only metadata lands there. HF_HOME stays on NFS so the LM is not refetched.
 export HF_DATASETS_CACHE="${TMPDIR:-/tmp}/hf_datasets_${SLURM_JOB_ID}"
 
-BASE="${SPADE_MULTISEED_DIR:-/n/netscratch/ba_lab/Lab/${USER}/spade_multiseed}"
+BASE="$(python -m spade.common.study multiseed)"
 TRAINER="trainer_${SLURM_ARRAY_TASK_ID}"
 
 : "${SEED:?SEED must be set (run_cosine_sweep_multiseed.sh exports it per eval array)}"

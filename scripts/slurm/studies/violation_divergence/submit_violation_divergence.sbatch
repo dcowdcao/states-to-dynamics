@@ -18,7 +18,7 @@ export HF_DATASETS_CACHE="${TMPDIR:-/tmp}/hf_datasets_${SLURM_JOB_ID}"
 cd "${SPADE_REPO:?}"
 mkdir -p logs/violation_divergence
 
-DIR="${SPADE_DIVERGENCE_DIR:-/n/netscratch/ba_lab/Lab/$USER/spade_divergence}"
+DIR="$(python -m spade.common.study divergence)"
 
 [ -f "$DIR/branches/branches.pt" ] || python -m spade.violation_divergence.branches
 [ -f "$DIR/acts/logits.pt" ] || python -m spade.violation_divergence.extract_acts

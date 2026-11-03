@@ -14,7 +14,7 @@ export PYTHONUNBUFFERED=1
 cd "${SPADE_REPO:?}"
 mkdir -p logs/violation_divergence
 
-DIR="${SPADE_DIVERGENCE_DIR:-/n/netscratch/ba_lab/Lab/$USER/spade_divergence}"
+DIR="$(python -m spade.common.study divergence)"
 
 # Resamples the suffix of the spliced branches; branches.pt is its input and is
 # never rewritten. ~36 sequential steps per t0 group against extract_acts' single

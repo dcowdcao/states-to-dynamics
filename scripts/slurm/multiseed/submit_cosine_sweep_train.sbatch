@@ -24,7 +24,7 @@ export WANDB_MODE=online
 # HF datasets cache lives on NFS; hard flocks fail under concurrent array tasks
 export HF_USE_SOFTFILELOCK=1
 
-BASE="${SPADE_MULTISEED_DIR:-/n/netscratch/ba_lab/Lab/${USER}/spade_multiseed}"
+BASE="$(python -m spade.common.study multiseed)"
 SEED="${SLURM_ARRAY_TASK_ID}"
 
 : "${COSINE_GAMMAS:?COSINE_GAMMAS must be set (run_cosine_sweep_multiseed.sh exports it)}"

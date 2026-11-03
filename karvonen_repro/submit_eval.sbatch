@@ -20,16 +20,16 @@
 #
 #   mkdir -p logs/karvonen_repro          # once per checkout; SLURM will not
 #   SPADE_REPO=$PWD \
-#   KARVONEN_CKPT_GLOB='/n/netscratch/.../othello-trained_model-layer_5-*/trainer*' \
-#   KARVONEN_OUT=/n/netscratch/ba_lab/Lab/$USER/karvonen_repro \
+#   KARVONEN_CKPT_GLOB="$SPADE_DATA_ROOT/.../othello-trained_model-layer_5-*/trainer*" \
+#   KARVONEN_OUT="$SPADE_DATA_ROOT/karvonen_repro" \
 #     sbatch --export=ALL karvonen_repro/submit_eval.sbatch
 #
 # For the reproduction run, take the checkpoint list from validation_set.csv:
-#   KARVONEN_RELEASED_ROOT=/n/netscratch/ba_lab/Lab/$USER/karvonen_released \
+#   KARVONEN_RELEASED_ROOT="$SPADE_DATA_ROOT/karvonen_released" \
 #   KARVONEN_OUT=... SPADE_REPO=$PWD sbatch --export=ALL karvonen_repro/submit_eval.sbatch
 #
 # For the SpaDE/CosineSpaDE run, from spade_set.csv (44 checkpoints):
-#   KARVONEN_MULTISEED_ROOT=/n/netscratch/ba_lab/Lab/$USER/spade_multiseed \
+#   KARVONEN_MULTISEED_ROOT="$SPADE_DATA_ROOT/spade_multiseed" \
 #   KARVONEN_OUT=... SPADE_REPO=$PWD sbatch --export=ALL karvonen_repro/submit_eval.sbatch
 #
 # ~1000 SAEs at his n_inputs=1000 will not fit in one 24h job; submit in slices of

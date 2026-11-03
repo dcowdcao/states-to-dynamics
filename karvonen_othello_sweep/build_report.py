@@ -21,6 +21,8 @@ import numpy as np
 import pandas as pd
 import torch
 
+from spade.common.study import data_root
+
 ACT_DIM = 512
 EXPANSIONS = (8, 16)
 
@@ -29,7 +31,7 @@ AGGREGATE_SUBSET = "othello-6-10-trained-f1_results.csv"
 RANDOM_MODEL = "othello-6-10-random-f1_results.csv"
 MLP_NEURONS = "othello-6-10-mlp-acts-f1_results.csv"
 
-DEFAULT_CONFIG_ROOT = "/n/netscratch/ba_lab/Lab/dcao/karvonen_released"
+DEFAULT_CONFIG_ROOT = data_root() / "karvonen_released"
 # group dir (as it appears in the results CSVs) -> its parent release dir on disk
 CONFIG_GROUPS = {
     "othello-trained_model-layer_5-standard": "othello-trained_model-layer_5-2024-05-23",
@@ -861,7 +863,7 @@ across {prov['shared_cols']} shared columns on the {prov['shared_rows']} shared 
 
 Regenerate with `python karvonen_othello_sweep/recompute_coverage.py --config-root <root>` (slow,
 output committed) then `python karvonen_othello_sweep/build_report.py` (`--config-root` defaults to
-`$KARVONEN_RELEASED`, then to `{DEFAULT_CONFIG_ROOT}`).
+`$KARVONEN_RELEASED`, then to `$SPADE_DATA_ROOT/karvonen_released`).
 """)
     return "".join(parts)
 

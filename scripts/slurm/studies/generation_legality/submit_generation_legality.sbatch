@@ -16,10 +16,10 @@ export HF_DATASETS_CACHE="${TMPDIR:-/tmp}/hf_datasets_${SLURM_JOB_ID}"
 cd "${SPADE_REPO:?}"
 mkdir -p logs/generation_legality
 
-DIR="${SPADE_GENERATION_DIR:-/n/netscratch/ba_lab/Lab/$USER/spade_generation}"
+DIR="$(python -m spade.common.study generation)"
 # The rollout population is shared, not this study's: one bank, generated once, extended by
 # prefix. Every rollout read-out in the repo should read it rather than draw its own.
-BANK="${SPADE_ROLLOUTS_DIR:-/n/netscratch/ba_lab/Lab/$USER/spade_rollouts}"
+BANK="$(python -m spade.common.study rollouts)"
 
 [ -f "$BANK/tokens.pt" ]             || python -m spade.othello.rollout_bank --n_games 1000
 [ -f "$DIR/positions/cats.pt" ]      || python -m spade.generation_legality.positions

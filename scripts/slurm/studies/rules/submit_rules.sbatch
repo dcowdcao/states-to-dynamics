@@ -15,7 +15,7 @@ export HF_USE_SOFTFILELOCK=1
 cd "${SPADE_REPO:?}"
 mkdir -p logs/rules
 
-RULES_DIR="${SPADE_RULES_DIR:-/n/netscratch/ba_lab/Lab/$USER/spade_rules}"
+RULES_DIR="$(python -m spade.common.study rules)"
 
 [ -f "$RULES_DIR/pairs/items.pt" ] || python -m spade.rules.build_pairs
 [ -f "$RULES_DIR/acts/acts_final.pt" ] || python -m spade.rules.extract_acts

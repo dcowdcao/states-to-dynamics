@@ -819,4 +819,4 @@ across 251 shared columns on the 240 shared rows.
 
 Regenerate with `python karvonen_othello_sweep/recompute_coverage.py --config-root <root>`
 (slow, output committed) then `python karvonen_othello_sweep/build_report.py` (`--config-root`
-defaults to `$KARVONEN_RELEASED`, then to `/n/netscratch/ba_lab/Lab/dcao/karvonen_released`).
+defaults to `$KARVONEN_RELEASED`, then to `$SPADE_DATA_ROOT/karvonen_released`).

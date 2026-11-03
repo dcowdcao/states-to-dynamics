@@ -20,12 +20,13 @@ output, which makes every one of its siblings suspect.
 
 import argparse
 import json
-import os
 from pathlib import Path
 
 import pandas as pd
 
-DEFAULT_ROOT = os.environ.get("SPADE_MULTISEED_DIR", "/n/netscratch/ba_lab/Lab/dcao/spade_multiseed")
+from spade.common.study import study_dir
+
+DEFAULT_ROOT = study_dir("multiseed")
 SPADE_SET = Path(__file__).resolve().parent / "spade_set.csv"
 
 

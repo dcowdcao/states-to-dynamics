@@ -14,7 +14,7 @@ export PYTHONUNBUFFERED=1
 cd "${SPADE_REPO:?}"
 mkdir -p logs/violation_divergence
 
-DIR="${SPADE_DIVERGENCE_DIR:-/n/netscratch/ba_lab/Lab/$USER/spade_divergence}"
+DIR="$(python -m spade.common.study divergence)"
 
 # The rollout tree's per-branch geometry: 20700 rows x 9 spaces. This is the step
 # that gets OOM-killed on a login node roughly 12 minutes in, silently and with no

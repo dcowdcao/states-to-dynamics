@@ -15,7 +15,7 @@ export HF_USE_SOFTFILELOCK=1
 cd "${SPADE_REPO:?}"
 mkdir -p logs/manifold_capture
 
-DIR="${SPADE_MANIFOLD_DIR:-/n/netscratch/ba_lab/Lab/$USER/spade_manifold}"
+DIR="$(python -m spade.common.study manifold)"
 
 [ -f "$DIR/corpus/corpus.pt" ] || python -m spade.manifold_capture.build_corpus
 [ -f "$DIR/acts/acts.pt" ] || python -m spade.manifold_capture.extract_acts

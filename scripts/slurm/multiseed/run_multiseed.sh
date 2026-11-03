@@ -11,15 +11,13 @@
 # Usage:
 #   SPADE_REPO=<repo root> bash scripts/slurm/multiseed/run_multiseed.sh
 #
-# Storage root (override with SPADE_MULTISEED_DIR):
-#   /n/netscratch/ba_lab/Lab/$USER/spade_multiseed
-#   NOTE: netscratch has a 90-day retention policy.
+# Storage root: study_dir("multiseed") ($SPADE_MULTISEED_DIR, else $SPADE_DATA_ROOT/spade_multiseed).
 # ==========================================================================
 
 set -euo pipefail
 source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 
-BASE="${SPADE_MULTISEED_DIR:-/n/netscratch/ba_lab/Lab/${USER}/spade_multiseed}"
+BASE="$(python -m spade.common.study multiseed)"
 LOGS="${BASE}/logs"
 SEEDS=(43 44 45 46)
 

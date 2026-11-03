@@ -21,7 +21,7 @@ export PYTHONUNBUFFERED=1
 # HF datasets cache lives on NFS; hard flocks fail under concurrent array tasks
 export HF_USE_SOFTFILELOCK=1
 
-BASE="${SPADE_MULTISEED_DIR:-/n/netscratch/ba_lab/Lab/${USER}/spade_multiseed}"
+BASE="$(python -m spade.common.study multiseed)"
 TRAINER="trainer_${SLURM_ARRAY_TASK_ID}"
 
 : "${SEED:?SEED must be set (run_multiseed.sh exports it per eval array)}"

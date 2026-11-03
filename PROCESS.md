@@ -31,6 +31,13 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
   `sbatch`. Without it, FASRC's sbatch refuses the job ("allocation failure"), so a forgotten
   source fails at submit time. The one CPU job is submitted with `$SPADE_CPU_ACCOUNT` /
   `$SPADE_CPU_PARTITION` from the same file.
+- **C4, the other hardcoded paths.** `build_report.py`, `test_trace_safe_encode.py`,
+  `karvonen_repro/spade_checkpoints.py`, `simplex_threshold_report.py` and `theta_ablation.py`
+  now go through `data_root()` / `study_dir()`. The 23 `${SPADE_X_DIR:-/n/netscratch/...}`
+  defaults in the shell scripts call `python -m spade.common.study x` instead of restating the
+  rule in bash; each resolves to its old value under the FASRC data root. `REPORT.md` now
+  names the default as `$SPADE_DATA_ROOT/karvonen_released`, so it no longer embeds whoever's
+  root regenerated it. `load_points.py:39` is left to the pipeline-decoupling branch.
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 

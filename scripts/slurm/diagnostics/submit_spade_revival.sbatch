@@ -19,7 +19,7 @@ cd "${SPADE_REPO:?}"
 mkdir -p logs/revival
 
 CKPT=checkpoints/spade_revival
-MULTISEED_DIR="${SPADE_MULTISEED_DIR:-/n/netscratch/ba_lab/Lab/$USER/spade_multiseed}"
+MULTISEED_DIR="$(python -m spade.common.study multiseed)"
 
 if [ ! -f "$CKPT/trainer_0/ae.pt" ]; then
     python -m spade.training.sweep \

@@ -9,9 +9,12 @@ already exists), and are too big for git — the repo alone cannot regenerate a 
 `study_dir("bracket")` -> $SPADE_BRACKET_DIR, else data_root()/spade_bracket
 Names in use: rules, bracket, straightness, manifold, divergence, multiseed, legality,
 generation, move_legality, probes, rollouts.
+
+`python -m spade.common.study [name]` prints data_root(), or study_dir(name), for the shell
+scripts, so the rule is not restated in bash.
 """
 
-import os
+import os, sys
 from pathlib import Path
 
 from spade.common.paths import repo_root
@@ -34,3 +37,7 @@ def variant_dir(name: str, smoke: bool = False, variant: str = "") -> Path:
     """
     base = study_dir(name) / "smoke" if smoke else study_dir(name)
     return base / variant if variant else base
+
+
+if __name__ == "__main__":
+    print(study_dir(sys.argv[1]) if sys.argv[1:] else data_root())

@@ -15,7 +15,7 @@ export HF_USE_SOFTFILELOCK=1
 cd "${SPADE_REPO:?}"
 mkdir -p logs/rules
 
-RULES_DIR="${SPADE_RULES_DIR:-/n/netscratch/ba_lab/Lab/$USER/spade_rules}"
+RULES_DIR="$(python -m spade.common.study rules)"
 
 [ -f "$RULES_DIR/causal/forfeit_pairs.pt" ] || python -m spade.rules.causal.mine_forfeits
 python -m spade.rules.causal.unflip_edit

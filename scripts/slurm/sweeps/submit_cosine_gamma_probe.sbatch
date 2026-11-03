@@ -29,7 +29,7 @@ source "${SPADE_REPO:?}/scripts/slurm/cluster.env"
 export PYTHONUNBUFFERED=1
 export HF_USE_SOFTFILELOCK=1
 
-BASE="${SPADE_MULTISEED_DIR:-/n/netscratch/ba_lab/Lab/${USER}/spade_multiseed}"
+BASE="$(python -m spade.common.study multiseed)"
 OUT="${BASE}/cosine_gamma_probe"
 GAMMAS="0.1,1,5,10,20,50,100,300,1000,3000"
 
