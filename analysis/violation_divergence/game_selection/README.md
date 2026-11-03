@@ -7,7 +7,7 @@ criterion. This sub-study sweeps every complete game, scores how distinct its
 nine branch trajectories are, and hands the fork figure an argmax it can disclose.
 
 ```
-python analysis/violation_divergence/game_selection/score_games.py   # ~4 min, cpu
+python analysis/violation_divergence/game_selection/score_games.py   # game_id < 2000; writes a new --out, never results/
 python analysis/violation_divergence/game_selection/make_figures.py
 python analysis/violation_divergence/game_selection/score_rules.py   # ~15 min, cpu
 ```

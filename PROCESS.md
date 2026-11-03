@@ -55,6 +55,13 @@ RELEASE_PLAN §5 items, so each paper figure recomputes or redraws without anoth
   relative (float32 device noise), the rest byte-identical. **Not done:** giving `field()` its
   own `default_rng(42)`. It would change `m2_field.csv`'s CIs in the third decimal (A.8
   quotes them), so the call order stays as is and A.8 needs the note instead.
+- **C20: `score_games.py` scores B.2's population and cannot overwrite its ranking.** It
+  takes branch-complete games with `game_id < 2000` (the 1550 game 1235 was chosen from;
+  today's tree has 3185) and writes `ranking.csv`, `transfer_check.csv`, `summary.txt` and an
+  `inputs.json` of the branches/acts sha256 into a new `--out` (default under
+  `study_dir("divergence")`), refusing one that exists. The committed `results/` stay as the
+  selection's provenance: the acts were re-extracted after it, so a re-score moves S3 by
+  ≤6e-7. Not re-run here (the audit's re-score took 4 h on the login node).
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 
