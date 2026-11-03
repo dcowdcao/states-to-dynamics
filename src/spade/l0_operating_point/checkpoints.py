@@ -4,11 +4,12 @@
 checkpoint directory. The mapping is not one lookup because the eight picks come from three
 places and two naming conventions:
 
-  * Karvonen's five are published checkpoints, not in the git tree. `download_saes.sh` fetches
-    them; they live on netscratch (see KARVONEN_ROOT). `picks.csv` names them by the
-    `autoencoder_path` of the results table, and `matched()` checks each one's sparsity knob.
-  * Our three come from the L0 grids on netscratch, named by `wandb_name` minus its
-    `_trainer_N` suffix.
+  * Karvonen's five are published checkpoints, not in the git tree.
+    `scripts/download_karvonen_saes/download.sh` extracts them into KARVONEN_ROOT
+    (`$SPADE_DATA_ROOT/karvonen_saes`). `picks.csv` names them by the `autoencoder_path` of the
+    results table, and `matched()` checks each one's sparsity knob.
+  * Our three come from the L0 grids under `study_dir("multiseed")`, named by `wandb_name`
+    minus its `_trainer_N` suffix.
   * CosineSpaDE's picks read `beta1-...` because the eval ran after `karvonen/cosine-beta`
     added an inverse temperature. `DEFAULT_COSINE_BETA = 1.0` is plain cosine and reproduces
     every pre-beta checkpoint bitwise, so `CosineSpaDE-beta1-gamG` IS the pre-beta run at

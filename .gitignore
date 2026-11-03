@@ -11,9 +11,6 @@ __pycache__/
 *.pt
 *.pth
 
-# Karvonen's released SAEs and their zips (scripts/download_karvonen_saes)
-checkpoints/karvonen_saes/
-
 # $SPADE_DATA_ROOT's default (spade.common.study): study trees and downloaded weights, never tracked
 /data/
 

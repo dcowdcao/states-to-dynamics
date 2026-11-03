@@ -4,16 +4,17 @@
 #
 #   SPADE_REPO=<repo root> bash scripts/download_karvonen_saes/download.sh
 #
-# SPADE_KARVONEN_SAES  extraction root, absolute or repo-relative (default checkpoints/karvonen_saes)
+# Extracts into $SPADE_DATA_ROOT/karvonen_saes, where spade.l0_operating_point.checkpoints
+# reads them; extracted_files.tsv holds each extracted file's sha256, relative to that root.
 # SPADE_KARVONEN_ZIPS  where the zips are read from, and downloaded to when absent
-#                      (default $SPADE_KARVONEN_SAES/zips; 9.3 + 3.0 GB, kept afterwards)
+#                      (default <that root>/zips; 9.3 + 3.0 GB, kept afterwards)
 set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
 cd "${SPADE_REPO:?}"
 
 HF_REVISION=f997cba04444628deda521daab4c8b9a48735af6
-dest=${SPADE_KARVONEN_SAES:-checkpoints/karvonen_saes}
+dest="$(python -m spade.common.study)/karvonen_saes"
 zips=${SPADE_KARVONEN_ZIPS:-$dest/zips}
 mkdir -p "$dest" "$zips"
 
