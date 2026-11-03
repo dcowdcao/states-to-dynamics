@@ -32,9 +32,12 @@ make setup                       # fetch external/, create .venv, pip install -e
 make run                         # full pipeline: train → extract → eval → figures
 ```
 
+`make setup` needs Python 3.11 and uses `python3` by default. If `python3` is another version
+(on FASRC it is 3.6), name the interpreter: `make setup PYTHON=/path/to/python3.11`.
+
 ## Dev setup
 
-`make setup` builds `.venv` from `python3.11` and installs the pins in `requirements.txt`
+`make setup` builds `.venv` from `$(PYTHON)` and installs the pins in `requirements.txt`
 (~2 GB, mostly torch). On FASRC that stack already exists in the `spade_env` conda env, so
 reuse it instead of re-downloading it:
 

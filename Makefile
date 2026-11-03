@@ -1,7 +1,8 @@
 # Two-command interface (CLAUDE.md setup-docs target): `make setup`, `make run`.
 # Everything runs out of ./.venv. SPADE_REPO is what the shell scripts cd to.
 
-PYTHON ?= python3.11
+# Must be 3.11; setup checks. Where python3 is another version: make setup PYTHON=/path/to/python3.11
+PYTHON ?= python3
 VENV   := .venv
 PY     := $(VENV)/bin/python
 
@@ -10,6 +11,7 @@ export SPADE_REPO = $(CURDIR)
 .PHONY: setup run test
 
 setup:              ## fetch external/, create .venv and install spade editable with the pinned deps
+	@$(PYTHON) -c 'import sys; v = "%d.%d" % sys.version_info[:2]; sys.exit(v != "3.11" and "$(PYTHON) is Python " + v + ", setup needs 3.11: make setup PYTHON=/path/to/python3.11")'
 	bash scripts/fetch_external/fetch.sh
 	$(PYTHON) -m venv $(VENV)
 	$(PY) -m pip install --upgrade pip
