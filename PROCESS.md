@@ -13,6 +13,11 @@ RELEASE_PLAN §5 items, so each paper figure recomputes or redraws without anoth
 - **C11: Fig 7(b)'s field corpus has a command.** `submit_bracket_field.sbatch` now mines it
   (`events --variant field --n_events 4000`) before extracting; the default 2000 events fail
   `probe_space`'s quota assert.
+- **C12: the branch tree is one script.** `scripts/build_branch_tree.sh` runs
+  `branches --n_prefixes 2003` then `extend_branches --t0 20 --target 2000` and checks
+  sha256 `6e5a0253…` (the corpus audit rebuilt it byte-identically this way, CPU ~32 min).
+  The README's `branches` + `--t0 20` gave a different 3920-game tree. The script refuses
+  to run over an existing `branches.pt`, since `branches` overwrites it.
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 

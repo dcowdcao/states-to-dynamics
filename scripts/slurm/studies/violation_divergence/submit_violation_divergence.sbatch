@@ -24,5 +24,5 @@ mkdir -p logs/violation_divergence
 
 DIR="${SPADE_DIVERGENCE_DIR:-/n/netscratch/ba_lab/Lab/$USER/spade_divergence}"
 
-[ -f "$DIR/branches/branches.pt" ] || python -m spade.violation_divergence.branches
+[ -f "$DIR/branches/branches.pt" ] || bash scripts/build_branch_tree.sh
 [ -f "$DIR/acts/logits.pt" ] || python -m spade.violation_divergence.extract_acts
