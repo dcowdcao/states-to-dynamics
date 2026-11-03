@@ -2,7 +2,7 @@
 
 A by-space figure needs a name, a family to take its colour from, and the L0 the checkpoint
 was seated at -- all three in `picks.csv`. It does not need weights, so this never calls
-`checkpoints.matched()`, which walks the grid roots to resolve them.
+`checkpoints.matched()`, which needs them on disk.
 
 The canonical seed-42 roster sits wherever each family's default hyperparameters put it on the
 sparsity axis, so a difference between two of those spaces confounds architecture with L0.

@@ -29,11 +29,11 @@ import pandas as pd
 import torch
 
 from spade.common.paths import repo_root
+from spade.common.study import data_root, study_dir
 from spade.evaluation.karvonen_adapter import (
     StandardizedDictionary, load_karvonen_sae, load_standardization_params)
 
-KARVONEN_ROOT = Path("/n/netscratch/ba_lab/Lab/dcao/karvonen_saes")
-GRID_ROOT = Path("/n/netscratch/ba_lab/Lab/dcao")
+KARVONEN_ROOT = data_root() / "karvonen_saes"
 PICKS = repo_root() / "results" / "l0_operating_point" / "picks.csv"
 
 # Karvonen's results table records `gated/trainer32`; the archive stores `trainer32-v2`.
@@ -48,6 +48,15 @@ KARVONEN_DIRS = {
                              "othello-trained_model-layer_5-standard/trainer25-v2",
     "top_k/trainer_61": "othello-trained_model-layer_5-2024-07-10_topk/"
                         "othello-trained_model-layer_5-top_k/trainer_61",
+}
+
+# Our three, seated at one seed under study_dir("multiseed"). picks.csv's CosineSpaDE metrics
+# are its 5-seed mean; the weights are this seed's.
+SEED = 42
+OUR_DIRS = {
+    "BatchTopK-k220": "autoencoders_batch_topk_l0_grid/trainer_10",
+    "CosineSpaDE-beta1-gam0.05": "autoencoders_cosine_spade_sweep/trainer_0",
+    "SpaDE-lam0.001-gam0.005": "autoencoders_l0_coverage/trainer_5",
 }
 
 
@@ -102,30 +111,19 @@ def _params(config: str) -> dict:
 
 
 def _ours(config: str) -> Path:
-    """The grid checkpoint whose trainer hyperparameters equal the pick's."""
-    trainer_class = config.split("-")[0] + "Trainer"
+    """The pick's pinned checkpoint, asserted to be the run its config string names."""
+    ckpt = study_dir("multiseed") / f"seed_{SEED}" / OUR_DIRS[config]
+    trainer = json.loads((ckpt / "config.json").read_text())["trainer"]
     want = _params(config)
-    assert want, f"no hyperparameters parsed out of {config}"
-    for cfg in GRID_ROOT.rglob("config.json"):
-        if not (cfg.parent / "ae.pt").exists():
-            continue
-        try:
-            trainer = json.loads(cfg.read_text()).get("trainer", {})
-        except json.JSONDecodeError:
-            continue
-        if trainer.get("trainer_class") != trainer_class:
-            continue
-        # beta needs its own rule: a pre-beta checkpoint has no `beta` key, and beta1 IS that
-        # checkpoint (DEFAULT_COSINE_BETA = 1.0 is plain cosine). Matching gamma alone would
-        # accept the beta=5 run at the same gamma, which is a different model.
-        beta = want.get("beta")
-        have = trainer.get("beta")
-        if beta is not None and not (float(have) == beta if have is not None else beta == 1.0):
-            continue
-        rest = {f: v for f, v in want.items() if f != "beta"}
-        if all(trainer.get(f) is not None and float(trainer[f]) == v for f, v in rest.items()):
-            return cfg.parent
-    raise FileNotFoundError(f"no {trainer_class} checkpoint with {want}")
+    # A pre-beta checkpoint has no `beta` key, and beta1 IS that checkpoint (DEFAULT_COSINE_BETA
+    # = 1.0 is plain cosine); the beta=5 run at the same gamma is a different model.
+    beta = want.pop("beta", None)
+    assert (trainer["trainer_class"] == config.split("-")[0] + "Trainer"
+            and trainer["seed"] == SEED
+            and (beta is None or float(trainer.get("beta", 1.0)) == beta)
+            and all(float(trainer[f]) == v for f, v in want.items())), \
+        f"{ckpt} is not {config} at seed {SEED}: {trainer}"
+    return ckpt
 
 
 def matched() -> list[Matched]:

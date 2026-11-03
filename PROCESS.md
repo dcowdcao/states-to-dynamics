@@ -16,6 +16,13 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
   `SPADE_DATA_ROOT=/n/netscratch/ba_lab/Lab/dcao` all 11 study names resolve to exactly the
   paths the old netscratch default gave. The unused `paths.data_dir()`, which ignored the env,
   became `study.data_root()`.
+- **C2, the seats.** `checkpoints._ours()` rglobbed the whole data root for a config.json with
+  the pick's hyperparameters and took the first: CosineSpaDE matched 10 (seeds 42-46, each
+  twice via the `karvonen_repro_*` symlink mirrors) and got seed 42 by filesystem order.
+  `OUR_DIRS` + `SEED = 42` now pin each pick under `study_dir("multiseed")`, and config.json
+  must agree on class, seed and knobs. Old and new resolve ae.pt, config.json and
+  standardization_params.json to the same real files. `KARVONEN_ROOT` is
+  `data_root()/karvonen_saes`; `GRID_ROOT` went with the rglob.
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 
