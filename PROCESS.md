@@ -69,6 +69,21 @@ RELEASE_PLAN §5 items, so each paper figure recomputes or redraws without anoth
 - **C26: the probe pipeline has launchers again.** `scripts/slurm/studies/probes/` ports the
   frozen repo's `shell/probes/submit_{corpus,train,tpr_weight_decay}.sh` to
   `python -m spade.probes.*`; the three module docstrings pointed at `src/probes/*.py`.
+- **C18: Fig 6 redraws from the committed `pooled.csv`.** `plot_pareto` drew our points from
+  seven netscratch eval streams through `identify()`, which opens each checkpoint's absolute
+  `config.json`. It now takes our rows from `pooled.csv` (lowest seed per config, as before)
+  and his from his published CSV. Draw order matters: overlapping markers in the 3-var panels
+  change pixels when reordered, and pooled.csv is sorted by L0. Sorting by (stream in
+  `OUR_STREAMS` order, path) reproduces the streams' order exactly, checked per trainer class.
+  `combine_figure` builds only `with_spade` by default (`--variants` adds the archive-bound
+  `karvonen_only`), so `styled_karvonen_only/` is no longer required. `REPRO_ROOT` defaults to
+  the data root `study_dir` resolves, not a `$USER` path.
+  **pooled.csv's `path` column is now relative to `REPRO_ROOT`** (196 rows,
+  `karvonen_repro_*/checkpoints/...`; the anonymous export cannot carry
+  `/n/netscratch/.../dcao`). `aggregate` writes it that way; nothing reads the column back
+  except plot_pareto's sort. Every other column is byte-identical. Verified: `aggregate`
+  regenerates the rewritten pooled.csv byte for byte, `pick` regenerates picks.csv byte for
+  byte, and all 12 panels and the composite PNG are byte-identical (PDF: `/CreationDate`).
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 

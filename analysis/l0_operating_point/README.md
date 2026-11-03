@@ -188,9 +188,9 @@ ours do not. For a paper, publish the two windows as a pair rather than compromi
     python -m spade.l0_operating_point.aggregate          # -> results/l0_operating_point/pooled.csv
     python -m spade.l0_operating_point.pick --rule nearest # -> results/l0_operating_point/picks.csv
     python -m spade.l0_operating_point.pick --rule band     # the alternative
-    python -m spade.l0_operating_point.plot_pareto          # the four panels, both variants
+    python -m spade.l0_operating_point.plot_pareto          # the four panels, both variants, from pooled.csv
     python -m spade.l0_operating_point.verify_match         # holds karvonen_only to his PNGs
-    python -m spade.l0_operating_point.combine_figure       # the 2x2 Figure 4
+    python -m spade.l0_operating_point.combine_figure       # the 2x2 Figure 4 (with_spade; --variants for both)
 
 Use the conda interpreter directly; worktrees have no `.venv`:
 `/n/home10/dcao/.conda/envs/spade_env/bin/python`, with `PYTHONPATH=<worktree>/src` so the

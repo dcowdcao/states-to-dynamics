@@ -42,7 +42,10 @@ COLUMNS = ["family", "trainer_class", "config", "seed", "l0", *SCORED,
 
 
 def _ours(csv: Path, source: str) -> pd.DataFrame:
-    """One karvonen_repro f1_results.csv, with both metric families and the sample size."""
+    """One karvonen_repro f1_results.csv, with both metric families and the sample size.
+
+    `path` is relative to `load_points.REPRO_ROOT` (the data root by default), so the
+    committed table names no machine's directories."""
     df = pd.read_csv(csv)
     ids = pd.DataFrame([load_points.identify(Path(p)) for p in df["autoencoder_path"]])
     return pd.DataFrame({
@@ -62,7 +65,8 @@ def _ours(csv: Path, source: str) -> pd.DataFrame:
         "dict_size": ids["dict_size"],
         "source": source,
         "eval_n_activations": df["eval_n_activations"],
-        "path": df["autoencoder_path"],
+        "path": [Path(p).relative_to(load_points.REPRO_ROOT).as_posix()
+                 for p in df["autoencoder_path"]],
     })
 
 
