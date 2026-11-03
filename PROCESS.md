@@ -6,6 +6,14 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## Clean-clone pipeline fixes (2026-11-03)
+
+RELEASE_PLAN §5 items, so each paper figure recomputes or redraws without another study's data.
+
+- **C11: Fig 7(b)'s field corpus has a command.** `submit_bracket_field.sbatch` now mines it
+  (`events --variant field --n_events 4000`) before extracting; the default 2000 events fail
+  `probe_space`'s quota assert.
+
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 
 `curvature_rules_{tree}_combined` and `curvature_rules_{tree}_population_combined` read cell to

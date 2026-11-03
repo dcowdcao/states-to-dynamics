@@ -16,5 +16,6 @@ export PYTHONUNBUFFERED=1
 cd "${SPADE_REPO:?}"
 export PYTHONPATH="${SPADE_REPO}/src:${PYTHONPATH:-}"
 mkdir -p logs/bracket_flip
+python -m spade.bracket_flip.events --variant field --n_events 4000
 python -m spade.bracket_flip.extract_acts --variant field
 python -m spade.bracket_flip.probe_space

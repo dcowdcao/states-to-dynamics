@@ -223,7 +223,9 @@ here, which only draw. Three GPU jobs under `scripts/slurm/studies/bracket_flip/
 `submit_bracket_flip.sbatch` (mine and extract), `submit_bracket_readout.sbatch`
 (`probe_space` + `geometry_tables`), and `submit_bracket_intervene.sbatch` (the M6
 sweep); `submit_bracket_robustness.sbatch` and `submit_bracket_sae.sbatch` run the
-two side arms. Every figure is drawn off the GPU by `make_figures.py`.
+two side arms. Fig 1(b)'s field set is its own job, `submit_bracket_field.sbatch`:
+`events --variant field --n_events 4000` → `extract_acts --variant field` →
+`probe_space` (the default 2000 events fail its quota assert). Every figure is drawn off the GPU by `make_figures.py`.
 Large artifacts on `$SPADE_BRACKET_DIR`; per-event CSVs in `results/`; the A1–A6
 write-ups in `reports/`.
 
