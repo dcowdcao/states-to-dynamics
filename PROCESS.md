@@ -25,6 +25,8 @@ RELEASE_PLAN §5 items, so each paper figure recomputes or redraws without anoth
   resolves raw and the nulls without `roster()`, and loads the 2.1 GB branch acts after the
   first fit instead of before it. `extract_geometry.py` returns before `seed42_entries()`
   when no `--spaces` is given. The asserts themselves stay: the seed-42 studies want them.
+  `straightness.compute_geometry` (Fig 3's legal profile) and `compute_divergence` (B.2's
+  rollout δ̂) filter `--spaces` the same way, so `--spaces resid_post_5` needs no SAE.
 
 ## rule_curvature's two cross-SAE grids get an L0-matched twin, and only those two (2026-08-25)
 
