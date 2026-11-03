@@ -61,10 +61,11 @@ FALSE_ALARM = ["hit_control", "hit_control2", "hit_reference"]
 sys.path.insert(0, str(HERE.parent / "illegal_move_detector"))
 
 
-def histogram_panel(ax, space: str) -> int:
-    """(b): the five score distributions at t0, in `space`, drawn by their own figure's code."""
+def histogram_panel(ax, space: str) -> pd.DataFrame:
+    """(b): the five score distributions at t0, in `space`, drawn by their own figure's code.
+    Returns that figure's per-series table: n, tau and the share of each series above it."""
     import detector
-    from figure_histograms import panel as densities, subset
+    from figure_histograms import panel as densities, subset, summary
 
     data = detector.load(space)
     cand = detector.band()
@@ -72,8 +73,10 @@ def histogram_panel(ax, space: str) -> int:
     sel = detector.arms(data)
     tau = detector.operating_point(score, cand, data, sel)
     rows = subset(data, sel)
-    densities(ax, {k: detector.at_t0(score, cand, data["t0"], r) for k, r in rows.items()}, tau)
-    return detector.assert_eval_set(data["game_id"][rows["legal"]], data["t0"][rows["legal"]])
+    at_t0 = {k: detector.at_t0(score, cand, data["t0"], r) for k, r in rows.items()}
+    densities(ax, at_t0, tau)
+    detector.assert_eval_set(data["game_id"][rows["legal"]], data["t0"][rows["legal"]])
+    return summary(at_t0, tau).assign(space=space)
 
 
 def panel_letter(ax, i: int) -> None:
@@ -149,8 +152,8 @@ def draw_threshold(table: pd.DataFrame, styles: dict, camera_ready: bool,
     fig, axes = plt.subplots(1, 2, figsize=(11.0, 3.6),
                              gridspec_kw={"width_ratios": [1.0, 0.92]})
     panel(axes[0], table, "auroc_position", "AUROC", 0.5, None, None, 1.05, "chance", styles)
-    n_games = histogram_panel(axes[1], table.space.iloc[0])
-    assert (table.n_games == n_games).all(), "the two panels are not one evaluation set"
+    cut = histogram_panel(axes[1], table.space.iloc[0])
+    assert set(table.n_games) == set(cut.n), "the two panels are not one evaluation set"
     fig.tight_layout(rect=(0, 0.06, 1, 1))
     letters_below(fig, axes)
     return save_figure(fig, HERE / "figures" / f"threshold_detection{suffix}", camera_ready)

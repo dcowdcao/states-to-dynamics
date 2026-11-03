@@ -14,7 +14,8 @@ every candidate in the band is a different question and lives in
 against 0.681 here: its negatives are mostly positions nowhere near a splice, and this one's
 is the matched control at the same t0.
 
-(b) is whichever space (a) puts first, so the panels cannot disagree about the winner.
+(b) is whichever space (a) puts first, so the panels cannot disagree about the winner. Its tau, and
+the share of each series above it, go to results/sae_detector_tau.csv.
 
 Usage: PYTHONPATH=src:analysis/violation_divergence/illegal_move_detector python
            analysis/violation_divergence/illegal_move_detector/figure_sae_overview.py
@@ -36,15 +37,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "changepoint_locali
 from make_figures import histogram_panel  # noqa: E402  (sibling study, not a package)
 
 
-def draw(table: pd.DataFrame, camera_ready: bool) -> Path:
+def draw(table: pd.DataFrame, camera_ready: bool) -> tuple[Path, pd.DataFrame]:
     fig, axes = plt.subplots(1, 2, figsize=(11.0, 3.4),
                              gridspec_kw={"width_ratios": [1.0, 0.92]})
     bars(axes[0], table)
-    n_games = histogram_panel(axes[1], table.space.iloc[0])
-    assert (table.n_games == n_games).all(), "the two panels are not one evaluation set"
+    cut = histogram_panel(axes[1], table.space.iloc[0])
+    assert set(table.n_games) == set(cut.n), "the two panels are not one evaluation set"
     fig.tight_layout()
     letters_topleft(fig, axes)
-    return save_figure(fig, detector.FIGURES / "sae_detector_overview", camera_ready)
+    return save_figure(fig, detector.FIGURES / "sae_detector_overview", camera_ready), cut
 
 
 def main() -> None:
@@ -54,8 +55,11 @@ def main() -> None:
 
     apply_style(args.camera_ready)
     table = pd.read_csv(detector.RESULTS / "auroc_by_space_l0_matched.csv")
-    print(draw(table.sort_values("auroc", ascending=False).reset_index(drop=True),
-               args.camera_ready))
+    figure, cut = draw(table.sort_values("auroc", ascending=False).reset_index(drop=True),
+                       args.camera_ready)
+    cut.to_csv(detector.RESULTS / "sae_detector_tau.csv", index=False)
+    print(cut.to_string(index=False))
+    print(figure)
 
 
 if __name__ == "__main__":
