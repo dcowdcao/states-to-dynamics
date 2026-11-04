@@ -30,3 +30,4 @@ wandb	(?i)wandb\.ai/[\w-]+
 wandb	(?i)(?<![a-z])entity["']?\s*[:=]\s*["'][^"'\s]+
 hf_space	(?i)huggingface\.co/spaces/
 hf_space	(?i)othello-sae-viewer
+cluster	(?i)netscratch

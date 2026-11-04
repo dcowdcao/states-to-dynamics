@@ -4,7 +4,7 @@
 lam1e-03-gam1e-04 sweep point; the other in-repo sweep dirs for the 14-config
 set hold config.json without ae.pt (the two sweep dirs that do have weights
 are lam1e-04 points outside the 14-config set). Seeds 43-46 have all 14
-configs on netscratch, so the 6 sweep configs run with n_seeds=4.
+configs under the data root, so the 6 sweep configs run with n_seeds=4.
 
 Every entry is verified on construction: ae.pt exists and the checkpoint's
 own wandb_name maps to the expected config via config_key().
@@ -65,7 +65,7 @@ def _verify(entry: SAEEntry) -> SAEEntry:
 
 
 def seed42_entries() -> list[SAEEntry]:
-    """The 8 in-repo baseline checkpoints — no netscratch dependency."""
+    """The 8 in-repo baseline checkpoints — no data-root dependency."""
     root = repo_root()
     return [_verify(SAEEntry(cfg, 42, root / rel)) for cfg, rel in _SEED42_DIRS.items()]
 

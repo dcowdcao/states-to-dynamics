@@ -3,7 +3,7 @@
 Two studies called `straightness.build_games.sample_rollouts` and each spent its own GPU
 pass on it, at its own seed -- so a rollout number from one was not about the same games as
 a rollout number from the other, and neither draw was reusable. This is that population,
-once, on netscratch, with a manifest that says what generated it.
+once, under the data root, with a manifest that says what generated it.
 
 **The bank extends by prefix, and that is what makes one bank enough.** `sample_rollouts`
 draws in `ROLLOUT_BATCH` blocks from a single seeded generator, so block k depends only on

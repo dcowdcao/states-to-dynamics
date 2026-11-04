@@ -2,7 +2,7 @@
 
 The roster is `spade.spaces.representative_spaces()` restricted to the seed-42
 checkpoints: raw plus 8 SAEs. That function also carries the two random controls and,
-once the multiseed netscratch tree exists, the six seed-43 sweep points — 17 entries in
+once the multiseed data tree exists, the six seed-43 sweep points — 17 entries in
 all — so the filter is on `entry.seed`, not on a name set. `{"raw", *BASELINE_CONFIGS}`
 (`bracket_flip/sae_arm.py:45`) is the wrong filter twice over: it readmits the degenerate
 SpaDETrainer-othello that `spaces.EXCLUDED_SAE` drops, and it never names the default
