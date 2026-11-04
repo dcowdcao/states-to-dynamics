@@ -6,6 +6,79 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The paper reproduces from a fresh clone in four make targets (2026-11-03)
+
+`release/reproduce-docs`: `make setup && make data && make figures`, then `make verify`.
+REPRODUCE.md has the per-figure commands; this is why they look the way they do.
+
+**The data release** is Tier A minus three things: Karvonen's weights (`make data` downloads
+them at `f997cba`), the audit evidence (`release_audit_rerun/`, Fig 1's pre-t58 inputs), and
+games.pt's rows past the legal block (D25). It adds game 1235's activation slices. 972 files,
+527 MB, listed in `manifests/data_release.tsv`. `scripts/release/stage_data.py` staged them
+at `/n/netscratch/ba_lab/Lab/dcao/release_data_staging`.
+- **The eval tables named this cluster.** Three path columns of every `karvonen_repro_*`
+  table, plus three manifests, held the absolute data root: 7,491 identity hits. Staging strips
+  the data root's prefix from every text file. `aggregate` and `load_points` now join a row's
+  path onto `REPRO_ROOT`, which leaves an absolute path as it was. From the released tables,
+  `aggregate` and `pick` regenerate `pooled.csv` and `picks.csv` byte for byte. After that the
+  scan over text, `.pt` pickles and `.npz` string arrays finds nothing.
+- **games.pt is its legal block.** `straightness_legal_index` (extract_geometry, Figs 3/4/8)
+  and `l0_matched_profile` sized that block as `len // 5`, which would be 400 on the cut file.
+  Both now count it. On the full file the count is the same 2000, and the legal index is
+  identical on both files. The geometry `_raw.npz` files keep their 10,000 rows of derived step
+  lengths, which include the championship class. That is numbers, not moves.
+- **Figs 9-12 redraw from 2.7 MB.** `fork_and_board/game_acts.py` cuts the game's rows out of
+  the 2.1 / 8.35 GB tensors, and `make_figures.py` reads only the cut, asserting its rows against
+  branches.pt. The cuts are also in the live data root.
+
+**Redraws run on one thread.** With 8 threads, two identical Fig 10 renders differed by 111
+pixels of 1/255 and one of them matched HEAD. One thread matched it as well. The PDFs never
+moved, since their coordinates are rounded. The Makefile pins OMP/MKL/OpenBLAS to 1 for the
+`figNN` targets only, because the CPU measures behind Figs 13-16 want their 8 threads.
+
+**compute-* targets** chain the modules the sbatch jobs run, called directly so they also run
+off SLURM. They write into the data root, and a step that finds its output there checks it
+(`rollout_bank`), refuses (`build_branch_tree.sh`) or keeps it (the geometry caches). Hence
+REPRODUCE.md says to recompute into an empty root. Tested: `compute-fig01` on an H100 (below)
+and Fig 6's aggregate + pick on a CPU. The rest are untested chains of steps that each ran before.
+
+**cluster.env** stays tracked and is excluded from the export. Jobs source `cluster.sh`, which
+stops with a pointer to `cluster.env.example`. This cluster's runbook is `docs/fasrc_commands.md`;
+the archived one is kept. The export excludes it as `docs/*_commands.md`, because the exclude
+list ships and the cluster's name in it would be a hit.
+
+**Stranded in archive/ and now in REPRODUCE.md:** the rollout tree's three passes, why the
+branch tree starts at 2003, the Fig 2 and Figs 3-4 step order, and the CPU measure for Figs
+13-16. The archived README's `pick --rule nearest` is stale: `picks.csv` says `consensus`, the
+default, and regenerates.
+
+**Verified** (SLURM, `test` partition, 8 cores; the GPU job on `kempner_h100`):
+- Fresh clone of this branch, with an empty data root and HF cache: `make setup` 14 min,
+  `make test` 16/17 (weights test skipped) plus the three data-free modules, `make data`
+  1 min from the staging dir and the local zips, `make figures` 5 min.
+- `make verify`: 32/32 figure files and 50/50 results. That is 16 PNGs byte-identical, and 16
+  PDFs identical without `/CreationDate`.
+- `make compute-fig01` on one H100 in that root, 3 min: `rollout_bank` reproduced the released
+  1000 games exactly and the scan's `positions.csv` byte for byte. `rollout_by_move.csv` moved
+  in 44 of 5,220 cells by ≤ 1.1e-16, and the figure stayed the same.
+- The export: 0 identity hits, 314 files, 13.5 MB, commit `6acecdb`.
+- A clone of the export gave the same result: 32/32 and 50/50. It has no archive/, no
+  vendored external/ and no cluster.env, and setup fetched external/ from GitHub in 9 min.
+  `fetch.py` with no source stops with its message.
+- The integration test clone (`release_integration_test/`) is deleted. This branch's test
+  clones and data roots are in `/n/netscratch/ba_lab/Lab/dcao/release_e2e_test/`, and the job
+  scripts and logs are in `reproduce_docs_jobs/` beside it.
+
+**Open (owner).** Create the anonymous HF dataset, upload the staging dir, and set
+`SPADE_RELEASE_DATASET`'s default in `scripts/fetch_release_data/fetch.py`. SpaDE's training
+script is only on `karvonen/l0-sweep`. A.6's `threshold_localization.csv` has no compute target
+(it needs `curvature_discriminant/`). `submit_straightness.sbatch` runs `compute_geometry`
+without `--spaces`, so it needs the seed-42 weights; `make compute-straightness` does not.
+`make_log_dirs.sh` misses six log dirs. Two results docs cite paths that moved:
+`PROBE_REPORT.md:7` and `ROBUSTNESS.md:3`.
+
+---
+
 ## The six release branches are one branch, release/integration (2026-11-03)
 
 Merged with `--no-ff` in the order gated fix, vendored-deps fetch, public export, clean-clone
