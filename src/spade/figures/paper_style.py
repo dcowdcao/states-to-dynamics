@@ -283,7 +283,7 @@ COMPONENT_STYLE = {
 # Sparsity hyperparameter per seed-42 SAE family, for figure labels. Values are
 # the canonical trainer configs, not the checkpoints' config.json: every
 # config.json under checkpoints/main is a Mac smoke config written over real GPU
-# weights, so none of them labels its own weights (ARCHITECTURE.md, PROCESS.md).
+# weights, so none of them labels its own weights.
 # `SpaDE` is the default SpaDE configuration, λ=1e-3 γ=1e-4.
 SAE_HPARAMS = {
     "PAnneal": "p-anneal, pen 0.042",

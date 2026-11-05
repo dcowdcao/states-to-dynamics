@@ -12,7 +12,7 @@ source "${SPADE_REPO:?}/scripts/slurm/cluster.sh"
 export PYTHONUNBUFFERED=1
 # HF_USE_SOFTFILELOCK is not honored by this datasets/filelock version and the
 # builder's hard flock dies on NFS; give the job a node-local datasets cache and
-# leave HF_HOME on NFS so the LM is not refetched (PROCESS.md).
+# leave HF_HOME on NFS so the LM is not refetched.
 export HF_DATASETS_CACHE="${TMPDIR:-/tmp}/hf_datasets_${SLURM_JOB_ID}"
 
 cd "${SPADE_REPO:?}"

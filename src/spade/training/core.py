@@ -7,7 +7,7 @@ standardization (center+scale), data-sampled prototype init (SpaDE/CosineSpaDE o
 single Karvonen `trainSAE()` call, multi-GPU device assignment, and checkpoint/config
 writing.
 
-KEEP SHARED LOGIC HERE, NOT IN THE ENTRYPOINTS (see PROCESS.md decision).
+KEEP SHARED LOGIC HERE, NOT IN THE ENTRYPOINTS.
 """
 
 import argparse

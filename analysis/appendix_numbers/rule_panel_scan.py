@@ -11,7 +11,7 @@ distance, then by the played move's closed directions, then by (game, t): square
 and a move that visibly flanks. Fig 1(a)'s game 606, t = 16 qualifies, at the rank the CSV
 gives, but no ranking over one or two of these features picks it: the original scan was never
 committed and its pick is unrecorded, and its R1 square b2 (2 cells from b4) was moved by
-hand afterwards (PROCESS.md, "The constraint rules get drawn").
+hand afterwards.
 
 Writes results/appendix_numbers/rule_panel_scan.csv: every qualifying position, ranked.
 

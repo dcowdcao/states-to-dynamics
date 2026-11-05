@@ -210,7 +210,7 @@ def main():
     # SAE ones that carry the encode, so a block split loads every expensive
     # space into one task. The array passes indices and never space names --
     # a space list duplicated in bash is how the cosine sweep silently trained
-    # one config instead of nine (PROCESS.md).
+    # one config instead of nine.
     spaces = spaces[args.shard::args.n_shards]
 
     row_meta = {key: meta[key][branch].numpy() for key in META_KEYS}
