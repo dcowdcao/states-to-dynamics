@@ -63,7 +63,7 @@ def add_tpr_to_path() -> None:
 def linear_probe_activations() -> Path:
     """The committed board probe and its cached activations.
 
-    Gitignored and 220 MB (MIGRATION.md), so a worktree that does not carry it sets
+    Gitignored and 220 MB, so a worktree that does not carry it sets
     $SPADE_LINEAR_PROBE_ACTIVATIONS to a checkout that does.
     """
     return Path(os.environ.get("SPADE_LINEAR_PROBE_ACTIVATIONS",
