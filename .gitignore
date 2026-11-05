@@ -14,7 +14,7 @@ __pycache__/
 # $SPADE_DATA_ROOT's default (spade.common.study): study trees and downloaded weights, never tracked
 /data/
 
-# Probe activations (large; copied by hand, not cloned — see MIGRATION.md)
+# Probe activations (large; copied by hand, not cloned)
 analysis/linear_probe/activations/
 
 # Interactive plots are large and regenerable — but the viewer's pages are source.
@@ -31,9 +31,6 @@ logs/
 
 # W&B run artifacts (training writes these into cwd)
 wandb/
-
-# Agent worktrees (transient; each is its own checkout)
-.claude/worktrees/
 
 # transient locks
 *.lock

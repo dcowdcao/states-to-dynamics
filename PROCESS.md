@@ -6,6 +6,18 @@ Keep entries short; the code is the source of truth for *what*, this is the *why
 
 ---
 
+## The export ships no trace of the tooling that built it (2026-11-04)
+
+The identity scan passed, but two kinds of trace it doesn't look for still shipped. The shipped
+exclude list named `CLAUDE.md`, and `.gitignore` carried `.claude/worktrees/`; one docstring said
+"the user's requested normalization". `scripts/release/` is now excluded whole: its tools import
+`identity_scan`, whose patterns were already excluded, so none of them could run from the export
+anyway. `.claude/worktrees/` moved to the common `.git/info/exclude`. REPRODUCE.md and fetch.py
+no longer point at the staging script, and README.md lists `scripts/release/` as private,
+beside `archive/`.
+
+---
+
 ## The paper reproduces from a fresh clone in four make targets (2026-11-03)
 
 `release/reproduce-docs`: `make setup && make data && make figures`, then `make verify`.

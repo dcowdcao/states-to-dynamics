@@ -18,5 +18,5 @@ external/tpr_othello/
 scripts/slurm/cluster.env
 docs/*_commands.md
 
-# The scan's own patterns.
-scripts/release/identity_patterns.txt
+# The export and data-staging tools: they run only from this repo.
+scripts/release/

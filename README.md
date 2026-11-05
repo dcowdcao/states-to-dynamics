@@ -47,13 +47,14 @@ src/spade/      the package
 analysis/       per-study scripts that measure from a study tree and draw a figure
 scripts/        stage_figures.py; fetch_external/, fetch_release_data/, download_karvonen_saes/
                 (what make setup and make data run); build_branch_tree.sh; slurm/ (cluster jobs);
-                verify_outputs/; release/ (the export and data-staging tools)
+                verify_outputs/
 karvonen_repro/ our checkpoints through Karvonen's board-reconstruction eval (Fig 6)
 checkpoints/    configs and standardization of the seed-42 SAEs the registry checks
 manifests/      sha256 of the data release and of figures/ and results/
 ```
 
-The private working repository also has `archive/`: every file the paper does not use.
+The private working repository also has `archive/`, every file the paper does not use, and
+`scripts/release/`, the tools that build the public export and its data release.
 
 To change a figure, edit the script `make figNN` runs (REPRODUCE.md, or the comment above its
 entry in `scripts/stage_figures.py`), run `make figNN`, and check the result against

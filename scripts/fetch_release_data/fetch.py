@@ -5,7 +5,7 @@
 
 The files are manifests/data_release.tsv's rows, at the same relative paths under the data
 root. They come from the Hugging Face dataset SPADE_RELEASE_DATASET or, when it is set, from
-the local directory SPADE_RELEASE_DATA_DIR (scripts/stage_release_data/ builds one). A file
+the local directory SPADE_RELEASE_DATA_DIR, a copy of that dataset. A file
 already in place with the right sha256 is kept; one with another sha256 stops the run.
 """
 

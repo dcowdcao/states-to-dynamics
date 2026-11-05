@@ -33,8 +33,7 @@ Two kinds of release file differ from what the pipeline wrote.
 corpus: its later classes include WTHOR championship games, which are not re-hosted. The
 redraws and the detector's legal profile read only that block, and `compute-straightness`
 rebuilds the full file, downloading WTHOR itself. Text files (eval tables, manifests) name
-paths relative to the data root. `scripts/release/stage_data.py`
-builds the release from a data root and rewrites the manifest.
+paths relative to the data root.
 
 ## Pinned versions
 

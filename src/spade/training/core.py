@@ -101,7 +101,7 @@ class StandardizedBuffer:
         mean   = E[act]                           (computed over calibration batches)
         scale  = sqrt(d / E[||act - mean||^2])    (gives unit variance per dimension)
 
-    This implements the user's requested normalization (Anthropic April 2024 convention).
+    This is the input standardization of Anthropic's April 2024 circuits update.
     """
 
     def __init__(self, buffer, d_model: int, n_calibration_batches: int = 100):
